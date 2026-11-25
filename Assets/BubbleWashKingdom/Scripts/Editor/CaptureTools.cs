@@ -86,19 +86,11 @@ namespace BubbleWash.EditorTools
         public static void Render(Camera cam, int w, int h, string path)
         {
             var rt = RenderTexture.GetTemporary(w, h, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB, 4);
-            var prev = cam.targetTexture;
-            cam.targetTexture = rt;
             cam.aspect = w / (float)h;
-            cam.Render();
-            var active = RenderTexture.active;
-            RenderTexture.active = rt;
-            var tex = new Texture2D(w, h, TextureFormat.RGB24, false);
-            tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
-            tex.Apply();
-            RenderTexture.active = active;
+            CaptureUtil.Render(cam, rt);
+            var tex = CaptureUtil.ReadBack(rt, null, TextureFormat.RGB24);
             File.WriteAllBytes(path, tex.EncodeToPNG());
             Object.DestroyImmediate(tex);
-            cam.targetTexture = prev;
             cam.ResetAspect();
             RenderTexture.ReleaseTemporary(rt);
         }

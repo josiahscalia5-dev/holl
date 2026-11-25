@@ -26,17 +26,17 @@ namespace BubbleWash.EditorTools
             Mat("M_Water", "BWK/Water", m =>
             {
                 C(m, "_DeepColor", "#1F7BC1"); C(m, "_ShallowColor", "#3FB3E0"); C(m, "_StreakColor", "#C2EFFC");
-                C(m, "_EdgeTint", "#B386CD"); F(m, "_FlowSpeed", 7.5f); F(m, "_Width", 3.6f); F(m, "_Glow", 0.34f); F(m, "_Smoothness", 0.82f); F(m, "_StreakAmount", 0.45f); F(m, "_EdgeTintAmount", 0.3f);
+                C(m, "_EdgeTint", "#B386CD"); F(m, "_FlowSpeed", 7.5f); F(m, "_Width", 3.6f); F(m, "_Glow", 0.1f); F(m, "_Smoothness", 0.85f); F(m, "_StreakAmount", 0.45f); F(m, "_EdgeTintAmount", 0.3f);
             });
             Mat("M_RailRainbow", "BWK/Soft", m =>
             {
                 F(m, "_Mode", 1); C(m, "_ColorA", "#97A1D2"); C(m, "_ColorB", "#D56FC7"); C(m, "_ColorC", "#E062A8");
-                F(m, "_Smoothness", 0.9f); F(m, "_Glow", 0.48f); F(m, "_RimStrength", 0.25f);
+                F(m, "_Smoothness", 0.9f); F(m, "_Glow", 0.16f); F(m, "_RimStrength", 0.25f);
             });
             Mat("M_RailPink", "BWK/Soft", m =>
             {
                 F(m, "_Mode", 1); C(m, "_ColorA", "#EC8CA4"); C(m, "_ColorB", "#FDFED5"); C(m, "_ColorC", "#F3AE7D");
-                F(m, "_Smoothness", 0.94f); F(m, "_Glow", 0.5f); F(m, "_RimStrength", 0.35f);
+                F(m, "_Smoothness", 0.94f); F(m, "_Glow", 0.3f); F(m, "_RimStrength", 0.35f);
             });
             Lit_("M_SlideShell", "#E24AB8", metallic: 0.05f, smooth: 0.85f, emission: "#3A0A30");
 

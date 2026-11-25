@@ -763,8 +763,8 @@ namespace BubbleWash.EditorTools
             RenderSettings.ambientIntensity = 1f;
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = new Color(0.55f, 0.38f, 0.86f);
-            RenderSettings.fogDensity = 0.012f;
+            RenderSettings.fogColor = new Color(0.78f, 0.64f, 0.95f);
+            RenderSettings.fogDensity = 0.016f;
             RenderSettings.skybox = null;
             RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
 
@@ -794,7 +794,7 @@ namespace BubbleWash.EditorTools
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
             AssetDatabase.CreateAsset(profile, $"{GenDir}/PostFX_Level01.asset");
             var bloom = profile.Add<Bloom>(true);
-            bloom.threshold.Override(0.8f); bloom.intensity.Override(1.7f); bloom.scatter.Override(0.72f);
+            bloom.threshold.Override(1.05f); bloom.intensity.Override(1.25f); bloom.scatter.Override(0.66f);
             bloom.tint.Override(new Color(1f, 0.92f, 0.95f)); bloom.highQualityFiltering.Override(false);
             var tm = profile.Add<Tonemapping>(true); tm.mode.Override(TonemappingMode.Neutral);
             var ca = profile.Add<ColorAdjustments>(true);

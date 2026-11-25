@@ -27,7 +27,7 @@ Material:
     m_Floats:
     - _BumpScale: 6
     - _BumpStrength: 0.5
-    - _Glow: 0.32
+    - _Glow: 0.48
     - _Metallic: 0
     - _Mode: 1
     - _RimPower: 3

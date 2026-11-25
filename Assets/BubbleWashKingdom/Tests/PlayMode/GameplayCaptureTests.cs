@@ -37,7 +37,6 @@ namespace BubbleWash.Tests
             const int w = 540, h = 960;
             var rt = new RenderTexture(w, h, 24, RenderTextureFormat.ARGB32) { antiAliasing = 2 };
             var tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
-            cam.targetTexture = rt;
             Time.captureFramerate = 30;
 #if UNITY_EDITOR
             var attrs = new VideoTrackAttributes
@@ -52,11 +51,8 @@ namespace BubbleWash.Tests
             while (frames < 30 * 75)
             {
                 yield return null;
-                cam.Render();
-                RenderTexture.active = rt;
-                tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
-                tex.Apply(false);
-                RenderTexture.active = null;
+                CaptureUtil.Render(cam, rt);
+                CaptureUtil.ReadBack(rt, tex);
 #if UNITY_EDITOR
                 encoder.AddFrame(tex);
 #endif
@@ -74,7 +70,6 @@ namespace BubbleWash.Tests
             encoder.Dispose();
 #endif
             Time.captureFramerate = 0;
-            cam.targetTexture = null;
             File.WriteAllText(Path.Combine(OutDir, "run_summary.txt"),
                 $"frames={frames}\nstart={startDistance:F1}\nend={runner.Distance:F1}\ntrack={runner.track.Length:F1}\n" +
                 $"coins={gm.items.Coins}\ngems={gm.items.Gems}\nrearChecks={rearChecks}\nrearViolations={rearViolations}\nfinished={gm.Celebrating}\n");
