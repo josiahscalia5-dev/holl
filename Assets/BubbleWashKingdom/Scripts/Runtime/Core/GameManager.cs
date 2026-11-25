@@ -30,8 +30,12 @@ namespace BubbleWash
         {
             Application.targetFrameRate = 60;
             QualitySettings.vSyncCount = 0;
-            foreach (var a in System.Environment.GetCommandLineArgs())
-                if (a == "-bwkAutopilot") useAutopilot = true;
+            var args = System.Environment.GetCommandLineArgs();
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (args[i] == "-bwkAutopilot") useAutopilot = true;
+                if (args[i] == "-bwkPerf" && i + 1 < args.Length) { perfOutput = args[i + 1]; useAutopilot = true; }
+            }
             if (autopilot != null) autopilot.enabled = useAutopilot || CaptureMode;
         }
 
@@ -60,9 +64,16 @@ namespace BubbleWash
 
         void OnFinished() { StartCoroutine(Celebrate()); }
 
+        string perfOutput;
+
         IEnumerator Celebrate()
         {
             Celebrating = true;
+            if (!string.IsNullOrEmpty(perfOutput) && PerfStats.Instance != null)
+            {
+                PerfStats.Instance.WriteSummary(perfOutput, "standalone-autopilot-run");
+                Application.Quit();
+            }
             yield return new WaitForSeconds(0.8f);
             if (director) director.Show(CameraDirector.Shot.Celebrate);
             if (hud && items) hud.ShowComplete(true, items.Coins, items.Gems);

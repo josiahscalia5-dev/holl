@@ -16,8 +16,8 @@ namespace BubbleWash
         public ParticleSystem speedStreaks;
         public ParticleSystem pickupSparkles;
         public ParticleSystem gemSparkles;
-        public float sprayRateAtBase = 90f;
-        public float trailRateAtBase = 40f;
+        public float sprayRateAtBase = 60f;
+        public float trailRateAtBase = 24f;
 
         void OnEnable()
         {

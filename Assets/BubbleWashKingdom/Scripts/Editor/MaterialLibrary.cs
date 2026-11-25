@@ -25,83 +25,89 @@ namespace BubbleWash.EditorTools
             // ---------------- slide and water
             Mat("M_Water", "BWK/Water", m =>
             {
-                C(m, "_DeepColor", "#1C6BFF"); C(m, "_ShallowColor", "#3FD9FF"); C(m, "_StreakColor", "#EEF9FF");
-                C(m, "_EdgeTint", "#FF6BD6"); F(m, "_FlowSpeed", 7.5f); F(m, "_Width", 3.6f); F(m, "_Glow", 0.38f);
+                C(m, "_DeepColor", "#1F7BC1"); C(m, "_ShallowColor", "#3FB3E0"); C(m, "_StreakColor", "#C2EFFC");
+                C(m, "_EdgeTint", "#B386CD"); F(m, "_FlowSpeed", 7.5f); F(m, "_Width", 3.6f); F(m, "_Glow", 0.34f); F(m, "_Smoothness", 0.82f); F(m, "_StreakAmount", 0.45f); F(m, "_EdgeTintAmount", 0.3f);
             });
             Mat("M_RailRainbow", "BWK/Soft", m =>
             {
-                F(m, "_Mode", 1); C(m, "_ColorA", "#FF4FB2"); C(m, "_ColorB", "#FF9A3C"); C(m, "_ColorC", "#FFE45A");
-                F(m, "_Smoothness", 0.9f); F(m, "_Glow", 0.32f); F(m, "_RimStrength", 0.25f);
+                F(m, "_Mode", 1); C(m, "_ColorA", "#97A1D2"); C(m, "_ColorB", "#D56FC7"); C(m, "_ColorC", "#E062A8");
+                F(m, "_Smoothness", 0.9f); F(m, "_Glow", 0.48f); F(m, "_RimStrength", 0.25f);
             });
             Mat("M_RailPink", "BWK/Soft", m =>
             {
-                F(m, "_Mode", 1); C(m, "_ColorA", "#FF5CC0"); C(m, "_ColorB", "#FF8AD4"); C(m, "_ColorC", "#FF4FA8");
-                F(m, "_Smoothness", 0.94f); F(m, "_Glow", 0.28f); F(m, "_RimStrength", 0.35f);
+                F(m, "_Mode", 1); C(m, "_ColorA", "#EC8CA4"); C(m, "_ColorB", "#FDFED5"); C(m, "_ColorC", "#F3AE7D");
+                F(m, "_Smoothness", 0.94f); F(m, "_Glow", 0.5f); F(m, "_RimStrength", 0.35f);
             });
             Lit_("M_SlideShell", "#E24AB8", metallic: 0.05f, smooth: 0.85f, emission: "#3A0A30");
 
             // ---------------- drum, gold, lights
             Mat("M_DrumWall", "BWK/DrumWall", m =>
             {
-                C(m, "_BaseColor", "#6B44C9"); C(m, "_HighlightColor", "#B593FF"); C(m, "_HoleColor", "#140828");
-                C(m, "_HoleGlow", "#7A44E0"); F(m, "_Circumference", 26.4f); F(m, "_HoleSpacing", 0.42f);
+                C(m, "_BaseColor", "#7954B4"); C(m, "_HighlightColor", "#9390D2"); C(m, "_HoleColor", "#1A2235");
+                C(m, "_HoleGlow", "#4E4683"); F(m, "_Circumference", 26.4f); F(m, "_HoleSpacing", 0.42f);
                 F(m, "_HoleRadius", 0.27f); F(m, "_Glow", 0.14f);
             });
             Mat("M_DrumWallHall", "BWK/DrumWall", m =>
             {
-                C(m, "_BaseColor", "#8A63D8"); C(m, "_HighlightColor", "#D3B8FF"); C(m, "_HoleColor", "#2A1450");
-                C(m, "_HoleGlow", "#A070FF"); F(m, "_Circumference", 90f); F(m, "_HoleSpacing", 0.9f);
+                C(m, "_BaseColor", "#9A86D6"); C(m, "_HighlightColor", "#BDB3E8"); C(m, "_HoleColor", "#2A1450");
+                C(m, "_HoleGlow", "#A070FF"); F(m, "_Circumference", 84.4f); F(m, "_HoleSpacing", 0.9f);
                 F(m, "_HoleRadius", 0.24f); F(m, "_Glow", 0.22f);
             });
-            Lit_("M_Gold", "#FFC23B", metallic: 1f, smooth: 0.86f, emission: "#4A2C00");
-            Lit_("M_GoldDark", "#C7861C", metallic: 1f, smooth: 0.72f, emission: "#1E1000");
-            Lit_("M_Coin", "#FFC93F", metallic: 1f, smooth: 0.88f, emission: "#6A3E00");
-            Emissive("M_Bulb", "#FFE3A0", 5.5f, chase: 1f, core: 0.7f);
-            Emissive("M_Neon", "#38F2FF", 4.2f);
-            Emissive("M_Neon_Cyan", "#38F2FF", 4.2f);
-            Emissive("M_Neon_Pink", "#FF4FD8", 4.2f);
-            Emissive("M_Neon_Yellow", "#FFE04A", 4.0f);
+            Mat("M_DrumWallFlat", "BWK/DrumWall", m =>
+            {
+                C(m, "_BaseColor", "#9A86D6"); C(m, "_HighlightColor", "#BDB3E8"); C(m, "_HoleColor", "#2A1450");
+                C(m, "_HoleGlow", "#A070FF"); F(m, "_Circumference", 4f); F(m, "_VTile", 4f); F(m, "_HoleSpacing", 0.8f);
+                F(m, "_HoleRadius", 0.25f); F(m, "_Glow", 0.2f); F(m, "_PanelLength", 1000f);
+            });
+            Lit_("M_Gold", "#F0B85A", metallic: 1f, smooth: 0.9f, emission: "#5A3A10");
+            Lit_("M_GoldDark", "#B77D4B", metallic: 1f, smooth: 0.72f, emission: "#1E1000");
+            Lit_("M_Coin", "#F5D45A", metallic: 1f, smooth: 0.88f, emission: "#7A5A00");
+            Emissive("M_Bulb", "#FFE9A0", 8f, chase: 1f, core: 0.7f);
+            Emissive("M_Neon", "#45D5E5", 4.2f);
+            Emissive("M_Neon_Cyan", "#45D5E5", 4.2f);
+            Emissive("M_Neon_Pink", "#E070D0", 4.2f);
+            Emissive("M_Neon_Yellow", "#F8DC6A", 4.0f);
             Emissive("M_EyeHighlight", "#FFFFFF", 1.6f, pulse: 0f, core: 0f);
             Emissive("M_ArrowRim", "#F2FFFF", 2.5f, pulse: 0f);
-            Emissive("M_Screen", "#8FEAFF", 1.8f, pulse: 0.05f);
+            Emissive("M_Screen", "#5E8FC7", 1.6f, pulse: 0.05f);
             Emissive("M_ButtonCyan", "#3FF0FF", 2.2f);
-            Emissive("M_ButtonYellow", "#FFE14D", 2.2f);
+            Emissive("M_ButtonYellow", "#F4D82B", 2.2f);
             Emissive("M_ButtonPink", "#FF5FD0", 2.2f);
 
             // ---------------- glass, liquids, swirl, arrows, portal
-            Mat("M_Glass", "BWK/Glass", m => { C(m, "_Tint", "#BFE9FF"); F(m, "_Alpha", 0.1f); F(m, "_Glow", 0.2f); }, RenderQueue.Transparent);
-            Mat("M_Bubble", "BWK/Glass", m => { C(m, "_Tint", "#FFFFFF"); F(m, "_Alpha", 0.03f); F(m, "_Iridescence", 1f); F(m, "_FresnelPower", 2.2f); F(m, "_Glow", 0.35f); }, RenderQueue.Transparent);
-            Mat("M_PipeWater", "BWK/FlowGlow", m => { F(m, "_Mode", 0); C(m, "_ColorA", "#38E8FF"); C(m, "_ColorB", "#FF6AE0"); F(m, "_Intensity", 1.8f); F(m, "_Speed", 1.2f); });
+            Mat("M_Glass", "BWK/Glass", m => { C(m, "_Tint", "#A5C6E7"); F(m, "_Alpha", 0.1f); F(m, "_Glow", 0.2f); }, (int)RenderQueue.Transparent);
+            Mat("M_Bubble", "BWK/Glass", m => { C(m, "_Tint", "#FFFFFF"); F(m, "_Alpha", 0.03f); F(m, "_Iridescence", 1f); F(m, "_FresnelPower", 2.2f); F(m, "_Glow", 0.35f); }, (int)RenderQueue.Transparent);
+            Mat("M_PipeWater", "BWK/FlowGlow", m => { F(m, "_Mode", 0); C(m, "_ColorA", "#6CCBDF"); C(m, "_ColorB", "#A943A6"); F(m, "_Intensity", 1.8f); F(m, "_Speed", 1.2f); });
             Mat("M_ChamberSwirl", "BWK/FlowGlow", m => { F(m, "_Mode", 1); C(m, "_ColorA", "#9FE8FF"); F(m, "_Intensity", 1.35f); F(m, "_Speed", 1f); });
             Mat("M_Arrow", "BWK/FlowGlow", m => { F(m, "_Mode", 2); C(m, "_ColorA", "#22EEFF"); F(m, "_Intensity", 2.6f); F(m, "_Speed", 1.4f); });
             Mat("M_PortalRays", "BWK/FlowGlow", m =>
             {
                 F(m, "_Mode", 3); C(m, "_ColorA", "#FFF6D8"); C(m, "_ColorB", "#FFB43A"); F(m, "_Intensity", 2.4f); F(m, "_Speed", 1f);
                 F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One); F(m, "_ZWrite", 0); F(m, "_RayCount", 18);
-            }, RenderQueue.Transparent + 10);
+            }, (int)RenderQueue.Transparent + 10);
 
             // ---------------- soft materials
             Mat("M_Foam", "BWK/Soft", m =>
             {
-                F(m, "_Mode", 0); C(m, "_ColorA", "#FFFFFF"); C(m, "_ShadowColor", "#BFC6FF"); F(m, "_Wrap", 0.65f);
+                F(m, "_Mode", 0); C(m, "_ColorA", "#FFFFFF"); C(m, "_ShadowColor", "#C9BFE6"); F(m, "_Wrap", 0.65f);
                 F(m, "_BumpScale", 3.5f); F(m, "_BumpStrength", 0.35f); F(m, "_Glow", 0.12f); F(m, "_RimStrength", 0.3f);
             });
-            Soft("M_BrushPink", "#FF7CC6", "#FFB6E1");
+            Soft("M_BrushPink", "#E463B1", "#FFB6E1");
             Soft("M_BrushBlue", "#6FD3FF", "#B4ECFF");
             Soft("M_BrushWhite", "#FFF6FF", "#FFFFFF");
             Mat("M_HatKnit", "BWK/Soft", m =>
             {
-                F(m, "_Mode", 2); C(m, "_ColorA", "#6A2FC2"); C(m, "_ColorB", "#CDB2F5"); F(m, "_Stripes", 3); F(m, "_StripeWidth", 0.0f);
+                F(m, "_Mode", 2); C(m, "_ColorA", "#6C2EA0"); C(m, "_ColorB", "#CDB2F5"); F(m, "_Stripes", 3); F(m, "_StripeWidth", 0.0f);
                 F(m, "_StitchU", 70); F(m, "_StitchV", 22); F(m, "_BumpStrength", 0.55f); F(m, "_Smoothness", 0.2f); F(m, "_Glow", 0.08f);
             });
             Mat("M_HatCuff", "BWK/Soft", m =>
             {
-                F(m, "_Mode", 2); C(m, "_ColorA", "#5A23A8"); C(m, "_ColorB", "#5A23A8"); F(m, "_StripeWidth", 0f);
+                F(m, "_Mode", 2); C(m, "_ColorA", "#5E2A94"); C(m, "_ColorB", "#5E2A94"); F(m, "_StripeWidth", 0f);
                 F(m, "_StitchU", 96); F(m, "_StitchV", 7); F(m, "_BumpStrength", 0.75f); F(m, "_Smoothness", 0.18f); F(m, "_Glow", 0.06f);
             });
             Mat("M_HatStripe", "BWK/Soft", m =>
             {
-                F(m, "_Mode", 2); C(m, "_ColorA", "#F1E6FF"); C(m, "_ColorB", "#F1E6FF"); F(m, "_StripeWidth", 0f);
+                F(m, "_Mode", 2); C(m, "_ColorA", "#E0B3D7"); C(m, "_ColorB", "#E0B3D7"); F(m, "_StripeWidth", 0f);
                 F(m, "_StitchU", 70); F(m, "_StitchV", 22); F(m, "_BumpStrength", 0.5f); F(m, "_Smoothness", 0.2f); F(m, "_Glow", 0.1f);
             });
             Mat("M_EyeIris", "BWK/Soft", m =>
@@ -111,31 +117,31 @@ namespace BubbleWash.EditorTools
             });
             Lit_("M_Mouth", "#4B0F1E", metallic: 0f, smooth: 0.6f);
             Lit_("M_Tongue", "#FF6F93", metallic: 0f, smooth: 0.55f, emission: "#300812");
-            Lit_("M_PawPad", "#FFE2EE", metallic: 0f, smooth: 0.35f, emission: "#2A1A20");
+            Lit_("M_PawPad", "#F2F4FF", metallic: 0f, smooth: 0.35f, emission: "#2A1A20");
             Lit_("M_StarBadge", "#FFD43F", metallic: 0.1f, smooth: 0.6f, emission: "#7A4A00");
-            Lit_("M_MachinePink", "#FF7AC8", metallic: 0.05f, smooth: 0.78f, emission: "#2A0A1E");
-            Lit_("M_MachineLavender", "#C9A9FF", metallic: 0.05f, smooth: 0.75f, emission: "#1E1430");
+            Lit_("M_MachinePink", "#E84AA3", metallic: 0.05f, smooth: 0.78f, emission: "#2A0A1E");
+            Lit_("M_MachineLavender", "#D79AD8", metallic: 0.05f, smooth: 0.75f, emission: "#1E1430");
             Lit_("M_PlasticWhite", "#F6F1FF", metallic: 0f, smooth: 0.8f, emission: "#1A181F");
             Lit_("M_MetalPurple", "#6C3FC4", metallic: 0.85f, smooth: 0.75f);
-            Lit_("M_Gem", "#A43BFF", metallic: 0.15f, smooth: 0.96f, emission: "#5C12B0");
+            Lit_("M_Gem", "#C42BE0", metallic: 0.15f, smooth: 0.96f, emission: "#6A0F80");
             Mat("M_Fabric", "BWK/Soft", m => { F(m, "_Mode", 4); C(m, "_ColorA", "#FFFFFF"); F(m, "_Smoothness", 0.15f); F(m, "_Glow", 0.12f); F(m, "_BumpScale", 2f); });
 
             // ---------------- fur
             var furNoise = AssetDatabase.LoadAssetAtPath<Texture2D>($"{Tex}/T_FurNoise.png");
             Mat("M_Fur", "BWK/Fur", m =>
             {
-                C(m, "_RootColor", "#D9327D"); C(m, "_BaseColor", "#FF5AA6"); C(m, "_TipColor", "#FF9CCB");
+                C(m, "_RootColor", "#8D486C"); C(m, "_BaseColor", "#D2678F"); C(m, "_TipColor", "#EC9FB9");
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
                 F(m, "_Density", 42); F(m, "_FurLength", 0.05f); F(m, "_Gravity", 0.012f); F(m, "_Thinning", 1.05f);
-                C(m, "_RimColor", "#FFD6EC"); F(m, "_Glow", 0.12f);
-            }, RenderQueue.AlphaTest);
+                C(m, "_RimColor", "#FFD0E2"); F(m, "_Glow", 0.12f);
+            }, (int)RenderQueue.AlphaTest);
             Mat("M_PomPom", "BWK/Fur", m =>
             {
-                C(m, "_RootColor", "#4C1F96"); C(m, "_BaseColor", "#7A3FD6"); C(m, "_TipColor", "#B07CFF");
+                C(m, "_RootColor", "#4B2680"); C(m, "_BaseColor", "#793AAB"); C(m, "_TipColor", "#B45BDB");
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
                 F(m, "_Density", 46); F(m, "_FurLength", 0.04f); F(m, "_Gravity", 0.006f); F(m, "_Thinning", 0.95f);
                 C(m, "_RimColor", "#E2CCFF"); F(m, "_Glow", 0.1f);
-            }, RenderQueue.AlphaTest);
+            }, (int)RenderQueue.AlphaTest);
 
             // ---------------- particles
             Particle("M_FX_Splash", $"{Tex}/T_Splash.png", additive: false, "#FFFFFF");

@@ -26,7 +26,7 @@ namespace BubbleWash.EditorTools
             {
                 var circle = new List<Vector2>();
                 for (int k = 0; k <= 12; k++) { float ang = k / 12f * Mathf.PI * 2f; circle.Add(new Vector2(side * 2.22f + Mathf.Cos(ang) * 0.16f, 0.72f + Mathf.Sin(ang) * 0.16f)); }
-                if (side > 0) circle.Reverse();
+                circle.Reverse(); // clockwise profile -> outward normals
                 Extrude(circle, length, rings, verts, uvs, tris1, false);
             }
             // outer shell (simple U)
@@ -48,7 +48,7 @@ namespace BubbleWash.EditorTools
                 pts.Add(new Vector2(Mathf.Cos(a) * radius, centerY + Mathf.Sin(a) * radius));
             }
             var verts = new List<Vector3>(); var uvs = new List<Vector2>(); var tris = new List<int>();
-            Extrude(pts, length, rings, verts, uvs, tris, true, flip: true);
+            Extrude(pts, length, rings, verts, uvs, tris, true, flip: false);
             var mesh = new Mesh { name = "SM_Tunnel_Module_Procedural" };
             mesh.SetVertices(verts); mesh.SetUVs(0, uvs); mesh.SetTriangles(tris, 0);
             mesh.RecalculateNormals(); mesh.RecalculateTangents(); mesh.RecalculateBounds();
@@ -89,7 +89,7 @@ namespace BubbleWash.EditorTools
                 float a = i / (float)seg * Mathf.PI * 2f;
                 var dir = new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0f);
                 v.Add(dir * inner); v.Add(dir * outer);
-                uv.Add(new Vector2(i / (float)seg, inner / outer * 0.25f)); uv.Add(new Vector2(i / (float)seg, 0.25f));
+                uv.Add(new Vector2(dir.x * inner, dir.y * inner) / 4f); uv.Add(new Vector2(dir.x * outer, dir.y * outer) / 4f);
             }
             for (int i = 0; i < seg; i++)
             {

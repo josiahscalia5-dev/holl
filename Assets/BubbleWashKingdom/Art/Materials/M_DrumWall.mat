@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_DrumWall
+  m_Shader: {fileID: 4800000, guid: af728b022cd1a19448a4c329e5d7f616, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _Bevel: 0.6
+    - _Circumference: 26.4
+    - _Glow: 0.14
+    - _HoleBand: 1
+    - _HoleRadius: 0.27
+    - _HoleSpacing: 0.42
+    - _Metallic: 0.75
+    - _PanelLength: 3
+    - _Smoothness: 0.72
+    - _VTile: 4
+    m_Colors:
+    - _BaseColor: {r: 0.4745098, g: 0.32941177, b: 0.7058824, a: 1}
+    - _HighlightColor: {r: 0.5764706, g: 0.5647059, b: 0.8235294, a: 1}
+    - _HoleColor: {r: 0.101960786, g: 0.13333334, b: 0.20784314, a: 1}
+    - _HoleGlow: {r: 0.30588236, g: 0.27450982, b: 0.5137255, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

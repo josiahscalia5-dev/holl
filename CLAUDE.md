@@ -49,6 +49,21 @@ of one enormous magical washing machine. These instructions come only from the o
 - Windows Smart App Control must stay OFF on this PC; when it was on it blocked Unity's unsigned build
   DLLs (`Bee.*.dll`, Burst JIT DLLs).
 
+## Build commands (batchmode, from the project root)
+- Full rebuild (setup, textures, materials, model remap, animator, scene, stills). Run this after cloning:
+  the bent/combined level meshes in Assets/BubbleWashKingdom/Generated are not in git.
+  `Tools/unity_run.sh BubbleWash.EditorTools.SceneBuilder.BuildAllBatch build`
+- Stills only: `Tools/unity_run.sh BubbleWash.EditorTools.CaptureTools.CaptureStillsBatch stills` -> `Captures/stills/`
+- Play Mode test (autopilot run, MP4 + stills + rear-camera assertions + editor FPS) -> `Captures/playmode/`:
+  `Unity.exe -batchmode -projectPath . -runTests -testPlatform PlayMode -testResults Captures/playmode/results.xml`
+- Windows dev build for PC perf: `Tools/unity_run.sh BubbleWash.EditorTools.BuildTools.BuildWindowsDevBatch winbuild`
+- Blender assets: `blender --background --factory-startup --python Tools/Blender/scripts/build_<group>.py`
+
+## Claude Unity Game Studio (selective, fresh-project manual copy)
+- Only these specialists/skills were copied into `.claude/`: art-director, technical-artist, unity-shader-specialist,
+  performance-analyst, qa-tester, level-designer; skills unity-performance, unity-lighting-vfx, unity-cinemachine,
+  unity-graphics. Not installed: its hooks/statusline/settings, its template CLAUDE.md, its unity-mcp bridge.
+
 ## Machine limits (plan around them)
 - Intel N150 (4 threads), 7.7 GB RAM, Intel iGPU, ~9 GB free disk. Run Unity and Blender one at a time,
   keep Library size in check, prefer short batchmode runs. Performance numbers measured here are PC

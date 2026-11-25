@@ -105,6 +105,16 @@ namespace BubbleWash
             SnapToTrack();
         }
 
+        /// <summary>Places the runner at a track position (editor capture tools, tests).</summary>
+        public void TeleportTo(float distance, float lateral = 0f, float height = 0f)
+        {
+            Distance = distance;
+            Lateral = lateral;
+            Height = height;
+            Lane = Mathf.Clamp(Mathf.RoundToInt(lateral / laneWidth), -lanesEachSide, lanesEachSide);
+            SnapToTrack();
+        }
+
         void OnSwipe(SwipeDir dir)
         {
             if (State != RunnerState.Running) return;
