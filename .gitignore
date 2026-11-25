@@ -1,0 +1,55 @@
+# ---- Unity generated ----
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+sysinfo.txt
+crashlytics-build.properties
+/[Aa]ssets/[Ss]treamingAssets/aa.meta
+/[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# ---- IDE ----
+.vs/
+.vscode/
+.idea/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.booproj
+*.svd
+*.VC.db
+
+# ---- Builds ----
+*.apk
+*.aab
+*.unitypackage
+*.app
+
+# ---- Private / generated (never publish) ----
+# Approved Google Flow reference: frames, contact sheets and analysis stay local (repo is public).
+/Reference/
+# Gameplay captures, profiler dumps and recordings are large evidence files.
+/Captures/
+# Blender working files are regenerated from Tools/Blender/scripts.
+/Tools/Blender/work/
+*.blend1
+*.blend2
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- Claude Code local settings ----
+.claude/settings.local.json

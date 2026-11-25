@@ -1,0 +1,68 @@
+# Bubble Wash Kingdom — project instructions
+
+A brand-new Unity mobile water-slide adventure: a fluffy hot-pink mascot slides through the inside
+of one enormous magical washing machine. These instructions come only from the owner's brief
+(`Docs/ProjectBrief.md`) and the approved Google Flow video `25982.mp4`.
+
+## Independence (hard rule)
+- This project is new and independent. Never open, read, copy or modify any previous game project
+  (for example `C:\RainbowUnity`, `C:\Whirlwash`) or reuse their scenes, models, scripts, shaders,
+  settings, designs, names or memories. The global pointer about "Rainbow Unity" does not apply here.
+- Never use the video or its frames as backgrounds or textures pretending to be the game. Everything
+  on screen is real 3D geometry, real materials, real particles, real animation.
+
+## Source of truth
+- `Reference/` (private, gitignored, never publish): frames every 0.25 s (`frames/`), named key frames
+  (`key/`), contact sheets, and `VISUAL_ANALYSIS.md` (the art bible: palette hex values, world scale,
+  camera spec, QA checklist). The original video stays at `C:\Users\josia\Downloads\25982.mp4`.
+- The video is the single source of truth for art direction. Camera and gameplay corrections in the
+  brief override it: **normal gameplay camera is behind and slightly above the mascot, who faces the
+  direction of travel** (back of hat, pom-pom, fluffy back, tail puff and sole pads visible). Front-facing
+  shots only for the opening or celebration.
+- Reference 0.00-3.25 s is the target gameplay framing; 3.75-15 s supplies the tunnel, side chambers,
+  neon stars, pipes and the golden light portal.
+- Must include: purple perforated metallic drum walls, polished gold rings with warm marquee bulbs,
+  cyan/pink/yellow neon stars, vibrant blue flowing water slide with glossy pink/rainbow rails, curved
+  and downhill slides, glass pipes with glowing water, circular side chambers with swirling water and
+  floating socks/laundry, pink/white/blue fluffy brush rollers, white foam banks and splashes, iridescent
+  bubbles, gold paw-print coins, purple gems, glowing cyan chevron speed-boost arrows, reflections, soft
+  shadows, bloom. Never: outdoor scenery, trees/grass, schools, gardens, castles, unrelated buildings.
+
+## Scope and stages
+- Level 1 has 12 proposed screens (see brief). Build and perfect only the section shown in the video
+  first (Screens 04-06: Rainbow Rush, Rainbow Water Slide, Twisty Tunnel) until the owner approves it;
+  then use its quality as the bar for the remaining screens.
+- Quality target: 9/10 similarity to the video (allowing for the rear camera). Never claim a match
+  without actual Unity screenshots compared against `Reference/` frames.
+
+## Toolchain
+- Unity 6000.3.29f1 (6.3 LTS), URP 17.3, Shader Graph 17.3, Cinemachine 3.1.8, Splines 2.9.2,
+  Input System 1.20.1, Recorder 5.1.8, Test Framework 1.6, Timeline 1.8. Windows Standalone module only
+  (Android Build Support is not installed yet).
+- Blender 5.3 (portable): `C:\Users\josia\Blender\blender-5.3.0-windows-x64\blender.exe`. Every asset is
+  built from a script in `Tools/Blender/scripts/` (headless: `blender --background --factory-startup
+  --python <script>`), exported as FBX to `Assets/BubbleWashKingdom/Art/Models/`, with a preview render in
+  `Docs/AssetPreviews/`. Blender working files go to `Tools/Blender/work/` (gitignored).
+- No Unity MCP bridge is connected in Code sessions; drive Unity through batchmode
+  (`Unity.exe -batchmode -projectPath C:\Users\josia\thanksgiving -executeMethod <Class.Method> -logFile <log> -quit`).
+  Never run two Unity instances on this project at once.
+- Windows Smart App Control must stay OFF on this PC; when it was on it blocked Unity's unsigned build
+  DLLs (`Bee.*.dll`, Burst JIT DLLs).
+
+## Machine limits (plan around them)
+- Intel N150 (4 threads), 7.7 GB RAM, Intel iGPU, ~9 GB free disk. Run Unity and Blender one at a time,
+  keep Library size in check, prefer short batchmode runs. Performance numbers measured here are PC
+  numbers; anything not run on a physical Android device must be reported as untested.
+
+## Code layout
+- All game content lives under `Assets/BubbleWashKingdom/` (Art, Animation, Prefabs, Scenes, Scripts,
+  Tests). Runtime code namespace `BubbleWash`, editor code `BubbleWash.EditorTools`.
+- Shaders are hand-written URP HLSL in `Art/Shaders/` (deterministic and reviewable in text).
+- Track geometry: Blender-authored straight modules bent along Unity Splines by `SplineMeshDeformer`.
+
+## Git
+- Local repo on `main`, remote `origin` = https://github.com/josiahscalia5-dev/holl (PUBLIC).
+- Ask the owner before any push. Never force-push, rewrite history or delete branches.
+- `Reference/`, `Captures/`, `Tools/Blender/work/`, `Library/`, `Temp/`, `Logs/`, `UserSettings/` stay out of git.
+  Binary art (fbx, png, blend, audio) goes through Git LFS (`.gitattributes`).
+- Commit meaningful checkpoints (tag `checkpoint-*`) before major changes.

@@ -1,0 +1,22 @@
+{
+    "name": "BubbleWash.Tests.PlayMode",
+    "rootNamespace": "BubbleWash.Tests",
+    "references": [
+        "BubbleWash.Runtime",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "Unity.Splines",
+        "Unity.Mathematics",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": ["nunit.framework.dll"],
+    "autoReferenced": false,
+    "defineConstraints": ["UNITY_INCLUDE_TESTS"],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
