@@ -1,0 +1,75 @@
+// Transparent glass for pipes and porthole windows: light tint, strong fresnel reflections from the reflection
+// probe, crisp specular highlight from the main light. _Iridescence adds a soap-bubble thin-film shimmer (bubbles).
+Shader "BWK/Glass"
+{
+    Properties
+    {
+        _Tint ("Tint", Color) = (0.75, 0.92, 1.0, 1)
+        _Alpha ("Base Opacity", Range(0,1)) = 0.12
+        _FresnelPower ("Fresnel Power", Float) = 3
+        _Reflectivity ("Reflectivity", Range(0,2)) = 0.9
+        _Smoothness ("Smoothness", Range(0,1)) = 0.96
+        _Iridescence ("Iridescence", Range(0,1)) = 0
+        _IridescenceScale ("Iridescence Scale", Float) = 1.6
+        _Glow ("Edge Glow", Range(0,2)) = 0.15
+    }
+    SubShader
+    {
+        Tags { "RenderType"="Transparent" "RenderPipeline"="UniversalPipeline" "Queue"="Transparent" }
+        HLSLINCLUDE
+        #include "BWKCommon.hlsl"
+        CBUFFER_START(UnityPerMaterial)
+            half4 _Tint;
+            half _Alpha, _FresnelPower, _Reflectivity, _Smoothness, _Iridescence, _IridescenceScale, _Glow;
+        CBUFFER_END
+        ENDHLSL
+        Pass
+        {
+            Name "ForwardLit"
+            Tags { "LightMode"="UniversalForward" }
+            Blend One OneMinusSrcAlpha
+            ZWrite Off
+            Cull Back
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
+            #pragma multi_compile_fog
+            #pragma multi_compile_instancing
+            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            struct Varyings { float4 positionCS : SV_POSITION; float3 positionWS : TEXCOORD0; half3 normalWS : TEXCOORD1; half fog : TEXCOORD2; float3 positionOS : TEXCOORD3; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            Varyings vert(Attributes i)
+            {
+                Varyings o = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(i);
+                UNITY_TRANSFER_INSTANCE_ID(i, o);
+                VertexPositionInputs p = GetVertexPositionInputs(i.positionOS.xyz);
+                o.positionCS = p.positionCS;
+                o.positionWS = p.positionWS;
+                o.normalWS = TransformObjectToWorldNormal(i.normalOS);
+                o.fog = ComputeFogFactor(p.positionCS.z);
+                o.positionOS = i.positionOS.xyz;
+                return o;
+            }
+            half4 frag(Varyings i) : SV_Target
+            {
+                half3 n = normalize(i.normalWS);
+                half3 v = GetWorldSpaceNormalizeViewDir(i.positionWS);
+                half fres = BWK_Fresnel(n, v, _FresnelPower);
+                half3 refl = GlossyEnvironmentReflection(reflect(-v, n), i.positionWS, 1.0h - _Smoothness, 1.0h, GetNormalizedScreenSpaceUV(i.positionCS));
+                Light l = GetMainLight();
+                half3 h = normalize(l.direction + v);
+                half spec = pow(saturate(dot(n, h)), 180.0) * 2.5;
+                half3 film = BWK_Rainbow(fres * _IridescenceScale + BWK_ValueNoise3(i.positionOS * 3.0 + _Time.y * 0.15) * 0.6);
+                half3 tint = lerp(_Tint.rgb, film, _Iridescence);
+                half alpha = saturate(_Alpha + fres * 0.75);
+                half3 c = tint * _Alpha + refl * _Reflectivity * fres * lerp(1.0, film, _Iridescence) + spec * l.color + tint * fres * _Glow;
+                c = MixFog(c, i.fog);
+                return half4(c, alpha);
+            }
+            ENDHLSL
+        }
+    }
+    FallBack Off
+}
