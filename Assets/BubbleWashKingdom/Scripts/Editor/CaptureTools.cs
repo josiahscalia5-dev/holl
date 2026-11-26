@@ -84,6 +84,10 @@ namespace BubbleWash.EditorTools
                 EditorSceneManager.OpenScene(SceneBuilder.ScenePath);
                 SceneBuilder.PreviewRefreshDomains();
                 CaptureHero(outDir, outDir);
+                // lead 2026-11-26 17:55: optional -bwkStills = also render every section still (+ bg/) of the in-memory
+                // refreshed level into DIR/stills (no save, ~5 extra minutes), so one preview shows a change in all sections
+                if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-bwkStills") >= 0)
+                    CaptureStills(outDir + "/stills");
                 EditorApplication.Exit(0);
             }
             catch (System.Exception e) { Debug.LogError("[BWK] agent preview failed: " + e); EditorApplication.Exit(1); }
