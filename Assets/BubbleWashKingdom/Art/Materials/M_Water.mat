@@ -28,7 +28,7 @@ Material:
     - _CausticAmount: 0.28
     - _CenterGlow: 0.06
     - _ChevronEndX: 0.38
-    - _ChevronGlow: 0.5
+    - _ChevronGlow: 0.32
     - _ChevronHalfLen: 0.25
     - _ChevronHalfWidth: 0.5
     - _ChevronOffset: 0
@@ -44,7 +44,7 @@ Material:
     - _FlowSpeed: 7.5
     - _Glow: 0.1
     - _NearBrighten: 0.05
-    - _PatchAmount: 0.22
+    - _PatchAmount: 0.28
     - _RainbowAmount: 0.32
     - _ReflectBoost: 0.45
     - _RippleStrength: 0.9

@@ -1,5 +1,32 @@
 # Bubble Wash Kingdom - lead handoff (2026-11-26 12:30, lead session cd43a82d on the third Pro account)
 
+## Round 7 continuation (2026-11-26 from 13:36, lead session a0655f8d on the fourth account) - read this first
+- Takeover 13:36: newest work = local tag checkpoint-18b-handoff, git clean. Exactly ONE autosave loop (PID 1291, started
+  12:26, no BWK_PUBLISH_CHAT; public tree has 0 ChatHistory / Reference / Captures files). The previous lead's "17:12
+  restart timer" was still alive as an orphaned `sleep 14569` (parent shell gone) -> killed 13:37. No Unity / Blender, no
+  heavy lock, no scheduled tasks. Unity's official plugin: enabled on this account (ListPlugins). Remote Control ON.
+- FINDING: `Reference/review/Bubble_Wash_Kingdom_4K_Claude.mp4` is byte-identical (same MD5) to the approved 4K reference
+  video - it is NOT a gameplay recording. The recording the owner reviewed (26403.mp4, 29.5 s) is our own
+  `Captures/playmode/gameplay_autopilot_9x16.mp4` of 13:16 (kept as `..._r7_1316_owner_reviewed.mp4`). Review frames:
+  `Captures/review_r7/ours/` + `review_r7_opening_0-5s.png`, `review_r7_end_23-29.5s.png` (new helper
+  `Tools/review_recording.sh <mp4> <outDir>`).
+- What the review shows: 0-3 s the old FRONT intro orbit fills the portrait frame with the face / hat and its 1.3 s
+  Cinemachine blend to the rear camera passes THROUGH the hat (3.0 s); 23-25 s the camera flies into the portal glow
+  (whole-portal 1.6x scale + light 14 -> white-out); 26 s the finish point (track end - 6 m) is 6 m PAST the portal, so the
+  rear camera looks past the track end into the empty background ("empty purple"); 26.5-29.5 s the celebration orbit
+  circles outside the tunnel end through foam (the "awkward camera movement").
+- Step 2 R-camera baseline DONE 13:44: `Captures/stills_r7/R3..R6_*` (+ bg/); 13:06 stills backed up in
+  `Captures/stills_r7_1306_backup/`.
+- Step 4 water pass RUNNING since 13:48 (run wf_73ffac15-515, task wxzedpvmg; resume with resumeFromRunId).
+- Step 3 lead camera + finish (owner-approved fix; hero framing 2.75/1.3/10/58 untouched, captures unchanged because
+  Snap() clears the new offsets): CameraDirector now keeps ONE live camera (the rear rig) - opening = rear crane
+  (+4.4 m back, +1.7 m up, +7 deg pitch easing into the gameplay framing over 3.5 s); finish = the mascot brakes to rest
+  5.5 m before the portal (RunnerController.finishRestBeforeEnd 17.5, finishBrakeDistance 8), hops and turns 180 deg to
+  face the camera (front-facing celebration, reference 14.5 s composition), the rig eases 1.4 m back / pitch -5 / FOV +5
+  with a slow push-in, banner pops in after the turn, soft violet fade before a loop restart. PortalGlow scales only the
+  glow pieces (max 1.18x) and caps the light at 6.5. Play Mode test A asserts the celebration pose and that the camera
+  stays >= 2 m before the portal plane. Verification recording: lead_play_r7cam (running 13:51).
+
 ## Round 7 status (2026-11-26 12:30, lead session cd43a82d) - read this first
 - 13:45 HANDOFF TO THE NEXT ACCOUNT (owner): lead session cd43a82d stopped, its 17:12 timer cancelled. Start with the
   private `Captures/handoff/NEXT_ACCOUNT_START.md` (exact steps 1-7). Recording copy: `Reference/review/`.

@@ -23,7 +23,9 @@ namespace BubbleWash.EditorTools
                 // deeper shallow colour, fewer turquoise patches, a tighter TURQUOISE halo around the arrows (seam fixed)
                 // (v3: lower corners #2355CC / #376DCE violet-dark vs reference #65A2D7 / #8DC8E0: lighter, less violet deep colour)
                 C(m, "_DeepColor", "#1460B8"); C(m, "_ShallowColor", "#1A72C0"); C(m, "_StreakColor", "#B8F6FF");
-                C(m, "_TurquoiseColor", "#2CC0DC"); F(m, "_PatchAmount", 0.22f); F(m, "_DetailStrength", 0.7f); C(m, "_ReflectTint", "#8CC8FF");
+                // round 7 (library 16 "flowing turquoise"; hero bottom water ours #79B6E3 vs reference #6EBCDF = a touch too
+                // blue / grey): a few more turquoise flow patches
+                C(m, "_TurquoiseColor", "#2CC0DC"); F(m, "_PatchAmount", 0.28f); F(m, "_DetailStrength", 0.7f); C(m, "_ReflectTint", "#8CC8FF");
                 C(m, "_CausticColor", "#7FE9FF"); C(m, "_ChevronColor", "#24E0DA"); C(m, "_EdgeTint", "#E66AC8");
                 F(m, "_FlowSpeed", 7.5f); F(m, "_Width", 3.6f); F(m, "_Glow", 0.1f); F(m, "_Smoothness", 0.6f);   // PBR gloss low: at 0.95 the pink CharLight_RimFront drew a wavy streak behind him; the glossy look comes from _ReflectBoost
                 F(m, "_StreakAmount", 0.12f); F(m, "_StreakDensity", 1.25f); F(m, "_EdgeTintAmount", 0.28f); F(m, "_SparkleAmount", 0.9f);
@@ -32,7 +34,8 @@ namespace BubbleWash.EditorTools
                 // light halos around the decor chevrons: same period / geometry / runway offset as SceneBuilder.BuildDecorChevrons
                 F(m, "_ChevronStart", SceneBuilder.ChevronStart); F(m, "_ChevronSpacing", SceneBuilder.ChevronSpacing);
                 // (v2 notch measured #55B8E5 vs reference deep #3386CC: the arrows now bloom on their own -> fainter, tighter pool)
-                F(m, "_ChevronScale", SceneBuilder.ChevronScale); F(m, "_ChevronWidth", SceneBuilder.ChevronWidth); F(m, "_ChevronGlow", 0.5f);
+                // round 7: arrow light pool .5 -> .32 (owner: arrows too bright; library 20 "gentle glow")
+                F(m, "_ChevronScale", SceneBuilder.ChevronScale); F(m, "_ChevronWidth", SceneBuilder.ChevronWidth); F(m, "_ChevronGlow", 0.32f);
                 F(m, "_ChevronHalfLen", SceneBuilder.ChevronHalfLen); F(m, "_ChevronHalfWidth", SceneBuilder.ChevronHalfWidth);
                 F(m, "_ChevronThick", SceneBuilder.ChevronThick); F(m, "_ChevronOffset", 0f);   // runway = the weave alone
                 F(m, "_ChevronEndX", SceneBuilder.ChevronEndX);
@@ -53,7 +56,7 @@ namespace BubbleWash.EditorTools
                 F(m, "_StreakAmount", 0.7f); F(m, "_StreakSpeed", 7f); F(m, "_ReflectBoost", 0.7f);
             });
             Lit_("M_SlideShell", "#E24AB8", metallic: 0.05f, smooth: 0.85f, emission: "#3A0A30");
-            Emissive("M_ArrowRim", "#E6FFFF", 2.6f, pulse: 0f);
+            Emissive("M_ArrowRim", "#E6FFFF", 1.6f, pulse: 0f);   // round 7: 2.6 -> 1.6 (owner: arrows too bright)
             Mat("M_Bubble", "BWK/Glass", m =>
             {
                 // soap bubbles: clear centre, thin bright rim, thin-film colour patches, studio window highlights
@@ -71,9 +74,12 @@ namespace BubbleWash.EditorTools
                 // saturated aqua x3.4 HDR (Neutral tonemap -> ~#9CF7F1, blooms into the water), turquoise edges, mint-white
                 // (#DEFFF7 in the reference) on the arrow nearest the camera
                 // (v2 matched the value / saturation: #A6FFFF vs #A6FBF3; hue 180 vs 174 -> a touch greener)
-                F(m, "_Mode", 7); C(m, "_ColorA", "#5EFFE0"); C(m, "_ColorB", "#1FC8CC"); C(m, "_ColorC", "#B4FFEA");
-                F(m, "_Glow", 0.85f); F(m, "_StreakAmount", 0.12f); F(m, "_StreakSpeed", 1.6f); F(m, "_ReflectBoost", 0.15f);
-                F(m, "_HotNear", 1.75f); F(m, "_HotFar", 2.15f); F(m, "_HotBoost", 0.3f);
+                // round 7 (owner 13:30 "reduce excessive cyan arrow brightness"; library 20 "bright centre and gentle glow,
+                // keep the shape legible without washing out the lane"): HDR x3.4 -> x2.2 (core just over the bloom
+                // threshold: soft halo instead of a glaring block), less white-hot near the camera, paler mint fill
+                F(m, "_Mode", 7); C(m, "_ColorA", "#7DF7E6"); C(m, "_ColorB", "#22BCCB"); C(m, "_ColorC", "#C2FFF2");
+                F(m, "_Glow", 0.55f); F(m, "_StreakAmount", 0.08f); F(m, "_StreakSpeed", 1.6f); F(m, "_ReflectBoost", 0.15f);
+                F(m, "_HotNear", 1.75f); F(m, "_HotFar", 2.15f); F(m, "_HotBoost", 0.12f);
             });
             Mat("M_Foam", "BWK/Soft", m =>
             {

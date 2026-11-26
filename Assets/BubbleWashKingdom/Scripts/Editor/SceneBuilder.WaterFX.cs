@@ -151,6 +151,28 @@ namespace BubbleWash.EditorTools
             return null;
         }
 
+        /// <summary>
+        /// Water/FX agent preview of the WHOLE level (round 7, no save): textures + materials, open the saved scene, rebuild the
+        /// preview domains in memory (runner FX + this domain's foam / chevrons / bubbles because -bwkOut contains
+        /// agents/waterfx), then every comparison still (01-09, C1-C5, R3-R6, + bg/ with the mascot hidden) into -bwkOut.
+        /// Run: bash Tools/unity_run.sh BubbleWash.EditorTools.SceneBuilder.WaterFxStillsBatch LOG -bwkOut Captures/agents/waterfx/r7/stills_vN
+        /// </summary>
+        public static void WaterFxStillsBatch()
+        {
+            try
+            {
+                string outDir = PreviewOutArg() ?? "Captures/agents/waterfx/r7/stills";
+                if (!outDir.Contains("agents/waterfx")) throw new System.Exception("-bwkOut must be under Captures/agents/waterfx");
+                TextureGenerator.Run();
+                MaterialLibrary.Run();
+                EditorSceneManager.OpenScene(ScenePath);
+                PreviewRefreshDomains();
+                CaptureTools.CaptureStills(outDir);
+                EditorApplication.Exit(0);
+            }
+            catch (System.Exception e) { Debug.LogError("[BWK] waterfx stills failed: " + e); EditorApplication.Exit(1); }
+        }
+
         /// <summary>Any agent preview (AgentPreviewBatch): never write mesh assets.</summary>
         static bool InAgentPreview => PreviewOutArg() != null;
 
@@ -309,8 +331,8 @@ namespace BubbleWash.EditorTools
                     {
                         if (hall)
                         {
-                            Place(f, side * Rand(2.45f, 2.9f), Rand(-0.08f, 0.04f), Rand(0.95f, 1.35f), 0);
-                            Place(f, side * Rand(3.1f, 7.5f), Rand(-0.3f, 0.1f), Rand(1.1f, 1.9f), r.NextDouble() < 0.5 ? 0 : 1);
+                            Place(f, side * Rand(2.45f, 2.9f), Rand(-0.15f, 0.03f), Rand(1.0f, 1.4f), 0);
+                            Place(f, side * Rand(3.1f, 7.5f), Rand(-0.35f, 0.05f), Rand(1.2f, 1.9f), r.NextDouble() < 0.5 ? 0 : 1);
                         }
                         else
                         {
@@ -363,7 +385,8 @@ namespace BubbleWash.EditorTools
             var r = new System.Random(9157);
             float Rand(float a, float b) => Mathf.Lerp(a, b, (float)r.NextDouble());
             var holder = Child(env, "FloatingBubbles");
-            for (float d = 6f; d < L - 4f; d += Rand(3.2f, 6.5f))
+            // round 7 (asset library 19 "vary size and depth"; brief: dense iridescent bubbles along the walls): ~1.6x denser
+            for (float d = 6f; d < L - 4f; d += Rand(2.0f, 4.0f))
             {
                 var f = track.Evaluate(d);
                 bool hall = d < tunnelStart;
@@ -493,7 +516,9 @@ namespace BubbleWash.EditorTools
                 var e = ps.emission; e.rateOverTime = 0f;
                 Seed(ps, 12);
             });
-            fx.trailRateAtBase = 12f;
+            // round 7 (owner: "replace the flat lace splashes throughout the level"): the flat lace sprites on the water stay
+            // built (gameplay code references them) but no longer emit - the v2 milk crowns + 3D drops carry the splash
+            fx.trailRateAtBase = 0f;
             // landing / boost burst: a ring of 3D milk drops
             fx.crown = Particles(fxRoot, "Crown", "M_FX_Milk", new Vector3(0, 0.1f, 0), new Vector3(-90, 0, 0), ps =>
             {
@@ -558,8 +583,88 @@ namespace BubbleWash.EditorTools
             return fx;
         }
 
+        // round 7 (owner 13:30 "replace the flat lace splashes"; annotated sheet 02 item 4 "thick, rounded milk-white splash
+        // crowns - not lace"; asset library 18): the MEASURED v2 crowns (build_fx_v2.py, traced from f_08.25s, silhouette IoU
+        // .924) replace the perforated SM_FX_Crown_xx flipbook. They are authored for the front reference camera in runner-local
+        // space; turned 180 deg for the rear gameplay camera (v2_L then sits at the LEFT foot, v2_R at the right), pushed
+        // outward so both sole pads stay visible, a little taller (the hero reference crowns rise beside the feet).
+        const float CrownV2Out = 0.26f, CrownV2Fwd = 0.12f, CrownV2Scale = 1.3f, CrownV2Lift = 1.2f;
+        const int CrownV2Frames = 6;
+
+        /// <summary>Stop-motion frames for one v2 crown: the measured mesh with a travelling liquid swell (displacement along
+        /// the normals growing with height + a slow rise / fall of the fingers), seamless over CrownV2Frames.</summary>
+        static List<Mesh> CrownV2FrameMeshes(Mesh src, string name, bool save)
+        {
+            var frames = new List<Mesh>();
+            var v0 = src.vertices;
+            var n0 = src.normals;
+            float top = 0.001f;
+            foreach (var v in v0) top = Mathf.Max(top, v.y);
+            for (int k = 0; k < CrownV2Frames; k++)
+            {
+                float ph = 2f * Mathf.PI * k / CrownV2Frames;
+                var vs = new Vector3[v0.Length];
+                for (int i = 0; i < v0.Length; i++)
+                {
+                    var v = v0[i];
+                    float h = Mathf.Clamp01(v.y / top);
+                    float w = Mathf.Sin(ph + v.x * 9.0f + v.z * 7.0f);
+                    float rise = Mathf.Sin(ph + v.x * 4.0f - v.z * 3.0f);
+                    var nn = n0 != null && n0.Length == v0.Length ? n0[i] : Vector3.up;
+                    vs[i] = v + nn * (0.009f * h * w) + Vector3.up * (v.y * 0.07f * rise);
+                }
+                var m = Object.Instantiate(src);
+                m.name = $"{name}_f{k}";
+                m.vertices = vs;
+                m.RecalculateBounds();
+                if (save) SaveMesh(m);
+                frames.Add(m);
+            }
+            return frames;
+        }
+
+        static bool BuildCrownsV2(GameObject fxRoot, RunnerController runner, bool save)
+        {
+            var pl = ModelParts("FX", "SM_FX_Crown_v2_L");
+            var pr = ModelParts("FX", "SM_FX_Crown_v2_R");
+            var milk = Mat("M_FX_Milk_v2");
+            if (pl.Count == 0 || pr.Count == 0 || milk == null) return false;
+            var framesL = CrownV2FrameMeshes(pl[0].mesh, "SM_FX_CrownV2_L", save);
+            var framesR = CrownV2FrameMeshes(pr[0].mesh, "SM_FX_CrownV2_R", save);
+            var holder = Child(fxRoot, "Crowns");
+            var sc = holder.AddComponent<SplashCrowns>();
+            sc.runner = runner;
+            sc.frames = framesL.ToArray();
+            sc.framesRight = framesR.ToArray();
+            sc.fps = 12f;
+            var rot = Quaternion.Euler(0f, 180f, 0f);
+            var s = new Vector3(CrownV2Scale, CrownV2Scale * CrownV2Lift, CrownV2Scale);
+            var crowns = new List<MeshFilter>();
+            foreach (float side in new[] { -1f, 1f })
+            {
+                var go = Child(holder, side < 0 ? "CrownL" : "CrownR");
+                go.transform.localPosition = new Vector3(side * CrownV2Out, 0f, CrownV2Fwd);
+                go.transform.localRotation = rot;
+                go.transform.localScale = s;
+                var mf = go.AddComponent<MeshFilter>();
+                mf.sharedMesh = (side < 0 ? framesL : framesR)[side < 0 ? 0 : CrownV2Frames / 2];
+                var mr = go.AddComponent<MeshRenderer>();
+                mr.sharedMaterial = milk;
+                mr.shadowCastingMode = ShadowCastingMode.Off;
+                mr.receiveShadows = true;
+                crowns.Add(mf);
+            }
+            sc.crowns = crowns.ToArray();
+            sc.baseScale = new[] { s, s };
+            sc.baseRotation = new[] { rot, rot };
+            sc.phase = new[] { 0, CrownV2Frames / 2 };
+            Debug.Log($"[BWK] waterfx crowns v2: SM_FX_Crown_v2_L/R x{CrownV2Frames} frames, yaw 180, out {CrownV2Out} fwd {CrownV2Fwd} scale {CrownV2Scale} lift {CrownV2Lift}, M_FX_Milk_v2");
+            return true;
+        }
+
         static void BuildCrowns(GameObject fxRoot, RunnerController runner, bool save, Vector3 rootL, Vector3 rootR)
         {
+            if (BuildCrownsV2(fxRoot, runner, save)) return;
             var frames = new List<Mesh>();
             for (int k = 0; k < 32; k++)
             {
