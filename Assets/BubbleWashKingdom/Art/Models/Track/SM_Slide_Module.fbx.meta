@@ -7,6 +7,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: M_RailBand_r8
+    second: {fileID: 2100000, guid: 932dcae30f996974aacb2d2c5decde71, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: M_RailPink
     second: {fileID: 2100000, guid: 20bcf6b5271378540b5fb1285ec5068d, type: 2}
   - first:
@@ -14,6 +19,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: M_RailRainbow
     second: {fileID: 2100000, guid: 8f124e3b36fe1fc4eb2f3781222d3a6e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_RailTube_r8
+    second: {fileID: 2100000, guid: 2516fa22569e2684090da7049d5fd42d, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule

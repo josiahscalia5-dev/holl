@@ -86,7 +86,10 @@ namespace BubbleWash.EditorTools
         /// <summary>Brush roller = spinning bristle body (about its own X axis, like the video) + static gold hub and arm.</summary>
         static void HallRoller(GameObject parent, Vector3 pos, Quaternion rot, float scale, float spin)
         {
-            var body = HallPlace(parent, "Machinery", "SM_BrushRoller_r7", pos, rot, scale, default, false);
+            // r8 (asset artist): smooth plush band body + BWK/Fur shells (M_RollerFur_r8) instead of the r7 box blades;
+            // same axis / origin / size, so only the model reference changes (r7 stays the fallback)
+            string bodyName = ModelPrefab("Machinery", "SM_BrushRoller_r8") != null ? "SM_BrushRoller_r8" : "SM_BrushRoller_r7";
+            var body = HallPlace(parent, "Machinery", bodyName, pos, rot, scale, default, false);
             HallPlace(parent, "Machinery", "SM_BrushRollerArm_r7", pos, rot, scale);
             if (body == null) return;
             var sp = body.AddComponent<Spinner>();

@@ -429,7 +429,7 @@ def build_roller_r8(M):
     bm = bmesh.new()
     uv0 = bm.loops.layers.uv.new("UVMap")
     uv1 = bm.loops.layers.uv.new("UVShell")
-    col = bm.loops.layers.color.new("Col")
+    face_keys = []
     lin = {k: tuple(C.srgb_to_linear(int(v[i:i + 2], 16) / 255.0) for i in (1, 3, 5)) + (1.0,) for k, v in R8_COLS.items()}
     tris = 0
     for s_ in range(R8_SHELLS):
@@ -455,11 +455,18 @@ def build_roller_r8(M):
                     kk = k + xx
                     lp[uv0].uv = (kk / R8_SEG * R8_LC * 0.5, rows[rr][0] + total / 2)
                     lp[uv1].uv = (h, mask)
-                    lp[col] = lin[key]
+                face_keys.append(key)
                 tris += 2
     bm.normal_update()
     o = C.mesh_from_bmesh("roller_r8_fur", bm)
     me = o.data
+    # raw stored bytes = LINEAR band colour (same convention as the foam AO data: color_srgb writes the stored values)
+    ca = me.color_attributes.new(name="Col", type='BYTE_COLOR', domain='CORNER')
+    for poly in me.polygons:
+        c4 = lin[face_keys[poly.index]]
+        for li in poly.loop_indices:
+            ca.data[li].color_srgb = c4
+    me.color_attributes.active_color = ca
     # keep the analytic lathe normals (smooth bulges, crisp nothing)
     me.shade_smooth()
     try:
