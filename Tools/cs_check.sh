@@ -1,5 +1,8 @@
 #!/bin/bash
-# Usage: Tools/cs_check.sh [-w]
+# Usage: Tools/cs_check.sh [-w] [-add <Assembly>=<draft.cs>]...
+#   -w    also list the warnings (default: count only)
+#   -add  also compile a NEW file that is not in Assets yet (check a draft before Unity can see it), for example
+#         Tools/cs_check.sh -add BubbleWash.Editor=C:/Users/josia/AppData/Local/Temp/Draft.cs
 # Fast C# compile check of BubbleWash.Runtime, BubbleWash.Editor and BubbleWash.Tests.PlayMode WITHOUT starting Unity
 # (seconds instead of a 1-4 minute Unity batch run plus the heavy-lock queue). Run it after every C# edit, before asking
 # for a Unity preview. No heavy lock needed: it is one short dotnet process at a time (concurrent cs_check runs queue).
@@ -23,7 +26,8 @@ OUT="Logs/cs_check"
 ASMS="BubbleWash.Runtime BubbleWash.Editor BubbleWash.Tests.PlayMode"   # dependency order
 export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*'                         # pass csc options through untouched
 export PATH="/usr/bin:$PATH"                                               # GNU find/sort, never Windows find.exe/sort.exe
-SHOWW=0; [ "$1" = "-w" ] && SHOWW=1
+SHOWW=0; EXTRA=()
+while [ $# -gt 0 ]; do case "$1" in -w) SHOWW=1;; -add) EXTRA+=("$2"); shift;; esac; shift; done
 cd "$ROOT" || exit 2
 mkdir -p "$OUT"
 t0=$(date +%s%N)
@@ -73,26 +77,40 @@ mkrsp() {     # $1 assembly, $2 BubbleWash.Runtime reference to use -> $OUT/$1.r
     [ "$doc" -gt 0 ] && echo "-doc:\"$OUT/$a.xml\""
     echo "-generatedfilesout:\"$OUT/generated/$a\""
     sources "$a" | sed 's/.*/"&"/'
+    for x in "${EXTRA[@]}"; do [ "${x%%=*}" = "$a" ] && echo "\"${x#*=}\""; done
   } >> "$dst"
 }
 
-errs=0; warns=0; failed=""; fallback=0; report=""
-RT="$OUT/BubbleWash.Runtime.ref.dll"
 for a in $ASMS; do
   if [ ! -f "$DAG/$a.rsp" ] || [ -z "${DIR[$a]}" ]; then
     echo "[cs_check] $a: Unity response file or asmdef missing - run any Unity batch once to regenerate Library/Bee"; exit 2
   fi
-  mkdir -p "$OUT/generated/$a"
-  mkrsp "$a" "$RT"
-  "$DOTNET" exec "$CSC" -nostdlib -noconfig "@$OUT/$a.rsp" > "$OUT/$a.out" 2>&1
-  code=$?
+done
+compile() {   # $1 assembly, $2 Runtime reference -> $OUT/$1.out (csc output) + $OUT/$1.code (csc exit code)
+  mkdir -p "$OUT/generated/$1"
+  mkrsp "$1" "$2"
+  "$DOTNET" exec "$CSC" -nostdlib -noconfig "@$OUT/$1.rsp" > "$OUT/$1.out" 2>&1
+  echo $? > "$OUT/$1.code"
+}
+compile BubbleWash.Runtime "$OUT/BubbleWash.Runtime.ref.dll"
+RT="$OUT/BubbleWash.Runtime.ref.dll"; fallback=0
+if [ "$(cat "$OUT/BubbleWash.Runtime.code")" != 0 ]; then RT="$DAG/BubbleWash.Runtime.ref.dll"; fallback=1; fi
+free_kb=$(awk '/^MemFree:/{print $2}' /proc/meminfo 2>/dev/null)
+if [ "${free_kb:-0}" -gt 800000 ]; then   # Editor + Tests in parallel (~1.5 s faster) when there is RAM for two csc
+  compile BubbleWash.Editor "$RT" & compile BubbleWash.Tests.PlayMode "$RT"; wait
+else
+  compile BubbleWash.Editor "$RT"; compile BubbleWash.Tests.PlayMode "$RT"
+fi
+
+errs=0; warns=0; failed=""; report=""
+for a in $ASMS; do
+  code=$(cat "$OUT/$a.code" 2>/dev/null || echo 1)
   e=$(grep -cE '(^|: )error CS[0-9]+' "$OUT/$a.out"); w=$(grep -cE ': warning CS[0-9]+' "$OUT/$a.out")
-  [ $code -ne 0 ] && [ "$e" -eq 0 ] && e=1   # csc failed without a CS error line (crash, missing file): show raw output
+  [ "$code" != 0 ] && [ "$e" -eq 0 ] && e=1   # csc failed without a CS error line (crash, missing file): show raw output
   errs=$((errs + e)); warns=$((warns + w))
-  if [ $code -ne 0 ]; then
+  if [ "$code" != 0 ]; then
     failed="$failed $a"
     report+="$(grep -E 'error CS[0-9]+' "$OUT/$a.out" || head -5 "$OUT/$a.out")"$'\n'
-    if [ "$a" = "BubbleWash.Runtime" ]; then RT="$DAG/BubbleWash.Runtime.ref.dll"; fallback=1; fi
   fi
   [ $SHOWW -eq 1 ] && [ "$w" -gt 0 ] && report+="$(grep -E ': warning CS[0-9]+' "$OUT/$a.out" | sort -u | head -40)"$'\n'
 done

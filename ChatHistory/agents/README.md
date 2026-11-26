@@ -23,6 +23,8 @@ One file per agent (lead brief + agent statements + tool actions), grouped by le
 - [read: Unity MCP + C# LSP + Blender MCP](2026-11-26_4a13e8f3/1335_read_Unity_MCP_C_LSP_Blender_MCP_a8032be1.md)
 - [Tools engineer](2026-11-26_4a13e8f3/1338_Tools_engineer_a2f22067.md)
 - [Agent 3: environment](2026-11-26_4a13e8f3/1349_Agent_3_environment_a358da59.md)
+- [Agent 4: lighting](2026-11-26_4a13e8f3/1354_Agent_4_lighting_a3b8dd9a.md)
+- [Agent 5: intro cinematic](2026-11-26_4a13e8f3/1354_Agent_5_intro_cinematic_ac5ae970.md)
 - [Agent 1: v4 mascot reconstruction](2026-11-26_579812d8/1211_Agent_1_v4_mascot_reconstruction_a90c1fe1.md)
 - [Agent 2: water and splash FX](2026-11-26_579812d8/1211_Agent_2_water_and_splash_FX_ab474268.md)
 - [Agent 3: tunnel environment geometry](2026-11-26_579812d8/1212_Agent_3_tunnel_environment_geometry_a92d7e66.md)

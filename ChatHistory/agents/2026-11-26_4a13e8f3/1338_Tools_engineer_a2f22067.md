@@ -213,3 +213,43 @@ _Text-only export: the lead's brief, the agent's statements and one line per too
 **Agent (2026-11-26 13:51 UTC):**
 
 > _tool: PowerShell - Measure cs_check wall time and peak RAM_
+
+**Agent (2026-11-26 13:51 UTC):**
+
+> _tool: Bash - Time each assembly compile and a parallel variant_
+
+**Agent (2026-11-26 13:52 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Tools\cs_check.sh_
+
+**Agent (2026-11-26 13:52 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Tools\cs_check.sh_
+
+**Agent (2026-11-26 13:52 UTC):**
+
+> _tool: Bash - Locate lines to extend with the -add option_
+
+**Agent (2026-11-26 13:52 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Tools\cs_check.sh_
+
+**Agent (2026-11-26 13:52 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Tools\cs_check.sh_
+
+**Agent (2026-11-26 13:52 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Tools\cs_check.sh_
+
+**Agent (2026-11-26 13:53 UTC):**
+
+> _tool: Bash - Test cs_check error path with a scratch draft and the clean path_
+
+**Agent (2026-11-26 13:54 UTC):**
+
+> _tool: PowerShell - Check CPU load, free RAM and lock holder_
+
+**Agent (2026-11-26 13:54 UTC):**
+
+You've hit your 5-hour limit · resets 1pm (America/New_York) · out of usage credits

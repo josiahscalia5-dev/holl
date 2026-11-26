@@ -286,3 +286,19 @@ Now the armature + controls for Agent 5 (17 game-bone names, skinned meshes, hai
 **Agent (2026-11-26 13:51 UTC):**
 
 > _tool: Bash - Fix stale view-layer iteration and rerun rig quick test_
+
+**Agent (2026-11-26 13:51 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Captures\agents\character\v4_pose_test.png_
+
+**Agent (2026-11-26 13:51 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Docs\AssetPreviews\SK_Mascot_v4_hero_9x16.png_
+
+**Agent (2026-11-26 13:52 UTC):**
+
+> _tool: Bash - Lower the hat for the hero view and run the final full build_
+
+**Agent (2026-11-26 13:54 UTC):**
+
+You've hit your 5-hour limit · resets 1pm (America/New_York) · out of usage credits

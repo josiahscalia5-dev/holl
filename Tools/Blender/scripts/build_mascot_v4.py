@@ -80,20 +80,20 @@ TAIL_C, TAIL_R = Vector((0.0, 0.37, 0.22)), 0.030       # tiny tuft hidden in th
 
 # ------------------------------------------------------------------ beanie (lathe about the tilted hat axis)
 HAT_O = Vector((0.0, 0.0, 0.700))      # cuff-bottom centre on the axis
-HAT_TILT = -8.0                        # deg about X (negative: front edge up, crown leans back)
+HAT_TILT = -6.0                        # deg about X (negative: front edge up, crown leans back)
 RIB_N = 58                             # knit ribs around (UV u * 44 = rib index, see knit_uv)
 CUFF_AMP, CROWN_AMP = 0.0080, 0.0085   # shallow geometric ribs (the knit tile does the stitches)
 ROW_H = 0.024                          # knit row height (m) along the profile
 # (h above the cuff bottom, radius, material) material 0 knit crown, 1 cuff, 2 stripe; first point = tuck (set later)
-CUFF_PROF = [(h * 0.93, r * 0.935) for h, r in (
+CUFF_PROF = [(h * 0.86, r * 0.935) for h, r in (
     (0.000, 0.500), (0.010, 0.518), (0.032, 0.528), (0.075, 0.532), (0.125, 0.533), (0.172, 0.530),
     (0.205, 0.523), (0.226, 0.511), (0.238, 0.494), (0.236, 0.478))]
-STRIPE_PROF = [(0.212, 0.432), (0.228, 0.452), (0.256, 0.460), (0.284, 0.458), (0.302, 0.451)]
-DOME_H0, DOME_R0, DOME_H, DOME_E = 0.302, 0.451, 0.240, 2.00
+STRIPE_PROF = [(0.196, 0.432), (0.212, 0.452), (0.240, 0.460), (0.268, 0.458), (0.286, 0.451)]
+DOME_H0, DOME_R0, DOME_H, DOME_E = 0.286, 0.451, 0.228, 2.00
 TOP_BAND = (9.0, 9.0)                  # (disabled: the reference has ONE pale stripe)              # extra pale band on the crown FRONT (h range), fades out toward the sides
 TOP_BAND_PSI = 70.0                    # +- deg from the front where the band is full width
-POM_H, POM_CORE, POM_R = 0.610, 0.150, 0.258   # pom-pom centre (h), dark core radius, yarn tip radius
-STAR_H, STAR_PSI, STAR_ROT, STAR_RO, STAR_RI = 0.262, 30.0, -12.0, 0.100, 0.045
+POM_H, POM_CORE, POM_R = 0.586, 0.150, 0.258   # pom-pom centre (h), dark core radius, yarn tip radius
+STAR_H, STAR_PSI, STAR_ROT, STAR_RO, STAR_RI = 0.246, 30.0, -12.0, 0.100, 0.045
 
 # ------------------------------------------------------------------ face (placed on the body surface)
 EYE_DX, EYE_R, EYE_PROT = 0.214, 0.116, 0.036           # eye centre x, footprint radius, protrusion
