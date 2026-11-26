@@ -10,7 +10,7 @@ Measured on Reference/frames4k_720/f_08.25s.png (spec: Captures/agents/environme
                         plane is 3.40 m from the axis with Blender Z = world up (side wall, the wall curves around Z).
                         M_Gold, M_GoldDark, M_Glass, M_ChamberDrum, M_ChamberSwirl, M_DrumRim, M_Foam
   SM_GlassPipe_Pink_v2  vertical transparent glass column r 0.5 x 6.0 m (origin = base centre, Z up), glowing pink
-                        liquid up to 2.0 m with a meniscus, floating bubbles, gold foot / top collars, a tall gold clamp
+                        liquid up to 2.55 m with a meniscus, floating bubbles, gold foot / top collars, a tall gold clamp
                         collar (1.1 x diameter) at 3.2-4.3 m with an arm + block toward +X (the window hinge)
                         M_Glass, M_PipeWaterPink, M_Gold, M_GoldDark, M_Bubble
   SM_NeonStarTube_v2    big neon OUTLINE star, outer r 1.0, chubby inner r 0.47, rounded tips, slim tube r 0.065
@@ -168,7 +168,8 @@ def build_pink_pipe_v2(M):
     H, R = 6.0, 0.5
     zs = [0.25 + (H - 0.5) * k / 8 for k in range(9)]
     lathe(mb, [(R, z) for z in zs], GL, 32, (0.0, 0.0, 0.0), Z_AXIS, X_AXIS)
-    liq = [(0.0, 0.2), (0.45, 0.2), (0.45, 1.0), (0.45, 1.95), (0.40, 2.0), (0.25, 1.985), (0.0, 1.98)]
+    # reference: liquid top ~0.6 m below the clamp collar (collar bottom y 220, liquid top y 300, collar 140 px = 1.1 m)
+    liq = [(0.0, 0.2), (0.45, 0.2), (0.45, 1.3), (0.45, 2.5), (0.40, 2.56), (0.25, 2.545), (0.0, 2.54)]
     lathe(mb, liq, LQ, 24, (0.0, 0.0, 0.0), Z_AXIS, X_AXIS, v_vals=[h / 2.0 for _, h in liq])
     for z0 in (0.0, H - 0.32):
         lathe(mb, [(0.47, z0), (0.62, z0), (0.65, z0 + 0.04), (0.65, z0 + 0.28), (0.61, z0 + 0.32), (0.47, z0 + 0.32)],
@@ -189,7 +190,7 @@ def build_pink_pipe_v2(M):
         r = rnd.uniform(0.035, 0.09)
         a = rnd.uniform(0.0, TAU)
         rho = rnd.uniform(0.0, 0.36)
-        z = rnd.uniform(0.35, 1.8) if k < 7 else rnd.uniform(2.1, 5.6)
+        z = rnd.uniform(0.35, 2.3) if k < 7 else rnd.uniform(2.7, 5.6)
         sphere(mb, (rho * math.cos(a), rho * math.sin(a), z), r, BB, 10, 6)
     names = ["M_Glass", "M_PipeWaterPink", "M_Gold", "M_GoldDark", "M_Bubble"]
     return mb.build("SM_GlassPipe_Pink_v2", [M[n] for n in names])
@@ -201,6 +202,7 @@ def build_star_v2(mat):
     outline = rounded_polygon(star_outline(1.0, 0.47), lambda i: 0.10 if i % 2 == 0 else 0.06, 6)
     outline = resample_closed(outline, 150)
     tube_loop(bm, outline, 0.065, 12, xz)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])   # outline winding made the tube inside-out (volume < 0)
     obj = C.mesh_from_bmesh("SM_NeonStarTube_v2", bm)
     for p in obj.data.polygons:
         p.use_smooth = True

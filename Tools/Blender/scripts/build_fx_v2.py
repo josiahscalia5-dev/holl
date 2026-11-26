@@ -38,13 +38,17 @@ V2_DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "fx_c
 
 # ------------------------------------------------------------------ reference camera model, frame 8.25 s (1280x720)
 SHOT_W, SHOT_H_PX = 1280, 720
-SHOT_F = 700.0             # focal length in pixels (h-FOV 84.9 deg, v-FOV 54.4 deg)
-SHOT_PITCH = 10.5          # deg down: tunnel vanishing point at y ~230
-SHOT_CAM_H = 1.14          # m above the water
-SHOT_BODY_PX, SHOT_BODY_DEPTH = (530.0, 415.0), 2.6   # mascot body centre: ~1 m wide body = 270 px
+_E = os.environ.get
+SHOT_F = float(_E("BWK_FX_CAM_F", "700.0"))           # focal length in pixels (h-FOV 84.9 deg, v-FOV 54.4 deg)
+SHOT_PITCH = float(_E("BWK_FX_CAM_PITCH", "10.5"))    # deg down: tunnel vanishing point at y ~230
+SHOT_CAM_H = float(_E("BWK_FX_CAM_H", "1.14"))        # m above the water
+SHOT_ROLL = float(_E("BWK_FX_CAM_ROLL", "0.0"))       # deg about the view axis (+ = camera right axis tilts up: scene turns clockwise)
+SHOT_BODY_PX = (float(_E("BWK_FX_BODY_U", "530")), float(_E("BWK_FX_BODY_V", "415")))
+SHOT_BODY_DEPTH = float(_E("BWK_FX_BODY_DEPTH", "2.6"))  # axial depth of the mascot body centre (~1 m wide body = 270 px)
+# (the env-var overrides let the crowns be re-solved through the environment agent's camera.json in one run)
 SHOT_FEET_PX = (600.0, 575.0)                         # feet / water contact between the soles
 CROWN_WALL_A, CROWN_WALL_B = 0.75, 0.40               # elliptic crown wall around the feet (lateral, depth semi-axes)
-MB_K = float(os.environ.get("BWK_FX_MBK", "0.80"))    # ridge balls spaced .45 r -> tube radius ~= measured radius
+MB_K = float(os.environ.get("BWK_FX_MBK", "0.68"))    # measured balls + in-between balls -> IoU .924 vs the reference mask (.80: .870)
 RES_V2 = 0.0045
 
 
@@ -55,8 +59,11 @@ class ShotCam:
         p = math.radians(SHOT_PITCH)
         self.C = Vector((0.0, 0.0, SHOT_CAM_H))
         self.fwd = Vector((0.0, math.cos(p), -math.sin(p)))
-        self.right = Vector((1.0, 0.0, 0.0))
-        self.up = Vector((0.0, math.sin(p), math.cos(p)))
+        right = Vector((1.0, 0.0, 0.0))
+        up = Vector((0.0, math.sin(p), math.cos(p)))
+        q = math.radians(SHOT_ROLL)
+        self.right = right * math.cos(q) + up * math.sin(q)
+        self.up = up * math.cos(q) - right * math.sin(q)
 
     def ray(self, u, v):
         """Direction whose component along fwd is 1 (so the ray parameter = axial depth)."""
@@ -308,7 +315,8 @@ def shot_camera_object(cam, M):
     co = bpy.data.objects.new("ShotCam0825", cd)
     bpy.context.scene.collection.objects.link(co)
     co.location = cam.C - M
-    co.rotation_euler = (math.radians(90 - SHOT_PITCH), 0.0, 0.0)
+    co.rotation_mode = 'ZXY'                     # R = Rx(pitch) * Rz(roll): roll about the camera's own view axis first
+    co.rotation_euler = (math.radians(90 - SHOT_PITCH), 0.0, math.radians(SHOT_ROLL))
     bpy.context.scene.camera = co
     return co
 

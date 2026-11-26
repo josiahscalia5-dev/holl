@@ -43,6 +43,7 @@ namespace BubbleWash.EditorTools
         const float VFov = 52f;            // chamber window ellipse 215 x 365 px flush on an r 3.4 wall -> 50-55 deg
         const float CamLateral = 0.30f;    // m toward the travel-right wall (rails: left slope 0.47 vs right 0.32)
         const float VpBack = 22f;          // tunnel opening (vanishing glow) = axis point this far behind the mascot
+        const float CamHeight = 1.5f;      // m above the slide under the camera: rail slopes 0.47 / 0.32 -> 1.65; VP angle -> 1.2 (v2)
         static readonly Vector2 MascotPx = new Vector2(522f, 397f), VpPx = new Vector2(545f, 215f);
         const float MascotHeightPx = 385f; // pom-pom top y 205 .. foot bottom y 590
         const float ModulePeriod = 12.75f; // = SceneBuilder.GoldRingSpacing (one chamber module per gold-ring gap)
@@ -61,6 +62,7 @@ namespace BubbleWash.EditorTools
             public float spin;            // degrees about the facing axis
             public bool worldUp;          // keep the model upright (pipe, gem)
             public float originUp;        // model origin this far below the matched point (pipe base, m at scale 1)
+            public float aspect;          // >0: turn about world up until projected width / height = aspect (window ellipse)
         }
 
         // Every entry = one landmark measured on Reference/frames4k_720/f_08.25s.png (grid sheet g_full.png).
@@ -68,12 +70,12 @@ namespace BubbleWash.EditorTools
         {
             var L = new List<Item>
             {
-                new Item { name = "ChamberWindow", model = Mach + "SM_ChamberWindow_v2.fbx", px = new Vector2(245, 205), sizePx = 365, sizeM = 4.64f, mode = Mode.Wall, radius = 3.40f, worldUp = true },
+                new Item { name = "ChamberWindow", model = Mach + "SM_ChamberWindow_v2.fbx", px = new Vector2(245, 205), sizePx = 365, sizeM = 4.64f, mode = Mode.Wall, radius = 3.40f, worldUp = true, aspect = 215f / 365f },
                 new Item { name = "PinkPipe", model = Mach + "SM_GlassPipe_Pink_v2.fbx", px = new Vector2(62, 150), sizePx = 140, sizeM = 1.10f, mode = Mode.Wall, radius = 3.35f, worldUp = true, originUp = 3.75f },
                 new Item { name = "CurvyPipe", model = Mach + "SM_ChamberPipe.fbx", px = new Vector2(395, 150), sizePx = 230, sizeM = 3.9f, mode = Mode.Wall, radius = 3.7f, worldUp = true },
                 new Item { name = "Gem", model = Props + "SM_Gem.fbx", px = new Vector2(1043, 222), sizePx = 125, mode = Mode.Wall, radius = 3.0f, worldUp = true, spin = 10f },
-                new Item { name = "CoinA", model = Props + "SM_Coin.fbx", px = new Vector2(887, 352), sizePx = 60, mode = Mode.Wall, radius = 3.1f, worldUp = true },
-                new Item { name = "CoinB", model = Props + "SM_Coin.fbx", px = new Vector2(1125, 378), sizePx = 105, mode = Mode.Wall, radius = 3.1f, worldUp = true, spin = 60f },
+                new Item { name = "CoinA", model = Props + "SM_Coin.fbx", px = new Vector2(887, 352), sizePx = 60, mode = Mode.Depth, depth = 4.6f, worldUp = true },
+                new Item { name = "CoinB", model = Props + "SM_Coin.fbx", px = new Vector2(1125, 378), sizePx = 105, mode = Mode.Depth, depth = 3.6f, worldUp = true, spin = 55f },
             };
             // neon outline tube stars on the wall / ceiling (x, y, height px, colour, tilt)
             var stars = new (float x, float y, float h, string c, float tilt)[]
@@ -215,8 +217,40 @@ namespace BubbleWash.EditorTools
             }
         }
 
+        /// <summary>World-space vertices of the posed mascot (skinned meshes baked, fur shells included).</summary>
+        static List<Vector3> MascotVerts(RunnerController runner)
+        {
+            var from = runner.visual != null ? runner.visual : runner.transform;
+            var pts = new List<Vector3>();
+            var tmp = new Mesh();
+            foreach (var smr in from.GetComponentsInChildren<SkinnedMeshRenderer>())
+            {
+                if (!smr.enabled) continue;
+                smr.BakeMesh(tmp, true);
+                var m = Matrix4x4.TRS(smr.transform.position, smr.transform.rotation, Vector3.one);
+                var vs = tmp.vertices;
+                for (int i = 0; i < vs.Length; i += 7) pts.Add(m.MultiplyPoint3x4(vs[i]));
+            }
+            foreach (var mr in from.GetComponentsInChildren<MeshRenderer>())
+            {
+                var mf = mr.GetComponent<MeshFilter>();
+                if (!mr.enabled || mf == null || mf.sharedMesh == null || !mf.sharedMesh.isReadable) continue;
+                var vs = mf.sharedMesh.vertices;
+                for (int i = 0; i < vs.Length; i += 7) pts.Add(mr.transform.TransformPoint(vs[i]));
+            }
+            Object.DestroyImmediate(tmp);
+            return pts;
+        }
+
         static Bounds MascotBounds(RunnerController runner)
         {
+            var vb = MascotVerts(runner);
+            if (vb.Count > 50)
+            {
+                var bb = new Bounds(vb[0], Vector3.zero);
+                foreach (var v in vb) bb.Encapsulate(v);
+                return bb;
+            }
             var from = runner.visual != null ? runner.visual : runner.transform;
             var rs = from.GetComponentsInChildren<SkinnedMeshRenderer>().Where(r => r.enabled).Cast<Renderer>().ToList();
             if (rs.Count == 0) rs = from.GetComponentsInChildren<MeshRenderer>().Where(r => r.enabled).Cast<Renderer>().ToList();
@@ -246,20 +280,41 @@ namespace BubbleWash.EditorTools
             Vector3 mc = mb.center;
             Vector3 vp = runner.track.Evaluate(d - VpBack).FlatPoint(0f, TunnelCenter);
             float lat = (mirror ? -1f : 1f) * CamLateral;
-            float lo = -10f, hi = 70f, e = 20f;
-            Vector3 pos = mc;
-            for (int it = 0; it < 40; it++)
+            var verts = MascotVerts(runner);
+            float e = 10f; Vector3 pos = mc; Quaternion rot = Quaternion.identity;
+            for (int pass = 0; pass < 3; pass++)
             {
-                e = 0.5f * (lo + hi);
-                pos = CamPos(f, mc, z, e, lat);
-                float ang = Vector3.Angle(mc - pos, vp - pos);
-                if (ang < target) lo = e; else hi = e;
+                float lo = 0f, hi = 40f;
+                for (int it = 0; it < 40; it++)
+                {
+                    e = 0.5f * (lo + hi);
+                    pos = CamPos(f, mc, z, e, lat);
+                    float ahead0 = Vector3.Dot(pos - f.position, f.forward);
+                    var fc = runner.track.Evaluate(d + ahead0);
+                    float hc = Vector3.Dot(pos - fc.position, fc.flatUp);
+                    if (hc < CamHeight) lo = e; else hi = e;
+                }
+                if (e < 0.5f || e > 39.5f) { e = 10.6f; pos = CamPos(f, mc, z, e, lat); Debug.Log($"[BWK] shot0825: elevation solve out of range at {d} m (curve) - 10.6 deg used"); }
+                Vector3 d1 = (mc - pos).normalized, d2 = (vp - pos).normalized;
+                var q1 = Quaternion.FromToRotation(s1, d1);
+                Vector3 s2r = q1 * s2;
+                Vector3 a = Vector3.ProjectOnPlane(s2r, d1), b = Vector3.ProjectOnPlane(d2, d1);
+                rot = Quaternion.AngleAxis(Vector3.SignedAngle(a, b, d1), d1) * q1;
+                if (verts.Count < 50) break;
+                // measured projected mascot height -> rescale the distance to the reference 385 px
+                var inv = Quaternion.Inverse(rot);
+                float yMin = float.MaxValue, yMax = float.MinValue;
+                foreach (var v in verts)
+                {
+                    var q = inv * (v - pos);
+                    if (q.z < 0.05f) continue;
+                    float py = H * 0.5f - fpx * q.y / q.z;
+                    yMin = Mathf.Min(yMin, py); yMax = Mathf.Max(yMax, py);
+                }
+                float hpx = yMax - yMin;
+                if (!mirror) Debug.Log($"[BWK] shot0825 pass {pass}: mascot {hpx:F0} px tall (ref {MascotHeightPx}), top y {yMin:F0}, cam dist {z:F2} m");
+                if (pass < 2) z *= hpx / MascotHeightPx;
             }
-            Vector3 d1 = (mc - pos).normalized, d2 = (vp - pos).normalized;
-            var q1 = Quaternion.FromToRotation(s1, d1);
-            Vector3 s2r = q1 * s2;
-            Vector3 a = Vector3.ProjectOnPlane(s2r, d1), b = Vector3.ProjectOnPlane(d2, d1);
-            var rot = Quaternion.AngleAxis(Vector3.SignedAngle(a, b, d1), d1) * q1;
             var c = new Cam { pos = pos, rot = rot, fpx = fpx };
             Vector3 camUp = rot * Vector3.up, camFwd = rot * Vector3.forward;
             float roll = Vector3.SignedAngle(Vector3.ProjectOnPlane(Vector3.up, camFwd), camUp, camFwd);
@@ -325,7 +380,7 @@ namespace BubbleWash.EditorTools
                     X = c.pos + dirW * (depth / dirC.z);
                     AxisOffset(runner.track, X, ref dd, out _);
                 }
-                var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, holder);
+                var go = Spawn(prefab, holder);
                 go.name = it.name;
                 Vector3 camUp = c.rot * Vector3.up;
                 Quaternion rot;
@@ -340,6 +395,11 @@ namespace BubbleWash.EditorTools
                     if (it.name.StartsWith("Coin") || it.name == "Gem") fwd = Vector3.ProjectOnPlane(c.pos - X, Vector3.up);
                     rot = Quaternion.LookRotation(fwd.normalized, Vector3.up) * Quaternion.Euler(0f, mirror ? -it.spin : it.spin, 0f);
                 }
+                else if (it.worldUp)
+                {
+                    Vector3 fwd = Vector3.ProjectOnPlane(c.pos - X, Vector3.up);
+                    rot = Quaternion.LookRotation(fwd.normalized, Vector3.up) * Quaternion.Euler(0f, mirror ? -it.spin : it.spin, 0f);
+                }
                 else rot = Quaternion.LookRotation(c.pos - X, camUp);
                 go.transform.rotation = rot;
                 go.transform.localScale = Vector3.one;
@@ -352,6 +412,31 @@ namespace BubbleWash.EditorTools
                     else sizeM = 1f;
                 }
                 float s = it.sizePx * depth / (c.fpx * sizeM);
+                if (it.aspect > 0f)
+                {
+                    var inv = Quaternion.Inverse(c.rot);
+                    System.Func<Vector3, Vector2> P = v => { var q = inv * (v - c.pos); return new Vector2(W * 0.5f + c.fpx * q.x / q.z, H * 0.5f - c.fpx * q.y / q.z); };
+                    float half = sizeM * 0.5f;
+                    for (int pass = 0; pass < 3; pass++)
+                    {
+                        float best = 1e9f; Quaternion bestRot = rot;
+                        for (float yaw = -75f; yaw <= 75f; yaw += 1f)
+                        {
+                            var r2 = Quaternion.AngleAxis(yaw, Vector3.up) * rot;
+                            Vector3 rgt = r2 * Vector3.right * half * s, upv = r2 * Vector3.up * half * s;
+                            if ((inv * (X - rgt - c.pos)).z < 0.3f || (inv * (X + rgt - c.pos)).z < 0.3f) continue;
+                            float wpx = Mathf.Abs(P(X + rgt).x - P(X - rgt).x), hpx = Mathf.Abs(P(X + upv).y - P(X - upv).y);
+                            float err = Mathf.Abs(wpx / Mathf.Max(hpx, 1f) - it.aspect);
+                            if (err < best) { best = err; bestRot = r2; }
+                        }
+                        rot = bestRot;
+                        Vector3 up2 = rot * Vector3.up * half * s;
+                        float hNow = Mathf.Abs(P(X + up2).y - P(X - up2).y);
+                        s *= it.sizePx / Mathf.Max(hNow, 1f);
+                    }
+                    go.transform.rotation = rot;
+                    if (module == 0) Debug.Log($"[BWK] shot0825 window turned {Quaternion.Angle(rot, go.transform.rotation):F0}/aspect fit, scale {s:F2}");
+                }
                 go.transform.localScale = new Vector3(mirror ? -s : s, s, s);
                 go.transform.position = X - (it.worldUp ? Vector3.up : rot * Vector3.up) * it.originUp * s;
                 if (it.name == "CurvyPipe")
@@ -376,6 +461,20 @@ namespace BubbleWash.EditorTools
             if (module == 0) Debug.Log("[BWK] shot0825 placed:" + sb);
         }
 
+        /// <summary>Same convention as SceneBuilder.Spawn: holder (front = +Z, up = +Y) with the FBX instance turned 180 deg
+        /// about Y under it, keeping the importer's root rotation.</summary>
+        static GameObject Spawn(GameObject prefab, Transform parent)
+        {
+            var holder = new GameObject(prefab.name);
+            holder.transform.SetParent(parent, false);
+            var inst = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            inst.transform.SetParent(holder.transform, false);
+            var fix = Quaternion.Euler(0f, 180f, 0f);
+            inst.transform.localPosition = fix * inst.transform.localPosition;
+            inst.transform.localRotation = fix * inst.transform.localRotation;
+            return holder;
+        }
+
         /// <summary>Striped socks floating in front of the swirl disc (as the Blender preview: ~1 m long, 3 of them).</summary>
         static void AddSocks(Transform window)
         {
@@ -390,7 +489,7 @@ namespace BubbleWash.EditorTools
             {
                 var pf = AssetDatabase.LoadAssetAtPath<GameObject>(Props + s.m + ".fbx");
                 if (pf == null) continue;
-                var go = (GameObject)PrefabUtility.InstantiatePrefab(pf, window);
+                var go = Spawn(pf, window);
                 go.transform.localPosition = s.p;
                 go.transform.localRotation = Quaternion.Euler(s.e);
                 go.transform.localScale = Vector3.one * 2.6f;

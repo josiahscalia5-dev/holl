@@ -98,6 +98,24 @@ namespace BubbleWash.EditorTools
                 F(m, "_MilkAlpha", 0.97f); F(m, "_MilkEdgeAlpha", 0.45f);
                 F(m, "_SrcBlend", (float)BlendMode.SrcAlpha); F(m, "_DstBlend", (float)BlendMode.OneMinusSrcAlpha); F(m, "_ZWrite", 1f);
             }, (int)RenderQueue.Transparent);
+            // round 6 shot 8.25 s test (NEW materials for SM_FX_Crown_v2_* / SM_Foam_v2_*; the level's materials above are unchanged)
+            Mat("M_FX_Milk_v2", "BWK/Soft", m =>
+            {
+                // measured on the reference milk mask (Tools/fx_splash_trace.py, f_08.25s): core p80-100 #E9F9F9, mid #D1E7ED,
+                // shade p0-20 #B0C5D6 / #B3B9D6: opaque thick milk (no blending: the reference crowns are not see-through),
+                // cyan-white body, blue-grey shading, cool bounce from the water, glossy wet highlights
+                F(m, "_Mode", 6); C(m, "_ColorA", "#E9F9F9"); C(m, "_ShadowColor", "#A9BED6"); C(m, "_ColorB", "#9CC6E8"); F(m, "_Wrap", 0.55f);
+                F(m, "_RimPower", 2.6f); F(m, "_RimStrength", 0.55f); F(m, "_SpecStrength", 0.9f); F(m, "_ReflectBoost", 0.3f); F(m, "_Glow", 0.22f);
+                F(m, "_Wobble", 0.006f); F(m, "_WobbleFreq", 6f); F(m, "_MilkAlpha", 1f); F(m, "_MilkEdgeAlpha", 1f);
+            });
+            Mat("M_Foam_v2", "BWK/Soft", m =>
+            {
+                // reference foam (4K f_08.00s crops): bright white bubble tops #F3F5FB, faint blue-lavender crevices #B8BEDC,
+                // no pink cast; soft satin sheen (many small bubbles, not plastic)
+                F(m, "_Mode", 5); C(m, "_ColorA", "#F4F6FC"); C(m, "_ShadowColor", "#B6BCDC"); C(m, "_ColorB", "#E6ECFA"); F(m, "_Wrap", 0.6f);
+                F(m, "_BumpScale", 14f); F(m, "_BumpStrength", 0.02f); F(m, "_Glow", 0.1f); F(m, "_RimPower", 2.6f); F(m, "_RimStrength", 0.3f);
+                F(m, "_SpecStrength", 0.3f); F(m, "_ReflectBoost", 0.15f); F(m, "_GlintAmount", 0.08f); F(m, "_Wobble", 0.006f); F(m, "_WobbleFreq", 1.4f);
+            });
             Particle("M_FX_Splash", $"{Tex}/T_Splash.png", additive: false, "#FFFFFF");
             Particle("M_FX_SplashSheet", $"{Tex}/T_SplashCrown.png", additive: false, "#FFFFFF");
             Particle("M_FX_Soft", $"{Tex}/T_SoftCircle.png", additive: false, "#FFFFFF");
