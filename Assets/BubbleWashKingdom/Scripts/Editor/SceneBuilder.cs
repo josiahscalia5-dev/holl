@@ -45,6 +45,12 @@ namespace BubbleWash.EditorTools
             new Vector3(68f, -38f, 133), new Vector3(69f, -39f, 118), new Vector3(69f, -39.6f, 104),
         };
 
+        /// <summary>Round 3 (2026-11-26): the reference tunnel bends RIGHT at the hero frame (vanishing point right of the
+        /// pom-pom, rings receding to the right, pink rail sweeping right); the original knots bend left there. Mirroring
+        /// the whole layout in X flips every curve; all placement is track-relative, so nothing else changes. The hero
+        /// camera values (2.75 / 1.3 / 10 / 58) are untouched. Set to 1 to restore the original layout.</summary>
+        const float TrackMirrorX = -1f;
+
         static System.Random rng;
         static TrackPath track;
         static float tunnelStart, portalD;
@@ -126,7 +132,7 @@ namespace BubbleWash.EditorTools
             var container = trackGo.AddComponent<SplineContainer>();
             var spline = container.Spline;
             spline.Clear();
-            foreach (var k in Knots) spline.Add(new BezierKnot(new float3(k.x, k.y, k.z)), TangentMode.AutoSmooth);
+            foreach (var k in Knots) spline.Add(new BezierKnot(new float3(TrackMirrorX * k.x, k.y, k.z)), TangentMode.AutoSmooth);
             track = trackGo.AddComponent<TrackPath>();
             track.Rebuild();
             float L = track.Length;

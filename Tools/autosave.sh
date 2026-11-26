@@ -23,6 +23,17 @@ snapshot() {
   [ -f "$INDEX" ] || GIT_INDEX_FILE="$INDEX" git read-tree "$(git rev-parse -q --verify $PUBLIC_REF || echo $BASE)"
   GIT_INDEX_FILE="$INDEX" git add -A >> "$LOG" 2>&1
   for p in "${PRIVATE_PATHS[@]}"; do GIT_INDEX_FILE="$INDEX" git rm -q --cached --ignore-unmatch -- "$p"; done
+  # Second line of defence (2026-11-26): the repo is public, so any video file, and any image whose file name looks like a
+  # reference frame, side-by-side, triptych or contact sheet, stays local even if someone saves it outside Captures/.
+  local p b
+  while IFS= read -r p; do
+    b=${p##*/}; b=${b,,}
+    if [[ "$b" =~ \.(mp4|mov|webm|mkv|avi|m4v)$ ]] || { [[ "$b" =~ \.(png|jpe?g|webp|gif|bmp|tga|exr|tiff?)$ ]] && \
+       { [[ "$b" =~ ^f_[0-9] ]] || [[ "$b" =~ (^|[_.-])(ref|refs|reference|references|vs|versus|frame|frames|25982|flow|contact|sheet|4k|k4|compare|comparison|triptych)([_.0-9-]|$) ]]; }; }; then
+      GIT_INDEX_FILE="$INDEX" git rm -q --cached --ignore-unmatch -- "$p"
+      echo "$(date '+%F %T') kept private (not published): $p" >> "$LOG"
+    fi
+  done < <(GIT_INDEX_FILE="$INDEX" git ls-files)
   local tree parent commit
   tree=$(GIT_INDEX_FILE="$INDEX" git write-tree) || return 1
   parent=$(git rev-parse -q --verify $PUBLIC_REF || git rev-parse $BASE)
