@@ -70,6 +70,26 @@ Whole-game estimate at the r5 base: ~4/10 (hero screen ~5.5-6/10).
 - Unity now: a yellow glow disc at the tunnel end with a gold ring; coins on the track; no starburst rays, no sparkles,
   no glass pipe.
 
+## 7.50-15.00 s quarter-second map (owner's reference sheet, 2026-11-26 09:55) -> Unity section
+| Video | Section | What the frames show (all must be rebuilt as real 3D) |
+|-------|---------|--------------------------------------------------------|
+| 7.50-8.00 | S5 | round gold-framed chamber window on the left (rainbow interior, striped socks); vertical transparent PINK pipe with glowing liquid; gold coins on the right wall; pink and yellow tube stars; bulb rings ahead |
+| 8.25-8.75 | S5 | pink pipe + rainbow sock chamber left; dense pink stars; pink gem upper right; bubbles; camera banks |
+| 9.00-9.75 | S6 | big rainbow chamber left (blue socks), gold hinges / mechanical frame; cyan stars right; bubbles |
+| 10.00-10.75 | S6 | two chamber windows left, transparent CYAN pipe curving on the left, stars on both walls, gold bulb ring ahead |
+| 11.00-12.00 | S6 | chambers left, cyan stars right, bulb rings, foam banks both sides; mascot squints with joy (blink) |
+| 12.00-12.75 | S6 -> S7 | golden light starts at the far end; sparkles; chambers and cyan pipe continue |
+| 13.00-13.75 | S7 | golden starburst portal inside a big gold bulb ring; cyan water pipe curving left; rainbow chamber left; cyan stars right |
+| 14.00-15.00 | S7 | the portal light fills the frame; bulb ring large; sparkle stars; flowing water pipe; foam and milky crown splashes |
+
+Mascot in 7.5-15 s (front camera): happy open smile, big glossy eyes, blinks / squints with joy (5.75, 11.25-11.75,
+12.0-13.5), arms out balancing, leans with the banking slide, feet forward with pink pads, milky crown splash at the
+feet. In the game these become: the rear-view slide animation with leans and balance, plus front-facing celebration
+moments (portal finale) only.
+
+Comparison sheets per section (private): `bash Tools/section_sheet.sh <tag>` -> `Captures/sections/`.
+Front comparison stills: C1 (100 m), C2 (220 m), C3 (L-22) exist; C4 (190 m, S4) and C5 (280 m, S6) are being added.
+
 ## Cross-section problems (fix once, applies everywhere)
 1. Mascot: the old in-game model (mushroom hat hiding the body, pale spiky pom-pom, hairy soles) - v4 replaces it after
    owner approval (character).

@@ -430,7 +430,10 @@ namespace BubbleWash.EditorTools
             }
 
             // Front-facing comparison angles (reference 3.75-15 s camera) - comparison only, never used in gameplay.
-            foreach (var (name, d) in new[] { ("C1_front_tunnel_like_5s", 100f), ("C2_front_chambers_like_10s", 220f), ("C3_front_portal_like_14s", L - 22f) })
+            // C4 / C5 (2026-11-26): front angles for video sections S4 (first sock window, 6-7 s) and S6 (chamber tunnel 2,
+            // 9-12.75 s), so every section of Docs/VideoCoverageChecklist.md has a comparable camera angle.
+            foreach (var (name, d) in new[] { ("C1_front_tunnel_like_5s", 100f), ("C4_front_window_like_7s", 190f), ("C2_front_chambers_like_10s", 220f),
+                                              ("C5_front_chambers2_like_11s", 280f), ("C3_front_portal_like_14s", L - 22f) })
             {
                 runner.TeleportTo(d, 0f);
                 if (slide != null) slide.SampleAnimation(animator.gameObject, 0.25f);
