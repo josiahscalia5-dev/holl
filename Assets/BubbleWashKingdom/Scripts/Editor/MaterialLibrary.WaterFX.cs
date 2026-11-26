@@ -129,6 +129,9 @@ namespace BubbleWash.EditorTools
                 // variation (thick ribs / thin water-lit film, 9 per metre) and a slightly bluer milk body + shade
                 F(m, "_BumpScale", 9f); F(m, "_BumpStrength", 0.85f);
                 C(m, "_ColorA", "#E4F6FC"); C(m, "_ShadowColor", "#A2BCE0");
+                // p3 (p2: variation std L 12.3 / R 17.3 but too dark + grey: p50 196 / 198 vs ref 212 / 226, mean #BDC4D2 vs
+                // #C5D1E4): light cyan film (#A6DCF2, ref thin lace ~#B6DAE9), brighter body, more wrap, stronger wet highlights
+                C(m, "_MilkThin", "#A6DCF2"); C(m, "_ColorA", "#EAFAFD"); F(m, "_Wrap", 0.52f); F(m, "_SpecStrength", 1.35f); F(m, "_Glow", 0.08f);
                 F(m, "_MilkAlpha", 1f); F(m, "_MilkEdgeAlpha", 0.3f);
                 F(m, "_SrcBlend", (float)BlendMode.SrcAlpha); F(m, "_DstBlend", (float)BlendMode.OneMinusSrcAlpha); F(m, "_ZWrite", 1f);
             }, (int)RenderQueue.Transparent);

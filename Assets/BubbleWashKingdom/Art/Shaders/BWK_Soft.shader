@@ -310,7 +310,7 @@ Shader "BWK/Soft"
                         float3 q = i.positionOS * _BumpScale;
                         half t1 = BWK_ValueNoise3(q * float3(1.0, 0.4, 1.0) + float3(0.0, _Time.y * 0.5, 0.0));
                         half t2 = BWK_ValueNoise3(q * 2.3 + 7.1);
-                        thick = saturate((t1 * 0.65 + t2 * 0.35 - 0.5) * 2.6 + 0.6);
+                        thick = saturate((t1 * 0.65 + t2 * 0.35 - 0.5) * 2.6 + 0.72);
                         thick = lerp(1.0, thick, saturate(_BumpStrength) * _MilkSoft);
                         // round 8 (lead: the crowns read as flat opaque white cut-outs in every rear view): ROUNDED milk
                         // volume - the thick cores that face the camera stay creamy white, the body rolls off toward its
@@ -338,7 +338,7 @@ Shader "BWK/Soft"
                     // translucency: opaque milky where the sheet faces the camera, see-through blue at thin / grazing parts
                     half alpha = lerp(_MilkAlpha, _MilkEdgeAlpha, saturate(fr * 1.4));
                     // round 8: soft translucent silhouette band (not a hard paper edge) where the volume shading is on
-                    alpha = lerp(alpha, lerp(_MilkEdgeAlpha, _MilkAlpha, smoothstep(0.03, 0.42, fv)) * lerp(0.6, 1.0, thick), _MilkSoft);
+                    alpha = lerp(alpha, lerp(_MilkEdgeAlpha, _MilkAlpha, smoothstep(0.03, 0.42, fv)) * lerp(0.7, 1.0, thick), _MilkSoft);
                     col = MixFog(col, i.fog);
                     return half4(col, alpha);
                 }

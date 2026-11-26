@@ -340,6 +340,8 @@ namespace BubbleWash.EditorTools
                     (new Vector3(0.80f, 0.25f, -0.12f), new Vector3(-25f, 60f, 200f)),
                 };
                 var crng = new System.Random(7031);   // own sequence: the shared rng feeds the gameplay item layout
+                // r8 v2 (asset artist, asset 12): socks get their own saturated fabric (MaterialLibrary.Assets.cs M_Sock_r8)
+                var sockMap = new Dictionary<string, Material> { ["M_Fabric"] = Mat("M_Sock_r8") };
                 int i = 0;
                 foreach (var (d, side) in ChamberWindows())
                 {
@@ -362,6 +364,7 @@ namespace BubbleWash.EditorTools
                         var sp = ModelPrefab("Props", sockSet[(s + i) % sockSet.Length]);
                         if (sp == null) continue;
                         var sock = Spawn(sp);
+                        HallRemap(sock, sockMap);
                         sock.transform.SetParent(go.transform, false);
                         sock.transform.localPosition = socks[s].p;
                         sock.transform.localRotation = Quaternion.Euler(socks[s].e + new Vector3(0f, 0f, (float)crng.NextDouble() * 50f - 25f));
@@ -483,6 +486,10 @@ namespace BubbleWash.EditorTools
                 else { pink = 0.36f; cyan = 0.36f; }
                 int ci = cr < pink ? 0 : cr < pink + cyan ? 1 : 2;
                 if (ci == last) ci = (ci + 1 + (k % 2)) % 3;
+                // r8 v2 (asset artist, owner sheet 03 item 3 "a distinct cyan star around the portal"): reference f_14.50s has
+                // a big cyan neon star on the right wall beside the portal ring (ours: orange + pink) -> the travel-right side
+                // wall stars of the last 9 m are cyan (colour only: same positions, sizes and count)
+                if (d > portalD - 9f && angDeg > 55f) ci = 1;
                 last = ci;
                 var rot = Quaternion.LookRotation(f.forward, f.flatUp) * Quaternion.Euler(0f, 0f, roll);
                 comb.Add(tinted[ci], Matrix4x4.TRS(pos, rot, Vector3.one * s));

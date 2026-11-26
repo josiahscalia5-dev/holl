@@ -67,6 +67,31 @@ namespace BubbleWash.EditorTools
                 F(m, "_RimPower", 3f); F(m, "_RimStrength", 0.3f);
                 F(m, "_StreakAmount", 0f); F(m, "_ReflectBoost", 0.6f);
             });
+            // ---------------------------------------------------------------- 12 colourful socks (r8 v2)
+            // rear still 07 (v1): the chamber socks read pale blue-grey - M_Fabric (white, glow .12) x the blue tunnel light,
+            // the same loss as the roller. Sock-only copy (remapped in BuildPortholes): cream tint takes the surplus blue out,
+            // colour-true glow keeps the vertex-colour stripes saturated (reference 8.25-11 s: red / yellow / blue / green).
+            Mat("M_Sock_r8", "BWK/Soft", m =>
+            {
+                F(m, "_Mode", 4); C(m, "_ColorA", "#FFFFC6"); F(m, "_Smoothness", 0.2f); F(m, "_Glow", 0.5f); F(m, "_BumpScale", 2f);
+            });
+
+            // ---------------------------------------------------------------- 24 golden starburst geometry (r8 v2)
+            // SM_Starburst_r8 (build_hall_assets.py): additive soft quads for BWK/LightBlob (radial UV falloff): 132 thin rays
+            // that fade outward, 42 soft 4-point sparkles, an amber halo and a small CREAM core (reference f_14.50s: warm
+            // amber-gold glow, many thin soft rays, cream not white centre). Blue stays low in every colour, so overlaps sum
+            // to amber / cream instead of clipping white; moderate strengths (no blanket bloom). Metal keeps M_PortalCore.
+            void Burst(string name, string hex, float strength, float core) => Mat(name, "BWK/LightBlob", m =>
+            {
+                C(m, "_Color", hex); F(m, "_Strength", strength); F(m, "_Softness", 1f); F(m, "_Core", core);
+                F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
+                F(m, "_NearFade", 0f);
+            }, (int)RenderQueue.Transparent - 9);
+            Burst("M_BurstRays_r8", "#FF9A2E", 1.3f, 1.3f);
+            Burst("M_BurstSparkle_r8", "#FFC860", 1.8f, 1.2f);
+            Burst("M_BurstGlow_r8", "#FF8A1A", 0.55f, 1.6f);
+            Burst("M_BurstCore_r8", "#FFE2B0", 1.0f, 1.5f);
+
             // the screen read as a pale grey-white card (M_Screen emissive #5E8FC7 x 1.6); reference = deep blue glass behind
             // the cyan neon T-shirt (the icon keeps M_Neon_Cyan)
             Mat("M_ConsoleScreen_r8", "BWK/Soft", m =>

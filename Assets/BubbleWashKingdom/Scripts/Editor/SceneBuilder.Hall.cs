@@ -297,7 +297,10 @@ namespace BubbleWash.EditorTools
             if (oldRays != null) oldRays.gameObject.SetActive(false);
 
             // golden starburst (rays + sparkle stars) inside the bulb ring, slowly turning in the portal plane
-            var burst = HallPlace(pgo, "Lighting", "SM_Starburst_r7", Vector3.zero, Quaternion.identity, 0.55f, default, false);
+            // r8 v2 (asset artist, asset 24): soft additive SM_Starburst_r8 (many thin fading rays, sparkles, cream core) in
+            // the same place / scale; r7 stays the fallback
+            string burstName = ModelPrefab("Lighting", "SM_Starburst_r8") != null ? "SM_Starburst_r8" : "SM_Starburst_r7";
+            var burst = HallPlace(pgo, "Lighting", burstName, Vector3.zero, Quaternion.identity, 0.55f, default, false);
             if (burst != null)
             {
                 burst.transform.localPosition = new Vector3(0f, 0f, 1.3f);

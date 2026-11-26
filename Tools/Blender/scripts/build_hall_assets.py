@@ -495,6 +495,122 @@ def build_roller_r8(M):
     return finish("SM_BrushRoller_r8", smooth=0.0)
 
 
+# ------------------------------------------------------------------ r8 v2 (asset artist): soft golden starburst, asset 24
+# Reference f_14.50s / asset sheet 24: a warm amber-gold glow with MANY thin soft radial rays fading outward, a cream (not
+# white) centre, small golden sparkles. r7 = opaque BWK/Emissive blades (flat lemon polygon). r8 = additive soft quads for
+# BWK/LightBlob (radial UV falloff, no texture): each ray quad carries only the OUTER half of the blob (base uv.y 0.5 ->
+# tip 1.0), so it is brightest at its root and fades to nothing at the tip and both sides; sparkles = two crossed stretched
+# blobs (soft 4-point stars); a big amber halo + a small cream core quad. Same plane / axes / scale as SM_Starburst_r7
+# (XZ plane, +Y toward the viewer) so it drops into BuildPortalExtras unchanged. ~430 tris.
+def build_starburst_r8():
+    mats = [C.material("M_BurstRays_r8", "#FF9A2E"), C.material("M_BurstSparkle_r8", "#FFC860"),
+            C.material("M_BurstGlow_r8", "#FF8A1A"), C.material("M_BurstCore_r8", "#FFE2B0")]
+    bm = bmesh.new()
+    uvl = bm.loops.layers.uv.new("UVMap")
+
+    def quad(mi, pts, uvs):
+        vs = [bm.verts.new(p) for p in pts]
+        f = bm.faces.new(vs)
+        f.material_index = mi
+        for lp, uv in zip(f.loops, uvs):
+            lp[uvl].uv = uv
+        f.normal_update()
+        if f.normal.y < 0:
+            f.normal_flip()
+
+    full = [(0, 0), (1, 0), (1, 1), (0, 1)]
+    # amber halo (behind everything) and the cream core
+    for mi, r, y in ((2, 3.4, -0.12), (3, 1.25, 0.02)):
+        quad(mi, [Vector((-r, y, -r)), Vector((r, y, -r)), Vector((r, y, r)), Vector((-r, y, r))], full)
+    # rays: 132 thin tapered soft quads, every 3rd long, slight angular jitter; roots at r 0.55-0.8 under the core
+    nr = 132
+    for i in range(nr):
+        a = 2 * PI * i / nr + random.uniform(-0.012, 0.012)
+        long_ = i % 3 == 0
+        L = random.uniform(4.6, 7.0) if long_ else random.uniform(2.0, 4.2)
+        r0 = random.uniform(0.55, 0.8)
+        w0 = random.uniform(0.07, 0.12) if long_ else random.uniform(0.045, 0.085)
+        w1 = w0 * 0.4
+        d = Vector((math.cos(a), 0, math.sin(a)))
+        t = Vector((-math.sin(a), 0, math.cos(a)))
+        y = Vector((0, -0.03 - 0.03 * random.random(), 0))
+        quad(0, [d * r0 - t * w0 + y, d * r0 + t * w0 + y, d * L + t * w1 + y, d * L - t * w1 + y],
+             [(0, 0.5), (1, 0.5), (1, 1), (0, 1)])
+    # sparkles: soft 4-point stars (two crossed stretched blobs) in front of the rays
+    for i in range(42):
+        rr = random.uniform(1.3, 6.2)
+        a = random.uniform(0, 2 * PI)
+        c = Vector((rr * math.cos(a), random.uniform(0.15, 0.8), rr * math.sin(a)))
+        s = random.uniform(0.12, 0.3) * (1.5 if i < 6 else 1.0)
+        tw = s * 0.16
+        for (ax, bx) in ((Vector((1, 0, 0)), Vector((0, 0, 1))), (Vector((0, 0, 1)), Vector((1, 0, 0)))):
+            quad(1, [c - ax * s - bx * tw, c + ax * s - bx * tw, c + ax * s + bx * tw, c - ax * s + bx * tw], full)
+    o = C.mesh_from_bmesh("starburst_r8", bm)
+    for m in mats:
+        o.data.materials.append(m)
+    # Blender preview only: additive UV-radial emission like BWK/LightBlob (Unity uses the library materials of these names)
+    for m, strength in zip(mats, (2.2, 3.0, 0.9, 1.6)):
+        nt = m.node_tree
+        nt.nodes.clear()
+        out = nt.nodes.new("ShaderNodeOutputMaterial")
+        tc = nt.nodes.new("ShaderNodeTexCoord")
+        ma = nt.nodes.new("ShaderNodeVectorMath")
+        ma.operation = 'MULTIPLY_ADD'
+        ma.inputs[1].default_value = (2.0, 2.0, 0.0)
+        ma.inputs[2].default_value = (-1.0, -1.0, 0.0)
+        ln = nt.nodes.new("ShaderNodeVectorMath")
+        ln.operation = 'LENGTH'
+        mr = nt.nodes.new("ShaderNodeMapRange")
+        mr.interpolation_type = 'SMOOTHSTEP'
+        mr.inputs["To Min"].default_value = 1.0
+        mr.inputs["To Max"].default_value = 0.0
+        pw = nt.nodes.new("ShaderNodeMath")
+        pw.operation = 'POWER'
+        pw.inputs[1].default_value = 1.4
+        em = nt.nodes.new("ShaderNodeEmission")
+        em.inputs["Color"].default_value = C.hex_rgba({0: "#FF9A2E", 1: "#FFC860", 2: "#FF8A1A", 3: "#FFE2B0"}[mats.index(m)])
+        mu = nt.nodes.new("ShaderNodeMath")
+        mu.operation = 'MULTIPLY'
+        mu.inputs[1].default_value = strength
+        tr = nt.nodes.new("ShaderNodeBsdfTransparent")
+        add = nt.nodes.new("ShaderNodeAddShader")
+        nt.links.new(tc.outputs["UV"], ma.inputs[0])
+        nt.links.new(ma.outputs[0], ln.inputs[0])
+        nt.links.new(ln.outputs["Value"], mr.inputs["Value"])
+        nt.links.new(mr.outputs["Result"], pw.inputs[0])
+        nt.links.new(pw.outputs[0], mu.inputs[0])
+        nt.links.new(mu.outputs[0], em.inputs["Strength"])
+        nt.links.new(em.outputs[0], add.inputs[0])
+        nt.links.new(tr.outputs[0], add.inputs[1])
+        nt.links.new(add.outputs[0], out.inputs["Surface"])
+        try:
+            m.surface_render_method = 'BLENDED'
+        except Exception:  # noqa: BLE001
+            m.blend_method = 'BLEND'
+    PARTS.append(o)
+    return finish("SM_Starburst_r8", group="Lighting", smooth=0)
+
+
+def starburst_r8_only():
+    """BWK_HALL_ONLY=starburst_r8: build + export only SM_Starburst_r8 and its preview (dark background)."""
+    C.reset_scene()
+    o = build_starburst_r8()
+    try:
+        bpy.context.scene.eevee.taa_render_samples = 16
+    except Exception:
+        pass
+    w = bpy.context.scene.world
+    if w is not None and w.use_nodes:
+        bg = w.node_tree.nodes.get("Background")
+        if bg is not None:
+            bg.inputs["Color"].default_value = (0.03, 0.02, 0.08, 1.0)
+            bg.inputs["Strength"].default_value = 1.0
+    out = os.path.join(C.ROOT, "Captures", "agents", "assets", "r8", "v2", "pv_starburst_r8.png")
+    C.ensure_dir(os.path.dirname(out))
+    lineup_preview([o], out, (0.0, 19.0, 0.0), (0.0, 0.0, 0.0), 50.0, (800, 800))
+    print("DONE starburst r8")
+
+
 def roller_r8_only():
     """BWK_HALL_ONLY=roller_r8: build + export only SM_BrushRoller_r8 (no churn on the r7 FBX files) and its preview."""
     C.reset_scene()
@@ -562,5 +678,7 @@ def main():
 
 if os.environ.get("BWK_HALL_ONLY") == "roller_r8":
     roller_r8_only()
+elif os.environ.get("BWK_HALL_ONLY") == "starburst_r8":
+    starburst_r8_only()
 else:
     main()
