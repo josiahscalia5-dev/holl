@@ -29,7 +29,7 @@ Material:
     - _BumpStrength: 0.5
     - _DstBlend: 0
     - _GlintAmount: 0.5
-    - _Glow: 0.45
+    - _Glow: 0.75
     - _HotBoost: 0.6
     - _HotFar: 3.5
     - _HotNear: 3
@@ -41,7 +41,7 @@ Material:
     - _ReflectBoost: 0
     - _RimPower: 3
     - _RimStrength: 0.25
-    - _Smoothness: 0.9
+    - _Smoothness: 0.88
     - _SpecStrength: 1
     - _SrcBlend: 1
     - _StitchU: 64

@@ -26,7 +26,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bmesh  # noqa: E402
 import bpy  # noqa: E402
-from mathutils import Vector  # noqa: E402
+from mathutils import Matrix, Vector  # noqa: E402
 
 import bwk_common as C  # noqa: E402
 
@@ -34,7 +34,12 @@ GROUP = "FX"
 QUICK = os.environ.get("BWK_FX_QUICK", "") == "1"
 ONLY = os.environ.get("BWK_FX_ONLY", "")
 OUT = os.environ.get("BWK_FX_OUT", "")
-V2_DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "fx_crown_v2_f0825.json")
+V2_DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", os.environ.get("BWK_FX_DATA", "fx_crown_v2_f0825.json"))
+# round 8 masters: BWK_FX_REAR=1 = crowns traced from the REAR hero frame (fx_crown_rear_f0300.json) through the hero
+# gameplay camera (2.75 back / 1.3 up / pitch 10 / vFOV 58 -> f 649.5 px at 720p); the runner origin M sits on the water
+# just ahead of the reference soles; the meshes are turned 180 deg about Z before export so they are authored in
+# runner-local space (Unity: no yaw) and exported as SM_FX_CrownRear_L / _R (the front-traced v2 stay as they are)
+REAR = os.environ.get("BWK_FX_REAR", "") == "1"
 
 # ------------------------------------------------------------------ reference camera model, frame 8.25 s (1280x720)
 SHOT_W, SHOT_H_PX = 1280, 720
@@ -46,7 +51,7 @@ SHOT_ROLL = float(_E("BWK_FX_CAM_ROLL", "0.0"))       # deg about the view axis 
 SHOT_BODY_PX = (float(_E("BWK_FX_BODY_U", "530")), float(_E("BWK_FX_BODY_V", "415")))
 SHOT_BODY_DEPTH = float(_E("BWK_FX_BODY_DEPTH", "2.6"))  # axial depth of the mascot body centre (~1 m wide body = 270 px)
 # (the env-var overrides let the crowns be re-solved through the environment agent's camera.json in one run)
-SHOT_FEET_PX = (600.0, 575.0)                         # feet / water contact between the soles
+SHOT_FEET_PX = (float(os.environ.get("BWK_FX_FEET_U", "600")), float(os.environ.get("BWK_FX_FEET_V", "575")))  # feet / water contact between the soles
 CROWN_WALL_A, CROWN_WALL_B = 0.75, 0.40               # elliptic crown wall around the feet (lateral, depth semi-axes)
 MB_K = float(os.environ.get("BWK_FX_MBK", "0.68"))    # measured balls + in-between balls -> IoU .924 vs the reference mask (.80: .870)
 RES_V2 = 0.0045
@@ -80,6 +85,8 @@ def shot_frame():
     body = cam.C + cam.ray(*SHOT_BODY_PX) * SHOT_BODY_DEPTH
     M = Vector((body.x, body.y, 0.0))
     feet, _ = cam.water(*SHOT_FEET_PX)
+    if REAR:   # runner origin on the water 10 cm ahead of the soles (rear view: ahead = +Y)
+        M = Vector((feet.x, feet.y + 0.10, 0.0))
     return cam, M, body, feet
 
 
@@ -89,6 +96,20 @@ def embed_ball(cam, M, F, u, v, r_px):
     Cp = cam.C
     r_m = r_px * 2.2 / SHOT_F
     wall = False
+    if REAR:
+        # rear view: the milk rises BESIDE the feet -> every ball sits on the vertical plane through the feet (a crown
+        # wall facing the camera) unless its ray meets the water first (parts below the feet line lie on the water
+        # nearer the camera); far rays never run off along the water (the first rear build reached 3 m sideways)
+        for _ in range(3):
+            zt = 0.55 * r_m
+            t = (F.y - Cp.y) / d.y
+            hit = Cp + d * t
+            wall = hit.z >= zt
+            if not wall:
+                t = (Cp.z - zt) / -d.z
+                hit = Cp + d * t
+            r_m = r_px * t / SHOT_F
+        return hit - M, r_m, wall
     for _ in range(3):
         zt = 0.55 * r_m
         hit, t, wall = None, None, False
@@ -477,8 +498,11 @@ def main_v2():
         print("SHOT model: runner origin M world (%.2f, %.2f), body z %.2f, feet rel M (%.2f, %.2f), camera rel M (%.2f, %.2f, %.2f)" % (
             M.x, M.y, body.z, feet.x - M.x, feet.y - M.y, -M.x, -M.y, SHOT_CAM_H))
         for side in ("L", "R"):
-            name = "SM_FX_Crown_v2_" + side
+            name = ("SM_FX_CrownRear_" if REAR else "SM_FX_Crown_v2_") + side
             obj, raw = crown_v2(cam, M, feet, data["wings"][side]["balls"], name, milk)
+            if REAR:
+                obj.data.transform(Matrix.Rotation(math.pi, 4, "Z"))
+                obj.data.update()
             crowns.append(obj)
             report.append("%-18s %6d tris (raw %6d) dims %s loc-bbox x %.2f..%.2f y %.2f..%.2f z %.2f..%.2f" % (
                 name, C.tri_count(obj), raw, tuple(round(d, 3) for d in obj.dimensions),
@@ -505,12 +529,15 @@ def main_v2():
         pink = C.material("PV_Mascot", "#F07AA0", roughness=0.8)
         cream = C.material("PV_Feet", "#FFF2F6", roughness=0.7)
         stand = [ellipsoid("PV_Body", body - M, (0.48, 0.44, 0.46), pink)]
-        for (u, v) in ((560.0, 540.0), (683.0, 498.0)):
-            stand.append(ellipsoid("PV_Foot", cam.C + cam.ray(u, v) * 2.15 - M, (0.12, 0.06, 0.12), cream))
+        for (u, v) in (((551.0, 492.0), (726.0, 490.0)) if REAR else ((560.0, 540.0), (683.0, 498.0))):
+            stand.append(ellipsoid("PV_Foot", cam.water(u, v, 0.12)[0] - M if REAR else cam.C + cam.ray(u, v) * 2.15 - M, (0.12, 0.06, 0.12), cream))
+        if REAR:   # preview in the authored (Blender) frame: turn the crowns back so the shot camera sees them as traced
+            for o in crowns:
+                o.data.transform(Matrix.Rotation(math.pi, 4, "Z"))
         for o in foams:
             o.hide_render = True
         shot_camera_object(cam, M)
-        render(C.preview_path("FX_Crown_v2_shot0825"), SHOT_W, SHOT_H_PX)
+        render(C.preview_path("FX_Crown_rear_f0300" if REAR else "FX_Crown_v2_shot0825"), SHOT_W, SHOT_H_PX)
         if OUT:
             mask_pass(crowns, os.path.join(OUT, "v2_crown_mask.png"), SHOT_W, SHOT_H_PX)
         for o in crowns + stand:

@@ -36,7 +36,7 @@ CYAN_GR = 34            # g - r above this (and g > 232) = chevron glow, not mil
 if os.environ.get("BWK_TRACE_PRESET", "") == "rear0300":
     WINGS = {
         "L": {"box": (395, 405, 602, 652), "excl_circles": [(551, 492, 46)], "excl_boxes": [(395, 405, 470, 446)]},
-        "R": {"box": (678, 380, 1002, 714), "excl_circles": [(726, 490, 46)], "excl_boxes": []},
+        "R": {"box": (678, 380, 1002, 714), "excl_circles": [(726, 490, 46)], "excl_boxes": [(905, 440, 1002, 590)]},
     }
     CHEVRON = None
     CYAN_GR = 26
@@ -49,7 +49,7 @@ def splash_mask(img):
     white = (mn > 150) & (b > 175) & ((mx - mn) < 72)
     cyan = (g - r > CYAN_GR) & (g > 225)       # glowing chevron core / rim (cyan-white, greener than the milk)
     if os.environ.get("BWK_TRACE_PRESET", "") == "rear0300":
-        white &= (b > r + 8) & (g > r)            # rear frame: pink rail highlights / fur are warm (r >= b), milk is cool white
+        white &= (b >= r - 3) & (g >= r - 3)      # rear frame: pink rail highlights / fur are warm (r > b), milk is neutral-to-cool white
     return white & ~cyan
 
 
@@ -142,6 +142,17 @@ def main():
         if CHEVRON:
             m &= ~in_triangle(xx, yy, CHEVRON)
         m = majority(majority(m))
+        if os.environ.get("BWK_TRACE_PRESET", "") == "rear0300":
+            # owner: THICK rounded CONNECTED liquid, not lace -> close the gaps between neighbouring strands (dilate 3 px,
+            # erode 1 px): strands ~2 px thicker per side, near fragments fuse, separate droplets stay separate
+            for _ in range(3):
+                p_ = np.pad(m, 1)
+                m = p_[1:-1, 1:-1] | p_[:-2, 1:-1] | p_[2:, 1:-1] | p_[1:-1, :-2] | p_[1:-1, 2:]
+            p_ = np.pad(m, 1, constant_values=True)
+            m = p_[1:-1, 1:-1] & p_[:-2, 1:-1] & p_[2:, 1:-1] & p_[1:-1, :-2] & p_[1:-1, 2:]
+            for (cx, cy, cr) in spec["excl_circles"]:
+                m &= (xx - cx) ** 2 + (yy - cy) ** 2 > cr * cr
+            box = np.zeros_like(m); box[y0:y1, x0:x1] = True; m &= box
         if dbg:
             write_png(os.path.join(dbg, "trace_bin_%s_%s.png" % (name, os.path.splitext(os.path.basename(src))[0])),
                       (m[:, :, None] * np.array([255, 255, 255])).astype(np.uint8))

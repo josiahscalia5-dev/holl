@@ -84,8 +84,10 @@ namespace BubbleWash.EditorTools
             // from going violet under the blue tunnel light (the loss measured on the r8 socks / roller).
             Mat("M_DoorRainbow_r8", "BWK/Soft", m =>
             {
-                F(m, "_Mode", 4); C(m, "_ColorA", "#FFF6E0"); F(m, "_Smoothness", 0.9f); F(m, "_Metallic", 0f);
-                F(m, "_Glow", 0.45f); F(m, "_BumpScale", 0.5f); F(m, "_RimPower", 3f); F(m, "_RimStrength", 0.25f);
+                // preview 1 (glow .45): bands rendered olive / teal-dark under the violet tunnel light (rear still 07) while the
+                // reference rainbow chamber is luminous -> colour-true self light .75 (the bands ARE the chamber's light)
+                F(m, "_Mode", 4); C(m, "_ColorA", "#FFF6E0"); F(m, "_Smoothness", 0.88f); F(m, "_Metallic", 0f);
+                F(m, "_Glow", 0.75f); F(m, "_BumpScale", 0.5f); F(m, "_RimPower", 3f); F(m, "_RimStrength", 0.25f);
             });
             // door socks = material VARIANT of the sock master M_Sock_r8 (overrides tint / glow only)
             var sockMaster = AssetDatabase.LoadAssetAtPath<Material>($"{Dir}/M_Sock_r8.mat");

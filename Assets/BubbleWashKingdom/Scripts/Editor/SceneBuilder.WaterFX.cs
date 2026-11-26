@@ -626,10 +626,23 @@ namespace BubbleWash.EditorTools
             return frames;
         }
 
+        // round 8 masters (owner: "thick rounded connected liquid crowns", annotated 02 item 4; library 18): crowns RE-TRACED from
+        // the REAR hero frame f_03.00s (Tools/fx_splash_trace.py preset rear0300 -> data/fx_crown_rear_f0300.json) and solved
+        // through the hero gameplay camera (build_fx_v2.py BWK_FX_REAR=1: 2.75 / 1.3 / pitch 10 / vFOV 58): milk rising on the
+        // plane of the soles, low parts lying on the water nearer the camera, separate droplets. Authored in runner-local space
+        // (no yaw, no per-side offsets); 0.95 because the reference feet stand ~0.5 m further from its camera than ours.
+        const float CrownRearScale = 0.95f, CrownRearFwd = 0f;
+
         static bool BuildCrownsV2(GameObject fxRoot, RunnerController runner, bool save)
         {
-            var pl = ModelParts("FX", "SM_FX_Crown_v2_L");
-            var pr = ModelParts("FX", "SM_FX_Crown_v2_R");
+            var pl = ModelParts("FX", "SM_FX_CrownRear_L");
+            var pr = ModelParts("FX", "SM_FX_CrownRear_R");
+            bool rear = pl.Count > 0 && pr.Count > 0;
+            if (!rear)
+            {
+                pl = ModelParts("FX", "SM_FX_Crown_v2_L");
+                pr = ModelParts("FX", "SM_FX_Crown_v2_R");
+            }
             var milk = Mat("M_FX_Milk_v2");
             if (pl.Count == 0 || pr.Count == 0 || milk == null) return false;
             var framesL = CrownV2FrameMeshes(pl[0].mesh, "SM_FX_CrownV2_L", save);
@@ -640,13 +653,13 @@ namespace BubbleWash.EditorTools
             sc.frames = framesL.ToArray();
             sc.framesRight = framesR.ToArray();
             sc.fps = 12f;
-            var rot = Quaternion.Euler(0f, 180f, 0f);
-            var s = new Vector3(CrownV2Scale, CrownV2Scale * CrownV2Lift, CrownV2Scale);
+            var rot = rear ? Quaternion.identity : Quaternion.Euler(0f, 180f, 0f);
+            var s = rear ? Vector3.one * CrownRearScale : new Vector3(CrownV2Scale, CrownV2Scale * CrownV2Lift, CrownV2Scale);
             var crowns = new List<MeshFilter>();
             foreach (float side in new[] { -1f, 1f })
             {
                 var go = Child(holder, side < 0 ? "CrownL" : "CrownR");
-                go.transform.localPosition = new Vector3(side < 0 ? -CrownV2OutL : CrownV2OutR, 0f, CrownV2Fwd);
+                go.transform.localPosition = rear ? new Vector3(0f, 0f, CrownRearFwd) : new Vector3(side < 0 ? -CrownV2OutL : CrownV2OutR, 0f, CrownV2Fwd);
                 go.transform.localRotation = rot;
                 go.transform.localScale = s;
                 var mf = go.AddComponent<MeshFilter>();
@@ -661,7 +674,8 @@ namespace BubbleWash.EditorTools
             sc.baseScale = new[] { s, s };
             sc.baseRotation = new[] { rot, rot };
             sc.phase = new[] { 0, CrownV2Frames / 2 };
-            Debug.Log($"[BWK] waterfx crowns v2: SM_FX_Crown_v2_L/R x{CrownV2Frames} frames, yaw 180, out L {CrownV2OutL} R {CrownV2OutR} fwd {CrownV2Fwd} scale {CrownV2Scale} lift {CrownV2Lift}, M_FX_Milk_v2");
+            Debug.Log(rear ? $"[BWK] waterfx crowns REAR-traced: SM_FX_CrownRear_L/R x{CrownV2Frames} frames, no yaw, scale {CrownRearScale} fwd {CrownRearFwd}, M_FX_Milk_v2"
+                           : $"[BWK] waterfx crowns v2: SM_FX_Crown_v2_L/R x{CrownV2Frames} frames, yaw 180, out L {CrownV2OutL} R {CrownV2OutR} fwd {CrownV2Fwd} scale {CrownV2Scale} lift {CrownV2Lift}, M_FX_Milk_v2");
             return true;
         }
 

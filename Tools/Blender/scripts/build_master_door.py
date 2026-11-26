@@ -196,27 +196,59 @@ def build_glass(mb, q):
           uv_fn=lambda p: (0.5 + p.x / (2 * GLASS_R), 0.5 + p.z / (2 * GLASS_R)))
 
 
+SKY_TOP, SKY_LOW = "#FFF1E4", "#BDE8F6"     # pale luminous chamber back: cream top -> pale aqua (preview 2: lavender-blue read 24.5 % cyan/blue vs ref 14.2, white 2.8 vs 12.5)
+
+
+def sky(p):
+    t = min(max((p.z + GLASS_R) / (2 * GLASS_R), 0.0), 1.0)
+    a, b = lin(SKY_LOW), lin(SKY_TOP)
+    return tuple(a[k] + (b[k] - a[k]) * t for k in range(3)) + (1.0,)
+
+
 def build_chamber(mb, q):
-    # drum cylinder + bowl back, normals facing the viewer / the axis
+    # drum cylinder + bowl back, normals facing the viewer / the axis (v1 preview: the perforated M_ChamberDrum read as a
+    # dark violet hole in the rear stills -> pale sky gradient in the glossy vertex-colour material, like the reference)
     prof = [(GLASS_R + 0.005, -0.03), (GLASS_R + 0.005, -0.20), (GLASS_R, -DRUM_D), (1.84, -0.46), (1.60, -0.53),
             (1.15, -0.58), (0.55, -0.61), (0.0, -0.62)]
-    lathe(mb, prof, DR, 64 if q else 32, (0, 0, 0), FRONT, X_AXIS, u_span=6.0)
+    lathe(mb, prof, RB, 64 if q else 32, (0, 0, 0), FRONT, X_AXIS, u_span=6.0, col_fn=sky)
     # lavender housing cylinder behind the frame back (hides the gap to the curved wall)
     hous = [(2.30, -1.25), (2.30, -0.11)]
     lathe(mb, hous, RIM, 64 if q else 32, (0, 0, 0), FRONT, X_AXIS, u_span=6.0)
 
 
-RAINBOW_C = (0.80, -0.17)       # rainbow / inner-drum centre (x, z): toward the latch side, slightly low
-RAINBOW = ["#9A62E6", "#4A86F0", "#3FD0E0", "#7EDB5A", "#FFE04A", "#FF9A3D", "#FF5A8C"]   # inner -> outer
+RAINBOW_C = (0.55, -0.25)       # rainbow / inner-drum centre (x, z): toward the latch side, slightly low
+INNER_R = 0.62                  # dark inner drum radius inside the rainbow
+RAINBOW = ["#9A62E6", "#4A86F0", "#3FD0E0", "#7EDB5A", "#FFF070", "#FFA040", "#FF5A8C"]   # inner -> outer
 
 
 def build_interior(mb, q):
     cx, cz = RAINBOW_C
-    # inner dark drum lip (lavender torus on the back wall) at radius 1.0 around the rainbow centre
+    # dark inner drum disc (reference: grey-violet drum inside the rainbow) following the bowl, slightly in front of it
+    segs = 32 if q else 16
+    rings = [0.0, 0.32, INNER_R + 0.02]
+    dark_c, dark_e = lin("#5E5296"), lin("#463A7E")
+    ids = []
+    for ri, r in enumerate(rings):
+        row = []
+        for k in range(segs if r > 0 else 1):
+            a = TAU * k / segs
+            x, z = cx + r * math.cos(a), cz + r * math.sin(a)
+            c = dark_c if ri < 2 else dark_e
+            row.append(mb.v(P(x, bowl_h(math.hypot(x, z)) + 0.012, z), c))
+        ids.append(row)
+    for ri in range(len(rings) - 1):
+        for k in range(segs):
+            k1 = (k + 1) % segs
+            if ri == 0:
+                mb.f([ids[0][0], ids[1][k], ids[1][k1]], RB, [(0.5, 0.5), (0, 1), (1, 1)], ref=FRONT)
+            else:
+                mb.f([ids[ri][k], ids[ri + 1][k], ids[ri + 1][k1], ids[ri][k1]], RB,
+                     [(k / segs, 0), (k / segs, 1), (k1 / segs, 1), (k1 / segs, 0)], ref=FRONT)
+    # inner drum lip (lavender torus on the back wall) around the dark disc
     lip_pts = []
     for k in range(48 if q else 24):
         a = TAU * k / (48 if q else 24)
-        x, z = cx + 0.93 * math.cos(a), cz + 0.93 * math.sin(a)
+        x, z = cx + (INNER_R + 0.03) * math.cos(a), cz + (INNER_R + 0.03) * math.sin(a)
         rho = math.hypot(x, z)
         if rho > GLASS_R - 0.08:
             x, z = x * (GLASS_R - 0.08) / rho, z * (GLASS_R - 0.08) / rho
@@ -225,10 +257,10 @@ def build_interior(mb, q):
           closed_path=True, closed_prof=True)
     # 7 raised glossy rainbow arches following the bowl (half-round, vertex colours), clipped by the drum wall
     step = 5.0 if q else 10.0
-    prof = [(0.02 + 0.045 * math.cos(t), 0.071 * math.sin(t)) for t in
+    prof = [(0.022 + 0.05 * math.cos(t), 0.088 * math.sin(t)) for t in
             [TAU * k / (10 if q else 6) for k in range(10 if q else 6)]]
     for b, hexc in enumerate(RAINBOW):
-        R = 1.02 + 0.155 * b
+        R = INNER_R + 0.13 + 0.19 * b
         col = lin(hexc)
         run = []
         a = -60.0
