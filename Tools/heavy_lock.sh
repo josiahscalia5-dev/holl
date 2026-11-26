@@ -15,8 +15,23 @@ yield() {   # true while a different, live lead run is waiting
   local p; p=$(cat "$PRIO" 2>/dev/null)
   [ -n "$p" ] && kill -0 "$p" 2>/dev/null
 }
-waited=0
-until ! yield && mkdir "$LOCK" 2>/dev/null; do
+orphan() {  # a Unity / Blender process still running although nobody holds the lock (its shell was killed by a tool timeout)
+  tasklist //FI "IMAGENAME eq Unity.exe" //NH 2>/dev/null | grep -qi "^Unity.exe" && return 0
+  tasklist //FI "IMAGENAME eq blender.exe" //NH 2>/dev/null | grep -qi "^blender.exe" && return 0
+  return 1
+}
+waited=0; owaited=0
+while true; do
+  if ! yield && mkdir "$LOCK" 2>/dev/null; then
+    # 2026-11-26: two batched previews died with "another Unity instance is running": a tool timeout had killed the shell
+    # holding the lock while its Unity kept running. Wait (max 15 min) for such orphans before starting a new run.
+    if orphan && [ $owaited -lt 900 ]; then
+      rmdir "$LOCK" 2>/dev/null
+      [ $((owaited % 60)) -eq 0 ] && echo "[heavy-lock] '$LABEL': lock free but a Unity/Blender process is still running - waiting (${owaited}s)"
+      sleep 5; owaited=$((owaited + 5)); continue
+    fi
+    break
+  fi
   if [ -d "$LOCK" ]; then
     holder=$(cat "$LOCK/pid" 2>/dev/null)
     age=$(( $(date +%s) - $(stat -c %Y "$LOCK" 2>/dev/null || date +%s) ))
