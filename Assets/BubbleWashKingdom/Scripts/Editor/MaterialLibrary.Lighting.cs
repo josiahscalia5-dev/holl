@@ -50,14 +50,14 @@ namespace BubbleWash.EditorTools
                 coreColor: "#70FFFF", probeDim: 0.45f);
             EmissiveLook("M_Neon_Pink", "#FF2E9E", 3.0f, core: 0.5f, corePower: 1.6f, halo: 0.5f, edgeSat: 0.6f, fog: 0.1f, pulse: 0.05f,
                 coreColor: "#FFB0E0", probeDim: 0.45f);
-            EmissiveLook("M_Neon_Yellow", "#FFB000", 3.2f, core: 0.65f, corePower: 1.6f, halo: 0.5f, edgeSat: 0.6f, fog: 0.1f, pulse: 0.05f,
+            EmissiveLook("M_Neon_Yellow", "#FF9C00", 3.2f, core: 0.8f, corePower: 1.6f, halo: 0.5f, edgeSat: 0.6f, fog: 0.1f, pulse: 0.05f,
                 coreColor: "#FFF0A0", probeDim: 0.45f);
             EmissiveLook("M_Neon_Purple", "#B040FF", 2.9f, core: 0.55f, corePower: 1.6f, halo: 0.5f, edgeSat: 0.6f, fog: 0.1f, pulse: 0.05f,
                 coreColor: "#E8C8FF", probeDim: 0.45f);
 
             // soft coloured glow cards behind every neon star (additive BWK/LightBlob): the star's light spilling over the wall
             // (reference: the big yellow star is filled with a warm ORANGE glow, the cyan one with a soft cyan haze)
-            StarGlow("M_StarGlow_Yellow", "#FF9020", 2.4f, 1.8f);
+            StarGlow("M_StarGlow_Yellow", "#FF6A00", 3.4f, 1.35f);
             StarGlow("M_StarGlow_Cyan", "#14B8FF", 1.6f, 2.0f);
             StarGlow("M_StarGlow_Pink", "#FF2AA8", 1.6f, 2.0f);
             StarGlow("M_StarGlow_Purple", "#9A3CFF", 1.6f, 2.0f);

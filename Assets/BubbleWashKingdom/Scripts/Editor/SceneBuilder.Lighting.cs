@@ -109,7 +109,7 @@ namespace BubbleWash.EditorTools
             var tm = profile.Add<Tonemapping>(true); tm.mode.Override(TonemappingMode.Neutral);
             var ca = profile.Add<ColorAdjustments>(true);
             // richer, darker mids than the washed-out HDR baseline (frame L50 .63 -> reference .55)
-            ca.saturation.Override(4f); ca.contrast.Override(8f); ca.postExposure.Override(-0.1f);
+            ca.saturation.Override(4f); ca.contrast.Override(8f); ca.postExposure.Override(-0.25f);
             // blue-violet shadows / low mids (depth, dark holes); warm highlights keep gold and bulbs warm
             var smh = profile.Add<ShadowsMidtonesHighlights>(true);
             smh.shadows.Override(new Vector4(0.92f, 0.88f, 1.14f, -0.03f));

@@ -20,11 +20,12 @@ namespace BubbleWash.EditorTools
     {
         // decor chevrons down the middle of the water (also drive the light pools in M_Water / BWK_Water). Reference
         // f_002.00-f_003.25: a runway of glowing chevrons about one chevron length apart (SM_Chevron is 1.31 x 0.65 m).
-        public const float ChevronStart = 6f, ChevronSpacing = 1.1f, ChevronScale = 1.35f;
+        // phase / spacing put the hero frame's chevron tips at the reference: under him (screen y .72) and at the bottom (y .87)
+        public const float ChevronStart = 6.4f, ChevronSpacing = 0.95f, ChevronScale = 1.35f;
         // milk crown splashes beside the feet (Art/Models/FX/SM_FX_Crown_xx, left-side asset mirrored for the right).
         // Root anchored in SCREEN space of the hero frame (reference f_003.00s: crowns rise at x 0-.35 / .65-1, y .55-.87).
         static readonly Vector2 CrownRootScreenL = new Vector2(0.31f, 0.80f);
-        const float CrownScale = 1.0f, CrownYaw = 0f;
+        const float CrownScale = 0.92f, CrownYaw = 50f;   // yaw turns the sheet to face the camera
         // reference f_003.00s foreground bubbles: screen x, screen y (0..1 from the top-left of the 9:16 hero frame),
         // diameter as a fraction of the frame width, w > 0 = height above the water (m), w < 0 = -camera depth (m)
         static readonly Vector4[] HeroBubbleSpots =
@@ -67,7 +68,8 @@ namespace BubbleWash.EditorTools
         /// </summary>
         static HeroCam MeasureHeroCam(RunnerController runner)
         {
-            var cam = new HeroCam { pos = new Vector3(0f, 1.0f, -3.0f), rot = Quaternion.Euler(6f, 0f, 0f), fov = HeroCamFov, aspect = 9f / 16f };
+            // fallback = last measurement (2.75 / 1.3 / 10 / 58 camera at 105.5 m)
+            var cam = new HeroCam { pos = new Vector3(0.099f, 0.768f, -2.640f), rot = Quaternion.Euler(1.52f, 356.38f, 354.26f), fov = HeroCamFov, aspect = 9f / 16f };
             if (runner == null || runner.track == null) return cam;
             var rig = Object.FindFirstObjectByType<RunnerCameraRig>(FindObjectsInactive.Include);
             GameObject temp = null;

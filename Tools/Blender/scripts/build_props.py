@@ -827,7 +827,7 @@ def main():
         m = C.material("PV_" + nm, col, roughness=0.3, emission=col, emission_strength=4.0)
         o.data.materials[0] = m
     # rotate items so the camera (at +Y, looking -Y) sees their faces
-    bpy.data.objects["SM_Chevron"].rotation_euler = (math.radians(55), 0, math.radians(180))
+    bpy.data.objects["SM_Chevron"].rotation_euler = (math.radians(-35), 0, math.radians(180))
     floor = bpy.data.meshes.new("floor")
     bm = bmesh.new()
     bmesh.ops.create_grid(bm, x_segments=1, y_segments=1, size=8)

@@ -68,12 +68,12 @@ CUFF_PROFILE = [  # (u, r, rib weight): roll under -> tall ribbed outer face -> 
     (0.225, 0.494, 1.0), (0.265, 0.492, 1.0), (0.293, 0.486, 0.9), (0.309, 0.476, 0.5), (0.317, 0.464, 0.2),
     (0.317, 0.452, 0.0), (0.309, 0.442, 0.0)]
 STRIPE_U = (0.315, 0.405)                  # pale ribbed band right above the cuff (~9 % of the hat width)
-DOME_U0, DOME_H, DOME_R, DOME_EXP = 0.413, 0.22, 0.405, 2.0     # soft round dome (elliptical profile)
+DOME_U0, DOME_H, DOME_R, DOME_EXP = 0.413, 0.21, 0.388, 2.0     # soft round dome (elliptical profile)
 TOP_STRIPE_PHI, TOP_STRIPE_HW = 47.0, 5.5  # extra pale stripe on the dome front (deg of the dome angle), fades out
 TOP_STRIPE_FULL, TOP_STRIPE_END = 45.0, 78.0    # ... over the front only (deg from the front): never seen from behind
 STAR_U, STAR_PHI, STAR_ROT = 0.192, 33.0, -12.0  # star badge on the cuff, 33 deg toward HIS LEFT (+X)
 STAR_RO, STAR_RI = 0.072, 0.032
-POMPOM_R, POMPOM_LIFT = 0.232, 0.18        # pom-pom radius; centre this many radii above the dome top
+POMPOM_R, POMPOM_LIFT = 0.228, 0.0         # pom-pom radius; centre this many radii above the dome top
 POMPOM_SEG = 12
 
 # ------------------------------------------------------------------ face (unchanged design, follows the body centre)
@@ -850,7 +850,7 @@ def build_beanie():
     psi0 = math.pi / 2                          # seam at the back
     # ---- crown profile (u, r, material of the band above this point)
     prof = [(0.255, 0.430, STRIPE), (0.290, 0.457, STRIPE), (STRIPE_U[0], 0.467, STRIPE), (0.348, 0.466, STRIPE),
-            (0.378, 0.458, STRIPE), (0.397, 0.446, STRIPE), (STRIPE_U[1], 0.428, KNIT), (DOME_U0, DOME_R, KNIT)]
+            (0.378, 0.456, STRIPE), (0.397, 0.440, STRIPE), (STRIPE_U[1], 0.414, KNIT), (DOME_U0, DOME_R, KNIT)]
     for phi in (10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 69.0, 77.0, 84.0):
         u, r = dome_ur(phi)
         prof.append((u, r, KNIT))

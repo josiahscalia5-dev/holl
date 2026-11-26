@@ -29,15 +29,15 @@ Material:
     - _BumpStrength: 0.5
     - _DstBlend: 0
     - _GlintAmount: 0.5
-    - _Glow: 0.3
-    - _HotBoost: 0.6
-    - _HotFar: 3.5
+    - _Glow: 0.36
+    - _HotBoost: 0.7
+    - _HotFar: 3.6
     - _HotNear: 3
     - _Intensity: 1.9
     - _Metallic: 0
     - _Mode: 7
     - _RayCount: 14
-    - _ReflectBoost: 0.6
+    - _ReflectBoost: 0.4
     - _RimPower: 3
     - _RimStrength: 0.35
     - _Scale: 3
@@ -47,7 +47,7 @@ Material:
     - _SrcBlend: 1
     - _StitchU: 64
     - _StitchV: 26
-    - _StreakAmount: 0.35
+    - _StreakAmount: 0.25
     - _StreakSpeed: 1.6
     - _StripeWidth: 0.35
     - _Stripes: 4
@@ -56,9 +56,9 @@ Material:
     - _Wrap: 0.5
     - _ZWrite: 1
     m_Colors:
-    - _ColorA: {r: 0.65882355, g: 1, b: 0.9490196, a: 1}
-    - _ColorB: {r: 0, g: 0.6509804, b: 0.78431374, a: 1}
-    - _ColorC: {r: 1, g: 1, b: 1, a: 1}
+    - _ColorA: {r: 0.6509804, g: 1, b: 0.95686275, a: 1}
+    - _ColorB: {r: 0.078431375, g: 0.84705883, b: 0.80784315, a: 1}
+    - _ColorC: {r: 0.9490196, g: 1, b: 0.9882353, a: 1}
     - _ShadowColor: {r: 0.62, g: 0.62, b: 0.95, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

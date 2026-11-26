@@ -25,6 +25,10 @@ Shader "BWK/Fur"
         _StaticMode ("Ignore Shell UV (static meshes)", Range(0,1)) = 0
         _Curl ("Curl / Lean (x fur length)", Range(0,3)) = 1.2
         _Underfur ("Underfur Density", Range(0,1)) = 0.55
+        _PawRootColor ("Paw Coat Root (vertex alpha 0)", Color) = (0.86, 0.80, 0.84, 1)
+        _PawTipColor ("Paw Coat Tip (vertex alpha 0)", Color) = (1, 0.98, 0.98, 1)
+        _EdgeSoft ("Strand Edge Softness", Range(0.01, 0.5)) = 0.18
+        _SilhouetteFade ("Silhouette Halo Fade", Range(0, 1)) = 0.6
     }
     SubShader
     {
@@ -33,10 +37,10 @@ Shader "BWK/Fur"
         #include "BWKCommon.hlsl"
         TEXTURE2D(_NoiseTex); SAMPLER(sampler_NoiseTex);
         CBUFFER_START(UnityPerMaterial)
-            half4 _RootColor, _BaseColor, _TipColor, _RimColor;
+            half4 _RootColor, _BaseColor, _TipColor, _RimColor, _PawRootColor, _PawTipColor;
             float4 _NoiseTex_ST;
             float _Density, _FurLength, _Gravity, _Thinning, _ClumpScale, _RimPower;
-            half _ClumpAmount, _Wrap, _RimStrength, _AO, _Glow, _UseVertexTint, _StaticMode, _Curl, _Underfur;
+            half _ClumpAmount, _Wrap, _RimStrength, _AO, _Glow, _UseVertexTint, _StaticMode, _Curl, _Underfur, _EdgeSoft, _SilhouetteFade;
         CBUFFER_END
         ENDHLSL
 
@@ -45,6 +49,7 @@ Shader "BWK/Fur"
             Name "ForwardLit"
             Tags { "LightMode"="UniversalForward" }
             Cull Back
+            AlphaToMask On   // MSAA alpha-to-coverage: soft strand edges and a fuzzy silhouette without sorting
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -122,20 +127,32 @@ Shader "BWK/Fur"
                 float d2 = length(frac(suv2) - 0.5 - jit2 * 0.4 - lean * 0.6);
                 half under = saturate(1.0 - d2 * 1.8) * 0.5 * _Underfur * (0.8 + 0.4 * clump);
                 half strand = max(guard, under);
-                if (h > 0.001) clip(strand - h * _Thinning * 0.85);
-
-                half3 tint = lerp(half3(1, 1, 1), i.color.rgb, _UseVertexTint * step(0.001, i.color.a));
-                half3 col = h < 0.5 ? lerp(_RootColor.rgb, _BaseColor.rgb, saturate(h * 2.0 + 0.55)) : lerp(_BaseColor.rgb, _TipColor.rgb, h * 2.0 - 1.0);
-                col *= tint * lerp(0.93, 1.05, strand);   // low strand contrast: plush, not needles
-
                 half3 n = normalize(i.normalWS);
                 half3 v = GetWorldSpaceNormalizeViewDir(i.positionWS);
+                half alpha = 1.0;
+                if (h > 0.001)
+                {
+                    // soft coverage instead of a hard cut (alpha-to-coverage), and the outer shells thin out where the
+                    // surface turns away so the silhouette is a soft plush halo instead of a row of needles
+                    half edge = strand - h * _Thinning * 0.85;
+                    alpha = saturate(edge / _EdgeSoft + 0.5);
+                    half ndv = saturate(dot(n, v));
+                    alpha *= lerp(1.0, saturate(ndv * 2.5 + 0.15), _SilhouetteFade * h);
+                    clip(alpha - 0.02);
+                }
+
+                // coat selector: vertex alpha 1 = pink coat, 0 = cream paw coat (blend = lighter paw tips); rgb = tint
+                half3 pinkC = h < 0.5 ? lerp(_RootColor.rgb, _BaseColor.rgb, saturate(h * 2.0 + 0.55)) : lerp(_BaseColor.rgb, _TipColor.rgb, h * 2.0 - 1.0);
+                half3 pawC = lerp(_PawRootColor.rgb, _PawTipColor.rgb, saturate(h * 1.4 + 0.2));
+                half coat = lerp(1.0, i.color.a, _UseVertexTint);
+                half3 col = lerp(pawC, pinkC, coat) * lerp(half3(1, 1, 1), i.color.rgb, _UseVertexTint);
+                col *= lerp(0.95, 1.04, strand);   // low strand contrast: plush, not needles
                 half3 light = BWK_WrapLight(i.positionWS, n, _Wrap);
                 half ao = lerp(1.0 - _AO, 1.0, h);
                 half rim = BWK_Fresnel(n, v, _RimPower) * _RimStrength * (0.4 + 0.6 * h);
                 half3 c = col * light * ao + _RimColor.rgb * rim * light + col * _Glow;
                 c = MixFog(c, i.fog);
-                return half4(c, 1);
+                return half4(c, alpha);
             }
             ENDHLSL
         }

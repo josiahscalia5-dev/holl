@@ -16,20 +16,23 @@ namespace BubbleWash.EditorTools
             {
                 // reference beanie dome: violet ribbed knit. The ribs are geometry (build_mascot_model.py CROWN_RIBS = 72,
                 // UV.x = 0..1 around, UV.y = arc length in metres): _StitchU must equal CROWN_RIBS, _StitchV = rows per metre.
-                F(m, "_Mode", 2); C(m, "_ColorA", "#6A36A6"); C(m, "_ColorB", "#EDE6FF"); F(m, "_Stripes", 3); F(m, "_StripeWidth", 0.0f);
-                F(m, "_StitchU", 72); F(m, "_StitchV", 55); F(m, "_BumpStrength", 0.75f); F(m, "_Smoothness", 0.16f); F(m, "_Glow", 0.06f);
+                // albedo chosen so the dome renders like the reference crown (~#76319f) under the tunnel's violet light
+                F(m, "_Mode", 2); C(m, "_ColorA", "#64428E"); C(m, "_ColorB", "#EDE6FF"); F(m, "_Stripes", 3); F(m, "_StripeWidth", 0.0f);
+                F(m, "_StitchU", 72); F(m, "_StitchV", 55); F(m, "_BumpStrength", 0.75f); F(m, "_Smoothness", 0.14f); F(m, "_Glow", 0.08f);
             });
             Mat("M_HatCuff", "BWK/Character", m =>
             {
                 // tall folded cuff: CUFF_RIBS = 96 deep geometric ribs
-                F(m, "_Mode", 2); C(m, "_ColorA", "#62329A"); C(m, "_ColorB", "#62329A"); F(m, "_StripeWidth", 0f);
-                F(m, "_StitchU", 96); F(m, "_StitchV", 60); F(m, "_BumpStrength", 0.85f); F(m, "_Smoothness", 0.14f); F(m, "_Glow", 0.05f);
+                // warmer, lighter violet than before (rendered indigo #5414a9; reference cuff ~#74329e)
+                F(m, "_Mode", 2); C(m, "_ColorA", "#8C5E9A"); C(m, "_ColorB", "#8C5E9A"); F(m, "_StripeWidth", 0f);
+                F(m, "_StitchU", 96); F(m, "_StitchV", 60); F(m, "_BumpStrength", 0.8f); F(m, "_Smoothness", 0.12f); F(m, "_Glow", 0.12f);
             });
             Mat("M_HatStripe", "BWK/Character", m =>
             {
                 // pale pink-lavender ribbed band above the cuff (same 72 ribs as the dome)
-                F(m, "_Mode", 2); C(m, "_ColorA", "#EED8EE"); C(m, "_ColorB", "#EED8EE"); F(m, "_StripeWidth", 0f);
-                F(m, "_StitchU", 72); F(m, "_StitchV", 55); F(m, "_BumpStrength", 0.7f); F(m, "_Smoothness", 0.18f); F(m, "_Glow", 0.08f);
+                // bright pale pink-white knit band (reference ~#d7acd5, lit #f1c8ef): it sits in the hat's shade, so it self-lights
+                F(m, "_Mode", 2); C(m, "_ColorA", "#FFEAF6"); C(m, "_ColorB", "#FFEAF6"); F(m, "_StripeWidth", 0f);
+                F(m, "_StitchU", 72); F(m, "_StitchV", 55); F(m, "_BumpStrength", 0.7f); F(m, "_Smoothness", 0.15f); F(m, "_Glow", 0.30f);
             });
             Mat("M_EyeIris", "BWK/Character", m =>
             {
@@ -38,27 +41,36 @@ namespace BubbleWash.EditorTools
             });
             Lit_("M_Mouth", "#4B0F1E", metallic: 0f, smooth: 0.6f);
             Lit_("M_Tongue", "#FF6F93", metallic: 0f, smooth: 0.55f, emission: "#300812");
-            Lit_("M_PawPad", "#F2F4FF", metallic: 0f, smooth: 0.35f, emission: "#2A1A20");
+            Mat("M_PawPad", "BWK/Character", m =>
+            {
+                // soft candy-pink toe beans: fabric mode multiplies _ColorA by the vertex colour (pads = pink Col)
+                F(m, "_Mode", 4); C(m, "_ColorA", "#FFFFFF"); F(m, "_BumpScale", 0.6f); F(m, "_Smoothness", 0.38f); F(m, "_Glow", 0.16f);
+                F(m, "_RimStrength", 0.25f);
+            });
             Lit_("M_StarBadge", "#FFD43F", metallic: 0.1f, smooth: 0.6f, emission: "#7A4A00");
             var furNoise = AssetDatabase.LoadAssetAtPath<Texture2D>($"{Tex}/T_FurNoise.png");
             Mat("M_Fur", "BWK/Fur", m =>
             {
                 // warm plush pink (slightly salmon; the tunnel's violet light adds blue): light roots, soft pale tips.
                 // Strand cells are square (the shader doubles UV.x); fine dense guard hairs + thick underfur = plush.
-                C(m, "_RootColor", "#C46C78"); C(m, "_BaseColor", "#E8888E"); C(m, "_TipColor", "#FAC4C0");
+                // coral-leaning albedo: the tunnel light is violet, so this renders as the reference's warm pink (~#d06e94).
+                // Short dense minky pile, soft alpha-to-coverage strands, little clumping/curl: plush, not needles.
+                C(m, "_RootColor", "#B85A5C"); C(m, "_BaseColor", "#DB706E"); C(m, "_TipColor", "#EBA197");
+                C(m, "_PawRootColor", "#D9CDD5"); C(m, "_PawTipColor", "#FFFFFF");
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
-                F(m, "_Density", 210); F(m, "_FurLength", 0.034f); F(m, "_Gravity", 0.008f); F(m, "_Thinning", 0.62f); F(m, "_ClumpAmount", 0.7f); F(m, "_ClumpScale", 9f);
-                F(m, "_AO", 0.12f); F(m, "_Curl", 1.6f); F(m, "_Underfur", 0.75f);
-                C(m, "_RimColor", "#FFDCD8"); F(m, "_Glow", 0.12f); F(m, "_RimStrength", 0.7f);
+                F(m, "_Density", 300); F(m, "_FurLength", 0.024f); F(m, "_Gravity", 0.004f); F(m, "_Thinning", 0.45f); F(m, "_ClumpAmount", 0.35f); F(m, "_ClumpScale", 9f);
+                F(m, "_AO", 0.15f); F(m, "_Curl", 0.7f); F(m, "_Underfur", 0.95f); F(m, "_EdgeSoft", 0.22f); F(m, "_SilhouetteFade", 0.6f);
+                C(m, "_RimColor", "#FFD0C8"); F(m, "_Glow", 0.10f); F(m, "_RimStrength", 0.5f);
             }, (int)RenderQueue.AlphaTest);
             Mat("M_PomPom", "BWK/Fur", m =>
             {
                 // dense soft yarn pom-pom: short, very dense, little thinning so the silhouette stays round and soft
-                C(m, "_RootColor", "#3C2470"); C(m, "_BaseColor", "#6A3EA6"); C(m, "_TipColor", "#A07ED2");
+                // deeper violet yarn (reference ~#8741b3, dark centre, lighter radiating tips): straight radial fibres
+                C(m, "_RootColor", "#2E1658"); C(m, "_BaseColor", "#5C3390"); C(m, "_TipColor", "#9A6AD0");
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
-                F(m, "_Density", 150); F(m, "_FurLength", 0.028f); F(m, "_Gravity", 0.002f); F(m, "_Thinning", 0.5f); F(m, "_AO", 0.35f);
-                F(m, "_Curl", 1.8f); F(m, "_Underfur", 0.9f); F(m, "_ClumpAmount", 0.5f);
-                C(m, "_RimColor", "#D9C4F5"); F(m, "_Glow", 0.06f); F(m, "_RimStrength", 0.6f);
+                F(m, "_Density", 170); F(m, "_FurLength", 0.032f); F(m, "_Gravity", 0.0f); F(m, "_Thinning", 0.7f); F(m, "_AO", 0.4f);
+                F(m, "_Curl", 0.3f); F(m, "_Underfur", 0.9f); F(m, "_ClumpAmount", 0.3f); F(m, "_EdgeSoft", 0.2f); F(m, "_SilhouetteFade", 0.5f);
+                C(m, "_RimColor", "#C8A8F0"); F(m, "_Glow", 0.03f); F(m, "_RimStrength", 0.4f);
             }, (int)RenderQueue.AlphaTest);
             // static (shell-less) preview variants: no clipping, no offset
             foreach (var n in new[] { "M_Fur", "M_PomPom" })
