@@ -55,9 +55,10 @@ namespace BubbleWash.EditorTools
                 // S .65 vs ref .48). Grade the lit metal in the shader: 35 % toward a value-preserving grey-lavender (linear
                 // tint .88/.50/1 solved so a typical wall pixel #54399f lands on the reference's H 263 / S .48 / V .64) and
                 // darken the lit recesses to 30 % (navy holes -> near black before the fog)
-                // masters wave (17:56): p3 measured hero upper wall H 270 vs ref 263 -> the grey-lavender tint moves from H 288
-                // to H 271 at the same luminance (.79), so the graded wall lands ~7 deg bluer without getting brighter
-                F(m, "_LitDesat", 0.5f); m.SetColor("_LitTint", new Color(0.88f, 0.75f, 1.0f)); F(m, "_HoleDarken", 0.3f);   // p2 .35 -> p3 .5
+                // masters wave (metal, 18:12): a bluer _LitTint was tried twice (r8m p1 H 271, p2 H 255 + desat .6): hero
+                // walls_upper_right only #98769e -> #907197 (ref #8067ac, the mauve comes from the LIGHTS), palette distance
+                // 23.4 -> 23.9 (worse) -> reverted to the checkpoint-20 values; the wall needs a light / probe method next wave
+                F(m, "_LitDesat", 0.5f); m.SetColor("_LitTint", new Color(0.945f, 0.727f, 1.0f)); F(m, "_HoleDarken", 0.3f);   // p2 .35 -> p3 .5
             });
             // polished lavender drum lips between the gold rings (SM_DrumRim, m1: fat rolled lip): the stylised BWK/Gold
             // environment shading with a lavender palette - violet body, magenta-pink fresnel edge, soft pink-lavender

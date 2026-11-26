@@ -104,7 +104,9 @@ namespace BubbleWash.EditorTools
                 F(m, "_NearFade", 0f);
             }, (int)RenderQueue.Transparent - 10);
             DestGlow("M_DestRays", "#FFBE45", 2.6f, 1.1f, -9);     // golden-yellow rays fading toward the ring
-            DestGlow("M_DestCream", "#FFD487", 1.8f, 1.6f, -8);    // cream centre (not white: B/R .25) inside the ray roots
+            // p1 (18:06): the multiply halo left a dark brown hole inside the ray roots (r < .44 m has no rays) -> p2 stronger,
+            // broader cream centre (peak ~ (3.4, 2.2, .8) linear: tonemaps cream #f3e4ac-ish, B stays low = never white)
+            DestGlow("M_DestCream", "#FFD487", 3.4f, 1.0f, -8);    // cream centre (not white: B/R .25) inside the ray roots
             DestGlow("M_DestSparkle", "#FFBA3E", 2.0f, 1.3f, -7);  // small golden 4-point sparkles
             // Neon tubes (reference: thick tubes with PALE hot cores - yellow #fbe496, cyan #78eaf5 - inside saturated colour
             // edges and soft tinted halos): saturated edge hue, tinted core across most of the tube face (broad _CorePower),
