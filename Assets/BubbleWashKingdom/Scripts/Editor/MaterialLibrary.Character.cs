@@ -45,10 +45,10 @@ namespace BubbleWash.EditorTools
             {
                 // warm plush pink (slightly salmon; the tunnel's violet light adds blue): light roots, soft pale tips.
                 // Strand cells are square (the shader doubles UV.x); fine dense guard hairs + thick underfur = plush.
-                C(m, "_RootColor", "#A8505C"); C(m, "_BaseColor", "#E8878C"); C(m, "_TipColor", "#FFD2CC");
+                C(m, "_RootColor", "#C46C78"); C(m, "_BaseColor", "#E8888E"); C(m, "_TipColor", "#FAC4C0");
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
                 F(m, "_Density", 210); F(m, "_FurLength", 0.034f); F(m, "_Gravity", 0.008f); F(m, "_Thinning", 0.62f); F(m, "_ClumpAmount", 0.7f); F(m, "_ClumpScale", 9f);
-                F(m, "_AO", 0.2f); F(m, "_Curl", 1.6f); F(m, "_Underfur", 0.75f);
+                F(m, "_AO", 0.12f); F(m, "_Curl", 1.6f); F(m, "_Underfur", 0.75f);
                 C(m, "_RimColor", "#FFDCD8"); F(m, "_Glow", 0.12f); F(m, "_RimStrength", 0.7f);
             }, (int)RenderQueue.AlphaTest);
             Mat("M_PomPom", "BWK/Fur", m =>

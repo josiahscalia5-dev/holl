@@ -30,7 +30,7 @@ Material:
     - _Mode: 1
     - _Softness: 1
     - _SrcBlend: 1
-    - _Strength: 0.62
+    - _Strength: 0.85
     m_Colors:
     - _Color: {r: 1, g: 0.18039216, b: 0.69803923, a: 1}
   m_BuildTextureStacks: []

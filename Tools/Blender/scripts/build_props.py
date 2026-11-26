@@ -391,27 +391,27 @@ def build_suds(M, name, seed, spread, count, lod=0):
         d = rng.uniform(0, 1) ** 0.75
         x = math.cos(a) * d * spread[0]
         y = math.sin(a) * d * spread[1]
-        r = rng.uniform(0.17, 0.31) * (1.2 - 0.45 * d)
+        r = rng.uniform(0.22, 0.40) * (1.2 - 0.45 * d)     # big smooth cloud puffs (reference banks)
         z = r * rng.uniform(0.0, 0.35) + (1 - d) * 0.2
         spheres.append((x, y, z, r))
     prim = list(spheres)
     for (x, y, z, r) in prim:                       # second layer: smaller puffs riding on the big ones
-        for _ in range(rng.randint(2, 4) if lod == 0 else 1):
+        for _ in range(rng.randint(1, 2) if lod == 0 else 1):
             th = rng.uniform(0, 2 * math.pi)
             ph = rng.uniform(0.15, 1.2)              # mostly upper hemisphere
             dirv = Vector((math.cos(th) * math.sin(ph), math.sin(th) * math.sin(ph), math.cos(ph)))
-            rs = r * rng.uniform(0.38, 0.62)
-            c = Vector((x, y, z)) + dirv * (r + rs * 0.15)
+            rs = r * rng.uniform(0.45, 0.7)
+            c = Vector((x, y, z)) + dirv * (r - rs * 0.3)    # half buried: soft cloud bulges, not lumps
             if c.z > 0.03:
                 spheres.append((c.x, c.y, c.z, rs))
     if lod == 0:                                     # tiny bubbles sprinkled over the surface
         base_list = list(spheres)
-        for _ in range(int(count * 4.5)):
+        for _ in range(int(count * 6)):
             x, y, z, r = base_list[rng.randrange(len(base_list))]
             th = rng.uniform(0, 2 * math.pi)
             ph = rng.uniform(0.0, 1.45)
             dirv = Vector((math.cos(th) * math.sin(ph), math.sin(th) * math.sin(ph), math.cos(ph)))
-            rt = rng.uniform(0.022, 0.055)
+            rt = rng.uniform(0.012, 0.03)                 # tiny glossy micro-bubbles on the puffs
             c = Vector((x, y, z)) + dirv * (r + rt * 0.05)
             if c.z > 0.02:
                 spheres.append((c.x, c.y, c.z, rt))
@@ -419,7 +419,7 @@ def build_suds(M, name, seed, spread, count, lod=0):
     pts, nrm, own, puff = [], [], [], []
     for si, (x, y, z, r) in enumerate(spheres):
         if lod == 0:
-            useg = max(7, min(18, int(round(r * 52))))
+            useg = max(6, min(24, int(round(r * 60))))
         else:
             useg = max(5, min(9, int(round(r * 26))))
         sub = bmesh.new()

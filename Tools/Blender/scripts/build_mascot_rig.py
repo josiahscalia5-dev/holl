@@ -69,7 +69,7 @@ ARM_HAND = 0.14           # elbow-ish joint along the arm (hand bone = the mitt)
 # ------------------------------------------------------------------ seated riding pose
 SEAT_DROP = 0.05          # body lowered so the fur-ball underside rests ~2 cm above the slide surface
 SEAT_LEAN = -4.0          # body pitch (negative = recline)
-HEAD_PITCH = 7.0          # head (and beanie) pitched forward: the rear camera sees the back of the hat
+HEAD_PITCH = 10.0          # head (and beanie) pitched forward: the rear camera sees the back of the hat
 FOOT_FLOOR = 0.012        # lowest paw point in the seated pose (heel on the surface)
 FOOT_MIN_Z = 0.006        # floor clamp for animated paws
 ARM_RAISE_MAX = 26.0      # extra raise above the modelled 30 deg: soft cap + per-frame cuff collision solve
@@ -881,6 +881,7 @@ class Rig:
         self.parent = {b.name: (b.parent.name if b.parent else None) for b in arm.data.bones}
         self.foot_samples = {tag: info['paw_rest'][tag][::3] for _s, tag in SIDES}
         self.arm_probe = {}
+        self.lowered = 0.0                       # max arm raise removed by the cuff collision solve (diagnostic)
         for _s, tag in SIDES:                    # arm surface points outside the body (h > 3 cm) + skin weight
             R0, d = info['arm_root'][tag], info['arm_dir'][tag]
             self.arm_probe[tag] = [(v, smoothstep(ARM_HAND - 0.05, ARM_HAND + 0.06, (v - R0).dot(d)))
@@ -926,6 +927,7 @@ class Rig:
                     else:
                         lo = mid
                 ga, gh = arm_pose(lo)
+                self.lowered = max(self.lowered, ra - lo)
             G['arm.' + tag], G['hand.' + tag] = ga, gh
             re = self.rest['eye.' + tag]
             G['eye.' + tag] = G['head'] @ re @ diag(*P.eye_scl[tag]) @ self.rest_inv['eye.' + tag]
@@ -1015,6 +1017,7 @@ def bake_clips(rig, clips):
         frames = []
         zmin_body, zmin_foot, zmax = 9.0, 9.0, -9.0
         hit = [0.0, 0.0, 0.0]
+        rig.lowered = 0.0
         for f in range(n + 1):
             t = 0.0 if (loop and f == n) else f / FPS
             P = fn(t)
@@ -1058,8 +1061,9 @@ def bake_clips(rig, clips):
         act.use_cyclic = loop
         actions[name] = (act, slot)
         print("CLIP %-10s frames 0-%d (%.2f s, %s)  body-bottom zmin %.3f  paw zmin %.3f  pom-pom ztop %.3f  "
-              "penetration arm>hat %.3f arm>body %.3f paw>body %.3f" % (
-                  name, n, dur, "loop" if loop else "one-shot", zmin_body, zmin_foot, zmax, hit[0], hit[1], hit[2]))
+              "penetration arm>hat %.3f arm>body %.3f paw>body %.3f  arm lowered by cuff solve %.1f deg" % (
+                  name, n, dur, "loop" if loop else "one-shot", zmin_body, zmin_foot, zmax, hit[0], hit[1], hit[2],
+                  rig.lowered))
     return actions
 
 

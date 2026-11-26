@@ -40,6 +40,8 @@ Material:
     - _SparkleScale: 16
     - _SpecPower: 90
     - _SpecStrength: 1.6
+    - _StreakHeight: 0.6
+    - _StreakStrength: 0
     - _ViewGradient: 1
     m_Colors:
     - _BandColor: {r: 0.84705883, g: 0.7764706, b: 1, a: 1}

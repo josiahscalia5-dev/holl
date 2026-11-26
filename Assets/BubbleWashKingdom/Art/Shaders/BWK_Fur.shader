@@ -126,7 +126,7 @@ Shader "BWK/Fur"
 
                 half3 tint = lerp(half3(1, 1, 1), i.color.rgb, _UseVertexTint * step(0.001, i.color.a));
                 half3 col = h < 0.5 ? lerp(_RootColor.rgb, _BaseColor.rgb, saturate(h * 2.0 + 0.55)) : lerp(_BaseColor.rgb, _TipColor.rgb, h * 2.0 - 1.0);
-                col *= tint * lerp(0.85, 1.12, strand);
+                col *= tint * lerp(0.93, 1.05, strand);   // low strand contrast: plush, not needles
 
                 half3 n = normalize(i.normalWS);
                 half3 v = GetWorldSpaceNormalizeViewDir(i.positionWS);

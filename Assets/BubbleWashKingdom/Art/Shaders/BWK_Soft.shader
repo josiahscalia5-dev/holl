@@ -270,7 +270,8 @@ Shader "BWK/Soft"
                     half down = saturate(-dot(n, half3(0, 1, 0)) * 0.8 + 0.1);
                     col = lerp(col, _ColorB.rgb, down * 0.6);                            // cool water bounce from below
                     half fr = BWK_Fresnel(n, v, _RimPower);
-                    col = lerp(col, _ColorA.rgb * 1.08, fr * _RimStrength);              // bright thin milky edges
+                    // grazing edges of the lace strands turn translucent blue-grey (reference: white cores, cool outlines)
+                    col = lerp(col, _ShadowColor.rgb * 0.92 + _ColorB.rgb * 0.12, fr * _RimStrength);
                     half3 hv = normalize(L.direction + v);
                     half nh = saturate(dot(n, hv));
                     half3 nv = mul((float3x3)UNITY_MATRIX_V, n);

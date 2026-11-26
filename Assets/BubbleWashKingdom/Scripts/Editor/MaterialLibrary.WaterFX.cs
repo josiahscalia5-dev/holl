@@ -14,12 +14,12 @@ namespace BubbleWash.EditorTools
             Mat("M_Water", "BWK/Water", m =>
             {
                 // reference f_003.00s: bright turquoise-cyan (#32B5E0 / #49DAE0) over medium blue (#3A92C6), glossy, translucent
-                C(m, "_DeepColor", "#1A7FD2"); C(m, "_ShallowColor", "#34DCEA"); C(m, "_StreakColor", "#F2FFFF");
+                C(m, "_DeepColor", "#0F5CC4"); C(m, "_ShallowColor", "#20B4E6"); C(m, "_StreakColor", "#F2FFFF");
                 C(m, "_CausticColor", "#A6FFFF"); C(m, "_ChevronColor", "#33EEFF"); C(m, "_EdgeTint", "#E66AC8");
-                F(m, "_FlowSpeed", 7.5f); F(m, "_Width", 3.6f); F(m, "_Glow", 0.32f); F(m, "_Smoothness", 0.94f);
+                F(m, "_FlowSpeed", 7.5f); F(m, "_Width", 3.6f); F(m, "_Glow", 0.22f); F(m, "_Smoothness", 0.94f);
                 F(m, "_StreakAmount", 0.75f); F(m, "_StreakDensity", 1.25f); F(m, "_EdgeTintAmount", 0.28f); F(m, "_SparkleAmount", 1.3f);
                 F(m, "_RainbowAmount", 0.32f); F(m, "_RippleStrength", 0.9f); F(m, "_EdgeFoam", 0.75f);
-                F(m, "_CausticAmount", 0.75f); F(m, "_Depth", 0.22f); F(m, "_NearBrighten", 0.55f); F(m, "_ReflectBoost", 0.7f); F(m, "_CenterGlow", 0.35f);
+                F(m, "_CausticAmount", 0.75f); F(m, "_Depth", 0.22f); F(m, "_NearBrighten", 0.3f); F(m, "_ReflectBoost", 0.5f); F(m, "_CenterGlow", 0.35f);
                 // light pools under the decor chevrons: same period / scale as SceneBuilder.BuildDecorChevrons
                 F(m, "_ChevronStart", SceneBuilder.ChevronStart); F(m, "_ChevronSpacing", SceneBuilder.ChevronSpacing);
                 F(m, "_ChevronScale", SceneBuilder.ChevronScale); F(m, "_ChevronGlow", 0.85f);
@@ -48,21 +48,21 @@ namespace BubbleWash.EditorTools
             // speed-boost chevrons (BWK/Soft Mode 7): luminous teal glass, mint-white arm centres, HDR so bloom catches them
             Mat("M_Arrow", "BWK/Soft", m =>
             {
-                F(m, "_Mode", 7); C(m, "_ColorA", "#D2FFF7"); C(m, "_ColorB", "#0FB4CF"); C(m, "_ColorC", "#FFFFFF");
-                F(m, "_Glow", 0.4f); F(m, "_StreakAmount", 0.35f); F(m, "_StreakSpeed", 1.6f); F(m, "_ReflectBoost", 0.6f);
+                F(m, "_Mode", 7); C(m, "_ColorA", "#A8FFF2"); C(m, "_ColorB", "#00A6C8"); C(m, "_ColorC", "#FFFFFF");
+                F(m, "_Glow", 0.3f); F(m, "_StreakAmount", 0.35f); F(m, "_StreakSpeed", 1.6f); F(m, "_ReflectBoost", 0.6f);
             });
             Mat("M_Foam", "BWK/Soft", m =>
             {
                 // soap suds (Mode 5): white-pink puffs, lavender crevices (#A197C4 in the reference), satin gloss, bubble glints
-                F(m, "_Mode", 5); C(m, "_ColorA", "#FFF9FD"); C(m, "_ShadowColor", "#A296CC"); C(m, "_ColorB", "#F6D9F2"); F(m, "_Wrap", 0.7f);
-                F(m, "_BumpScale", 10f); F(m, "_BumpStrength", 0.1f); F(m, "_Glow", 0.1f); F(m, "_RimPower", 2.6f); F(m, "_RimStrength", 0.32f);
+                F(m, "_Mode", 5); C(m, "_ColorA", "#FCF5FF"); C(m, "_ShadowColor", "#9686C6"); C(m, "_ColorB", "#F4D2EE"); F(m, "_Wrap", 0.55f);
+                F(m, "_BumpScale", 10f); F(m, "_BumpStrength", 0.06f); F(m, "_Glow", 0.03f); F(m, "_RimPower", 2.6f); F(m, "_RimStrength", 0.32f);
                 F(m, "_SpecStrength", 0.8f); F(m, "_ReflectBoost", 0.25f); F(m, "_GlintAmount", 0.45f); F(m, "_Wobble", 0.015f); F(m, "_WobbleFreq", 1.6f);
             });
             Mat("M_FX_Milk", "BWK/Soft", m =>
             {
                 // milky crown splashes + 3D droplets (Mode 6): creamy white, blue-grey shading, cool water bounce, wet highlights
-                F(m, "_Mode", 6); C(m, "_ColorA", "#FFFFFF"); C(m, "_ShadowColor", "#A3B6DA"); C(m, "_ColorB", "#9ED9F2"); F(m, "_Wrap", 0.6f);
-                F(m, "_RimPower", 2.4f); F(m, "_RimStrength", 0.35f); F(m, "_SpecStrength", 1f); F(m, "_ReflectBoost", 0.45f); F(m, "_Glow", 0.2f);
+                F(m, "_Mode", 6); C(m, "_ColorA", "#FFFFFF"); C(m, "_ShadowColor", "#93A8D4"); C(m, "_ColorB", "#8FD3F0"); F(m, "_Wrap", 0.35f);
+                F(m, "_RimPower", 2.0f); F(m, "_RimStrength", 0.6f); F(m, "_SpecStrength", 1.1f); F(m, "_ReflectBoost", 0.45f); F(m, "_Glow", 0.08f);
                 F(m, "_Wobble", 0.01f); F(m, "_WobbleFreq", 7f);
             });
             Particle("M_FX_Splash", $"{Tex}/T_Splash.png", additive: false, "#FFFFFF");

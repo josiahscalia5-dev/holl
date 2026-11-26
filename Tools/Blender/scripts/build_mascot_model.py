@@ -58,7 +58,7 @@ CUFF_PROFILE = [  # (u, r, rib weight): roll under -> tall ribbed outer face -> 
     (0.193, 0.470, 1.0), (0.233, 0.468, 1.0), (0.262, 0.463, 0.9), (0.280, 0.454, 0.5), (0.289, 0.442, 0.2),
     (0.290, 0.431, 0.0), (0.282, 0.421, 0.0)]
 STRIPE_U = (0.287, 0.370)                  # pale ribbed band right above the cuff (~9 % of the hat width)
-DOME_U0, DOME_H, DOME_R, DOME_EXP = 0.370, 0.170, 0.449, 1.9    # round slouchy dome (superellipse exponent)
+DOME_U0, DOME_H, DOME_R, DOME_EXP = 0.370, 0.205, 0.436, 1.8    # round slouchy dome (superellipse exponent)
 TOP_STRIPE_PHI, TOP_STRIPE_HW = 47.0, 5.5  # extra pale stripe on the dome front (deg of the dome angle), fades out
 TOP_STRIPE_FULL, TOP_STRIPE_END = 45.0, 78.0    # ... over the front only (deg from the front): never seen from behind
 STAR_U, STAR_PHI, STAR_ROT = 0.192, 33.0, -12.0  # star badge on the cuff, 33 deg toward HIS LEFT (+X)
@@ -76,8 +76,8 @@ NOSE_Z = 0.448
 BLUSH_X, BLUSH_Z, BLUSH_R = 0.235, 0.39, 0.058
 
 # ------------------------------------------------------------------ arms: big stubby mitts, raised out to the sides
-ARM_Z = 0.445                              # root height on the body side (just under the cuff)
-ARM_UP, ARM_BACK = 40.0, 0.02              # rest direction: 30 deg above horizontal, slightly back
+ARM_Z = 0.400                              # root height on the body side (just under the cuff)
+ARM_UP, ARM_BACK = 42.0, 0.02              # rest direction: 30 deg above horizontal, slightly back
 ARM_SEG = 20
 ARM_PROFILE = [(-0.10, 0.068), (-0.05, 0.078), (0.0, 0.083), (0.06, 0.086), (0.12, 0.088), (0.18, 0.090),
                (0.225, 0.090), (0.258, 0.084), (0.283, 0.070), (0.300, 0.050), (0.311, 0.026), (0.315, 0.0)]
@@ -838,8 +838,8 @@ def build_beanie():
     KNIT, CUFF, STRIPE = 0, 1, 2
     psi0 = math.pi / 2                          # seam at the back
     # ---- crown profile (u, r, material of the band above this point)
-    prof = [(0.240, 0.418, STRIPE), (0.272, 0.440, STRIPE), (STRIPE_U[0], 0.451, STRIPE), (0.313, 0.4535, STRIPE),
-            (0.343, 0.453, STRIPE), (STRIPE_U[1], DOME_R, KNIT)]
+    prof = [(0.240, 0.418, STRIPE), (0.272, 0.440, STRIPE), (STRIPE_U[0], 0.451, STRIPE), (0.313, 0.451, STRIPE),
+            (0.343, 0.446, STRIPE), (STRIPE_U[1], DOME_R, KNIT)]
     for phi in (10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 69.0, 77.0, 84.0):
         u, r = dome_ur(phi)
         prof.append((u, r, KNIT))
