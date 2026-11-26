@@ -53,6 +53,20 @@ namespace BubbleWash.EditorTools
         /// before/after comparison is like-for-like. Track distance of the hero shot (target frame f_003.00s).</summary>
         public const float HeroDistance = 105.5f;
 
+        /// <summary>Owner-approved portrait hero camera (2026-11-25, replaces 2.55 / 1.5): back, height, pitch, FOV.
+        /// Frozen: change only with the owner's explicit approval. Applied in BuildCameras and (for previews, which load the
+        /// saved scene) in PreviewRefreshDomains.</summary>
+        public const float HeroCamBack = 2.75f, HeroCamHeight = 1.3f, HeroCamPitch = 10f, HeroCamFov = 58f;
+
+        internal static void ApplyHeroCamera(RunnerCameraRig rig)
+        {
+            if (rig == null) return;
+            rig.distanceBackPortrait = HeroCamBack;
+            rig.heightPortrait = HeroCamHeight;
+            rig.pitchDownPortrait = HeroCamPitch;
+            rig.fovPortrait = HeroCamFov;
+        }
+
         /// <summary>Agent previews judge only the hero frame: bake just the reflection probes that light what the hero
         /// camera sees (behind it to well past the visible tunnel) instead of all ~12 probes x 2 passes along the track
         /// (that alone was ~90 s of every ~150 s preview). Distant probes keep their last full-build cubemaps.</summary>
@@ -291,7 +305,9 @@ namespace BubbleWash.EditorTools
             }
             BuildRunnerFX(runner.gameObject, runner, registry);
             BuildCharacterLights(runner.gameObject);
-            Debug.Log("[BWK] preview: lighting/post + runner FX rebuilt in memory (scene not saved)");
+            // The saved scene may predate the owner-approved hero camera: previews always use the approved values.
+            ApplyHeroCamera(Object.FindFirstObjectByType<RunnerCameraRig>(FindObjectsInactive.Include));
+            Debug.Log($"[BWK] preview: lighting/post + runner FX rebuilt in memory (scene not saved); hero camera {HeroCamBack}/{HeroCamHeight}/{HeroCamPitch}/{HeroCamFov}");
         }
 
         // ==================================================================== parts and combining
@@ -600,6 +616,7 @@ namespace BubbleWash.EditorTools
             var rig = gameplay.gameObject.AddComponent<RunnerCameraRig>();
             rig.runner = runner;
             rig.vcam = gameplay;
+            ApplyHeroCamera(rig);
             var director = Child(root, "CameraDirector").AddComponent<CameraDirector>();
             director.runner = runner;
             director.introCam = intro;

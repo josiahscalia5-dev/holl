@@ -21,9 +21,10 @@ namespace BubbleWash
         public float fovLandscape = 52f;
 
         [Header("Portrait 9:16 framing")]
-        [Tooltip("Owner requirement: rear follow camera slightly above and behind; back of hat, pom-pom, arms and paws visible, route and tunnel visible ahead above the pom-pom.")]
-        public float distanceBackPortrait = 2.55f;
-        public float heightPortrait = 1.5f;
+        [Tooltip("Owner requirement: rear follow camera slightly above and behind; back of hat, pom-pom, arms and paws visible, route and tunnel visible ahead above the pom-pom. " +
+                 "Owner-approved hero camera (2026-11-25): 2.75 back / 1.3 up / pitch 10 / FOV 58 - the reference sees the hat nearly side-on. Change only with the owner's explicit approval.")]
+        public float distanceBackPortrait = 2.75f;
+        public float heightPortrait = 1.3f;
         public float fovPortrait = 58f;
 
         [Header("Aim")]

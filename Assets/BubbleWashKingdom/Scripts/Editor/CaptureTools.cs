@@ -77,6 +77,7 @@ namespace BubbleWash.EditorTools
                 var registry = Object.FindFirstObjectByType<TrackItemRegistry>();
                 var cam = Camera.main;
                 if (runner == null || rig == null || cam == null || registry == null) throw new System.Exception("scene objects missing");
+                SceneBuilder.ApplyHeroCamera(rig);   // default variant = the owner-approved hero camera
                 var brain = cam.GetComponent<CinemachineBrain>();
                 if (brain) brain.enabled = false;
                 runner.track.Rebuild();
@@ -200,6 +201,7 @@ namespace BubbleWash.EditorTools
             var registry = Object.FindFirstObjectByType<TrackItemRegistry>();
             var cam = Camera.main;
             if (runner == null || rig == null || cam == null || registry == null) { Debug.LogError("[BWK] hero: scene objects missing"); return; }
+            SceneBuilder.ApplyHeroCamera(rig);   // owner-approved fixed hero camera, even on a scene saved before it
             var brain = cam.GetComponent<CinemachineBrain>();
             if (brain) brain.enabled = false;
             runner.track.Rebuild();

@@ -28,8 +28,8 @@ import bwk_common as C  # noqa: E402
 
 GROUP = "FX"
 FRAMES = 12
-RES = 0.0055          # metaball polygonisation step (m): lace strands are only 1-3 cm thick
-TARGET_TRIS = 14000   # per crown frame after decimation (the lace needs the detail)
+RES = 0.0095          # metaball polygonisation step (m): milk strands are 5-9 cm thick (round, fused holes)
+TARGET_TRIS = 9000    # per crown frame after decimation
 SEED = 20261125
 
 
@@ -48,26 +48,28 @@ def lerp(a, b, t):
 # loops lying on the water that spread outward / back toward the camera. Built from capsule metaballs along the
 # edges of a clipped Voronoi diagram on the crown wall (smaller cells near the root -> almost solid sheet there,
 # big holes near the rim) + a flat Voronoi lace skirt on the water. Twelve looping frames (periodic site jitter).
-SLEN = 1.2           # metres of wall along the root curve
+SLEN = 1.3           # metres of wall along the root curve
+# Round 3 (owner: "milky splash crowns on both sides", reference f_003.00s): a TALL milky sheet with round fused holes
+# (thick 5-9 cm strands, small cells near the water -> almost solid there, bigger holes up top), fingers + drops on the rim.
 
 
 def base(s):
     """Root line on the water: from the foot outward and back toward the camera."""
-    return Vector((0.03 + 0.42 * s + 0.12 * s * s, -0.06 + 1.10 * s, 0.0))
+    return Vector((0.03 + 0.50 * s + 0.10 * s * s, -0.08 + 0.95 * s, 0.0))
 
 
 def height(s):
-    """Crown silhouette: quick rise beside the foot, peak at s ~ 0.25, long low tail toward the camera."""
-    return 0.08 + 0.42 * math.exp(-((s - 0.25) / 0.24) ** 2) + 0.10 * (1.0 - s)
+    """Crown silhouette: rises beside the foot, peak ~0.8 m at s ~ 0.42 (outer side), lower tail toward the camera."""
+    return 0.12 + 0.60 * math.exp(-((s - 0.42) / 0.30) ** 2) + 0.10 * (1.0 - s)
 
 
-LEAN = Vector((0.5, 0.22, 1.0)).normalized()     # the sheet rises outward and slightly back
+LEAN = Vector((0.42, 0.18, 1.0)).normalized()    # the sheet rises outward and slightly back
 
 
 def wall(s, v, sway=0.0):
     h = height(s)
     p = base(s) + LEAN * (v * h)
-    p.x += 0.22 * h * v * v + sway * v             # lip curls outward at the top
+    p.x += 0.26 * h * v * v + sway * v             # lip curls outward at the top
     return p
 
 
@@ -185,8 +187,8 @@ def build_crown_elements(tau):
     # --- wall lace: Poisson sites, denser near the root (almost solid there), big holes toward the rim
     inside_w = lambda q: 0.0 <= q[0] <= SLEN and 0.0 <= q[1] <= Hm(q[0])  # noqa: E731
     base_sites = poisson(rng, 5000, lambda q: 0.0 <= q[0] <= SLEN and 0.0 <= q[1] <= height(q[0] / SLEN) * 1.12,
-                         lambda: (rng.uniform(-0.02, SLEN + 0.02), rng.uniform(0.0, 0.7)),
-                         lambda q: 0.055 + 0.13 * min(1.0, q[1] / max(0.05, height(min(1.0, max(0.0, q[0] / SLEN))))))
+                         lambda: (rng.uniform(-0.02, SLEN + 0.02), rng.uniform(0.0, 0.95)),
+                         lambda q: 0.065 + 0.12 * min(1.0, q[1] / max(0.05, height(min(1.0, max(0.0, q[0] / SLEN))))))
     sites = []
     for (S, V) in base_sites:
         a, b = rng.uniform(0, 6.28), rng.uniform(0, 6.28)
@@ -195,9 +197,9 @@ def build_crown_elements(tau):
     for k in range(40):
         S = -0.3 + (SLEN + 0.6) * k / 39
         sites.append((S, -0.25))
-        sites.append((S, 0.95))
-    for k in range(10):
-        V = -0.25 + 1.2 * k / 9
+        sites.append((S, 1.2))
+    for k in range(12):
+        V = -0.25 + 1.45 * k / 11
         sites.append((-0.3, V))
         sites.append((SLEN + 0.3, V))
     edge_rng = random.Random(SEED + 7)
