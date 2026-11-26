@@ -1629,6 +1629,9 @@ def main():
     bpy.context.view_layer.update()
     assert not any(m.type == 'NODES' for m in body.modifiers)
     arm.scale = (MASCOT_SCALE, MASCOT_SCALE, MASCOT_SCALE)
+    # BWK_RIG_TEST_YAW (deg, default 0): TEST-ONLY yaw of the exported armature object, for Animator-less candidate
+    # captures (their FBX default pose faces the camera); never set it for a deliverable export.
+    arm.rotation_euler.z = math.radians(float(os.environ.get("BWK_RIG_TEST_YAW") or 0.0))
     bpy.context.view_layer.update()
     path = C.export_fbx([arm], FBX_OUT, anim=True)
 
