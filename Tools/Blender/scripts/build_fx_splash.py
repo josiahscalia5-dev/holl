@@ -58,7 +58,7 @@ def base(s):
 
 def height(s):
     """Crown silhouette: quick rise beside the foot, peak at s ~ 0.25, long low tail toward the camera."""
-    return 0.08 + 0.50 * math.exp(-((s - 0.25) / 0.24) ** 2) + 0.10 * (1.0 - s)
+    return 0.08 + 0.42 * math.exp(-((s - 0.25) / 0.24) ** 2) + 0.10 * (1.0 - s)
 
 
 LEAN = Vector((0.5, 0.22, 1.0)).normalized()     # the sheet rises outward and slightly back
@@ -186,7 +186,7 @@ def build_crown_elements(tau):
     inside_w = lambda q: 0.0 <= q[0] <= SLEN and 0.0 <= q[1] <= Hm(q[0])  # noqa: E731
     base_sites = poisson(rng, 5000, lambda q: 0.0 <= q[0] <= SLEN and 0.0 <= q[1] <= height(q[0] / SLEN) * 1.12,
                          lambda: (rng.uniform(-0.02, SLEN + 0.02), rng.uniform(0.0, 0.7)),
-                         lambda q: 0.042 + 0.10 * min(1.0, q[1] / max(0.05, height(min(1.0, max(0.0, q[0] / SLEN))))))
+                         lambda q: 0.055 + 0.13 * min(1.0, q[1] / max(0.05, height(min(1.0, max(0.0, q[0] / SLEN))))))
     sites = []
     for (S, V) in base_sites:
         a, b = rng.uniform(0, 6.28), rng.uniform(0, 6.28)
@@ -201,6 +201,7 @@ def build_crown_elements(tau):
         sites.append((-0.3, V))
         sites.append((SLEN + 0.3, V))
     edge_rng = random.Random(SEED + 7)
+    joints = set()
     for (p, q) in voronoi_edges(sites, inside_w):
         S0, V0 = p
         S1, V1 = q
@@ -209,18 +210,24 @@ def build_crown_elements(tau):
             continue
         mid_s = max(0.0, min(1.0, 0.5 * (S0 + S1) / SLEN))
         vf = min(1.0, 0.5 * (V0 + V1) / max(0.05, Hm(0.5 * (S0 + S1))))
-        r = (0.0175 - 0.006 * vf) * (0.55 + 0.45 * taper(mid_s)) * edge_rng.uniform(0.85, 1.2)
+        r = (0.024 - 0.008 * vf) * (0.55 + 0.45 * taper(mid_s)) * edge_rng.uniform(0.8, 1.25)
         n = max(1, int(math.ceil(L / 0.035)))
         sway = 0.02 * math.sin(tw + mid_s * 6.0)
         pts = [to3d(S0 + (S1 - S0) * k / n, V0 + (V1 - V0) * k / n, sway) for k in range(n + 1)]
         E.chain(pts, [r] * (n + 1))
+        # fused, slightly swollen joints where three strands meet (milk lace look)
+        for (Sj, Vj), pj in ((p, pts[0]), (q, pts[-1])):
+            key = (round(Sj, 3), round(Vj, 3))
+            if key not in joints and 0.003 < Vj < Hm(Sj) - 0.003:
+                joints.add(key)
+                E.ball(pj, r * edge_rng.uniform(1.25, 1.6))
 
     # --- thick solid root where the sheet leaves the water + rim with beads
     nb = 36
     root_pts = [wall(k / nb, 0.0) + Vector((0, 0, 0.012)) for k in range(nb + 1)]
-    E.chain(root_pts, [0.03 * taper(k / nb) + 0.012 for k in range(nb + 1)])
+    E.chain(root_pts, [0.016 * taper(k / nb) + 0.012 for k in range(nb + 1)])
     low_pts = [wall(k / nb, 0.12) for k in range(nb + 1)]
-    E.chain(low_pts, [0.022 * taper(k / nb) + 0.008 for k in range(nb + 1)])
+    E.chain(low_pts, [0.012 * taper(k / nb) + 0.006 for k in range(nb + 1)])
     nr = 44
     rim_on = [edge_rng.random() > 0.18 for _ in range(nr)]
     for k in range(nr):
@@ -249,7 +256,7 @@ def build_crown_elements(tau):
 
     sk_sites = poisson(rng, 2500, lambda q: -0.02 <= q[0] <= 1.05 * SLEN and -0.02 <= q[1] <= W(q[0] / SLEN) + 0.05,
                        lambda: (rng.uniform(0.0, 1.05 * SLEN), rng.uniform(-0.02, 0.6)),
-                       lambda q: 0.07 + 0.06 * q[0] / SLEN)    # ~7-13 cm cells
+                       lambda q: 0.09 + 0.07 * q[0] / SLEN)    # ~9-16 cm cells
     sk = []
     for (S, d) in sk_sites:
         a = rng.uniform(0, 6.28)
@@ -268,7 +275,7 @@ def build_crown_elements(tau):
         L = math.hypot(q[0] - p[0], d1 - d0)
         if L < 0.004:
             continue
-        r = 0.012 * edge_rng.uniform(0.8, 1.25) * (1.0 - 0.35 * (0.5 * (d0 + d1)) / max(0.1, W(0.5 * (s0 + s1))))
+        r = 0.016 * edge_rng.uniform(0.8, 1.3) * (1.0 - 0.35 * (0.5 * (d0 + d1)) / max(0.1, W(0.5 * (s0 + s1))))
         n = max(1, int(math.ceil(L / 0.05)))
         pts = [skirt_xy(s0 + (s1 - s0) * k / n, d0 + (d1 - d0) * k / n) for k in range(n + 1)]
         E.chain(pts, [r] * (n + 1))

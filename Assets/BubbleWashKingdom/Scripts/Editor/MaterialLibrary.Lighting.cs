@@ -13,8 +13,8 @@ namespace BubbleWash.EditorTools
         {
             // Polished jewellery gold: deep amber undersides -> rich yellow body -> pale hot highlights, a view-dependent
             // gradient across flat ring faces, partly gold-tinted reflections of the violet tunnel and sharp bulb glints.
-            GoldLook("M_Gold", high: "#FFF6D0", mid: "#F5B42A", low: "#7A3A08", rim: "#FFE09A", band: "#FFEDB0",
-                brightness: 1.25f, glow: 0.06f, contrast: 1.6f, viewGradient: 1f, env: 0.45f, envTint: 0.55f, envRough: 0.22f,
+            GoldLook("M_Gold", high: "#FFF8D8", mid: "#FAC232", low: "#8A4208", rim: "#FFE6A0", band: "#FFF0B8",
+                brightness: 1.3f, glow: 0.08f, contrast: 1.5f, viewGradient: 1f, env: 0.35f, envTint: 0.9f, envRough: 0.22f,
                 specPower: 150f, specStrength: 2.2f, glints: 2.4f, sparkle: 0f, fog: 0.8f, highlightSize: 8f);
             GoldLook("M_GoldDark", high: "#FFE6A6", mid: "#D88E1C", low: "#552406", rim: "#FFD080", band: "#FFDF98",
                 brightness: 1.1f, glow: 0.03f, contrast: 1.6f, viewGradient: 1f, env: 0.5f, envTint: 0.65f, envRough: 0.3f,
@@ -30,7 +30,7 @@ namespace BubbleWash.EditorTools
 
             // Warm amber marquee bulbs: a moderately hot, fully saturated amber source so the Neutral tonemapper keeps the hue
             // (amber-yellow body, whiter centre from _CoreWhite) and the untinted bloom spreads an amber halo.
-            EmissiveLook("M_Bulb", "#FF8C0A", 6f, core: 0.28f, corePower: 6f, halo: 0.25f, edgeSat: 0.8f, chase: 1f, chaseMin: 0.7f, pulse: 0.05f, fog: 0.08f);
+            EmissiveLook("M_Bulb", "#FF7400", 9f, core: 0.22f, corePower: 6f, halo: 0.25f, edgeSat: 0.4f, chase: 1f, chaseMin: 0.7f, pulse: 0.05f, fog: 0.08f);
             // end-of-tunnel portal disc (BuildPortal core): radiant warm white-gold, bright but not a screen-filling flare
             EmissiveLook("M_PortalCore", "#FFC860", 3.4f, core: 0.55f, corePower: 2f, halo: 0.3f, edgeSat: 0.3f, pulse: 0.06f, fog: 0.05f);
             // Saturated neon tubes (reference: thick YELLOW / CYAN / PINK tubes, white-hot only in a thin core line): pure
@@ -38,7 +38,7 @@ namespace BubbleWash.EditorTools
             // _CorePower makes the white line only where the tube faces the camera.
             EmissiveLook("M_Neon", "#00D4FF", 3.0f, core: 0.55f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
             EmissiveLook("M_Neon_Cyan", "#00D4FF", 3.0f, core: 0.55f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
-            EmissiveLook("M_Neon_Pink", "#FF1EA8", 3.2f, core: 0.5f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
+            EmissiveLook("M_Neon_Pink", "#FF3AB4", 3.2f, core: 0.5f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
             EmissiveLook("M_Neon_Yellow", "#FFC000", 2.9f, core: 0.5f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
 
             // soft coloured glow cards behind every neon star (additive BWK/LightBlob): the star's light spilling over the wall

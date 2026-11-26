@@ -38,6 +38,6 @@ Material:
     - _PulseAmount: 0.06
     - _PulseSpeed: 1.2
     m_Colors:
-    - _Color: {r: 1, g: 0.11764706, b: 0.65882355, a: 1}
+    - _Color: {r: 1, g: 0.22745098, b: 0.7058824, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

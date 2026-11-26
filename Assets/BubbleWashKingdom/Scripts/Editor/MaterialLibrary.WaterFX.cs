@@ -14,12 +14,12 @@ namespace BubbleWash.EditorTools
             Mat("M_Water", "BWK/Water", m =>
             {
                 // reference f_003.00s: bright turquoise-cyan (#32B5E0 / #49DAE0) over medium blue (#3A92C6), glossy, translucent
-                C(m, "_DeepColor", "#0F5CC4"); C(m, "_ShallowColor", "#20B4E6"); C(m, "_StreakColor", "#F2FFFF");
+                C(m, "_DeepColor", "#1470D0"); C(m, "_ShallowColor", "#2CC6EC"); C(m, "_StreakColor", "#F2FFFF");
                 C(m, "_CausticColor", "#A6FFFF"); C(m, "_ChevronColor", "#33EEFF"); C(m, "_EdgeTint", "#E66AC8");
                 F(m, "_FlowSpeed", 7.5f); F(m, "_Width", 3.6f); F(m, "_Glow", 0.22f); F(m, "_Smoothness", 0.94f);
                 F(m, "_StreakAmount", 0.75f); F(m, "_StreakDensity", 1.25f); F(m, "_EdgeTintAmount", 0.28f); F(m, "_SparkleAmount", 1.3f);
                 F(m, "_RainbowAmount", 0.32f); F(m, "_RippleStrength", 0.9f); F(m, "_EdgeFoam", 0.75f);
-                F(m, "_CausticAmount", 0.75f); F(m, "_Depth", 0.22f); F(m, "_NearBrighten", 0.3f); F(m, "_ReflectBoost", 0.5f); F(m, "_CenterGlow", 0.35f);
+                F(m, "_CausticAmount", 0.75f); F(m, "_Depth", 0.22f); F(m, "_NearBrighten", 0.45f); F(m, "_ReflectBoost", 0.55f); F(m, "_CenterGlow", 0.35f);
                 // light pools under the decor chevrons: same period / scale as SceneBuilder.BuildDecorChevrons
                 F(m, "_ChevronStart", SceneBuilder.ChevronStart); F(m, "_ChevronSpacing", SceneBuilder.ChevronSpacing);
                 F(m, "_ChevronScale", SceneBuilder.ChevronScale); F(m, "_ChevronGlow", 0.85f);

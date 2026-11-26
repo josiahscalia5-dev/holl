@@ -41,15 +41,15 @@ namespace BubbleWash.EditorTools
             // (the "ground" colour is what the tunnel ceiling receives). Kept dim so the walls keep their depth.
             RenderSettings.ambientMode = AmbientMode.Trilight;
             RenderSettings.ambientSkyColor = new Color(0.5f, 0.33f, 0.9f);
-            RenderSettings.ambientEquatorColor = new Color(0.72f, 0.36f, 0.8f);
+            RenderSettings.ambientEquatorColor = new Color(0.62f, 0.38f, 0.88f);
             RenderSettings.ambientGroundColor = new Color(0.5f, 0.4f, 0.98f);
             RenderSettings.ambientIntensity = 0.8f;
             // Aerial perspective: saturated mid-violet (never pale), light density: near tunnel clear, far tunnel melts
             // into violet while the warm bulbs / portal still punch through (emissives use little fog).
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = new Color(0.6f, 0.46f, 0.98f);
-            RenderSettings.fogDensity = 0.0085f;
+            RenderSettings.fogColor = new Color(0.84f, 0.72f, 1.0f);
+            RenderSettings.fogDensity = 0.0105f;
             RenderSettings.skybox = null;
             RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
             RenderSettings.reflectionIntensity = 0.9f;
@@ -92,7 +92,7 @@ namespace BubbleWash.EditorTools
             // tonemapper keeps their hue and the bloom (untinted, so it carries each source's own colour) makes yellow /
             // cyan / pink / amber halos. Threshold above lit white foam so lit surfaces never veil the frame.
             var bloom = profile.Add<Bloom>(true);
-            bloom.threshold.Override(1.15f); bloom.intensity.Override(1.05f); bloom.scatter.Override(0.62f);
+            bloom.threshold.Override(1.15f); bloom.intensity.Override(1.25f); bloom.scatter.Override(0.7f);
             bloom.tint.Override(Color.white); bloom.highQualityFiltering.Override(true);
             bloom.maxIterations.Override(8);
             // Neutral keeps saturated hues far better than ACES (which pushes bright yellow / cyan to white).
@@ -109,7 +109,7 @@ namespace BubbleWash.EditorTools
             var st = profile.Add<SplitToning>(true);
             st.shadows.Override(new Color(0.45f, 0.38f, 0.64f)); st.highlights.Override(new Color(0.56f, 0.52f, 0.48f)); st.balance.Override(-15f);
             var vg = profile.Add<Vignette>(true); vg.intensity.Override(0.3f); vg.smoothness.Override(0.48f); vg.color.Override(new Color(0.12f, 0.03f, 0.26f));
-            var wb = profile.Add<WhiteBalance>(true); wb.temperature.Override(2f); wb.tint.Override(4f);
+            var wb = profile.Add<WhiteBalance>(true); wb.temperature.Override(0f); wb.tint.Override(0f);
             // soft far tunnel (premium film depth): mascot, coins and near rings stay crisp
             var dof = profile.Add<DepthOfField>(true);
             dof.mode.Override(DepthOfFieldMode.Gaussian); dof.gaussianStart.Override(24f); dof.gaussianEnd.Override(75f);
@@ -203,7 +203,9 @@ namespace BubbleWash.EditorTools
             for (float d = tunnelStart + 2f; d < portalD - 4f; d += 1.1f + (float)rng.NextDouble() * 1.3f)
             { rng.NextDouble(); rng.NextDouble(); rng.NextDouble(); }
 
-            var outline = ModelParts("Props", "SM_NeonStar");
+            // thick single-tube star (Tools/Blender/scripts/build_lighting_stars.py); falls back to the props double-line star
+            var outline = ModelParts("Lighting", "SM_NeonStarTube");
+            if (outline.Count == 0) outline = ModelParts("Props", "SM_NeonStar");
             if (outline.Count == 0) { Debug.LogWarning("[BWK] SM_NeonStar missing - stars skipped"); return; }
             var mats = new[] { Mat("M_Neon_Yellow"), Mat("M_Neon_Cyan"), Mat("M_Neon_Pink") };
             var glowMats = new[] { Mat("M_StarGlow_Yellow"), Mat("M_StarGlow_Cyan"), Mat("M_StarGlow_Pink") };
@@ -216,7 +218,7 @@ namespace BubbleWash.EditorTools
             int chunk = 0; float chunkStart = tunnelStart;
             int lastColor = -1;
             int count = 0;
-            for (float d = tunnelStart + 2.5f; d < portalD - 4f; d += 1.5f + Rand() * 1.9f)
+            for (float d = tunnelStart + 2.5f; d < portalD - 4f; d += 2.0f + Rand() * 2.2f)
             {
                 // keep clear of the gold rings (BuildRings: tunnelStart + 3 + k * RingSpacing)
                 float ringPhase = Mathf.Repeat(d - (tunnelStart + 3f), RingSpacing);
@@ -224,14 +226,14 @@ namespace BubbleWash.EditorTools
                 var f = track.Evaluate(d);
                 // upper side walls (12-62 deg from the ceiling, both sides) with an occasional ceiling star
                 float side = Rand() < 0.5f ? -1f : 1f;
-                float angDeg = Rand() < 0.14f ? Mathf.Lerp(-10f, 10f, Rand()) : side * Mathf.Lerp(14f, 62f, Rand());
+                float angDeg = Rand() < 0.06f ? Mathf.Lerp(-10f, 10f, Rand()) : side * Mathf.Lerp(26f, 66f, Rand());
                 float ang = angDeg * Mathf.Deg2Rad; // 0 = ceiling
                 var radial = f.flatRight * Mathf.Sin(ang) + f.flatUp * Mathf.Cos(ang);
                 var center = f.FlatPoint(0, TunnelCenter);
                 // size mix: a few big bold stars, many mid / small ones (reference)
                 float pick = Rand();
-                float scale = pick < 0.3f ? Mathf.Lerp(1.35f, 1.85f, Rand()) : Mathf.Lerp(0.7f, 1.2f, Rand());
-                var pos = center + radial * (TunnelRadius - 0.38f - 0.1f * scale);
+                float scale = pick < 0.4f ? Mathf.Lerp(1.5f, 2.1f, Rand()) : Mathf.Lerp(0.95f, 1.4f, Rand());
+                var pos = center + radial * (TunnelRadius - 0.38f - 0.18f * scale);
                 // Face the tunnel centre and tilt back toward the oncoming rear camera so they read as bold shapes;
                 // tip up on screen with a varied roll (reference stars sit at many angles).
                 float tilt = Mathf.Lerp(0.42f, 0.62f, Rand());
@@ -256,7 +258,7 @@ namespace BubbleWash.EditorTools
                     var gRot = Quaternion.LookRotation(gFacing, gUp.normalized);
                     var glowPos = pos - gFacing * 0.12f;
                     glowComb.Add(new List<Part> { new Part(quadMesh, new[] { glowMats[ci] }, Matrix4x4.identity) },
-                                 Matrix4x4.TRS(glowPos, gRot, new Vector3(2.3f, 2.3f, 1f) * scale));
+                                 Matrix4x4.TRS(glowPos, gRot, new Vector3(2.0f, 2.0f, 1f) * scale));
                 }
                 count++;
                 if (d - chunkStart > ChunkLength)
@@ -280,7 +282,7 @@ namespace BubbleWash.EditorTools
             // warm bulb glow on the top of the hat / pom-pom (slightly ahead, so it grazes over the top toward the camera)
             CharLight(group, "CharLight_WarmTop", new Vector3(0.35f, 2.3f, 0.6f), new Color(1f, 0.74f, 0.44f), 2.6f, 4f);
             // soft pink fill on the fluffy back the rear camera sees
-            CharLight(group, "CharLight_PinkBack", new Vector3(-0.35f, 1.7f, -1.6f), new Color(1f, 0.74f, 0.84f), 2.2f, 3.6f);
+            CharLight(group, "CharLight_PinkBack", new Vector3(-0.35f, 1.7f, -1.6f), new Color(1f, 0.8f, 0.74f), 2.6f, 3.6f);
             // cool lavender light from the bright tunnel ahead: wraps around the fur silhouette as a rim
             CharLight(group, "CharLight_RimFront", new Vector3(0f, 1.15f, 2.2f), new Color(1f, 0.56f, 0.86f), 3.0f, 3.6f);
 
