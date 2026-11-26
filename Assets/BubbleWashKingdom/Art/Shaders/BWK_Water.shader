@@ -187,7 +187,7 @@ Shader "BWK/Water"
                 half patch = smoothstep(0.42, 0.85, BWK_ValueNoise(float2(md.x * 0.85 + 3.1, (md.y - t * _FlowSpeed * 0.8) * 0.16))
                                                      * 0.7 + BWK_ValueNoise(float2(md.x * 2.1, flowD * 0.5 + 1.7)) * 0.3);
                 body = lerp(body, _TurquoiseColor.rgb, patch * _PatchAmount * (0.35 + 0.65 * centre));
-                body += _CausticColor.rgb * (caustic * _CausticAmount + deepStreak * 0.35) * (0.3 + 0.7 * centre) * 0.55;
+                body += _CausticColor.rgb * (caustic * _CausticAmount + deepStreak * 0.15) * (0.3 + 0.7 * centre) * 0.55;   // r3b: fainter under-surface lines
                 // brighter, more translucent where the camera looks down into the water (near the camera)
                 half ndv = saturate(dot(n, viewDir));
                 body = lerp(body, body * 1.18 + _ShallowColor.rgb * 0.22, smoothstep(0.2, 0.8, ndv) * _NearBrighten);

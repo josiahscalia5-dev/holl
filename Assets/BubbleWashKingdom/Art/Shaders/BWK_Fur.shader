@@ -120,14 +120,17 @@ Shader "BWK/Fur"
                 // tips the strands of a tuft converge on its (jittered) centre, so the pile breaks into soft clumps with
                 // partings between them. Strands are looked up at their ROOT position (expanded away from the centre).
                 float2 base = float2(i.uv.x * 2.0, i.uv.y);              // UV.x unit = 2x UV.y unit in metres -> square cells
+                // domain-warped tuft cells: irregular organic clumps instead of a visible square grid
                 float2 tuv = base * _TuftScale;
+                tuv += (float2(BWK_ValueNoise(tuv * 0.37 + 3.1), BWK_ValueNoise(tuv * 0.37 + 17.9)) - 0.5) * 2.2;
                 float2 tcell = floor(tuv);
                 float2 tc = tcell + 0.5 + (float2(BWK_Hash21(tcell + 21.7), BWK_Hash21(tcell + 4.3)) - 0.5) * 0.45;
                 half tRnd = BWK_Hash21(tcell + 11.9);
                 float pull = _TuftAmount * h * (0.7 + 0.6 * tRnd);
                 float2 rel = (tuv - tc) / max(1.0 - pull, 0.2);
                 float2 rootOff = abs(tc + rel - (tcell + 0.5));          // root outside its own tuft cell -> parting
-                half parting = (_TuftAmount > 0.001 && h > 0.001) ? saturate(1.0 - (max(rootOff.x, rootOff.y) - 0.5) * 6.0) : 1.0;
+                half parting = (_TuftAmount > 0.001 && h > 0.001) ? saturate(1.0 - (length(rootOff) - 0.55) * 2.5) : 1.0;
+                parting = lerp(1.0, parting, saturate(h * 1.6));           // partings only open toward the tips
                 float2 rootUV = (_TuftAmount > 0.001) ? (tc + rel) / _TuftScale : base;
                 float2 suv = rootUV * _Density;
                 float2 cell = floor(suv);

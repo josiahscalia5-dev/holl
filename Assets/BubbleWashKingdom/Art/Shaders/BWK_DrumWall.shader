@@ -317,7 +317,7 @@ Shader "BWK/DrumWall"
                 {
                     float w = max(_PinkSpillWidth, 0.05);
                     half spill = exp(-secLocal / w) + exp(-(secLen - secLocal) / w);
-                    emission += _PinkSpill.rgb * _PinkSpillStrength * saturate(spill) * (1.0 - hole) * (0.6 + 0.4 * fres);
+                    emission += _PinkSpill.rgb * _PinkSpillStrength * saturate(spill) * (1.0 - hole);   // r3 v3: no fresnel boost (grazing walls stayed too bright)
                 }
                 // a few holes lit from behind (light leaking through the drum)
                 half flicker = 0.8 + 0.2 * sin(_Time.y * 2.3 + m.x * 1.7 + m.y * 0.9);

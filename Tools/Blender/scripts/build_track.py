@@ -82,8 +82,9 @@ PLATES = 0                                # m1: no clamp plates / rivets (clutte
 # ------------------------------------------------------------------ lavender drum rim (nested-drum lips between rings)
 # m1: a fat rolled lip (reference f_003.00s: broad glossy lavender bands ~0.45 m deep with soft pink-white glints)
 RIM_SEGS, RIM_LEDS = 84, 32
-RIM_C, RIM_R = (3.98, 0.0), 0.24          # rolled bead, apex rho 3.74, front y 0.24
-RIM_FRONT, RIM_BACK = (4.26, 0.12), (4.26, -0.50)   # short front bevel / long back slope meet the wall
+RIM_C, RIM_R = (3.94, 0.0), 0.28          # rolled bead, apex rho 3.66, front y 0.28 (r3: one big lip per gap reads as
+                                          # the reference's broad lavender band, was r 0.24 / apex 3.74)
+RIM_FRONT, RIM_BACK = (4.26, 0.14), (4.26, -0.62)   # short front bevel / long back slope meet the wall
 RIM_LED_DEG = 128.0                       # soft LED studs on the front-inner face of the bead
 
 # ------------------------------------------------------------------ legacy single bulb asset

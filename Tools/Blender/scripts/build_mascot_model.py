@@ -71,12 +71,12 @@ CUFF_PROFILE = [(0.140 + (u - 0.140) * CUFF_STRETCH, r * HAT_RS, w) for (u, r, w
     (0.215, 0.470, 1.0), (0.248, 0.468, 1.0), (0.272, 0.463, 0.9), (0.287, 0.454, 0.5), (0.295, 0.443, 0.2),
     (0.295, 0.432, 0.0), (0.288, 0.424, 0.0)]]
 STRIPE_U = (0.364, 0.468)                  # thick pale ribbed band above the folded brim (same surface as the crown)
-DOME_U0, DOME_H, DOME_R, DOME_EXP = 0.476, 0.215, 0.428, 2.0    # tall ROUND dome (elliptical profile)
+DOME_U0, DOME_H, DOME_R, DOME_EXP = 0.476, 0.180, 0.412, 2.0    # tall ROUND dome (elliptical profile)
 TOP_STRIPE_PHI, TOP_STRIPE_HW = 47.0, 5.5  # extra pale stripe on the dome front (deg of the dome angle), fades out
 TOP_STRIPE_FULL, TOP_STRIPE_END = 45.0, 78.0    # ... over the front only (deg from the front): never seen from behind
 STAR_U, STAR_PHI, STAR_ROT = 0.192, 33.0, -12.0  # star badge on the cuff, 33 deg toward HIS LEFT (+X)
 STAR_RO, STAR_RI = 0.072, 0.032
-POMPOM_R, POMPOM_LIFT = 0.150, 0.05        # pom-pom CORE radius (dark shell-fur ball); centre this many radii above
+POMPOM_R, POMPOM_LIFT = 0.152, 0.58        # pom-pom CORE radius (dark shell-fur ball); centre this many radii above
 POMPOM_SEG = 9                             # the dome top (it sinks a little into the crown)
 # round 3 starburst: real radial yarn fibres (geometry) around the dark core, dark violet roots -> light lilac tips.
 # Material M_PawPad (BWK/Character fabric mode = vertex colour x white), Col = raw shader multipliers (see PAD_PINK).
@@ -97,17 +97,17 @@ BLUSH_X, BLUSH_Z, BLUSH_R = 0.235, 0.47 + FACE_DZ, 0.058
 # ------------------------------------------------------------------ arms: big stubby mitts raised up and out ("wheee")
 # Reference rear view: the arms leave the body sides just under the cuff and rise ~45 deg, so the paws sit at cuff
 # height OUTSIDE the hat silhouette. Seen from behind = back of the mitt (no palm pads), tips a little lighter.
-ARM_Z = 0.500                              # root height on the body side (rest; under the brim when seated)
+ARM_Z = 0.525                              # root height on the body side (rest; under the brim when seated)
 ARM_UP, ARM_BACK = 44.0, 0.22              # chord direction used by the rig (recomputed from the bent centre line)
 # round 3: SHORT, THICK stubby arms bent at the shoulder: the upper arm runs out almost level UNDER the wide brim
 # (hidden by it from the rear camera), then the forearm/mitt rises ~58 deg outside the brim edge, so the paws sit at
 # brim/stripe height outside the hat silhouette as in the reference, with no hat penetration (no cuff-solve lowering).
-ARM_A0, ARM_A1, ARM_B0, ARM_B1 = 6.0, 70.0, 0.06, 0.30   # elevation (deg) / back component: upper arm, forearm
+ARM_A0, ARM_A1, ARM_B0, ARM_B1 = 4.0, 76.0, 0.06, 0.30   # elevation (deg) / back component: upper arm, forearm
 ARM_BEND = (0.09, 0.23)                    # arc-length range of the shoulder bend
 ARM_SEG = 20
 ARM_PROFILE = [(-0.10, 0.076), (-0.05, 0.087), (0.0, 0.092), (0.08, 0.094), (0.16, 0.097), (0.24, 0.103),
-               (0.295, 0.108), (0.332, 0.108), (0.362, 0.099), (0.384, 0.082), (0.399, 0.058), (0.407, 0.030),
-               (0.410, 0.0)]
+               (0.305, 0.110), (0.350, 0.110), (0.382, 0.100), (0.404, 0.083), (0.419, 0.059), (0.427, 0.030),
+               (0.430, 0.0)]
 ARM_TIP_FROM, ARM_TIP_TO, ARM_TIP_CREAM = 0.26, 0.40, 0.30   # Col.a fades toward the cream coat at the paw tip
 PALM_FACING = Vector((0.0, -0.55, 0.85))   # palm side (front/up): only used as the seam-free side reference
 
@@ -893,7 +893,7 @@ def build_beanie():
     S = HAT_RS
     prof = [(0.250, 0.412 * S, STRIPE), (0.310, 0.436 * S, STRIPE), (STRIPE_U[0], 0.445 * S, STRIPE),
             (0.392, 0.444 * S, STRIPE), (0.420, 0.437 * S, STRIPE), (0.446, 0.423 * S, STRIPE),
-            (STRIPE_U[1], 0.405 * S, KNIT), (DOME_U0, DOME_R, KNIT)]
+            (STRIPE_U[1], 0.395 * S, KNIT), (DOME_U0, DOME_R, KNIT)]
     for phi in (8.0, 16.0, 24.0, 32.0, 40.0, 48.0, 56.0, 64.0, 71.0, 78.0, 84.0):
         u, r = dome_ur(phi)
         prof.append((u, r, KNIT))

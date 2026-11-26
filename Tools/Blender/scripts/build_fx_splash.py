@@ -85,11 +85,11 @@ SHEETS = [
     dict(name="curtain",
          root=((-0.05, 0.14), (0.14, 0.24), (0.34, 0.32), (0.54, 0.40)),
          fan=((0.05, 0.30, 0.95), (0.16, 0.30, 0.94), (0.30, 0.30, 0.90), (0.46, 0.34, 0.82)),
-         flen=(0.40, 0.72, 0.80, 0.62), flare=0.34, hole=(0.024, 0.090), solid=0.12, fingers=13),
+         flen=(0.40, 0.72, 0.80, 0.62), flare=0.34, hole=(0.024, 0.090), solid=0.12, fingers=13, roll=0.024, drops=3.0),
     dict(name="skirt",
          root=((0.44, 0.44), (0.26, 0.66), (0.02, 0.84), (-0.26, 0.96)),
-         fan=((0.50, 0.30, 0.81), (0.38, 0.45, 0.80), (0.18, 0.55, 0.82), (0.02, 0.60, 0.80)),
-         flen=(0.42, 0.36, 0.28, 0.18), flare=0.28, hole=(0.018, 0.055), solid=0.18, fingers=8),
+         fan=((0.40, 0.22, 0.89), (0.22, 0.26, 0.94), (0.10, 0.30, 0.95), (0.0, 0.32, 0.95)),
+         flen=(0.34, 0.26, 0.19, 0.12), flare=0.22, hole=(0.018, 0.050), solid=0.16, fingers=8, roll=0.013, drops=1.2),
 ]
 SHEET_STEP = 0.019     # metaball grid spacing on the sheet (m)
 SHEET_R = 0.0125       # sheet ball radius -> ~3.5 cm thick milky sheet
@@ -118,6 +118,8 @@ class Sheet:
         self.solid = spec["solid"]
         self.fingers = spec["fingers"]
         self.name = spec["name"]
+        self.roll = spec.get("roll", 0.024)
+        self.drops = spec.get("drops", 3.0)
         tot, prev = 0.0, self.rootp(0.0)
         for k in range(1, 101):
             p = self.rootp(k / 100)
@@ -227,7 +229,7 @@ def sheet_elements(E, sh, rng, tau, salt):
             E.ball(P(S1, top(S1)), rng.uniform(0.026, 0.036))
     nb = 30                                       # solid root roll where the sheet leaves the water
     E.chain([sh.rootp(k / nb) + Vector((0, 0, 0.010)) for k in range(nb + 1)],
-            [0.026 + 0.008 * math.sin(k * 0.9 + tw + salt) for k in range(nb + 1)])
+            [sh.roll * (1.0 + 0.3 * math.sin(k * 0.9 + tw + salt)) for k in range(nb + 1)])
     for j in range(sh.fingers):                   # fingers: grow, pinch off a drop, retract
         S0 = Stot * (0.05 + 0.88 * (j + rng.uniform(0.2, 0.8)) / sh.fingers)
         phase = rng.uniform(0, 1)
@@ -253,7 +255,7 @@ def sheet_elements(E, sh, rng, tau, salt):
             tip = root + tip_dir * lmax
             vel = tip_dir * 0.7 + sh.outward(s0) * 0.3
             E.ball(tip + vel * a * 0.3 + Vector((0, 0, -0.5 * a * a * 0.3)), r_tip * 0.9 * (1.0 - a) ** 0.5)
-    for j in range(int(3 * sh.fingers)):          # loose droplets on ballistic arcs (periodic)
+    for j in range(int(sh.drops * sh.fingers)):    # loose droplets on ballistic arcs (periodic)
         S0 = rng.uniform(0.04, 0.95) * Stot
         phase = rng.uniform(0, 1)
         r0 = rng.uniform(0.010, 0.028)

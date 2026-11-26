@@ -31,8 +31,8 @@ Material:
     - _NearFade: 14
     - _Softness: 1
     - _SrcBlend: 1
-    - _Strength: 0.75
+    - _Strength: 0.55
     m_Colors:
-    - _Color: {r: 1, g: 0.72156864, b: 0.84705883, a: 1}
+    - _Color: {r: 0.972549, g: 0.65882355, b: 0.8784314, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
