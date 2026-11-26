@@ -21,6 +21,8 @@ namespace BubbleWash.EditorTools
     /// dressed COPY (Test_S5_Shot0825.unity) where the shot module repeats along S5 (mirrored every other module) so the
     /// rear gameplay camera drives through dressed chambers in real time.
     /// Run: bash Tools/unity_run.sh BubbleWash.EditorTools.ShotMatchTool.RenderBatch env_shot_v1 -bwkTag v1 [-bwkSaveTest]
+    ///      options: -bwkCamH 1.5 (camera height above the slide), -bwkRollBank 0..1 (follow the slide bank), -bwkNoWater
+    ///      (skip the water agent's READY.json assets: crowns at the runner, foam banks / mounds / puffs per module)
     /// </summary>
     public static class ShotMatchTool
     {
@@ -43,7 +45,9 @@ namespace BubbleWash.EditorTools
         const float VFov = 52f;            // chamber window ellipse 215 x 365 px flush on an r 3.4 wall -> 50-55 deg
         const float CamLateral = 0.30f;    // m toward the travel-right wall (rails: left slope 0.47 vs right 0.32)
         const float VpBack = 22f;          // tunnel opening (vanishing glow) = axis point this far behind the mascot
-        const float CamHeight = 1.5f;      // m above the slide under the camera: rail slopes 0.47 / 0.32 -> 1.65; VP angle -> 1.2 (v2)
+        static float CamHeight = 1.5f;     // m above the slide under the camera: rail slopes 0.47 / 0.32 -> 1.65; VP angle -> 1.2 (v2)
+        static float RollBank;             // 0..1: roll the camera toward the banked slide normal (S5 banks ~13 deg; v3 = 0)
+        static float ArgF(string key, float def) => float.TryParse(Arg(key), NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : def;
         static readonly Vector2 MascotPx = new Vector2(522f, 397f), VpPx = new Vector2(545f, 215f);
         const float MascotHeightPx = 385f; // pom-pom top y 205 .. foot bottom y 590
         const float ModulePeriod = 12.75f; // = SceneBuilder.GoldRingSpacing (one chamber module per gold-ring gap)
@@ -118,9 +122,13 @@ namespace BubbleWash.EditorTools
         static void Run()
         {
             string tag = Arg("-bwkTag") ?? "v1";
+            CamHeight = ArgF("-bwkCamH", CamHeight);
+            RollBank = ArgF("-bwkRollBank", 0f);
             bool saveTest = System.Environment.GetCommandLineArgs().Contains("-bwkSaveTest");
             Directory.CreateDirectory(OutDir);
             RemapV2Materials();
+            bool water = File.Exists(WaterReady) && !System.Environment.GetCommandLineArgs().Contains("-bwkNoWater");
+            if (water) PrepareWaterAssets();
             EditorSceneManager.OpenScene(SceneBuilder.ScenePath);
             var runner = Object.FindFirstObjectByType<RunnerController>();
             var rig = Object.FindFirstObjectByType<RunnerCameraRig>(FindObjectsInactive.Include);
@@ -140,6 +148,7 @@ namespace BubbleWash.EditorTools
             var root = new GameObject("Shot0825_Dressing");
             var c0 = SolveCamera(runner, RunnerD, false, out var mascotH, out var report);
             Dress(runner, c0, RunnerD, false, root.transform, 0);
+            var crowns = water ? PlaceWaterAssets(runner, RunnerD, false, root.transform, mascotH, true) : new List<Transform>();
 
             // (a) reference camera, 1280x720 + side-by-side with the reference
             var hiddenItems = HideItemsNear(runner, RunnerD, c0.pos);
@@ -157,6 +166,13 @@ namespace BubbleWash.EditorTools
                 Dress(runner, SolveCamera(runner, d, k % 2 == 1, out _, out _), d, k % 2 == 1, root.transform, k);
             for (float d = RunnerD - ModulePeriod; d >= 194f; d -= ModulePeriod)
                 Dress(runner, SolveCamera(runner, d, true, out _, out _), d, true, root.transform, -1);
+            if (water)
+            {
+                // foam banks / mounds / puffs along every module; crowns turned 180 deg for the rear gameplay camera
+                for (float d = RunnerD + ModulePeriod; d <= 246f; d += ModulePeriod) PlaceWaterAssets(runner, d, ((int)Mathf.Round((d - RunnerD) / ModulePeriod)) % 2 == 1, root.transform, mascotH, false);
+                for (float d = RunnerD - ModulePeriod; d >= 194f; d -= ModulePeriod) PlaceWaterAssets(runner, d, true, root.transform, mascotH, false);
+                foreach (var cr in crowns) cr.localRotation = Quaternion.Euler(0f, 180f, 0f) * cr.localRotation;
+            }
 
             // (b) frozen rear gameplay camera (SceneBuilder.HeroCam*), 720x1280, a few metres before the shot module
             float rearD = RunnerD - 13f;
@@ -179,6 +195,63 @@ namespace BubbleWash.EditorTools
                 Debug.Log("[BWK] shot0825: dressed copy saved -> " + TestScenePath + " (Level01 untouched)");
             }
             Debug.Log($"[BWK] shot0825 {tag}: front {front}");
+        }
+
+        // ---- water / FX agent's shot assets (Captures/agents/waterfx/shot0825/READY.json, round 6) ----
+        const string WaterReady = "Captures/agents/waterfx/shot0825/READY.json";
+        const string FxDir = "Assets/BubbleWashKingdom/Art/Models/FX/";
+        static readonly string[] WaterModels = { "SM_FX_Crown_v2_L", "SM_FX_Crown_v2_R", "SM_Foam_v2_Bank", "SM_Foam_v2_Mound", "SM_Foam_v2_Puffs" };
+
+        /// <summary>M_FX_Milk_v2 / M_Foam_v2 are created by MaterialLibrary (WaterFX partial); remap the water FBX by name.</summary>
+        static void PrepareWaterAssets()
+        {
+            if (AssetDatabase.LoadAssetAtPath<Material>(Mats + "M_FX_Milk_v2.mat") == null || AssetDatabase.LoadAssetAtPath<Material>(Mats + "M_Foam_v2.mat") == null)
+                MaterialLibrary.Run();
+            foreach (var n in WaterModels)
+                if (AssetImporter.GetAtPath(FxDir + n + ".fbx") is ModelImporter mi)
+                {
+                    mi.materialLocation = ModelImporterMaterialLocation.InPrefab;
+                    mi.SearchAndRemapMaterials(ModelImporterMaterialName.BasedOnMaterialName, ModelImporterMaterialSearch.Everywhere);
+                    mi.SaveAndReimport();
+                }
+        }
+
+        /// <summary>READY.json placements (runner-local forward / right / up metres; crowns at the runner origin, authored for a
+        /// 1.43 m mascot -> scaled by the measured mascot height). Crowns only for the shot module (they ride with the runner).</summary>
+        static List<Transform> PlaceWaterAssets(RunnerController runner, float d, bool mirror, Transform root, float mascotH, bool crowns)
+        {
+            var made = new List<Transform>();
+            PoseRunner(runner, d);
+            var rt = runner.transform;
+            float m = mirror ? -1f : 1f;
+            var holder = new GameObject($"Water_{d:000.0}{(mirror ? "_M" : "")}").transform;
+            holder.SetParent(root, false);
+            void Put(string model, float fwd, float right, float up, float yaw, Vector3 scale, Transform parent)
+            {
+                var pf = AssetDatabase.LoadAssetAtPath<GameObject>(FxDir + model + ".fbx");
+                if (pf == null) { Debug.LogWarning("[BWK] shot0825: missing " + model); return; }
+                var go = Spawn(pf, parent);
+                go.transform.SetPositionAndRotation(rt.position + rt.forward * fwd + rt.right * (right * m) + rt.up * up, rt.rotation * Quaternion.Euler(0f, yaw * m, 0f));
+                go.transform.localScale = new Vector3(scale.x * m, scale.y, scale.z);
+                foreach (var r in go.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
+                made.Add(go.transform);
+            }
+            if (crowns)
+            {
+                float cs = Mathf.Clamp(mascotH / 1.43f, 0.8f, 1.4f);
+                Put("SM_FX_Crown_v2_L", 0f, 0f, 0f, 0f, Vector3.one * cs, rt);
+                Put("SM_FX_Crown_v2_R", 0f, 0f, 0f, 0f, Vector3.one * cs, rt);
+                Debug.Log($"[BWK] shot0825: water crowns at the runner, scale {cs:F2}");
+            }
+            var rnd = new System.Random(825 + (int)d);
+            foreach (var o in new[] { (-1.2f, -2.2f, 0f, 1.15f), (-3.0f, -2.4f, 0.1f, 1.25f), (-5.0f, -2.5f, 0.2f, 1.05f) })
+                Put("SM_Foam_v2_Bank", o.Item1, o.Item2, o.Item3, 90f + (float)(rnd.NextDouble() * 30.0 - 15.0), Vector3.one * o.Item4, holder);
+            foreach (var o in new[] { (-2.0f, -2.0f, 0f), (-4.2f, -2.3f, 0.1f) })
+                Put("SM_Foam_v2_Mound", o.Item1, o.Item2, o.Item3, 90f + (float)(rnd.NextDouble() * 30.0 - 15.0), Vector3.one * 1.1f, holder);
+            foreach (var o in new[] { (0.6f, 1.3f, 0f), (1.3f, 1.5f, 0f), (1.9f, 1.4f, 0f) })
+                Put("SM_Foam_v2_Puffs", o.Item1, o.Item2, o.Item3, (float)(rnd.NextDouble() * 360.0), new Vector3(1.45f, 1.6f, 1.45f), holder);
+            if (crowns) return made.Take(2).ToList();
+            return made;
         }
 
         static void RemapV2Materials()
@@ -315,6 +388,12 @@ namespace BubbleWash.EditorTools
                 if (!mirror) Debug.Log($"[BWK] shot0825 pass {pass}: mascot {hpx:F0} px tall (ref {MascotHeightPx}), top y {yMin:F0}, cam dist {z:F2} m");
                 if (pass < 2) z *= hpx / MascotHeightPx;
             }
+            if (RollBank != 0f)
+            {
+                Vector3 fwdC = rot * Vector3.forward;
+                Vector3 upBank = Vector3.ProjectOnPlane(f.up, fwdC).normalized;
+                rot = Quaternion.AngleAxis(Vector3.SignedAngle(rot * Vector3.up, upBank, fwdC) * RollBank, fwdC) * rot;
+            }
             var c = new Cam { pos = pos, rot = rot, fpx = fpx };
             Vector3 camUp = rot * Vector3.up, camFwd = rot * Vector3.forward;
             float roll = Vector3.SignedAngle(Vector3.ProjectOnPlane(Vector3.up, camFwd), camUp, camFwd);
@@ -437,7 +516,8 @@ namespace BubbleWash.EditorTools
                     go.transform.rotation = rot;
                     if (module == 0) Debug.Log($"[BWK] shot0825 window turned {Quaternion.Angle(rot, go.transform.rotation):F0}/aspect fit, scale {s:F2}");
                 }
-                go.transform.localScale = new Vector3(mirror ? -s : s, s, s);
+                bool flipX = mirror ^ (it.name == "ChamberWindow");   // v3: window hinge came out on the far side
+                go.transform.localScale = new Vector3(flipX ? -s : s, s, s);
                 go.transform.position = X - (it.worldUp ? Vector3.up : rot * Vector3.up) * it.originUp * s;
                 if (it.name == "CurvyPipe")
                 {
