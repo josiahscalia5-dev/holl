@@ -1,4 +1,33 @@
-# Bubble Wash Kingdom - lead handoff (2026-11-26 10:30, lead session 98d6de44 -> next Claude account)
+# Bubble Wash Kingdom - lead handoff (2026-11-26 12:30, lead session cd43a82d on the third Pro account)
+
+## Round 7 status (2026-11-26 12:30, lead session cd43a82d) - read this first
+- Takeover verified 12:13: newest work = local tag `checkpoint-17b-takeover` (checkpoint-17-s5-straight + the previous
+  lead's uncommitted round-7 hooks / workflow / TRELLIS helpers). The previous lead session's process was gone; its two
+  orphaned `sleep` timers (14:02 and the "15:40 continuation") were stopped, so no second account can start a duplicate
+  round. No scheduled tasks or cron jobs exist on this account.
+- Autosave: the loop restarted by the previous lead at 12:09 published chat history (BWK_PUBLISH_CHAT=1); the owner's new
+  brief says keep chat history local, so it was restarted at 12:20 WITHOUT chat publishing (public ChatHistory/ is frozen
+  at autosave c4fdbe9, which already contains the 4e740a08 export and the first 617 lines of this session's export).
+  OPEN QUESTION: remove ChatHistory/ from the public tree (git history keeps it; never rewrite history)?
+- Integrations (12:20): Claude Docs + scheduled-tasks connectors connected; Remote Control ON for this session; computer
+  use, Claude in Chrome and the built-in browser available (computer use asks per app). NOT installed and never were:
+  Unity MCP (would block batchmode: Unity can't open the project twice), Playwright, Chrome for Testing, Frontend Design
+  plugin, GitHub connector (git CLI pushes work), ProBuilder (not in the manifest). Blender MCP = Claude Desktop chat
+  extension only (add-on not installed in Blender, not visible to Code sessions) -> Blender batch scripts. Project agents
+  (6) + skills (4) in .claude/ load automatically.
+- New lead tooling: CaptureStills / CaptureHero now also write `<dir>/bg/` with the MASCOT HIDDEN (same file names);
+  `CaptureStillsBatch -bwkOut DIR -bwkHero`. Previous build captured 12:18 -> `Captures/stills_prev_r6/` (+ bg/, compare/).
+  `bash Tools/section_triptych.sh <tag> [prevDir] [newDir]` -> `Captures/sections/S<n>_triptych_<tag>.png` (row 1 reference
+  | previous | newest, row 2 the same with the mascot hidden) + ALL sheets. Previous full gameplay recording kept as
+  `Captures/playmode/gameplay_autopilot_9x16_prev_r5_0921.mp4`.
+- 12:27 Round 7 workflow launched (task wzik2ppqr, run wf_e8ef4a2c-f69, prompts updated with the shared colour sheet,
+  section boundaries 14-115 / 110-318 / 318-351 m, gameplay-untouched rules, max 5 full builds). Resume a cut-off run with
+  `Workflow({scriptPath: ".../bwk-round7-wholelevel.js", resumeFromRunId: "wf_e8ef4a2c-f69"})`; agent transcripts in
+  `~/.claude/projects/C--Users-josia-thanksgiving/cd43a82d-d354-43cf-9600-4a89cd571544/subagents/workflows/`.
+- After the wave: lead safe_build -> snapshot `Captures/stills_r7/` -> section_triptych -> scores in the checklist ->
+  full-level Play Mode recording -> checkpoint-18 -> this file.
+
+## (previous) lead handoff 2026-11-26 10:30, lead session 98d6de44
 
 Same existing project: `C:\Users\josia\thanksgiving` (Unity 6.3 URP + Blender 5.3). Never restart it, never create a new
 project. Newest local checkpoint: tag `checkpoint-15b-handoff` on local `main` (checkpoint-15-r5 = round 5 results).
