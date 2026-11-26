@@ -301,7 +301,7 @@ def plate_material(name, img, mode, shadow_empty=None):
         under = N.new("ShaderNodeAttribute")
         under.attribute_type = 'GEOMETRY'
         under.attribute_name = "under"
-        dk = fmath('SUBTRACT', 1.0, fmath('MULTIPLY', under.outputs["Fac"], 0.78))
+        dk = fmath('SUBTRACT', 1.0, fmath('MULTIPLY', under.outputs["Fac"], 0.62))
         f = fmath('MULTIPLY', f, dk)
         col = mixc(fmath('MULTIPLY', under.outputs["Fac"], 0.5), col, (0.55, 0.42, 0.75, 1.0))
     fc = N.new("ShaderNodeCombineColor")
@@ -626,8 +626,8 @@ def stage_scene():
         body_c, shadow_s = 0.53, 0.62
     arm.scale = (S, S, S)
     ex, ey = EMERGE
-    d_out = pile_depth(ex, ey) + float(os.environ.get("BWK_DOUT", "0.045"))   # body centre depth when out
-    y_root = float(os.environ.get("BWK_YROOT", "922"))                          # screen y of the root when out
+    d_out = pile_depth(ex, ey) + float(os.environ.get("BWK_DOUT", "0.02"))    # body centre depth when out
+    y_root = float(os.environ.get("BWK_YROOT", "900"))                          # screen y of the root when out
     p_out = scr_to_world(ex, y_root, d_out)
     p_hide = p_out + Vector((0.0, 0.06, -0.15))
     shadow = bpy.data.objects.new("ContactShadow", None)
@@ -643,7 +643,11 @@ def stage_scene():
     for f in range(SHOT_FIRST, END + 1):
         st = mascot_state(f)
         k = st["rise"]
-        loc = p_hide.lerp(p_out, k) + Vector((0.0, 0.0, st["pop"] * 0.05))
+        # forward (out of the gap) leads, rising lags: the hat slides out under the towel edge instead of
+        # poking through the cloth
+        ky = smooth(min(1.0, k * 1.6))
+        loc = Vector((p_hide.x + (p_out.x - p_hide.x) * k, p_hide.y + (p_out.y - p_hide.y) * ky,
+                      p_hide.z + (p_out.z - p_hide.z) * k)) + Vector((0.0, 0.0, st["pop"] * 0.05))
         arm.location = loc
         if pb is not None:
             arm.rotation_euler = (math.radians(-6.0 * (1 - k)), 0.0, 0.0)
@@ -690,8 +694,11 @@ def stage_scene():
     for v in me.vertices:
         sy = H / 2 - v.co.z / v.co.y * F_PX
         sx = v.co.x / v.co.y * F_PX + W / 2
-        inside = GAP_X0 - 30 < sx < GAP_X1 + 30 and sy < gap_edge(sx)
-        vals.append(1.0 if inside else 0.0)
+        # darken only where the top towel fully covers it at rest (no seam along the jagged towel edge, nothing
+        # above the towel's upper boundary): ramps from 0 at 8 px inside the edge to 1 at 40 px
+        inside = GAP_X0 - 30 < sx < GAP_X1 + 30
+        wv = smooth((gap_edge(sx) - sy - 8.0) / 32.0) * smooth((sy - 560.0) / 20.0) if inside else 0.0
+        vals.append(wv)
     ua.data.foreach_set("value", vals)
     lower.data.materials.append(plate_material("M_TowelPile", img, 'under', shadow))
 
@@ -713,7 +720,7 @@ def stage_scene():
         w = (1.0 - smooth(r)) if r < 1.0 else 0.0
         w = w ** 1.2
         # lift: up and slightly toward the camera (the cloth drapes over the hat), edge rises most
-        lift.data[i].co = p + Vector((0.0, -0.025 * w, 0.075 * w))
+        lift.data[i].co = p + Vector((0.0, -0.02 * w, 0.095 * w))
     for f in range(SHOT_FIRST, END + 1):
         lift.value = mascot_state(f)["lift"]
         lift.keyframe_insert("value", frame=f)

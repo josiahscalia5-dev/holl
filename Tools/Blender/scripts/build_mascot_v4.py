@@ -1379,4 +1379,49 @@ def render_all(objs):
     bpy.data.objects.remove(floor, do_unlink=True)
 
 
-main()
+# ------------------------------------------------------------------ private reference crops (Captures/ only)
+REF_CROPS = {   # name: (source relative to Reference/, x0, y0, x1, y1, out_w, out_h)
+    "ref_front_03": ("intro_handoff/03_Approved_Mascot_Front.jpg", 420, 160, 840, 580, 600, 600),
+    "ref_threequarter_05": ("intro_handoff/05_Approved_Mascot_ThreeQuarter.jpg", 330, 200, 770, 640, 600, 600),
+    "ref_rear_04": ("intro_handoff/04_Approved_Mascot_Back.jpg", 420, 140, 860, 580, 600, 600),
+    "ref_hero_3s_9x16": ("frames4k_720/f_03.00s.png", 437, 0, 842, 720, 540, 960),
+}
+
+
+def resize_np(img, w, h):
+    """Bilinear resize of an (H, W, C) float array."""
+    H, W = img.shape[:2]
+    ys = (np.arange(h) + 0.5) * H / h - 0.5
+    xs = (np.arange(w) + 0.5) * W / w - 0.5
+    y0 = np.clip(np.floor(ys).astype(int), 0, H - 1)
+    x0 = np.clip(np.floor(xs).astype(int), 0, W - 1)
+    y1, x1 = np.clip(y0 + 1, 0, H - 1), np.clip(x0 + 1, 0, W - 1)
+    fy, fx = np.clip(ys - y0, 0, 1)[:, None, None], np.clip(xs - x0, 0, 1)[None, :, None]
+    a, b, c, d = img[y0][:, x0], img[y0][:, x1], img[y1][:, x0], img[y1][:, x1]
+    return (a * (1 - fx) + b * fx) * (1 - fy) + (c * (1 - fx) + d * fx) * fy
+
+
+def export_ref_crops():
+    out_dir = os.path.join(PRIVATE, "ref")
+    os.makedirs(out_dir, exist_ok=True)
+    for name, (src, x0, y0, x1, y1, w, h) in REF_CROPS.items():
+        im = bpy.data.images.load(os.path.join(REF, src), check_existing=False)
+        W, H = im.size
+        px = np.empty(W * H * 4, dtype=np.float32)
+        im.pixels.foreach_get(px)
+        arr = px.reshape(H, W, 4)[::-1]                       # top-down
+        crop = resize_np(arr[y0:y1, x0:x1].astype(np.float64), w, h)
+        out = bpy.data.images.new(name, w, h, alpha=False)
+        o = np.ones((h, w, 4), dtype=np.float32)
+        o[..., :3] = crop[::-1, :, :3]
+        out.pixels.foreach_set(o.ravel())
+        out.filepath_raw = os.path.join(out_dir, name + ".png")
+        out.file_format = 'PNG'
+        out.save()
+        print("PREVIEW private ref crop", out.filepath_raw)
+
+
+if os.environ.get("BWK_V4_MODE", "") == "refs":
+    export_ref_crops()
+else:
+    main()

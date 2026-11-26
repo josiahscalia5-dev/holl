@@ -35,13 +35,13 @@ Material:
     - _CeilingTint: 0.9
     - _CeilingWidth: 0.55
     - _Circumference: 26.39
-    - _DepthTint: 0.4
-    - _DepthTintEnd: 17
-    - _DepthTintStart: 10
+    - _DepthTint: 0.55
+    - _DepthTintEnd: 26
+    - _DepthTintStart: 14
     - _EdgeAO: 0.35
     - _EdgeAOWidth: 0.5
     - _FlangeWidth: 0.2
-    - _Glow: 0.16
+    - _Glow: 0.14
     - _GlowChance: 0.04
     - _HoleAO: 0.45
     - _HoleAOWidth: 0.07
@@ -64,7 +64,7 @@ Material:
     - _Rows: 5
     - _SeamHighlight: 0.5
     - _SeamMargin: 0.06
-    - _ShadowTint: 0.3
+    - _ShadowTint: 0.4
     - _SheenStrength: 0.05
     - _SideRowPitch: 1.6
     - _SideSlotLength: 0.56
@@ -80,14 +80,14 @@ Material:
     - _Sparkle: 0.25
     - _VTile: 4
     m_Colors:
-    - _BaseColor: {r: 0.78431374, g: 0.68235296, b: 0.8, a: 1}
+    - _BaseColor: {r: 0.7294118, g: 0.61960787, b: 0.7764706, a: 1}
     - _BaySheenColor: {r: 0.5254902, g: 0.65882355, b: 0.9019608, a: 1}
-    - _CeilingColor: {r: 0.41568628, g: 0.6039216, b: 0.72156864, a: 1}
-    - _DepthTintColor: {r: 0.38431373, g: 0.5019608, b: 0.7058824, a: 1}
+    - _CeilingColor: {r: 0.27450982, g: 0.44705883, b: 0.6117647, a: 1}
+    - _DepthTintColor: {r: 0.32941177, g: 0.4392157, b: 0.65882355, a: 1}
     - _FlangeColor: {r: 0.6039216, g: 0.45490196, b: 0.87058824, a: 1}
     - _GlowColorA: {r: 1.7, g: 0.85, b: 1.6, a: 1}
     - _GlowColorB: {r: 0.75, g: 1.35, b: 1.9, a: 1}
-    - _HighlightColor: {r: 0.8627451, g: 0.7529412, b: 0.9254902, a: 1}
+    - _HighlightColor: {r: 0.83137256, g: 0.7137255, b: 0.9098039, a: 1}
     - _HoleColor: {r: 0.07058824, g: 0.039215688, b: 0.13333334, a: 1}
     - _HoleGlow: {r: 0.2901961, g: 0.17254902, b: 0.47058824, a: 1}
     - _PinkSpill: {r: 1, g: 0.43137255, b: 0.8235294, a: 1}
