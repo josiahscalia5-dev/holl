@@ -271,7 +271,7 @@ namespace BubbleWash.EditorTools
         // risers and the cyan water pipe sit on the travel-right wall (S6 adds windows on the travel-left wall), the
         // decorative coin lines on the travel-left wall. Window gaps (ChamberGaps) skip their drum rim.
         const float WindowScale = 1.0f;          // SM_ChamberWindow_v2 frame outer r 2.32 m (ref near window 3.9-4.6 m)
-        const float WindowAngle = 86f;           // window centre, degrees from the ceiling: mid-wall (v1 76 deg sat above the C-still frame top)
+        const float WindowAngle = 100f;          // window centre from the ceiling: centre 1.7 m = measured ~camera height (8.25 s solve); v1 76 / v2 86 sat above the C-still frame top
         const float WindowYaw = 14f;             // turned toward the travel direction so the socks read in the front views
         const float CyanPipeAngle = 35f, CyanPipeRadius = 2.8f, CyanPipeScale = 2.0f, CyanPipeStart = 238f;
         const float CyanPipeEnd = 312f;          // the hall agent's portal set (318-351 m) has its own curved cyan pipe (travel-left)
