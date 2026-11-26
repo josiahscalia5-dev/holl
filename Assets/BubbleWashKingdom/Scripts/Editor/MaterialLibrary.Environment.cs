@@ -59,6 +59,16 @@ namespace BubbleWash.EditorTools
                 // walls_upper_right only #98769e -> #907197 (ref #8067ac, the mauve comes from the LIGHTS), palette distance
                 // 23.4 -> 23.9 (worse) -> reverted to the checkpoint-20 values; the wall needs a light / probe method next wave
                 F(m, "_LitDesat", 0.5f); m.SetColor("_LitTint", new Color(0.945f, 0.727f, 1.0f)); F(m, "_HoleDarken", 0.3f);   // p2 .35 -> p3 .5
+                // S2 pass 1 (lead gap #2, 4K f_03.00s right wall): the side walls carry DENSE columns of SMALL vertical ovals
+                // (720p ~8 x 17 px, ~21 px apart around, columns ~30 px apart) - ours were 45 x 75 px ovals 150 px apart
+                // (1.1 m pitch). ~2.7x denser around and along, ~1/9 the hole area; thinner dark halos and lips so the
+                // small holes read as crisp recesses with lit rims on a lighter metal (not big dark blotches)
+                F(m, "_SideSlotPitch", 0.41f); F(m, "_SideSlotLength", 0.24f); F(m, "_SideSlotWidth", 0.14f); F(m, "_SideRowPitch", 0.6f);
+                F(m, "_SlotPitch", 0.41f); F(m, "_SlotLength", 0.30f); F(m, "_SlotWidth", 0.14f); F(m, "_RowPitch", 0.62f);
+                F(m, "_HoleAO", 0.35f); F(m, "_HoleAOWidth", 0.03f); F(m, "_LipWidth", 0.018f);
+                // v2: lighter, greyer lilac metal (wall-hue pixels upper right ref #7758aa V .67 vs ours #68488e V .56; top band
+                // ref V .67 vs ours .56-.65): albedo only (no exposure / light change), hue kept blue-violet
+                C(m, "_BaseColor", "#9886B6"); C(m, "_HighlightColor", "#B8AAD6");
             });
             // polished lavender drum lips between the gold rings (SM_DrumRim, m1: fat rolled lip): the stylised BWK/Gold
             // environment shading with a lavender palette - violet body, magenta-pink fresnel edge, soft pink-lavender

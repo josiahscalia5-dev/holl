@@ -43,8 +43,8 @@ Material:
     - _FlangeWidth: 0.2
     - _Glow: 0.035
     - _GlowChance: 0.03
-    - _HoleAO: 0.62
-    - _HoleAOWidth: 0.08
+    - _HoleAO: 0.35
+    - _HoleAOWidth: 0.03
     - _HoleBand: 1
     - _HoleDarken: 0.3
     - _HoleDepth: 0.1
@@ -52,7 +52,7 @@ Material:
     - _HoleSpacing: 0.6
     - _HoleStretch: 1.75
     - _InnerWall: 0.2
-    - _LipWidth: 0.035
+    - _LipWidth: 0.018
     - _LitDesat: 0.5
     - _Metallic: 0.58
     - _PanelLength: 3
@@ -62,34 +62,34 @@ Material:
     - _PlainBack: 0.85
     - _PlainFront: 0.75
     - _RimPhase: 0.4
-    - _RowPitch: 0.85
+    - _RowPitch: 0.62
     - _Rows: 5
     - _SeamHighlight: 0.5
     - _SeamMargin: 0.06
     - _ShadowTint: 0.4
     - _SheenStrength: 0.06
-    - _SideRowPitch: 1.6
-    - _SideSlotLength: 0.64
-    - _SideSlotPitch: 1.1
-    - _SideSlotWidth: 0.48
+    - _SideRowPitch: 0.6
+    - _SideSlotLength: 0.24
+    - _SideSlotPitch: 0.41
+    - _SideSlotWidth: 0.14
     - _SideZone: 0.25
     - _SlotDropout: 0.18
-    - _SlotLength: 0.4
-    - _SlotPitch: 0.58
+    - _SlotLength: 0.3
+    - _SlotPitch: 0.41
     - _SlotVariation: 0.2
-    - _SlotWidth: 0.22
+    - _SlotWidth: 0.14
     - _Smoothness: 0.58
     - _Sparkle: 0.25
     - _VTile: 4
     m_Colors:
-    - _BaseColor: {r: 0.5176471, g: 0.43137255, b: 0.61960787, a: 1}
+    - _BaseColor: {r: 0.59607846, g: 0.5254902, b: 0.7137255, a: 1}
     - _BaySheenColor: {r: 0.5254902, g: 0.65882355, b: 0.9019608, a: 1}
     - _CeilingColor: {r: 0.2901961, g: 0.34509805, b: 0.5254902, a: 1}
     - _DepthTintColor: {r: 0.30588236, g: 0.3529412, b: 0.54901963, a: 1}
     - _FlangeColor: {r: 0.54901963, g: 0.45490196, b: 0.78431374, a: 1}
     - _GlowColorA: {r: 1.7, g: 0.85, b: 1.6, a: 1}
     - _GlowColorB: {r: 0.75, g: 1.35, b: 1.9, a: 1}
-    - _HighlightColor: {r: 0.6666667, g: 0.59607846, b: 0.7764706, a: 1}
+    - _HighlightColor: {r: 0.72156864, g: 0.6666667, b: 0.8392157, a: 1}
     - _HoleColor: {r: 0.023529412, g: 0.011764706, b: 0.05490196, a: 1}
     - _HoleGlow: {r: 0.14117648, g: 0.08627451, b: 0.24313726, a: 1}
     - _LitTint: {r: 0.945, g: 0.727, b: 1, a: 1}

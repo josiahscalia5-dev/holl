@@ -166,9 +166,9 @@ namespace BubbleWash.EditorTools
             // round 5: shadow tone blue (hue ~235) instead of violet (R > G pushed dark cyan water toward violet; reference
             // shading is blue-violet with pink only where lit)
             // r8 v2: shadow tone (.41, .42, .64) -> a weaker grey-violet (hue ~252 like the reference darks)
-            // S2 pass 1 (lead gap #4): warm-hue share full frame ours 27 % vs reference 36 % -> warmer highlight tone (gold,
-            // bulbs, rails, fur highlights), shadows unchanged, no exposure / saturation / bloom change
-            st.shadows.Override(new Color(0.48f, 0.46f, 0.56f)); st.highlights.Override(new Color(0.60f, 0.52f, 0.44f)); st.balance.Override(-15f);
+            // S2 pass 1 v1 tried warmer highlights (.60, .52, .44): it pulled the lilac walls' blue down (top band V .65 -> .56,
+            // hue 266 -> 278 = magenta, reference 254-263) -> reverted; the warmth comes from the warmer key light instead
+            st.shadows.Override(new Color(0.48f, 0.46f, 0.56f)); st.highlights.Override(new Color(0.56f, 0.52f, 0.48f)); st.balance.Override(-15f);
             // Hue-selective saturation: only the blue-violet range (drum walls, ceiling bays, far tunnel ~225-268 deg) gets
             // richer (x1.28); the purple hat (~280), pink fur, cyan water and gold are untouched.
             var curves = profile.Add<ColorCurves>(true);
@@ -192,8 +192,8 @@ namespace BubbleWash.EditorTools
             // S2 pass 1 (lead gap #3): the far tunnel read as a soft pink bokeh blur (edge energy x 480-800 / y 140-360 ours
             // 5.1 vs reference 7.9): the reference's receding gold bulb rings and stars are sharp -> blur only far beyond
             // the third ring, and much less of it (no heavy DOF)
-            dof.mode.Override(DepthOfFieldMode.Gaussian); dof.gaussianStart.Override(34f); dof.gaussianEnd.Override(90f);
-            dof.gaussianMaxRadius.Override(0.7f); dof.highQualitySampling.Override(true);
+            dof.mode.Override(DepthOfFieldMode.Gaussian); dof.gaussianStart.Override(45f); dof.gaussianEnd.Override(110f);
+            dof.gaussianMaxRadius.Override(0.5f); dof.highQualitySampling.Override(true);
             foreach (var c in profile.components) AssetDatabase.AddObjectToAsset(c, profile);
             vol.sharedProfile = profile;
         }
@@ -344,16 +344,21 @@ namespace BubbleWash.EditorTools
         {
             (0.200f, 0.090f, 0.19f, 30f, 0),    // big yellow star on the upper-left wall (orange inner glow)
             (0.432f, 0.203f, 0.13f, -14f, 1),   // cyan star below-right of it (round 3: reference ~0.12-0.13 wide)
-            (0.968f, 0.285f, 0.085f, 18f, 0),   // small yellow star on the right wall, half off-frame
-            (0.988f, 0.360f, 0.080f, -10f, 2),  // pink star below it at the frame edge
+            // S2 p1 v2: both small stars moved ~30 px into the lavender rim's opening (v1: half hidden behind its lip; the
+            // reference shows them whole at 720p (820, 205) / (825, 250))
+            (0.925f, 0.285f, 0.085f, 18f, 0),   // small yellow star on the right wall, half off-frame
+            (0.940f, 0.352f, 0.080f, -10f, 2),  // pink star below it at the frame edge
             // S2 pass 1 (lead gap #1, 16:9 hero vs f_03.00s): the reference's right wall carries three LARGE stars outside
             // the portrait frame (u > 1 = right of it in the 16:9 capture, same vertical FOV; 16:9 x = 437.5 + u * 405).
             // Measured 720p centres / widths: yellow (1010, 65) 95 px, cyan (898, 152) 52 px, pink (1050, 282) 60 px.
             // Our near gold ring (109.75 m) covers x ~925-1060 there, so yellow / pink sit just right of it on the near
             // drum section and cyan between the lavender rim and that ring (same size, colour and roll as the reference).
-            (1.611f, 0.095f, 0.235f, -12f, 0),  // big yellow star, upper-right wall (720p ~(1090, 68))
-            (1.155f, 0.212f, 0.130f, -18f, 1),  // cyan star, right wall between rim and gold ring (~(905, 152))
-            (1.665f, 0.402f, 0.150f, 12f, 2),   // pink star, right wall below the yellow one (~(1112, 290))
+            // v2: the 16:9 capture lands near stars ~40-60 px right / 20-40 px lower than the portrait mapping (parallax of
+            // the landscape rig at 5 m depth; v1 measured yellow (1132, 88), cyan (935, 165), pink (1162, 330)) and they read
+            // ~15 % too big -> corrected u / v and widths toward the reference (1080, 65) 95 px / (898, 152) 52 / (1100, 290) 60
+            (1.483f, 0.063f, 0.200f, -12f, 0),  // big yellow star, upper-right wall
+            (1.080f, 0.196f, 0.125f, -18f, 1),  // cyan star, right wall between rim and gold ring
+            (1.512f, 0.346f, 0.130f, 12f, 2),   // pink star, right wall below the yellow one
         };
 
         const float StarMeshWidth = 1.07f;   // SM_NeonStarTube tip-to-tip incl. tube at scale 1 (outer radius 0.5 + tube 0.085)
@@ -467,8 +472,11 @@ namespace BubbleWash.EditorTools
                 comb.Add(Recolor(mats[s.color]), Matrix4x4.TRS(pos, rot, Vector3.one * scale));
                 // glow card facing the camera, just behind the tubes, ~1.8x the star: soft enough that the part cut by the
                 // drum wall is invisible (its radius beyond the inset is < 4 % intensity)
-                AddGlow(s.color, pos - toCam * (0.06f * scale), Quaternion.LookRotation(-toCam, upHint), StarMeshWidth * 2.2f * scale);
-                if (s.color == 0) AddCard(Mat("M_StarFill_Yellow"), pos - toCam * (0.04f * scale), Quaternion.LookRotation(-toCam, upHint), StarMeshWidth * 1.15f * scale);
+                // S2 p1 v2: the right-wall stars (u > 1, 16:9 only) are clean outline tubes in the reference (purple wall
+                // inside, tight glow): no orange fill card and a tighter glow (v1: hot filled blobs, star coverage 6.3 % vs 1.8 %)
+                bool outlineOnly = s.x > 1f;
+                AddGlow(s.color, pos - toCam * (0.06f * scale), Quaternion.LookRotation(-toCam, upHint), StarMeshWidth * (outlineOnly ? 1.55f : 2.2f) * scale);
+                if (s.color == 0 && !outlineOnly) AddCard(Mat("M_StarFill_Yellow"), pos - toCam * (0.04f * scale), Quaternion.LookRotation(-toCam, upHint), StarMeshWidth * 1.15f * scale);
                 heroCount++;
                 Debug.Log($"[BWK] hero star c{s.color} screen ({s.x:F2},{s.y:F2}) track {wf.distance:F1} m depth {Vector3.Dot(pos - camPos, camFwd):F1} m scale {scale:F2}");
             }

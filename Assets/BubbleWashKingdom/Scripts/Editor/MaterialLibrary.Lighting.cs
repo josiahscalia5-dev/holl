@@ -144,7 +144,7 @@ namespace BubbleWash.EditorTools
                 // half the strength, warmer pink-lavender, smaller cards (SceneBuilder) -> soft luminous end, not a flare
                 // S2 pass 1 (lead gap #3: far end = soft pink bokeh, far-tunnel mean ours #ba9bbc vs reference #9b70be):
                 // half again, lavender instead of pink-lavender -> the receding rings / bulbs / stars carry the far end
-                C(m, "_Color", "#B49CF0"); F(m, "_Strength", 0.20f); F(m, "_Softness", 1f); F(m, "_Core", 1.8f); F(m, "_NearFade", 14f);
+                C(m, "_Color", "#B49CF0"); F(m, "_Strength", 0.11f); F(m, "_Softness", 1f); F(m, "_Core", 1.8f); F(m, "_NearFade", 14f);
                 F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
             }, (int)RenderQueue.Transparent - 9);
             // round 5: soft pink haze card on the upper-left drum wall of the hero view (SceneBuilder.BuildNeonStars)
@@ -156,7 +156,7 @@ namespace BubbleWash.EditorTools
             }, (int)RenderQueue.Transparent - 11);
             Mat("M_VanishCore", "BWK/LightBlob", m =>
             {
-                C(m, "_Color", "#FFE6C8"); F(m, "_Strength", 0.65f); F(m, "_Softness", 1f); F(m, "_Core", 2.6f); F(m, "_NearFade", 14f);   // S2 p1: tighter, warmer, weaker
+                C(m, "_Color", "#FFE6C8"); F(m, "_Strength", 0.40f); F(m, "_Softness", 1f); F(m, "_Core", 2.6f); F(m, "_NearFade", 14f);   // S2 p1: tighter, warmer, weaker
                 F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
             }, (int)RenderQueue.Transparent - 8);
 
