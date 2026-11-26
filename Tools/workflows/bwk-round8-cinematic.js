@@ -7,6 +7,10 @@ export const meta = {
 // args: { base: '<newest checkpoint tag>', before: 'Captures/stills_r7w', agents: ['metal','assets','water'] }
 const BASE = (args && args.base) || 'checkpoint-18-r7'
 const BEFORE = (args && args.before) || 'Captures/stills_r7w'
+// optional args.resume = { all: '<RESUME line for every agent>', metal: '...', assets: '...', water: '...' } - put at the TOP
+// of the brief when a usage limit or an account switch cut the previous run (resumeFromRunId only works in the same session)
+const RESUME = (args && args.resume) || {}
+const resumeFor = k => (RESUME.all ? RESUME.all + '\n' : '') + (RESUME[k] ? RESUME[k] + '\n' : '')
 
 const REPORT = {
   type: 'object',
@@ -74,6 +78,6 @@ const pick = (args && Array.isArray(args.agents) && args.agents.length) ? args.a
 log('Round 8 agents: ' + pick.join(', ') + ' | base ' + BASE + ' | before ' + BEFORE + ' (max 2 run at once; the third starts when one finishes)')
 phase('Quality pass')
 const results = await parallel(pick.map(k => () =>
-  agent(COMMON + '\n' + AGENTS[k].prompt, { label: AGENTS[k].label, phase: 'Quality pass', schema: REPORT })
+  agent(resumeFor(k) + COMMON + '\n' + AGENTS[k].prompt, { label: AGENTS[k].label, phase: 'Quality pass', schema: REPORT })
     .then(r => ({ agent: AGENTS[k].label, report: r }))))
 return results
