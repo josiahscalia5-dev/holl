@@ -25,26 +25,31 @@ namespace BubbleWash.EditorTools
                 // (ref #7652a8 vs ours #5d36b5), weaker blue depth tint, purple-grey holes, pale steel-blue bay sheen.
                 // r7 shared look: deeper, richer metallic blue-purple (ref wall V 0.63-0.71 vs ours 0.77-0.84; lit upper wall mauve
                 // ~#a87ea0, deep violet in shadow) and bigger dark oval perforations
-                C(m, "_BaseColor", "#8C72A8"); C(m, "_HighlightColor", "#AE8EC6"); C(m, "_HoleColor", "#0C0618");
-                C(m, "_HoleGlow", "#4A2C78"); F(m, "_Circumference", 26.39f); F(m, "_VTile", 4f);
-                C(m, "_CeilingColor", "#3C5E8C"); F(m, "_CeilingTint", 0.9f); F(m, "_CeilingWidth", 0.55f);
+                // r8 (lighting, owner sheet 02 item 2 "deeper blue-violet metal, dark perforations"): measured on the same
+                // crops (reference vs r7w stills, blue-purple wall pixels) S2-S7 reference S .37-.48 / V .49-.66 vs ours
+                // S .55-.68 / V .66-.76, dark perforation pixels (V < .22) 1.6-5.7 % vs 0.0 %. -> greyer, deeper blue-violet
+                // base (the violet comes from the light), less ceiling blue, less self glow / pink spill, near-black hole
+                // interiors with a stronger dark halo, a little more metallic sheen from the (now box-projected) probes.
+                C(m, "_BaseColor", "#846E9E"); C(m, "_HighlightColor", "#AA98C6"); C(m, "_HoleColor", "#06030E");
+                C(m, "_HoleGlow", "#24163E"); F(m, "_Circumference", 26.39f); F(m, "_VTile", 4f);
+                C(m, "_CeilingColor", "#4A5886"); F(m, "_CeilingTint", 0.7f); F(m, "_CeilingWidth", 0.55f);
                 F(m, "_Pattern", 1f); F(m, "_BandLength", 12.75f); F(m, "_BandOffset", 71.5f); F(m, "_RimPhase", 0.40f);
                 F(m, "_PlainBack", 0.85f); F(m, "_PlainFront", 0.75f); F(m, "_Rows", 5f); F(m, "_RowPitch", 0.85f);
                 F(m, "_SlotPitch", 0.58f); F(m, "_SlotLength", 0.40f); F(m, "_SlotWidth", 0.22f); F(m, "_SlotVariation", 0.2f);
                 F(m, "_SideZone", 0.25f); F(m, "_SideSlotPitch", 1.1f); F(m, "_SideSlotLength", 0.64f); F(m, "_SideSlotWidth", 0.48f);
                 F(m, "_SideRowPitch", 1.6f); F(m, "_SeamMargin", 0.06f); F(m, "_SlotDropout", 0.18f);
-                F(m, "_LipWidth", 0.035f); F(m, "_Bevel", 0.7f); F(m, "_GlowChance", 0.04f); F(m, "_HoleDepth", 0.10f);
-                F(m, "_InnerWall", 0.38f);
+                F(m, "_LipWidth", 0.035f); F(m, "_Bevel", 0.8f); F(m, "_GlowChance", 0.03f); F(m, "_HoleDepth", 0.10f);
+                F(m, "_InnerWall", 0.2f);
                 m.SetColor("_GlowColorA", new Color(1.7f, 0.85f, 1.6f)); m.SetColor("_GlowColorB", new Color(0.75f, 1.35f, 1.9f));
-                C(m, "_SeamColor", "#2A1858"); C(m, "_SheenColor", "#F0B0F0"); F(m, "_SheenStrength", 0.05f);
-                F(m, "_Sparkle", 0.25f); F(m, "_CeilingLight", 0.04f); F(m, "_Glow", 0.08f);
-                F(m, "_Metallic", 0.5f); F(m, "_Smoothness", 0.52f); F(m, "_HoleBand", 1f);
-                F(m, "_EdgeAO", 0.35f); F(m, "_EdgeAOWidth", 0.5f); F(m, "_HoleAO", 0.45f); F(m, "_HoleAOWidth", 0.07f);
-                C(m, "_ShadowColor", "#3A4A96"); F(m, "_ShadowTint", 0.4f);
-                C(m, "_DepthTintColor", "#5470A8"); F(m, "_DepthTint", 0.55f); F(m, "_DepthTintStart", 14f); F(m, "_DepthTintEnd", 26f);
-                C(m, "_PinkSpill", "#FF6ED2"); F(m, "_PinkSpillStrength", 0.5f); F(m, "_PinkSpillWidth", 0.75f);
-                F(m, "_SeamHighlight", 0.5f); F(m, "_FlangeWidth", 0.2f); C(m, "_FlangeColor", "#9A74DE");
-                C(m, "_BaySheenColor", "#86A8E6"); F(m, "_BaySheen", 0.18f); F(m, "_BaySheenWidth", 0.25f); F(m, "_BaySheenPos", 0.6f);
+                C(m, "_SeamColor", "#20144A"); C(m, "_SheenColor", "#F0B0F0"); F(m, "_SheenStrength", 0.06f);
+                F(m, "_Sparkle", 0.25f); F(m, "_CeilingLight", 0.02f); F(m, "_Glow", 0.035f);
+                F(m, "_Metallic", 0.58f); F(m, "_Smoothness", 0.58f); F(m, "_HoleBand", 1f);
+                F(m, "_EdgeAO", 0.4f); F(m, "_EdgeAOWidth", 0.5f); F(m, "_HoleAO", 0.62f); F(m, "_HoleAOWidth", 0.08f);
+                C(m, "_ShadowColor", "#3A3A7E"); F(m, "_ShadowTint", 0.4f);
+                C(m, "_DepthTintColor", "#4E5A8C"); F(m, "_DepthTint", 0.45f); F(m, "_DepthTintStart", 14f); F(m, "_DepthTintEnd", 26f);
+                C(m, "_PinkSpill", "#FF6ED2"); F(m, "_PinkSpillStrength", 0.36f); F(m, "_PinkSpillWidth", 0.75f);
+                F(m, "_SeamHighlight", 0.5f); F(m, "_FlangeWidth", 0.2f); C(m, "_FlangeColor", "#8C74C8");
+                C(m, "_BaySheenColor", "#86A8E6"); F(m, "_BaySheen", 0.12f); F(m, "_BaySheenWidth", 0.25f); F(m, "_BaySheenPos", 0.6f);
             });
             // polished lavender drum lips between the gold rings (SM_DrumRim, m1: fat rolled lip): the stylised BWK/Gold
             // environment shading with a lavender palette - violet body, magenta-pink fresnel edge, soft pink-lavender
@@ -79,17 +84,19 @@ namespace BubbleWash.EditorTools
                 F(m, "_Glow", 0.28f); F(m, "_Metallic", 0.55f); F(m, "_Smoothness", 0.8f); F(m, "_HoleBand", 1f);
                 F(m, "_SheenStrength", 0.25f); F(m, "_Sparkle", 0.4f);
             });
+            // r8 (lighting): the S1 hall walls measured hue 248 / S .68 vs reference f_00.50s 275 / S .47 (the reference hall
+            // is pink-lilac, ours saturated blue): lilac-pink metal, pinker self glow, darker holes
             Mat("M_DrumWallHall", "BWK/DrumWall", m =>
             {
-                C(m, "_BaseColor", "#9A86D6"); C(m, "_HighlightColor", "#BDB3E8"); C(m, "_HoleColor", "#2A1450");
-                C(m, "_HoleGlow", "#A070FF"); F(m, "_Circumference", 84.4f); F(m, "_HoleSpacing", 0.9f);
-                F(m, "_HoleRadius", 0.24f); F(m, "_Glow", 0.22f);
+                C(m, "_BaseColor", "#B08CC8"); C(m, "_HighlightColor", "#D8BCE6"); C(m, "_HoleColor", "#1E0C34");
+                C(m, "_HoleGlow", "#8A4AB8"); F(m, "_Circumference", 84.4f); F(m, "_HoleSpacing", 0.9f);
+                F(m, "_HoleRadius", 0.24f); F(m, "_Glow", 0.2f);
             });
             Mat("M_DrumWallFlat", "BWK/DrumWall", m =>
             {
-                C(m, "_BaseColor", "#9A86D6"); C(m, "_HighlightColor", "#BDB3E8"); C(m, "_HoleColor", "#2A1450");
-                C(m, "_HoleGlow", "#A070FF"); F(m, "_Circumference", 4f); F(m, "_VTile", 4f); F(m, "_HoleSpacing", 0.8f);
-                F(m, "_HoleRadius", 0.25f); F(m, "_Glow", 0.2f); F(m, "_PanelLength", 1000f);
+                C(m, "_BaseColor", "#B08CC8"); C(m, "_HighlightColor", "#D8BCE6"); C(m, "_HoleColor", "#1E0C34");
+                C(m, "_HoleGlow", "#8A4AB8"); F(m, "_Circumference", 4f); F(m, "_VTile", 4f); F(m, "_HoleSpacing", 0.8f);
+                F(m, "_HoleRadius", 0.25f); F(m, "_Glow", 0.18f); F(m, "_PanelLength", 1000f);
             });
             Emissive("M_Screen", "#5E8FC7", 1.6f, pulse: 0.05f);
             Emissive("M_ButtonCyan", "#3FF0FF", 2.2f);

@@ -31,19 +31,26 @@ namespace BubbleWash.EditorTools
             // camera stay bright, rolled edges darken -> a bevelled band instead of a flat one; stronger glints / streaks.
             // v2: v1 (mid #F0A040 x1.2, cream streaks 1.45) read as a PALE golden-tan band; the 4K reference band is a deeper
             // saturated orange-amber (~#d08838) with darker brown-orange edges and the bulbs clearly brighter than the band.
-            GoldLook("M_Gold", high: "#FFD890", mid: "#E08A2C", low: "#5A2010", rim: "#8A4018", band: "#F0A858",
-                brightness: 1.0f, glow: 0.08f, contrast: 1.8f, viewGradient: 1f, env: 0.36f, envTint: 0.9f, envRough: 0.2f,
-                specPower: 170f, specStrength: 3.4f, glints: 3.2f, sparkle: 0f, fog: 0.4f, highlightSize: 9f, streak: 0.9f,
-                probeTint: "#8C4E8C");
-            GoldLook("M_GoldDark", high: "#FFE0B0", mid: "#C8702A", low: "#4A1636", rim: "#FFB070", band: "#FFCF96",
-                brightness: 1.0f, glow: 0.03f, contrast: 1.6f, viewGradient: 1f, env: 0.5f, envTint: 0.55f, envRough: 0.3f,
-                specPower: 120f, specStrength: 1.8f, glints: 2f, sparkle: 0f, fog: 0.8f, highlightSize: 8f, probeTint: "#8C4E8C");
+            // Round 8 (owner: "realistic polished gold"; measured on the same crops, reference vs r7w stills): rendered gold
+            // hue 32-36 deg in every section vs ours 26-30 (orange-salmon: rose ring lights + rose probe tint), the reference's
+            // dark bevel side V10 #89613f..#a47a56 vs ours #c17d50..#c78d58 (our edges too light -> flat band), and pale
+            // cream glints V99 #fee6af..#fef2a7 vs ours #ffcd82 / lemon #ffdf48. -> body ~5 deg more golden, much darker
+            // golden-brown lows + bevel rim (rolled edges fall off into deep amber), paler cream highlight, higher body
+            // contrast and sharper / stronger studio streaks (crisp bright specular lines on a rich amber body).
+            GoldLook("M_Gold", high: "#FFF0C0", mid: "#E2A23E", low: "#3E2208", rim: "#6A3E12", band: "#F4C478",
+                brightness: 0.96f, glow: 0.05f, contrast: 2.2f, viewGradient: 1f, env: 0.38f, envTint: 0.85f, envRough: 0.14f,
+                specPower: 260f, specStrength: 3.8f, glints: 3.4f, sparkle: 0f, fog: 0.4f, highlightSize: 11f, streak: 1.25f,
+                probeTint: "#8C5A6A");
+            GoldLook("M_GoldDark", high: "#FFE8BC", mid: "#C88634", low: "#3A1E10", rim: "#5A3414", band: "#F0C890",
+                brightness: 1.0f, glow: 0.03f, contrast: 1.9f, viewGradient: 1f, env: 0.5f, envTint: 0.6f, envRough: 0.22f,
+                specPower: 180f, specStrength: 2.2f, glints: 2.2f, sparkle: 0f, fog: 0.8f, highlightSize: 9f, probeTint: "#8C5A6A");
             // big premium paw coins (reference 16:9 frame): rich YELLOW gold body, darker amber relief / rim, crisp highlights
             // and a little twinkle as they spin
-            GoldLook("M_Coin", high: "#FFF2C4", mid: "#F2A61C", low: "#7A3606", rim: "#FFD47A", band: "#FFE29C",
-                brightness: 1.02f, glow: 0.06f, contrast: 1.5f, viewGradient: 0.75f, env: 0.3f, envTint: 0.85f, envRough: 0.2f,
-                specPower: 170f, specStrength: 2.4f, glints: 2.5f, sparkle: 1.2f, fog: 0.7f, highlightSize: 10f, sparkleScale: 14f,
-                probeTint: "#9A6A60");
+            // round 8: darker amber relief / bevel (reference coin V10 deep amber, ours stayed light), creamier glints
+            GoldLook("M_Coin", high: "#FFF4CC", mid: "#F0A82A", low: "#5A2A04", rim: "#9A5A12", band: "#FFE2A0",
+                brightness: 1.0f, glow: 0.05f, contrast: 1.8f, viewGradient: 0.75f, env: 0.32f, envTint: 0.85f, envRough: 0.16f,
+                specPower: 220f, specStrength: 2.8f, glints: 2.6f, sparkle: 1.2f, fog: 0.7f, highlightSize: 11f, sparkleScale: 14f,
+                probeTint: "#9A6A60", streak: 1.1f);
             // saturated purple faceted gem: the gold shader with a violet palette gives every flat facet its own tone, plus sparkle
             GoldLook("M_Gem", high: "#FFE4FF", mid: "#B22CF2", low: "#2E0766", rim: "#FF9AF2", band: "#E8B4FF",
                 brightness: 1.05f, glow: 0.3f, contrast: 1.6f, viewGradient: 1f, env: 0.45f, envTint: 0.85f, envRough: 0.08f,
@@ -63,7 +70,17 @@ namespace BubbleWash.EditorTools
             EmissiveLook("M_Bulb", "#FF6A10", 5.0f, core: 0.9f, corePower: 2.6f, halo: 1.0f, edgeSat: 1.0f, chase: 1f, chaseMin: 0.75f,
                 pulse: 0.05f, fog: 0.08f, coreColor: "#FFAA80", probeDim: 0.3f);
             // end-of-tunnel portal disc (BuildPortal core): radiant warm white-gold, bright but not a screen-filling flare
-            EmissiveLook("M_PortalCore", "#FFC860", 3.4f, core: 0.55f, corePower: 2f, halo: 0.3f, edgeSat: 0.3f, pulse: 0.06f, fog: 0.05f);
+            // round 8 (owner sheet 03 item 1 "large warm gold burst, no clipped white centre"; measured portal zone f_14.50s:
+            // gold 29.9 % / V99 #fef0a9 vs ours 16.8 % / lemon-white #ffdf48): (3.4, 2.7, 1.25) linear + a white core
+            // tonemapped to a pale lemon-white disc. Amber source with G/R ~.62, B/R ~.15 and a warm-gold (not white) core
+            // keeps the Neutral tonemapper + bloom on the gold side.
+            EmissiveLook("M_PortalCore", "#FFA436", 2.3f, core: 0.4f, corePower: 2.2f, halo: 0.45f, edgeSat: 0.7f, pulse: 0.06f, fog: 0.05f,
+                coreColor: "#FFD890", probeDim: 0.5f);
+            // round 8: the starburst rays + gold sparkles (SM_Starburst_r7 slot M_PortalCore, remapped in BuildPortalExtras;
+            // r7 used M_Neon_Yellow whose cream core (#FFF0A0 x .8 on x3.2) bloomed white). Saturated amber-gold rays, a
+            // small warm-gold hot centre, moderate intensity so the rays stay gold after tonemapping and bloom.
+            EmissiveLook("M_PortalBurst", "#FF9A1C", 2.1f, core: 0.35f, corePower: 2.6f, halo: 0.6f, edgeSat: 0.5f, pulse: 0.08f, fog: 0.04f,
+                coreColor: "#FFCC6A", probeDim: 0.4f);
             // Neon tubes (reference: thick tubes with PALE hot cores - yellow #fbe496, cyan #78eaf5 - inside saturated colour
             // edges and soft tinted halos): saturated edge hue, tinted core across most of the tube face (broad _CorePower),
             // moderate intensity so the tonemapper keeps the colour and the bloom carries the hue.

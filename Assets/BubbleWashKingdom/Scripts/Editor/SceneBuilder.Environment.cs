@@ -272,7 +272,13 @@ namespace BubbleWash.EditorTools
         // decorative coin lines on the travel-left wall. Window gaps (ChamberGaps) skip their drum rim.
         const float WindowScale = 1.0f;          // SM_ChamberWindow_v2 frame outer r 2.32 m (ref near window 3.9-4.6 m)
         const float WindowAngle = 100f;          // window centre from the ceiling: centre 1.7 m = measured ~camera height (8.25 s solve); v1 76 / v2 86 sat above the C-still frame top
-        const float WindowYaw = 14f;             // turned toward the travel direction so the socks read in the front views
+        // r7: +14 (toward the travel direction, for the front comparison stills) left the REAR gameplay camera looking at the
+        // window ~90 deg off its face = a tall gold slab (projection test 14:55; owner sheet 02 item 1). r8 (asset artist):
+        // turned toward the ONCOMING rear camera, yaw only (same wall positions / heights). -26 is the most the frame can turn
+        // before its forward edge reaches the slide: inner edge x = 3.35 - 2.17 sin 26 = 2.40 m at rail-top height (rail
+        // outer 2.38 m) and 2.33 m at camera height (camera <= ~1.3 m off the axis). The rear camera at 10-15 m now sees the
+        // face 45-51 deg off-axis (ellipse 0.63-0.71 wide) instead of ~90 deg.
+        const float WindowYaw = -26f;
         const float CyanPipeAngle = 35f, CyanPipeRadius = 2.8f, CyanPipeScale = 2.0f, CyanPipeStart = 238f;
         const float CyanPipeEnd = 312f;          // the hall agent's portal set (318-351 m) has its own curved cyan pipe (travel-left)
         static readonly bool PreviewRebuildsEnvironment = false;   // r7: agent previews keep the saved scene's environment

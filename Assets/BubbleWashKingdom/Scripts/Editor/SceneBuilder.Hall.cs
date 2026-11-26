@@ -228,8 +228,12 @@ namespace BubbleWash.EditorTools
             // ---- light lavender-pink / hot pink machine materials for the whole r7 set (not the shared materials)
             var map = new Dictionary<string, Material>
             {
-                ["M_MachineLavender"] = HallMat("M_MachineLavender", "M_HallLavender_r7", "#E7B9EC", 0.45f, "#4A2850"),
-                ["M_MachinePink"] = HallMat("M_MachinePink", "M_HallPink_r7", "#FF67B6", 0.55f, "#5C1640"),
+                // round 8 (lighting, owner sheet 01 item 1 "prominent PINK console"): measured S1 upper half f_00.50s pink
+                // 22.4 % / blue-purple 33.7 % vs ours 6.3 % / 56.1 %: the light lavender / pink albedos times the saturated
+                // blue-violet trilight ambient rendered navy and plum. Matte-er surfaces + stronger warm pink / lilac self-light
+                // so the hall pieces keep their own colour under the blue ambient (the tunnel walls are not touched).
+                ["M_MachineLavender"] = HallMat("M_MachineLavender", "M_HallLavender_r7", "#F2C6F2", 0.32f, "#A0609C"),
+                ["M_MachinePink"] = HallMat("M_MachinePink", "M_HallPink_r7", "#FF5AAE", 0.42f, "#C02A78"),
             };
             HallRemap(holder, map);
             Debug.Log($"[BWK] hall r7: {holder.transform.childCount} props placed, door ring + drum walls from {HallMouthD} m, old HallMachinery hidden");
@@ -256,7 +260,8 @@ namespace BubbleWash.EditorTools
                 sp.localAxis = Vector3.forward;
                 sp.degreesPerSecond = 5f;
                 // v1 rays read white (M_PortalCore blooms to white); the reference rays are saturated gold
-                HallRemap(burst, new Dictionary<string, Material> { ["M_PortalCore"] = Mat("M_Neon_Yellow") });
+                // round 8 (lighting): M_Neon_Yellow's cream core still bloomed white -> dedicated amber-gold M_PortalBurst
+                HallRemap(burst, new Dictionary<string, Material> { ["M_PortalCore"] = Mat("M_PortalBurst") ?? Mat("M_Neon_Yellow") });
             }
             // big polished gold ring with 20 warm bulbs in front of the existing portal ring (reference 13-15 s)
             var ring = HallPlace(pgo, "Machinery", "SM_MouthRing_r7", Vector3.zero, Quaternion.identity, 0.66f, default, false);

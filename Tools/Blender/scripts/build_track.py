@@ -617,6 +617,10 @@ def make_materials():
         "M_Water": C.material("M_Water", "#2C93DD", roughness=0.06, coat=0.5),
         "M_RailRainbow": C.material("M_RailRainbow", "#FFB347", roughness=0.18, coat=0.6),
         "M_RailPink": C.material("M_RailPink", "#F26DC2", roughness=0.16, coat=1.0),
+        # round 8 (asset artist, library 15 "glossy multicoloured slide rails"): the slide's bank + rail tube slots get
+        # their own Unity materials (MaterialLibrary.Assets.cs) - layered candy pink / amber / hot pink, clear-coat gloss
+        "M_RailBand_r8": C.material("M_RailBand_r8", "#FFB357", roughness=0.12, coat=1.0),
+        "M_RailTube_r8": C.material("M_RailTube_r8", "#FF79B4", roughness=0.1, coat=1.0),
         "M_SlideShell": C.material("M_SlideShell", "#E79AD6", roughness=0.35),
         "M_DrumWall": C.material("M_DrumWall", "#8E5CC4", metallic=0.55, roughness=0.32),
         "M_Glass": C.material("M_Glass", "#D9F6FF", roughness=0.04, alpha=0.22),
@@ -1077,7 +1081,7 @@ def main():
     C.reset_scene()
     m = make_materials()
     assets = {
-        "slide": build_slide([m["M_Water"], m["M_RailRainbow"], m["M_RailPink"], m["M_SlideShell"]]),
+        "slide": build_slide([m["M_Water"], m["M_RailBand_r8"], m["M_RailTube_r8"], m["M_SlideShell"]]),
         "tunnel": build_tunnel([m["M_DrumWall"]]),
         "pipe": build_glass_pipe([m["M_Glass"], m["M_PipeWater"]]),
         "coupler": build_coupler([m["M_Gold"]]),
@@ -1100,6 +1104,9 @@ def main():
     print("CHECK ring bulbs %d at rho %.3f, bulb centre y %.3f, crown y %.3f" % (
         RING_BULBS, RG_BULB_RHO, BULB_Y, BULB_Y + BULB_H2))
     C.save_work("build_track")
+    if os.environ.get("BWK_TRACK_NOPREVIEW"):   # r8: slot-only re-export, previews unchanged
+        print("BUILD_TRACK_DONE (no previews)")
+        return
 
     preview_materials(m)
     render_previews(assets)

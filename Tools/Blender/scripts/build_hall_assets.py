@@ -386,6 +386,127 @@ def build_pipe_curve(M):
 
 
 # ------------------------------------------------------------------ previews (next to the reference crops)
+# ------------------------------------------------------------------ round 8 (asset artist): fluffy roller
+# Library 02 "striped fluffy washing roller" (0.50 s): thick soft ROUNDED tufts in pink / white / cyan bands around a gold hub;
+# the r7 roller's 2.3k box blades read as blocky "pixel" discs. r8 = smooth lathe body whose bands bulge like plush discs,
+# + 8 coincident fur SHELLS for BWK/Fur (UV1.x = shell fraction 0..1, UV1.y = fur length mask), band colour in the vertex
+# colour (LINEAR values: Unity uses vertex colours as-is in linear space), alpha 1 = the shader's coat path.
+# Same axis / origin / overall size as SM_BrushRoller_r7 (bands x -1.31..1.31, tips r ~1.28 with _FurLength 0.30), so the
+# SceneBuilder.Hall placement is unchanged (model reference swap only). Static gold hub + arm stay SM_BrushRollerArm_r7.
+R8_SHELLS = 9                      # skin + 8 fur shells
+R8_SEG = 40                        # around
+R8_LC = 6.0                        # UV.x * 2 spans 0..6 around (integer strand / tuft cells -> no seam: density 30, tufts 7)
+R8_COLS = {"brp": "#FF74BA", "lav": "#7A4A9A", "brw": "#FFF3FA", "brb": "#7CCFF2"}
+
+
+def build_roller_r8(M):
+    bands = [("brp", 0.38), ("lav", 0.1), ("brp", 0.36), ("brw", 0.34), ("brb", 0.4), ("brw", 0.3), ("brp", 0.4), ("brb", 0.34)]
+    total = sum(w for _, w in bands)
+    R_PEAK, R_GROOVE, R_LAV = 0.98, 0.84, 0.86
+    # profile rows (x, r, nx, nr, band key, fur mask)
+    rows = []
+    x0 = -total / 2
+    # hub-end cap: annulus from r 0.55 up to the groove (normal -X)
+    rows.append((x0, 0.55, -1.0, 0.0, bands[0][0], 0.6, True))
+    for b, (key, w) in enumerate(bands):
+        rp = R_LAV if key == "lav" else R_PEAK
+        nseg = 2 if key == "lav" else 4
+        for j in range(nseg + 1):
+            if b > 0 and j == 0:
+                continue
+            u = j / nseg
+            t = 2.0 * u - 1.0
+            bul = math.sqrt(max(0.0, 1.0 - t * t))
+            r = R_GROOVE + (rp - R_GROOVE) * bul
+            # d r / d x of the bulge (finite, clamped at the band edges)
+            drdu = (rp - R_GROOVE) * (-t / max(bul, 0.35)) * 2.0
+            drdx = drdu / w
+            ln = math.hypot(drdx, 1.0)
+            rows.append((x0 + u * w, r, -drdx / ln, 1.0 / ln, key, 0.45 if key == "lav" else 1.0, False))
+        x0 += w
+    rows.append((x0, 0.55, 1.0, 0.0, bands[-1][0], 0.6, True))
+    # fix the cap rows: duplicate the first / last rim row with a cap normal so the end faces read as flat fluffy discs
+    bm = bmesh.new()
+    uv0 = bm.loops.layers.uv.new("UVMap")
+    uv1 = bm.loops.layers.uv.new("UVShell")
+    col = bm.loops.layers.color.new("Col")
+    lin = {k: tuple(C.srgb_to_linear(int(v[i:i + 2], 16) / 255.0) for i in (1, 3, 5)) + (1.0,) for k, v in R8_COLS.items()}
+    tris = 0
+    for s_ in range(R8_SHELLS):
+        h = s_ / (R8_SHELLS - 1)
+        grid = []
+        for (x, r, nx, nr, key, mask, cap) in rows:
+            ring = []
+            for k in range(R8_SEG + 1):
+                a = 2.0 * PI * k / R8_SEG
+                v = bm.verts.new((x, r * math.cos(a), r * math.sin(a)))
+                v.normal = Vector((nx, nr * math.cos(a), nr * math.sin(a))).normalized()
+                ring.append((v, a))
+            grid.append(ring)
+        for i in range(len(rows) - 1):
+            # the face takes the band of its upper row unless that row is a cap
+            key = rows[i + 1][4] if not rows[i + 1][6] else rows[i][4]
+            mask = min(rows[i][5], rows[i + 1][5]) if (rows[i][6] or rows[i + 1][6]) else rows[i + 1][5]
+            for k in range(R8_SEG):
+                quad = (grid[i][k], grid[i][k + 1], grid[i + 1][k + 1], grid[i + 1][k])
+                f = bm.faces.new([q[0] for q in quad])
+                f.material_index = 0
+                for lp, (vv, a), (rr, xx) in zip(f.loops, quad, ((i, 0), (i, 1), (i + 1, 1), (i + 1, 0))):
+                    kk = k + xx
+                    lp[uv0].uv = (kk / R8_SEG * R8_LC * 0.5, rows[rr][0] + total / 2)
+                    lp[uv1].uv = (h, mask)
+                    lp[col] = lin[key]
+                tris += 2
+    bm.normal_update()
+    o = C.mesh_from_bmesh("roller_r8_fur", bm)
+    me = o.data
+    # keep the analytic lathe normals (smooth bulges, crisp nothing)
+    me.shade_smooth()
+    try:
+        me.normals_split_custom_set_from_vertices([v.normal[:] for v in me.vertices])
+    except Exception as e:  # noqa: BLE001
+        print("WARN custom normals", e)
+    fur = C.material("M_RollerFur_r8", "#FFFFFF", 0.0, 0.9)
+    try:   # Blender preview: vertex colour drives the base colour (Unity uses BWK/Fur)
+        nt = fur.node_tree
+        bsdf = next(n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED')
+        at = nt.nodes.new("ShaderNodeVertexColor")
+        at.layer_name = "Col"
+        nt.links.new(at.outputs["Color"], bsdf.inputs["Base Color"])
+    except Exception as e:  # noqa: BLE001
+        print("WARN preview vc", e)
+    me.materials.append(fur)
+    me.materials.append(M["lav"])
+    me.materials.append(M["gold"])
+    print("SHELLS roller_r8 %d shells x %d tris" % (R8_SHELLS, tris // R8_SHELLS))
+    # lilac flange + gold torus at the hub end and the far gold axle cap (spin with the body, like r7)
+    PARTS.append(o)
+    hx = -total / 2
+    cyl(M["lav"], 0.78, 0.12, (hx - 0.08, 0, 0), rot=(0, PI / 2, 0), verts=40)
+    tor(M["gold"], 0.44, 0.06, (hx - 0.12, 0, 0), rot=(0, PI / 2, 0), seg=32, mseg=8)
+    cyl(M["gold"], 0.16, 0.25, (total / 2 + 0.1, 0, 0), rot=(0, PI / 2, 0))
+    return finish("SM_BrushRoller_r8", smooth=0.0)
+
+
+def roller_r8_only():
+    """BWK_HALL_ONLY=roller_r8: build + export only SM_BrushRoller_r8 (no churn on the r7 FBX files) and its preview."""
+    C.reset_scene()
+    M = make_materials()
+    body = build_roller_r8(M)
+    arm_dummy = None
+    try:
+        bpy.context.scene.eevee.taa_render_samples = 16
+    except Exception:
+        pass
+    body.location = (0, 0, 0)
+    body.rotation_euler = (0, 0, math.radians(-35))
+    out = os.path.join(C.ROOT, "Captures", "agents", "assets", "r8", "pv_roller_r8.png")
+    C.ensure_dir(os.path.dirname(out))
+    lineup_preview([body], out, (2.2, 6.2, 1.2), (0.0, 0.0, 0.0), 40.0, (960, 640))
+    C.save_work("roller_r8.blend")
+    print("DONE roller r8")
+
+
 def lineup_preview(objs, path, cam, target, lens, res):
     for o in bpy.context.scene.objects:
         if o.type == 'MESH':
@@ -432,4 +553,7 @@ def main():
     print("DONE hall r7 assets")
 
 
-main()
+if os.environ.get("BWK_HALL_ONLY") == "roller_r8":
+    roller_r8_only()
+else:
+    main()

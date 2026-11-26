@@ -26,6 +26,7 @@ namespace BubbleWash.EditorTools
             EnvironmentMaterials();
             LightingMaterials();
             CharacterMaterials();
+            AssetMaterials();      // round 8 asset artist: MaterialLibrary.Assets.cs (rails, roller fur)
 
             AssetDatabase.SaveAssets();
             Debug.Log("[BWK] Materials built.");

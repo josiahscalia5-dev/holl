@@ -165,7 +165,9 @@ namespace BubbleWash.EditorTools
             // Hue-selective saturation: only the blue-violet range (drum walls, ceiling bays, far tunnel ~225-268 deg) gets
             // richer (x1.28); the purple hat (~280), pink fur, cyan water and gold are untouched.
             var curves = profile.Add<ColorCurves>(true);
-            curves.hueVsSat.Override(new TextureCurve(new[] { new Keyframe(0.57f, 0.5f), new Keyframe(0.63f, 0.55f), new Keyframe(0.72f, 0.54f),
+            // round 8: the opposite now - measured wall pixels S2-S7 reference S .37-.48 vs ours .55-.68 (too saturated
+            // blue-violet everywhere): the same hue band is DE-saturated to x0.9 (with the greyer M_DrumWall base)
+            curves.hueVsSat.Override(new TextureCurve(new[] { new Keyframe(0.57f, 0.5f), new Keyframe(0.63f, 0.45f), new Keyframe(0.72f, 0.45f),
                 new Keyframe(0.765f, 0.5f) }, 0.5f, true, new Vector2(0f, 1f)));
             // round 5: hue-vs-hue (part of the colour-grading LUT, free at runtime): the reference violets sit ~12 deg BLUER
             // than ours (median hue frame 251 vs 264, tunnel ahead 255 vs 270, upper-right wall 262 vs 284, hat 279 vs 286).
@@ -201,12 +203,16 @@ namespace BubbleWash.EditorTools
                 if (asset == null) continue;
                 var so = new SerializedObject(asset);
                 var p = so.FindProperty("m_AdditionalLightsPerObjectLimit");
-                if (p == null || p.intValue == PerObjectLightLimit) continue;
-                p.intValue = PerObjectLightLimit;
+                // round 8: reflection-probe box projection on (ProjectSetup writes false; the probes are box-projected now)
+                var bp = so.FindProperty("m_ReflectionProbeBoxProjection");
+                bool changed = false;
+                if (p != null && p.intValue != PerObjectLightLimit) { p.intValue = PerObjectLightLimit; changed = true; }
+                if (bp != null && !bp.boolValue) { bp.boolValue = true; changed = true; }
+                if (!changed) continue;
                 so.ApplyModifiedPropertiesWithoutUndo();
                 EditorUtility.SetDirty(asset);
                 AssetDatabase.SaveAssetIfDirty(asset);
-                Debug.Log($"[BWK] lighting: {path} per-object light limit -> {PerObjectLightLimit} (high tier)");
+                Debug.Log($"[BWK] lighting: {path} per-object light limit -> {PerObjectLightLimit} (high tier), probe box projection on");
             }
         }
 
@@ -225,7 +231,11 @@ namespace BubbleWash.EditorTools
             // keeps their own violet albedo / ambient in the mix (less pale reflected haze)
             probe.intensity = 0.9f;
             probe.hdr = true;
-            probe.boxProjection = false;
+            // round 8: box projection (owner: "warm cinematic reflections"): each probe's box is the bounds of its own tunnel
+            // chunk / hall block, so gold, glass, rails, water and the metal walls reflect the nearby bulbs, rings and neon
+            // at their real place instead of an infinitely far cubemap (that read as a flat violet haze). Baked cubemaps,
+            // no realtime probes, no SSR: mobile safe (one extra ray-box intersection per reflecting pixel).
+            probe.boxProjection = true;
             probe.nearClipPlane = 0.1f;
             probe.farClipPlane = 120f;
         }
@@ -245,7 +255,9 @@ namespace BubbleWash.EditorTools
                 // warm amber-rose: on the violet drum wall this reads as the reference's pink-peach glow around each ring
                 // round 4: rosier (reference ring surroundings p30 #f2d2c9 pale pink-peach, median pink-lavender; ours
                 // yellow-orange) -> rose-peach pools on the walls and peach glints on the gold
-                l.color = new Color(1f, 0.52f, 0.5f);
+                // round 8: the rose light turned every gold glint salmon (rendered gold hue 26-30 deg vs reference 32-36 in
+                // S1-S7) -> warm golden-amber bulb light: golden glints on the rings, warm (not pink) pools on the metal
+                l.color = new Color(1f, 0.64f, 0.40f);
                 l.intensity = 2.6f;
                 l.range = 6.5f;
                 l.shadows = LightShadows.None;
