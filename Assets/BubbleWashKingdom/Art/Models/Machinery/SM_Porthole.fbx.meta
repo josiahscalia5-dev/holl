@@ -7,6 +7,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: M_ChamberDrum
+    second: {fileID: 2100000, guid: 2c08f71ef7e6abd4590cc5c6a0d47154, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: M_ChamberSwirl
     second: {fileID: 2100000, guid: d15bb1ee01fdc9a49acf71979849291f, type: 2}
   - first:
