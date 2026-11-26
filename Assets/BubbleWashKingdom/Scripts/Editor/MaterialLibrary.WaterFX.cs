@@ -43,6 +43,11 @@ namespace BubbleWash.EditorTools
                 // turquoise flow patches, stronger ripples + flow streaks (visible flow under / around the mascot)
                 C(m, "_ReflectTint", "#8CE8FF"); F(m, "_ReflectBoost", 0.36f); F(m, "_PatchAmount", 0.44f);
                 F(m, "_RippleStrength", 1.15f); F(m, "_StreakAmount", 0.22f);
+                // p2 (p1 18:27: still periwinkle - the URP PBR reflection of the lavender walls at the grazing rear angle wins;
+                // lower half water-class median ours #8083C8 vs reference #609BD1, lum p50 135 vs 147): less mirror-like PBR
+                // gloss, the extra probe reflection tinted by the water's own cyan (lavender walls read blue in it), a little
+                // more body glow (we are darker than the reference there)
+                F(m, "_Smoothness", 0.45f); C(m, "_ReflectTint", "#6CD8FF"); F(m, "_ReflectBoost", 0.5f); F(m, "_Glow", 0.14f);
                 // light halos around the decor chevrons: same period / geometry / runway offset as SceneBuilder.BuildDecorChevrons
                 F(m, "_ChevronStart", SceneBuilder.ChevronStart); F(m, "_ChevronSpacing", SceneBuilder.ChevronSpacing);
                 // (v2 notch measured #55B8E5 vs reference deep #3386CC: the arrows now bloom on their own -> fainter, tighter pool)

@@ -631,7 +631,9 @@ namespace BubbleWash.EditorTools
         // through the hero gameplay camera (build_fx_v2.py BWK_FX_REAR=1: 2.75 / 1.3 / pitch 10 / vFOV 58): milk rising on the
         // plane of the soles, low parts lying on the water nearer the camera, separate droplets. Authored in runner-local space
         // (no yaw, no per-side offsets); 0.95 because the reference feet stand ~0.5 m further from its camera than ours.
-        const float CrownRearScale = 0.95f, CrownRearFwd = 0f;
+        // (p1 18:27: both crowns sat ~80-100 px outside the soles vs the reference, which touches them -> 0.3 m inward each)
+        // (p2 18:31 9:16 hero: the reference crowns rise above the sole tops, ours reach mid-sole -> lift 1.3)
+        const float CrownRearScale = 0.95f, CrownRearFwd = 0f, CrownRearIn = 0.3f, CrownRearLift = 1.3f;
 
         static bool BuildCrownsV2(GameObject fxRoot, RunnerController runner, bool save)
         {
@@ -654,12 +656,12 @@ namespace BubbleWash.EditorTools
             sc.framesRight = framesR.ToArray();
             sc.fps = 12f;
             var rot = rear ? Quaternion.identity : Quaternion.Euler(0f, 180f, 0f);
-            var s = rear ? Vector3.one * CrownRearScale : new Vector3(CrownV2Scale, CrownV2Scale * CrownV2Lift, CrownV2Scale);
+            var s = rear ? new Vector3(CrownRearScale, CrownRearScale * CrownRearLift, CrownRearScale) : new Vector3(CrownV2Scale, CrownV2Scale * CrownV2Lift, CrownV2Scale);
             var crowns = new List<MeshFilter>();
             foreach (float side in new[] { -1f, 1f })
             {
                 var go = Child(holder, side < 0 ? "CrownL" : "CrownR");
-                go.transform.localPosition = rear ? new Vector3(0f, 0f, CrownRearFwd) : new Vector3(side < 0 ? -CrownV2OutL : CrownV2OutR, 0f, CrownV2Fwd);
+                go.transform.localPosition = rear ? new Vector3(side < 0 ? CrownRearIn : -CrownRearIn, 0f, CrownRearFwd) : new Vector3(side < 0 ? -CrownV2OutL : CrownV2OutR, 0f, CrownV2Fwd);
                 go.transform.localRotation = rot;
                 go.transform.localScale = s;
                 var mf = go.AddComponent<MeshFilter>();
@@ -674,7 +676,7 @@ namespace BubbleWash.EditorTools
             sc.baseScale = new[] { s, s };
             sc.baseRotation = new[] { rot, rot };
             sc.phase = new[] { 0, CrownV2Frames / 2 };
-            Debug.Log(rear ? $"[BWK] waterfx crowns REAR-traced: SM_FX_CrownRear_L/R x{CrownV2Frames} frames, no yaw, scale {CrownRearScale} fwd {CrownRearFwd}, M_FX_Milk_v2"
+            Debug.Log(rear ? $"[BWK] waterfx crowns REAR-traced: SM_FX_CrownRear_L/R x{CrownV2Frames} frames, no yaw, scale {CrownRearScale} lift {CrownRearLift} in {CrownRearIn} fwd {CrownRearFwd}, M_FX_Milk_v2"
                            : $"[BWK] waterfx crowns v2: SM_FX_Crown_v2_L/R x{CrownV2Frames} frames, yaw 180, out L {CrownV2OutL} R {CrownV2OutR} fwd {CrownV2Fwd} scale {CrownV2Scale} lift {CrownV2Lift}, M_FX_Milk_v2");
             return true;
         }
