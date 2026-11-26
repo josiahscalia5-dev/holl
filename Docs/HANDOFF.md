@@ -8,7 +8,13 @@
   specialist projects + bakes the approved artwork onto the S5 chamber ChamberV2_216_R (216 m) + wall, isolated test scene
   Scenes/Private/Test_Projection_S5.unity, private assets Art/Projected/ (both gitignored), gameplay recording
   Captures/playmode/projection_s5_9x16.mp4; then an independent judge. Notes: Captures/agents/projection/NOTES.md.
-- NEXT: (1) projection verdict -> send the owner reference | current | projected + recording; (2) round 8
+- 14:55 PROJECTION VERDICT = REJECTED (specialist + independent judge; sent to the owner): gameplay views current 3 vs
+  projected 1.5, front 3 vs 2. Causes: the rear camera sees the chamber window edge-on (interior never visible), the
+  surfaces it does see were 13-38 % covered by the reference camera (flat fill), seen texels stretched ~2.3x, the 4K
+  source is ~720p detail, solve error 10.9 px rms (AI video is not rigid), URP Lit gold rendered near-black. Evidence +
+  scripts: Captures/agents/projection/, ProjectionTest.cs, build_projection_test.py (private test scene / textures stay
+  gitignored). Round-8 assets prompt now: no projection; turn chamber windows toward the rear camera so socks read.
+- NEXT: (1) [done 14:55] projection verdict; (2) round 8 at the 18:30 usage reset
   (bwk-round8-cinematic.js, args {base: newest tag, before: "Captures/stills_r7w"}): metal + water first; the assets agent
   gets the projection rollout for the asset types the judge approved (else conventional); (3) lead safe_build lead_r8 ->
   cp stills -> stills_r8 -> section_triptych r8 (before stills_r7w) -> bwk-round7-verify.js {tag: "r8"} -> Play Mode
