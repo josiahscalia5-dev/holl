@@ -9,14 +9,14 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: M_PipeWaterPink
   m_Shader: {fileID: 4800000, guid: cef704881ca45b54dbe45ec9f9d8ac3e, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
+  m_Parent: {fileID: 2100000, guid: 33ee238a1cd1bce4ebd268d7e3b319c8, type: 2}
+  m_ModifiedSerializedProperties: 16
   m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
-  m_EnableInstancingVariants: 1
+  m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
+  m_CustomRenderQueue: 2000
   stringTagMap: {}
   disabledShaderPasses: []
   m_LockedProperties: 
@@ -25,14 +25,9 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _DstBlend: 0
     - _Intensity: 1.7
-    - _Mode: 0
-    - _RayCount: 14
     - _Scale: 2.5
     - _Speed: 0.9
-    - _SrcBlend: 1
-    - _ZWrite: 1
     m_Colors:
     - _ColorA: {r: 1, g: 0.24705882, b: 0.72156864, a: 1}
     - _ColorB: {r: 1, g: 0.7019608, b: 0.93333334, a: 1}

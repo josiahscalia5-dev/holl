@@ -38,6 +38,11 @@ namespace BubbleWash.EditorTools
                 F(m, "_StreakAmount", 0.18f); F(m, "_StreakDensity", 1.25f); F(m, "_EdgeTintAmount", 0.28f); F(m, "_SparkleAmount", 0.9f);
                 F(m, "_RainbowAmount", 0.32f); F(m, "_RippleStrength", 0.9f); F(m, "_EdgeFoam", 0.6f);
                 F(m, "_CausticAmount", 0.28f); F(m, "_Depth", 0.22f); F(m, "_NearBrighten", 0.05f); F(m, "_ReflectBoost", 0.45f); F(m, "_CenterGlow", 0.06f);
+                // round 8 MASTER (library 16 "turquoise flowing water", measured p50 #4BA5DB; the r8 rear stills read periwinkle
+                // because the lavender drum walls dominate the probe reflection): cyan reflection tint at a lower boost, more
+                // turquoise flow patches, stronger ripples + flow streaks (visible flow under / around the mascot)
+                C(m, "_ReflectTint", "#8CE8FF"); F(m, "_ReflectBoost", 0.36f); F(m, "_PatchAmount", 0.44f);
+                F(m, "_RippleStrength", 1.15f); F(m, "_StreakAmount", 0.22f);
                 // light halos around the decor chevrons: same period / geometry / runway offset as SceneBuilder.BuildDecorChevrons
                 F(m, "_ChevronStart", SceneBuilder.ChevronStart); F(m, "_ChevronSpacing", SceneBuilder.ChevronSpacing);
                 // (v2 notch measured #55B8E5 vs reference deep #3386CC: the arrows now bloom on their own -> fainter, tighter pool)
@@ -64,12 +69,7 @@ namespace BubbleWash.EditorTools
             });
             Lit_("M_SlideShell", "#E24AB8", metallic: 0.05f, smooth: 0.85f, emission: "#3A0A30");
             Emissive("M_ArrowRim", "#E6FFFF", 1.6f, pulse: 0f);   // round 7: 2.6 -> 1.6 (owner: arrows too bright)
-            Mat("M_Bubble", "BWK/Glass", m =>
-            {
-                // soap bubbles: clear centre, thin bright rim, thin-film colour patches, studio window highlights
-                C(m, "_Tint", "#EAF6FF"); F(m, "_Alpha", 0.08f); F(m, "_Iridescence", 0.4f); F(m, "_FresnelPower", 2.2f); F(m, "_Glow", 0.5f);
-                F(m, "_Reflectivity", 0.7f); F(m, "_Bubble", 1f); F(m, "_FilmStrength", 0.5f); F(m, "_WindowStrength", 1.6f); F(m, "_RimWidth", 2.0f);
-            }, (int)RenderQueue.Transparent);
+            // M_Bubble = a variant of the M_Glass master since round 8 (GlassLiquidMasters below)
             // speed-boost chevrons (BWK/Soft Mode 7): luminous teal glass, mint-white arm centres, HDR so bloom catches them
             Mat("M_Arrow", "BWK/Soft", m =>
             {
@@ -145,7 +145,12 @@ namespace BubbleWash.EditorTools
                 F(m, "_Mode", 5); C(m, "_ColorA", "#F4F6FC"); C(m, "_ShadowColor", "#B6BCDC"); C(m, "_ColorB", "#E6ECFA"); F(m, "_Wrap", 0.6f);
                 F(m, "_BumpScale", 14f); F(m, "_BumpStrength", 0.02f); F(m, "_Glow", 0.1f); F(m, "_RimPower", 2.6f); F(m, "_RimStrength", 0.3f);
                 F(m, "_SpecStrength", 0.3f); F(m, "_ReflectBoost", 0.15f); F(m, "_GlintAmount", 0.08f); F(m, "_Wobble", 0.006f); F(m, "_WobbleFreq", 1.4f);
+                // round 8 MASTER (library 17 "soft rounded foam bubbles", owner sheet 01 item 4): softer light wrap on the
+                // bigger lumps, a satin sheen + small bubble glints, broader soft rim (no flat white)
+                F(m, "_Wrap", 0.68f); F(m, "_SpecStrength", 0.38f); F(m, "_GlintAmount", 0.12f); F(m, "_RimStrength", 0.36f); F(m, "_RimPower", 2.2f);
             });
+            // round 8 masters: the old hall / fallback foam material is now a VARIANT of M_Foam_v2 (no overrides: one foam look)
+            WaterVariant("M_Foam", "M_Foam_v2", null, -1);
             Particle("M_FX_Splash", $"{Tex}/T_Splash.png", additive: false, "#FFFFFF");
             Particle("M_FX_SplashSheet", $"{Tex}/T_SplashCrown.png", additive: false, "#FFFFFF");
             Particle("M_FX_Soft", $"{Tex}/T_SoftCircle.png", additive: false, "#FFFFFF");
@@ -155,6 +160,52 @@ namespace BubbleWash.EditorTools
             Particle("M_FX_Bubble", $"{Tex}/T_Bubble.png", additive: false, "#FFFFFF");
             Particle("M_FX_Streak", $"{Tex}/T_Streak.png", additive: true, "#BFF6FF");
             Particle("M_FX_SpeedLine", $"{Tex}/T_Streak.png", additive: true, "#DDFBFF");
+        }
+
+        /// <summary>Round 8 masters: a Unity MATERIAL VARIANT of a master (Material.parent; every property inherited, then only
+        /// the given overrides - tint / scale / strength). A master change shows on every variant.</summary>
+        static Material WaterVariant(string name, string parentName, System.Action<Material> overrides, int queue)
+        {
+            var parent = AssetDatabase.LoadAssetAtPath<Material>($"{Dir}/{parentName}.mat");
+            if (parent == null) { Debug.LogWarning($"[BWK] master {parentName} missing - {name} not re-parented"); return null; }
+            string path = $"{Dir}/{name}.mat";
+            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null) { m = new Material(parent.shader) { name = name }; AssetDatabase.CreateAsset(m, path); }
+            if (m.shader != parent.shader) m.shader = parent.shader;
+            m.parent = parent;
+            m.RevertAllPropertyOverrides();
+            overrides?.Invoke(m);
+            m.renderQueue = queue == -1 ? parent.renderQueue : queue;
+            m.enableInstancing = true;
+            EditorUtility.SetDirty(m);
+            return m;
+        }
+
+        /// <summary>Round 8 masters (water agent; called from EnvironmentMaterials in place of the four glass / pipe-liquid
+        /// lines): M_Glass = the glass master (hall arches 03, S5 risers 13, S6-S7 curved pipes 14, chamber glass, bubbles);
+        /// M_PipeWater = the glowing-liquid master, M_PipeWaterCyan / M_PipeWaterPink = its tint variants.</summary>
+        static void GlassLiquidMasters()
+        {
+            // library 13 / 14 "transparent glass with visible thickness, fresnel rims, reflections, glowing liquid inside":
+            // a broader fresnel rim (reads as wall thickness at the tube silhouettes), stronger probe reflections, a soft edge
+            // glow lit by the liquid, a faint thin-film shimmer; the body stays clear so the liquid shows through
+            Mat("M_Glass", "BWK/Glass", m =>
+            {
+                C(m, "_Tint", "#C6E2FF"); F(m, "_Alpha", 0.07f); F(m, "_Glow", 0.16f); F(m, "_FresnelPower", 2.4f);
+                F(m, "_Reflectivity", 1.15f); F(m, "_Smoothness", 0.97f); F(m, "_Iridescence", 0.12f); F(m, "_IridescenceScale", 1.6f);
+                F(m, "_Bubble", 0f);
+            }, (int)RenderQueue.Transparent);
+            Mat("M_PipeWater", "BWK/FlowGlow", m => { F(m, "_Mode", 0); C(m, "_ColorA", "#1FD2FF"); C(m, "_ColorB", "#FF3FC8"); F(m, "_Intensity", 1.6f); F(m, "_Speed", 1.2f); F(m, "_Scale", 3f); });
+            // curved cyan pipes (library 14) and the pink risers beside the S5 chambers (library 13, reference key 7.5 s)
+            WaterVariant("M_PipeWaterCyan", "M_PipeWater", m => { C(m, "_ColorA", "#1FC8FF"); C(m, "_ColorB", "#9AF6FF"); F(m, "_Intensity", 1.8f); F(m, "_Speed", 1.5f); F(m, "_Scale", 2.0f); }, -1);
+            WaterVariant("M_PipeWaterPink", "M_PipeWater", m => { C(m, "_ColorA", "#FF3FB8"); C(m, "_ColorB", "#FFB3EE"); F(m, "_Intensity", 1.7f); F(m, "_Speed", 0.9f); F(m, "_Scale", 2.5f); }, -1);
+            // soap bubbles (owner takeover list: transparent IRIDESCENT bubbles - clear centres, thin-film hue-shifting rims,
+            // small specular dots) = a variant of the glass master: clearer centre, thinner + more iridescent rim film
+            WaterVariant("M_Bubble", "M_Glass", m =>
+            {
+                C(m, "_Tint", "#F0F8FF"); F(m, "_Alpha", 0.035f); F(m, "_Iridescence", 0.8f); F(m, "_FresnelPower", 2.6f); F(m, "_Glow", 0.34f);
+                F(m, "_Reflectivity", 0.8f); F(m, "_Bubble", 1f); F(m, "_FilmStrength", 1.0f); F(m, "_WindowStrength", 1.9f); F(m, "_RimWidth", 3.2f);
+            }, (int)RenderQueue.Transparent);
         }
     }
 }

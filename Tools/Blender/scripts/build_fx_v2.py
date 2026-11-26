@@ -373,9 +373,11 @@ def foam_lod1(obj, elems, seed, ratio=0.3):
 def build_foam_v2(mat):
     rng = random.Random(20261126)
     objs = []
-    specs = (("SM_Foam_v2_Bank", lambda: foam_bank_elems(rng, 1.6, 0.55, 0.30, 190, 0.035, 0.075), 9000, {}),
-             ("SM_Foam_v2_Mound", lambda: foam_bank_elems(rng, 0.8, 0.45, 0.24, 90, 0.03, 0.065), 5000, {}),
-             ("SM_Foam_v2_Puffs", lambda: foam_pillows_elems(rng, 4), 3000, {"zscale": 0.62, "k": 0.95}))
+    # round 8 masters (library 17 + owner sheet 01 item 4 'small soft ROUNDED foam bubbles'; lead: fewer, bigger, softer
+    # lumps and far fewer level triangles): ~1/3 of the bubbles at ~1.8x the radius, ~40 % of the triangles
+    specs = (("SM_Foam_v2_Bank", lambda: foam_bank_elems(rng, 1.6, 0.55, 0.32, 64, 0.065, 0.13), 3600, {}),
+             ("SM_Foam_v2_Mound", lambda: foam_bank_elems(rng, 0.8, 0.45, 0.26, 30, 0.055, 0.11), 2000, {}),
+             ("SM_Foam_v2_Puffs", lambda: foam_pillows_elems(rng, 4), 1600, {"zscale": 0.62, "k": 0.95}))
     for i, (name, make, tris, kw) in enumerate(specs):
         elems = make()
         o, raw = foam_mesh(name, elems, mat, tris, **kw)

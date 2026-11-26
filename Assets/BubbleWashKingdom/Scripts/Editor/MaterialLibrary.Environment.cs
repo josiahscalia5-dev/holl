@@ -111,11 +111,9 @@ namespace BubbleWash.EditorTools
             Emissive("M_ButtonCyan", "#3FF0FF", 2.2f);
             Emissive("M_ButtonYellow", "#F4D82B", 2.2f);
             Emissive("M_ButtonPink", "#FF5FD0", 2.2f);
-            Mat("M_Glass", "BWK/Glass", m => { C(m, "_Tint", "#B9D8FF"); F(m, "_Alpha", 0.06f); F(m, "_Glow", 0.06f); }, (int)RenderQueue.Transparent);
-            Mat("M_PipeWater", "BWK/FlowGlow", m => { F(m, "_Mode", 0); C(m, "_ColorA", "#1FD2FF"); C(m, "_ColorB", "#FF3FC8"); F(m, "_Intensity", 1.6f); F(m, "_Speed", 1.2f); });
-            // glowing pink liquid in the glass risers beside the side chambers (reference key 7.5 s)
-            Mat("M_PipeWaterCyan", "BWK/FlowGlow", m => { F(m, "_Mode", 0); C(m, "_ColorA", "#1FC8FF"); C(m, "_ColorB", "#9AF6FF"); F(m, "_Intensity", 1.8f); F(m, "_Speed", 1.5f); F(m, "_Scale", 2.0f); });
-            Mat("M_PipeWaterPink", "BWK/FlowGlow", m => { F(m, "_Mode", 0); C(m, "_ColorA", "#FF3FB8"); C(m, "_ColorB", "#FFB3EE"); F(m, "_Intensity", 1.7f); F(m, "_Speed", 0.9f); F(m, "_Scale", 2.5f); });
+            // round 8 masters (water agent): the M_Glass master, the M_PipeWater liquid master + its Cyan / Pink variants and
+            // M_Bubble come from MaterialLibrary.WaterFX.cs (glass / liquid shading of library 03 / 13 / 14 = water domain)
+            GlassLiquidMasters();
             Mat("M_ChamberSwirl", "BWK/FlowGlow", m => { F(m, "_Mode", 1); C(m, "_ColorA", "#9FE8FF"); F(m, "_Intensity", 1.15f); F(m, "_Speed", 1f); });
             Mat("M_PortalRays", "BWK/FlowGlow", m =>
             {

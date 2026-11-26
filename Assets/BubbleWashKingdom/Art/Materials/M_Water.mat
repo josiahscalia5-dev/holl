@@ -44,13 +44,13 @@ Material:
     - _FlowSpeed: 7.5
     - _Glow: 0.1
     - _NearBrighten: 0.05
-    - _PatchAmount: 0.36
+    - _PatchAmount: 0.44
     - _RainbowAmount: 0.32
-    - _ReflectBoost: 0.45
-    - _RippleStrength: 0.9
+    - _ReflectBoost: 0.36
+    - _RippleStrength: 1.15
     - _Smoothness: 0.6
     - _SparkleAmount: 0.9
-    - _StreakAmount: 0.18
+    - _StreakAmount: 0.22
     - _StreakDensity: 1.25
     - _VTile: 4
     - _WaveHeight: 0.025
@@ -63,7 +63,7 @@ Material:
     - _ChevronColor: {r: 0.14117648, g: 0.8784314, b: 0.85490197, a: 1}
     - _DeepColor: {r: 0.078431375, g: 0.42352942, b: 0.7372549, a: 1}
     - _EdgeTint: {r: 0.9019608, g: 0.41568628, b: 0.78431374, a: 1}
-    - _ReflectTint: {r: 0.54901963, g: 0.83137256, b: 1, a: 1}
+    - _ReflectTint: {r: 0.54901963, g: 0.9098039, b: 1, a: 1}
     - _ShallowColor: {r: 0.101960786, g: 0.5568628, b: 0.8, a: 1}
     - _StreakColor: {r: 0.72156864, g: 0.9647059, b: 1, a: 1}
     - _TurquoiseColor: {r: 0.17254902, g: 0.7529412, b: 0.8627451, a: 1}

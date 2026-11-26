@@ -28,7 +28,7 @@ Material:
     - _BumpScale: 14
     - _BumpStrength: 0.02
     - _DstBlend: 0
-    - _GlintAmount: 0.08
+    - _GlintAmount: 0.12
     - _Glow: 0.1
     - _HotBoost: 0.6
     - _HotFar: 3.5
@@ -39,10 +39,10 @@ Material:
     - _MilkSoft: 0
     - _Mode: 5
     - _ReflectBoost: 0.15
-    - _RimPower: 2.6
-    - _RimStrength: 0.3
+    - _RimPower: 2.2
+    - _RimStrength: 0.36
     - _Smoothness: 0.35
-    - _SpecStrength: 0.3
+    - _SpecStrength: 0.38
     - _SrcBlend: 1
     - _StitchU: 64
     - _StitchV: 26
@@ -52,7 +52,7 @@ Material:
     - _Stripes: 4
     - _Wobble: 0.006
     - _WobbleFreq: 1.4
-    - _Wrap: 0.6
+    - _Wrap: 0.68
     - _ZWrite: 1
     m_Colors:
     - _ColorA: {r: 0.95686275, g: 0.9647059, b: 0.9882353, a: 1}
