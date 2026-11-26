@@ -1,6 +1,7 @@
 #!/bin/bash
 # Usage: Tools/blender_run.sh Tools/Blender/scripts/<script>.py [logname]
-# Headless Blender under the heavy-process lock; log in Logs/blender_<logname>.log; prints errors + CHECK/EXPORTED lines.
+# Headless Blender under the heavy-process lock; log in Logs/blender_<logname>.log; prints errors + CHECK/EXPORTED lines,
+# then the lead's current directives (Captures/agents/LEAD_DIRECTIVES.md).
 SCRIPT="$1"; NAME="${2:-$(basename "$SCRIPT" .py)}"
 LOG="C:/Users/josia/thanksgiving/Logs/blender_${NAME}.log"
 cd /c/Users/josia/thanksgiving
@@ -8,3 +9,8 @@ bash Tools/heavy_lock.sh "blender:$NAME" "/c/Users/josia/Blender/blender-5.3.0-w
 CODE=$?
 echo "exit=$CODE log=$LOG"
 grep -E "Traceback|Error|error:|line [0-9]+, in|CHECK|EXPORTED|PREVIEW|VERIFY|SHELLS|DONE" "$LOG" | head -${MAXLINES:-60} | cut -c1-240
+if [ -f Captures/agents/LEAD_DIRECTIVES.md ]; then
+  echo "--- lead directives from the main session (Captures/agents/LEAD_DIRECTIVES.md, updated $(date -r Captures/agents/LEAD_DIRECTIVES.md '+%H:%M')):"
+  cat Captures/agents/LEAD_DIRECTIVES.md
+fi
+exit $CODE

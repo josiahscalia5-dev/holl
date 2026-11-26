@@ -52,7 +52,8 @@ FRONT = Vector((0.0, -1.0, 0.0))  # asset front
 DRUM_U_SPAN = 16.0 / 56.0         # porthole drum u range: same perforation size as SM_Tunnel_Module (56 per u)
 REVIEW_DIR = os.environ.get("BWK_REVIEW_DIR")
 ASSET_NAMES = ["SM_Porthole", "SM_BrushRoller", "SM_ControlPanel", "SM_Agitator", "SM_GoldPipe_Straight",
-               "SM_GoldPipe_Elbow", "SM_ValveWheel", "SM_Pillar", "SM_ChamberPipe"]
+               "SM_GoldPipe_Elbow", "SM_ValveWheel", "SM_Pillar", "SM_ChamberPipe",
+               "SM_ChamberWindow"]
 
 
 # ================================================================== mesh building
@@ -435,8 +436,11 @@ PORT_PLANE_R = 3.62    # window plane distance from the tunnel axis = SceneBuild
 PORT_WALL_R = 4.2      # tunnel drum wall radius (SM_Tunnel_Module)
 
 
-def build_porthole(M):
+def build_porthole(M, name="SM_Porthole", scale=1.0, plane_r=None, depth=PORT_DEPTH):
+    """scale: uniform size; plane_r: window plane distance from the tunnel axis -> adds the lavender skirt that meets
+    the r PORT_WALL_R drum wall exactly (in final, scaled units); None = free-standing porthole (hall)."""
     mb = MB()
+    S = scale
     G, GD, GL, DW, SW, SK = range(6)
     O = Vector((0.0, 0.0, 0.0))
     # frame ring around -Y (h = -y): flat back on the wall (h = -0.125), outer wall r 1.55, big front bead
@@ -467,7 +471,7 @@ def build_porthole(M):
     lathe(mb, seal, GD, 48, O, FRONT, X_AXIS)
     # shallow drum: r 1.22, y 0 -> PORT_DEPTH, normals inward; u around, v = depth / 4. The whole chamber stays in front
     # of the tunnel wall when the window plane is PORT_PLANE_R from the tunnel axis (SceneBuilder.ChamberPlaneRadius).
-    dd = PORT_DEPTH
+    dd = depth
     lathe(mb, [(1.22, 0.0), (1.22, -dd * 0.5), (1.22, -dd)], DW, 48, O, FRONT, X_AXIS, u_span=DRUM_U_SPAN,
           v_vals=[0.0, dd * 0.5 / V_TILE, dd / V_TILE])
 
@@ -489,29 +493,33 @@ def build_porthole(M):
     # lavender skirt from the frame back to the curved tunnel wall (cylinder r PORT_WALL_R around an axis parallel to
     # +Z, PORT_PLANE_R in front of the window): closes the gap all around, flaring slightly; gold trim where it meets
     # the wall. Local x = around the drum, z = along the tunnel (SceneBuilder: up = track forward).
-    def wall_y(x):
-        return math.sqrt(max(PORT_WALL_R ** 2 - x * x, 0.0)) - PORT_PLANE_R
-    n_sk = 72
-    rows_sk = []
-    for k in range(n_sk):
-        ph = TAU * k / n_sk
-        c, s = math.cos(ph), math.sin(ph)
-        y0 = 0.105
-        y2 = wall_y(1.72 * c) + 0.05
-        pts = [(1.50, y0), (1.585, y0 + 0.30 * (y2 - y0)), (1.65, y0 + 0.68 * (y2 - y0)), (1.72, y2)]
-        rows_sk.append([mb.v((r * c, y, r * s)) for r, y in pts])
-    for k in range(n_sk):
-        k1 = (k + 1) % n_sk
-        ph = TAU * (k + 0.5) / n_sk
-        out = Vector((math.cos(ph), -0.6, math.sin(ph)))
-        for j in range(3):
-            idx = [rows_sk[k][j], rows_sk[k1][j], rows_sk[k1][j + 1], rows_sk[k][j + 1]]
-            mb.f(idx, SK, [(k / n_sk, j / 3.0), (k1 / n_sk, j / 3.0), (k1 / n_sk, (j + 1) / 3.0), (k / n_sk, (j + 1) / 3.0)],
-                 ref=out)
-    trim = [Vector((1.70 * math.cos(TAU * k / n_sk), wall_y(1.70 * math.cos(TAU * k / n_sk)) + 0.01,
-                    1.70 * math.sin(TAU * k / n_sk))) for k in range(n_sk)]
-    sweep(mb, path_frames(trim, lambda i: Vector((math.cos(TAU * i / n_sk), 0.0, math.sin(TAU * i / n_sk)))),
-          circle2(0.045, 8), G, closed_path=True, closed_prof=True, swap_uv=True)
+    if plane_r is not None:
+        # built in final (scaled) metres, divided by S because the whole mesh is scaled by S at the end
+        def wall_y(x):
+            return math.sqrt(max(PORT_WALL_R ** 2 - x * x, 0.0)) - plane_r
+        n_sk = 72
+        rows_sk = []
+        for k in range(n_sk):
+            ph = TAU * k / n_sk
+            c, s_ = math.cos(ph), math.sin(ph)
+            y0 = 0.105 * S
+            y2 = wall_y(1.72 * S * c) + 0.05
+            pts = [(1.50 * S, y0), (1.585 * S, y0 + 0.30 * (y2 - y0)), (1.65 * S, y0 + 0.68 * (y2 - y0)),
+                   (1.72 * S, y2)]
+            rows_sk.append([mb.v((r * c / S, y / S, r * s_ / S)) for r, y in pts])
+        for k in range(n_sk):
+            k1 = (k + 1) % n_sk
+            ph = TAU * (k + 0.5) / n_sk
+            out = Vector((math.cos(ph), -0.6, math.sin(ph)))
+            for j in range(3):
+                idx = [rows_sk[k][j], rows_sk[k1][j], rows_sk[k1][j + 1], rows_sk[k][j + 1]]
+                mb.f(idx, SK, [(k / n_sk, j / 3.0), (k1 / n_sk, j / 3.0), (k1 / n_sk, (j + 1) / 3.0),
+                               (k / n_sk, (j + 1) / 3.0)], ref=out)
+        trim = [Vector((1.70 * math.cos(TAU * k / n_sk),
+                        (wall_y(1.70 * S * math.cos(TAU * k / n_sk)) + 0.01) / S,
+                        1.70 * math.sin(TAU * k / n_sk))) for k in range(n_sk)]
+        sweep(mb, path_frames(trim, lambda i: Vector((math.cos(TAU * i / n_sk), 0.0, math.sin(TAU * i / n_sk)))),
+              circle2(0.045, 8), G, closed_path=True, closed_prof=True, swap_uv=True)
     # back disc: shallow whirlpool, faces the viewer, planar UVs with (0.5, 0.5) at the centre
     rd = 1.225
 
@@ -548,9 +556,20 @@ def build_porthole(M):
         profs = [circle2(0.046 - 0.022 * i / (n - 1), 6) for i in range(n)]
         sweep(mb, path_frames(pts, lambda i: Y_AXIS), None, G, closed_prof=True, profs=profs, swap_uv=True)
         lathe(mb, ball, G, 8, pts[-1], (pts[-1] - pts[-2]).normalized())
-    obj = mb.build("SM_Porthole", slots(M, ["M_Gold", "M_GoldDark", "M_Glass", "M_ChamberDrum", "M_ChamberSwirl",
-                                            "M_DrumRim"]))
+    if S != 1.0:
+        mb.co = [c * S for c in mb.co]
+    names = ["M_Gold", "M_GoldDark", "M_Glass", "M_ChamberDrum", "M_ChamberSwirl"] + (["M_DrumRim"] if plane_r else [])
+    obj = mb.build(name, slots(M, names))
     return obj
+
+
+# side chamber window (SceneBuilder.BuildPortholes): 1.4x porthole (frame r 2.17), window plane CW_PLANE_R from the
+# tunnel axis; the drum stays shallow (0.34 m) so the whole chamber sits in front of the r 4.2 drum wall.
+CW_SCALE, CW_PLANE_R = 1.4, 3.40
+
+
+def build_chamber_window(M):
+    return build_porthole(M, "SM_ChamberWindow", CW_SCALE, CW_PLANE_R, PORT_DEPTH / CW_SCALE)
 
 
 # ================================================================== 2. brush roller
@@ -1387,7 +1406,8 @@ def main():
     M = make_materials()
     A = {}
     for build in (build_porthole, build_brush_roller, build_control_panel, build_agitator, build_pipe_straight,
-                  build_pipe_elbow, build_valve_wheel, build_pillar, build_chamber_pipe):
+                  build_pipe_elbow, build_valve_wheel, build_pillar, build_chamber_pipe,
+                  build_chamber_window):
         obj = build(M)
         A[obj.name] = obj
     bpy.context.view_layer.update()

@@ -8,6 +8,7 @@
 //            soft wrap light, satin soap gloss, translucent bright rims, tiny bubble glints, gentle wobble
 //  _Mode 6 = milk splash (3D crown splashes, droplet particles): creamy white, cool blue-grey shading and water bounce
 //            from below, crisp wet highlights, bright thin edges, liquid wobble; particle vertex colour tints
+//  _Mode 7 = glowing speed-boost chevron: teal edges -> mint-white arm centre (HDR for bloom), forward light pulse
 //  _Mode 1 also races rainbow light streaks along the banks (UV.y = distance / 4 m) and adds a clear-coat reflection.
 Shader "BWK/Soft"
 {
@@ -233,6 +234,25 @@ Shader "BWK/Soft"
                     half glint = smoothstep(0.17, 0.02, length(gf)) * step(0.72, BWK_Hash31(gc));
                     col += glint * _GlintAmount * (0.3 + pow(key, 4.0) + pow(nh, 8.0)) * occ;
                     col += _ColorA.rgb * _Glow;
+                    col = MixFog(col, i.fog);
+                    return half4(col, 1);
+                }
+                else if (_Mode > 6.5) // glowing speed-boost chevron (SM_Chevron inner slab, planar UV)
+                {
+                    // reference f_003.00s: luminous teal glass arrow, mint-white light along the middle of each arm,
+                    // deeper teal toward the edges, a soft light pulse racing forward, glossy top reflections.
+                    float px = abs(i.uv.x - 0.5) * 1.25;
+                    float py = -(i.uv.y - 0.5) * 0.72;
+                    float p = dot(float2(px, py + 0.36), float2(0.7198, -0.6942));   // 0 outer edge, -0.31 inner edge
+                    half g = saturate(1.0 - abs(p + 0.169) / 0.134);                 // 1 on the arm centre line
+                    half core = smoothstep(0.0, 1.0, g);
+                    half3 col = lerp(_ColorB.rgb, _ColorA.rgb, core * core);
+                    float pulse = frac(py * 0.9 + _Time.y * _StreakSpeed * 0.5);
+                    half beam = smoothstep(0.0, 0.18, pulse) * smoothstep(0.55, 0.18, pulse);
+                    col += _ColorC.rgb * beam * _StreakAmount * (0.35 + 0.65 * core);
+                    half fr = BWK_Fresnel(n, v, 4.0);
+                    col += GlossyEnvironmentReflection(reflect(-v, n), i.positionWS, 0.05h, 1.0h, GetNormalizedScreenSpaceUV(i.positionCS)) * (0.1 + fr * 0.5) * _ReflectBoost;
+                    col *= _Glow * 4.0;
                     col = MixFog(col, i.fog);
                     return half4(col, 1);
                 }

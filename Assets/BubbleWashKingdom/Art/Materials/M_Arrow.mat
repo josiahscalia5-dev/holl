@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: M_Arrow
-  m_Shader: {fileID: 4800000, guid: cef704881ca45b54dbe45ec9f9d8ac3e, type: 3}
+  m_Shader: {fileID: 4800000, guid: ebad0e801b4b43e49b9b485c14675c19, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -25,16 +25,37 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
+    - _BumpScale: 6
+    - _BumpStrength: 0.5
     - _DstBlend: 0
+    - _GlintAmount: 0.5
+    - _Glow: 0.4
     - _Intensity: 1.9
-    - _Mode: 2
+    - _Metallic: 0
+    - _Mode: 7
     - _RayCount: 14
+    - _ReflectBoost: 0.6
+    - _RimPower: 3
+    - _RimStrength: 0.35
     - _Scale: 3
+    - _Smoothness: 0.35
+    - _SpecStrength: 1
     - _Speed: 1.4
     - _SrcBlend: 1
+    - _StitchU: 64
+    - _StitchV: 26
+    - _StreakAmount: 0.35
+    - _StreakSpeed: 1.6
+    - _StripeWidth: 0.35
+    - _Stripes: 4
+    - _Wobble: 0
+    - _WobbleFreq: 3
+    - _Wrap: 0.5
     - _ZWrite: 1
     m_Colors:
-    - _ColorA: {r: 0.11764706, g: 0.9019608, b: 1, a: 1}
-    - _ColorB: {r: 1, g: 0.45, b: 0.9, a: 1}
+    - _ColorA: {r: 0.8235294, g: 1, b: 0.96862745, a: 1}
+    - _ColorB: {r: 0.05882353, g: 0.7058824, b: 0.8117647, a: 1}
+    - _ColorC: {r: 1, g: 1, b: 1, a: 1}
+    - _ShadowColor: {r: 0.62, g: 0.62, b: 0.95, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

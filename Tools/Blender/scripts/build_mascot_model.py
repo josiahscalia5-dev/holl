@@ -40,7 +40,7 @@ QUICK = os.environ.get("BWK_QUICK", "") == "1"
 # ------------------------------------------------------------------ body (meters)
 BODY_C = Vector((0.0, 0.0, 0.49))          # body centre
 BODY_W, BODY_D, BODY_H = 0.85, 0.80, 0.84  # width (1 BW), depth, height
-BODY_EGG = 0.10                            # >0: fuller toward the bottom
+BODY_EGG = 0.15                            # >0: fuller toward the bottom
 BODY_SEG = 16                              # quad sphere: 6*16*16 quads = 3072 tris
 FUR_U, FUR_V = 2.64, 1.32                  # metres per fur UV unit (around, along)
 
@@ -52,18 +52,18 @@ HAT_TILT = -5.0
 HAT_DEPTH = 0.94
 CUFF_BOTTOM_A = 76.0                       # deg from the hat axis: line where the cuff tucks into the fur
 CUFF_RIBS, CROWN_RIBS = 96, 72             # geometric knit ribs around (BWK/Character _StitchU must match)
-CUFF_RIB_AMP, CROWN_RIB_AMP = 0.0055, 0.0034
+CUFF_RIB_AMP, CROWN_RIB_AMP = 0.0075, 0.0045
 CUFF_PROFILE = [  # (u, r, rib weight): roll under -> tall ribbed outer face -> top roll -> tucks inside
-    (0.093, 0.428, 0.0), (0.089, 0.445, 0.1), (0.095, 0.458, 0.5), (0.110, 0.465, 0.9), (0.140, 0.468, 1.0),
-    (0.180, 0.469, 1.0), (0.215, 0.467, 1.0), (0.240, 0.462, 0.9), (0.256, 0.453, 0.5), (0.264, 0.441, 0.2),
-    (0.265, 0.430, 0.0), (0.258, 0.420, 0.0)]
-STRIPE_U = (0.262, 0.330)                  # pale ribbed band right above the cuff
-DOME_U0, DOME_H, DOME_R, DOME_EXP = 0.330, 0.122, 0.449, 2.25   # squat rounded dome (superellipse exponent)
+    (0.093, 0.428, 0.0), (0.089, 0.445, 0.1), (0.096, 0.459, 0.5), (0.113, 0.466, 0.9), (0.147, 0.469, 1.0),
+    (0.193, 0.470, 1.0), (0.233, 0.468, 1.0), (0.262, 0.463, 0.9), (0.280, 0.454, 0.5), (0.289, 0.442, 0.2),
+    (0.290, 0.431, 0.0), (0.282, 0.421, 0.0)]
+STRIPE_U = (0.287, 0.370)                  # pale ribbed band right above the cuff (~9 % of the hat width)
+DOME_U0, DOME_H, DOME_R, DOME_EXP = 0.370, 0.170, 0.449, 1.9    # round slouchy dome (superellipse exponent)
 TOP_STRIPE_PHI, TOP_STRIPE_HW = 47.0, 5.5  # extra pale stripe on the dome front (deg of the dome angle), fades out
-TOP_STRIPE_FULL, TOP_STRIPE_END = 65.0, 118.0   # ... over the front (deg from the front), gone at the back
-STAR_U, STAR_PHI, STAR_ROT = 0.178, 33.0, -12.0  # star badge on the cuff, 33 deg toward HIS LEFT (+X)
+TOP_STRIPE_FULL, TOP_STRIPE_END = 45.0, 78.0    # ... over the front only (deg from the front): never seen from behind
+STAR_U, STAR_PHI, STAR_ROT = 0.192, 33.0, -12.0  # star badge on the cuff, 33 deg toward HIS LEFT (+X)
 STAR_RO, STAR_RI = 0.072, 0.032
-POMPOM_R, POMPOM_LIFT = 0.165, 0.30        # pom-pom radius; centre this many radii above the dome top
+POMPOM_R, POMPOM_LIFT = 0.210, 0.42        # pom-pom radius; centre this many radii above the dome top
 POMPOM_SEG = 12
 
 # ------------------------------------------------------------------ face (unchanged design)
@@ -76,8 +76,8 @@ NOSE_Z = 0.448
 BLUSH_X, BLUSH_Z, BLUSH_R = 0.235, 0.39, 0.058
 
 # ------------------------------------------------------------------ arms: big stubby mitts, raised out to the sides
-ARM_Z = 0.465                              # root height on the body side (just under the cuff)
-ARM_UP, ARM_BACK = 30.0, 0.10              # rest direction: 30 deg above horizontal, slightly back
+ARM_Z = 0.445                              # root height on the body side (just under the cuff)
+ARM_UP, ARM_BACK = 40.0, 0.02              # rest direction: 30 deg above horizontal, slightly back
 ARM_SEG = 20
 ARM_PROFILE = [(-0.10, 0.068), (-0.05, 0.078), (0.0, 0.083), (0.06, 0.086), (0.12, 0.088), (0.18, 0.090),
                (0.225, 0.090), (0.258, 0.084), (0.283, 0.070), (0.300, 0.050), (0.311, 0.026), (0.315, 0.0)]
@@ -87,21 +87,22 @@ BEAN_SIZE = (0.0155, 0.0145, 0.0075)
 PALM_FACING = Vector((0.0, 0.55, 0.85))    # palm/beans face up and a little back (seen by the rear camera)
 
 # ------------------------------------------------------------------ legs (modelled seated): wide V-sit, toes up
-HIP = Vector((0.19, -0.10, 0.205))         # hip joint inside the lower body (his left; mirrored for the right)
-ANKLE = Vector((0.425, -0.265, 0.118))
+HIP = Vector((0.21, -0.08, 0.200))         # hip joint inside the lower body (his left; mirrored for the right)
+ANKLE = Vector((0.50, -0.20, 0.120))       # wide V-sit: the paws sit beside the low body and peek out from behind
 LEG_SEG, LEG_R0, LEG_R1 = 18, 0.088, 0.072 # around, radius at hip / ankle
-TOE_YAW, TOE_PITCH = 16.0, 58.0            # toes splay outward / point up (sole faces forward-down)
-PAW_HALF = (0.100, 0.128, 0.064)           # half width (lateral), half length (heel->toe), half thickness
+TOE_YAW, TOE_PITCH = 26.0, 58.0            # toes splay outward / point up (sole faces forward-down)
+PAW_HALF = (0.112, 0.140, 0.070)           # half width (lateral), half length (heel->toe), half thickness
 PAW_FWD = 0.062                            # paw centre ahead of the ankle along the toe direction
 PAW_SEG = 7
 SOLE_PADS = [(0.0, -0.042, 0.040, 0.044, 0.010),         # big pad (heel side): (lat, along, r_lat, r_along, h)
              (-0.056, 0.040, 0.018, 0.020, 0.008), (-0.020, 0.062, 0.018, 0.020, 0.008),
              (0.020, 0.062, 0.018, 0.020, 0.008), (0.056, 0.040, 0.018, 0.020, 0.008)]
-TAIL_R, TAIL_Z, TAIL_OUT = 0.078, 0.30, 0.55   # tail puff radius, height, centre offset (radii) behind the surface
+TAIL_R, TAIL_Z, TAIL_OUT = 0.068, 0.24, 0.30   # tail puff radius, height, centre offset (radii) behind the surface
 
 WHITE = (1.0, 1.0, 1.0, 1.0)
 PAD_PINK = (0.97, 0.56, 0.68, 1.0)         # Col (sRGB) for pads / beans on M_PawPad
 SOLE_WHITE = (1.0, 0.97, 0.98, 1.0)
+PALM_COL = (1.0, 0.80, 0.86, 1.0)         # light pink palm pad on the raised arms (seen from behind)
 BLUSH_COL = (1.0, 0.70, 0.72)              # Col tint (sRGB) at the blush centre
 
 HAT_R = Matrix.Rotation(math.radians(HAT_TILT), 3, 'X')
@@ -566,7 +567,7 @@ def build_arm(side):
     palm_c = root + d * PALM_H + pd * (prof_r(ARM_PROFILE, PALM_H) - 0.004)
     pex = d.cross(pd)
     md.extend(ellipsoid(palm_c, pex, d, pd, PALM_SIZE[0], PALM_SIZE[1], PALM_SIZE[2], seg=12, rings=5, mat=1,
-                        col=SOLE_WHITE))
+                        col=PALM_COL))
     beans = []
     for ang, hb in ARM_BEANS:
         n = Matrix.Rotation(math.radians(ang), 3, d) @ pd
@@ -837,8 +838,8 @@ def build_beanie():
     KNIT, CUFF, STRIPE = 0, 1, 2
     psi0 = math.pi / 2                          # seam at the back
     # ---- crown profile (u, r, material of the band above this point)
-    prof = [(0.218, 0.418, STRIPE), (0.250, 0.440, STRIPE), (STRIPE_U[0], 0.451, STRIPE), (0.285, 0.4535, STRIPE),
-            (0.308, 0.453, STRIPE), (STRIPE_U[1], DOME_R, KNIT)]
+    prof = [(0.240, 0.418, STRIPE), (0.272, 0.440, STRIPE), (STRIPE_U[0], 0.451, STRIPE), (0.313, 0.4535, STRIPE),
+            (0.343, 0.453, STRIPE), (STRIPE_U[1], DOME_R, KNIT)]
     for phi in (10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 69.0, 77.0, 84.0):
         u, r = dome_ur(phi)
         prof.append((u, r, KNIT))

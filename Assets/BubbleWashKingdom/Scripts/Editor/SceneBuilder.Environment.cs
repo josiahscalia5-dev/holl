@@ -16,6 +16,126 @@ namespace BubbleWash.EditorTools
     // Only this domain's agent edits this file; the lead developer runs the scene build that calls it.
     public static partial class SceneBuilder
     {
+        // ---------------------------------------------------------------- agent preview hook (in memory, never saved)
+        /// <summary>false while PreviewEnvironmentDomain rebuilds pieces: combined meshes stay in memory.</summary>
+        static bool envSave = true;
+
+        /// <summary>
+        /// Called by PreviewRefreshDomains in every agent's preview (before lighting is rebuilt): rebuilds the gold rings /
+        /// lavender rims, the side chamber windows and the chamber glass risers inside the open scene, in memory only, so
+        /// environment changes can be judged without a full build. Exception-safe; keeps the shared rng untouched.
+        /// </summary>
+        static partial void PreviewEnvironmentDomain(GameObject root, float L)
+        {
+            var savedRng = rng;
+            try
+            {
+                var envT = root.transform.Find("Environment");
+                if (envT == null) return;
+                var env = envT.gameObject;
+                envSave = false;
+                rng = new System.Random(4242);
+                void Rebuild(string name, System.Action build)
+                {
+                    var old = env.transform.Find(name);
+                    if (old != null) Object.DestroyImmediate(old.gameObject);
+                    build();
+                }
+                Rebuild("Rings", () => BuildRings(env, L));
+                Rebuild("SideChambers", () => BuildPortholes(env));
+                Rebuild("ChamberPipes", () => BuildPipes(env, L));
+                Debug.Log("[BWK] preview: environment rings / chambers / pipes rebuilt in memory");
+                string outArg = PreviewOutArg() ?? "";
+                if (outArg.Contains("agents/environment")) EnvPreviewShots(outArg);
+            }
+            catch (System.Exception e) { Debug.LogWarning("[BWK] preview: environment rebuild failed: " + e.Message); }
+            finally { envSave = true; rng = savedRng; }
+        }
+
+        /// <summary>
+        /// Environment-only preview extras: rear gameplay shots in the side chamber section and one front comparison angle
+        /// (like CaptureStills 07_chambers / C2), rendered with the saved scene's lighting (the hook runs before the
+        /// lighting rebuild). Files: OUT/env_*.png. CaptureHero teleports the runner again afterwards.
+        /// </summary>
+        static void EnvPreviewShots(string outDir)
+        {
+            var runner = Object.FindFirstObjectByType<RunnerController>();
+            var rig = Object.FindFirstObjectByType<RunnerCameraRig>(FindObjectsInactive.Include);
+            var cam = Camera.main;
+            if (runner == null || rig == null || cam == null) return;
+            Directory.CreateDirectory(outDir);
+            var brain = cam.GetComponent<CinemachineBrain>();
+            bool brainOn = brain != null && brain.enabled;
+            if (brain) brain.enabled = false;
+            try
+            {
+                foreach (var (name, d) in new[] { ("env_chambers_a", 205f), ("env_chambers_b", 215f), ("env_tunnel", 120f) })
+                {
+                    runner.TeleportTo(d, 0f);
+                    foreach (var (w, h, tag) in new[] { (1280, 720, "16x9"), (720, 1280, "9x16") })
+                    {
+                        rig.aspectOverride = w / (float)h;
+                        rig.Snap();
+                        var lens = rig.vcam.Lens;
+                        cam.transform.SetPositionAndRotation(rig.transform.position, rig.transform.rotation * Quaternion.Euler(0f, 0f, lens.Dutch));
+                        cam.fieldOfView = lens.FieldOfView;
+                        CaptureTools.Render(cam, w, h, $"{outDir}/{name}_{tag}.png");
+                    }
+                }
+                runner.TeleportTo(220f, 0f);
+                var f = runner.Frame;
+                Vector3 camPos = runner.transform.position + f.forward * 2.6f + f.flatUp * 0.95f;
+                cam.transform.SetPositionAndRotation(camPos, Quaternion.LookRotation(runner.transform.position + f.flatUp * 0.55f - camPos, f.flatUp));
+                cam.fieldOfView = 46f;
+                CaptureTools.Render(cam, 1280, 720, $"{outDir}/env_front_chambers_16x9.png");
+            }
+            finally
+            {
+                rig.aspectOverride = 0f;
+                if (brain) brain.enabled = brainOn;
+            }
+        }
+
+        /// <summary>Combines parts per material like Combiner; writes the meshes only when envSave (full builds).</summary>
+        class EnvCombiner
+        {
+            readonly Dictionary<Material, List<CombineInstance>> groups = new Dictionary<Material, List<CombineInstance>>();
+            readonly Dictionary<Material, int> vertexCounts = new Dictionary<Material, int>();
+
+            public void Add(List<Part> parts, Matrix4x4 world)
+            {
+                foreach (var p in parts)
+                    for (int s = 0; s < p.mesh.subMeshCount; s++)
+                    {
+                        var mat = p.mats != null && p.mats.Length > 0 ? p.mats[Mathf.Min(s, p.mats.Length - 1)] : Mat("M_Gold");
+                        if (mat == null) continue;
+                        if (!groups.TryGetValue(mat, out var l)) { l = new List<CombineInstance>(); groups[mat] = l; vertexCounts[mat] = 0; }
+                        l.Add(new CombineInstance { mesh = p.mesh, subMeshIndex = s, transform = world * p.local });
+                        vertexCounts[mat] += p.mesh.vertexCount;
+                    }
+            }
+
+            public void Flush(GameObject parent, string name, bool castShadows)
+            {
+                foreach (var kv in groups)
+                {
+                    var mesh = new Mesh { name = $"{name}_{kv.Key.name}" };
+                    mesh.indexFormat = vertexCounts[kv.Key] > 60000 ? IndexFormat.UInt32 : IndexFormat.UInt16;
+                    mesh.CombineMeshes(kv.Value.ToArray(), true, true);
+                    mesh.RecalculateBounds();
+                    if (envSave) SaveMesh(mesh);
+                    var go = Child(parent, mesh.name);
+                    go.AddComponent<MeshFilter>().sharedMesh = mesh;
+                    var mr = go.AddComponent<MeshRenderer>();
+                    mr.sharedMaterial = kv.Key;
+                    mr.shadowCastingMode = castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
+                    GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic | StaticEditorFlags.OccluderStatic | StaticEditorFlags.OccludeeStatic | StaticEditorFlags.ReflectionProbeStatic);
+                }
+                groups.Clear();
+                vertexCounts.Clear();
+            }
+        }
+
         static void BuildBulkheads(GameObject env)
         {
             var mouth = track.Evaluate(tunnelStart);
@@ -45,7 +165,8 @@ namespace BubbleWash.EditorTools
         // Chamber gaps (side porthole windows) skip their rims so the big windows fit between two gold rings.
         const int RimsPerGap = 2;
         const float ChamberStart = 190f, ChamberEnd = 262f;   // stills 07_chambers (215 m) / C2 (220 m)
-        const float ChamberPlaneRadius = 3.62f;               // window plane distance from the tunnel axis (SM_Porthole skirt)
+        const float ChamberPlaneRadius = 3.62f;               // SM_Porthole fallback: window plane distance from the axis
+        const float ChamberWindowPlaneRadius = 3.40f;         // SM_ChamberWindow (build_machinery CW_PLANE_R, 1.4x porthole)
         static float FirstRingDistance => tunnelStart + 3f;
 
         /// <summary>Gold-ring gaps [d, d + RingSpacing) that hold a side chamber window (centre d + RingSpacing / 2).</summary>
@@ -76,7 +197,7 @@ namespace BubbleWash.EditorTools
             }
             var chamberGaps = new HashSet<float>(ChamberGaps());
             var holder = Child(env, "Rings");
-            var comb = new Combiner();
+            var comb = new EnvCombiner();
             int chunk = 0, rings = 0, rims = 0;
             float chunkStart = tunnelStart;
             Matrix4x4 World(float d, float scale)
@@ -116,8 +237,8 @@ namespace BubbleWash.EditorTools
             Debug.Log($"[BWK] rings: {rings} gold (bulbs built in: {ringHasBulbs}), {rims} lavender rims, drum bands {band:F3} m from {FirstRingDistance} m");
         }
 
-        const float ChamberAngle = 74f;        // window centre, degrees from the ceiling (above the foam banks)
-        const float ChamberPipeOffset = 2.45f;  // glass riser this far past the window centre (before the next gold ring)
+        const float ChamberAngle = 84f;        // window centre, degrees from the ceiling: big windows low beside the slide
+        const float ChamberPipeOffset = 2.75f;  // glass riser this far past the window centre (before the next gold ring)
 
         /// <summary>
         /// Side washing chambers (reference key 7.5 s / 10.5 s): big gold-framed porthole windows on the drum wall, one per
@@ -128,7 +249,9 @@ namespace BubbleWash.EditorTools
         static void BuildPortholes(GameObject env)
         {
             DrainLegacyPortholeRng();
-            var prefab = ModelPrefab("Machinery", "SM_Porthole");
+            var prefab = ModelPrefab("Machinery", "SM_ChamberWindow");
+            float plane = ChamberWindowPlaneRadius, size = 1.4f;
+            if (prefab == null) { prefab = ModelPrefab("Machinery", "SM_Porthole"); plane = ChamberPlaneRadius; size = 1f; }
             if (prefab == null) { Debug.LogWarning("[BWK] SM_Porthole missing - portholes skipped"); return; }
             string[] socks = { "SM_Sock_A", "SM_Sock_B", "SM_Sock_C", "SM_Towel", "SM_Sock_A", "SM_Shirt", "SM_Sock_B" };
             var crng = new System.Random(7031);   // own sequence: the shared rng feeds the gameplay item layout
@@ -141,11 +264,14 @@ namespace BubbleWash.EditorTools
                 var f = track.Evaluate(d);
                 float ang = side * ChamberAngle * Mathf.Deg2Rad;
                 var radial = f.flatRight * Mathf.Sin(ang) + f.flatUp * Mathf.Cos(ang);
-                var pos = f.FlatPoint(0, TunnelCenter) + radial * ChamberPlaneRadius;
+                var pos = f.FlatPoint(0, TunnelCenter) + radial * plane;
                 var go = Spawn(prefab);
                 go.name = $"Chamber_{d:000}";
                 go.transform.SetParent(holder.transform, false);
                 go.transform.SetPositionAndRotation(pos, Quaternion.LookRotation(-radial, f.forward));
+                // mirrored on the right wall so the swirl disc's "up" (-U, rainbow arch / foam bank) is world up on both
+                // sides and the hinge stays toward the travel direction's back edge
+                if (side > 0) go.transform.localScale = new Vector3(-1f, 1f, 1f);
                 // floating laundry inside the shallow drum, between the glass and the swirling water
                 for (int s = 0; s < 4; s++)
                 {
@@ -154,12 +280,12 @@ namespace BubbleWash.EditorTools
                     var sock = Spawn(sp);
                     sock.transform.SetParent(go.transform, false);
                     float a = (s / 4f + i * 0.13f) * Mathf.PI * 2f;
-                    sock.transform.localPosition = new Vector3(Mathf.Cos(a) * 0.52f, Mathf.Sin(a) * 0.52f, -0.17f);
+                    sock.transform.localPosition = new Vector3(Mathf.Cos(a) * 0.52f * size, Mathf.Sin(a) * 0.52f * size, -0.17f * size);
                     sock.transform.localRotation = Quaternion.Euler((float)crng.NextDouble() * 360f, (float)crng.NextDouble() * 360f, 0);
-                    sock.transform.localScale = Vector3.one * 1.35f;
+                    sock.transform.localScale = Vector3.one * 1.35f * Mathf.Sqrt(size);
                     var bob = sock.AddComponent<FloatBob>();
                     bob.orbitAxis = Vector3.forward;
-                    bob.orbitRadius = 0.22f;
+                    bob.orbitRadius = 0.22f * size;
                     bob.orbitSpeed = 50f + s * 9f;
                     bob.amplitude = 0.05f;
                     foreach (var r in sock.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
@@ -194,7 +320,7 @@ namespace BubbleWash.EditorTools
             var riser = ModelParts("Machinery", "SM_ChamberPipe");
             if (riser.Count == 0) { Debug.Log("[BWK] SM_ChamberPipe not built - no tunnel pipes"); return; }
             var holder = Child(env, "ChamberPipes");
-            var comb = new Combiner();
+            var comb = new EnvCombiner();
             int i = 0;
             foreach (float g in ChamberGaps())
             {

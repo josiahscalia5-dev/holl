@@ -38,14 +38,19 @@ namespace BubbleWash.EditorTools
                 F(m, "_StreakAmount", 0.7f); F(m, "_StreakSpeed", 7f); F(m, "_ReflectBoost", 0.7f);
             });
             Lit_("M_SlideShell", "#E24AB8", metallic: 0.05f, smooth: 0.85f, emission: "#3A0A30");
-            Emissive("M_ArrowRim", "#F2FFFF", 2.0f, pulse: 0f);
+            Emissive("M_ArrowRim", "#E6FFFF", 2.6f, pulse: 0f);
             Mat("M_Bubble", "BWK/Glass", m =>
             {
                 // soap bubbles: clear centre, thin bright rim, thin-film colour patches, studio window highlights
                 C(m, "_Tint", "#FFFFFF"); F(m, "_Alpha", 0.015f); F(m, "_Iridescence", 1f); F(m, "_FresnelPower", 2.2f); F(m, "_Glow", 0.3f);
                 F(m, "_Reflectivity", 0.9f); F(m, "_Bubble", 1f); F(m, "_FilmStrength", 1.1f); F(m, "_WindowStrength", 1.3f); F(m, "_RimWidth", 4f);
             }, (int)RenderQueue.Transparent);
-            Mat("M_Arrow", "BWK/FlowGlow", m => { F(m, "_Mode", 2); C(m, "_ColorA", "#1EE6FF"); F(m, "_Intensity", 1.9f); F(m, "_Speed", 1.4f); });
+            // speed-boost chevrons (BWK/Soft Mode 7): luminous teal glass, mint-white arm centres, HDR so bloom catches them
+            Mat("M_Arrow", "BWK/Soft", m =>
+            {
+                F(m, "_Mode", 7); C(m, "_ColorA", "#D2FFF7"); C(m, "_ColorB", "#0FB4CF"); C(m, "_ColorC", "#FFFFFF");
+                F(m, "_Glow", 0.4f); F(m, "_StreakAmount", 0.35f); F(m, "_StreakSpeed", 1.6f); F(m, "_ReflectBoost", 0.6f);
+            });
             Mat("M_Foam", "BWK/Soft", m =>
             {
                 // soap suds (Mode 5): white-pink puffs, lavender crevices (#A197C4 in the reference), satin gloss, bubble glints

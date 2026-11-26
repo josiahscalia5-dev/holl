@@ -21,7 +21,7 @@ namespace BubbleWash.EditorTools
         // decor chevrons down the middle of the water (also drive the light pools in M_Water / BWK_Water)
         public const float ChevronStart = 6f, ChevronSpacing = 2.2f, ChevronScale = 1.45f;
         // milk crown splashes beside the feet (Art/Models/FX/SM_FX_Crown_xx, left-side asset mirrored for the right)
-        const float CrownRootX = 0.3f, CrownRootZ = 0.32f, CrownScale = 0.85f;
+        const float CrownRootX = 0.42f, CrownRootZ = 0.25f, CrownScale = 0.95f;
 
         // ==================================================================== preview / persistence helpers
         static string PreviewOutArg()

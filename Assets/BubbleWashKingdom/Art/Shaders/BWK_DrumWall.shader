@@ -45,6 +45,10 @@ Shader "BWK/DrumWall"
         _SheenStrength ("Grazing sheen", Range(0,2)) = 0
         _Sparkle ("Metal sparkles", Range(0,3)) = 0
         _CeilingLight ("Ceiling brightening", Range(0,1)) = 0
+        _EdgeAO ("Section edge occlusion (next to the rims)", Range(0,1)) = 0
+        _EdgeAOWidth ("Section edge occlusion width (m)", Float) = 0.45
+        _HoleAO ("Darkening halo around holes", Range(0,1)) = 0
+        _HoleAOWidth ("Hole halo width (m)", Float) = 0.07
     }
     SubShader
     {
@@ -57,7 +61,8 @@ Shader "BWK/DrumWall"
             half _Metallic, _Smoothness, _Glow, _HoleBand, _HoleStretch;
             float _Pattern, _BandLength, _BandOffset, _PlainBack, _PlainFront, _Rows, _SlotPitch, _SlotLength, _SlotWidth;
             float _SlotVariation, _LipWidth;
-            half _GlowChance, _SheenStrength, _Sparkle, _CeilingLight;
+            half _GlowChance, _SheenStrength, _Sparkle, _CeilingLight, _EdgeAO, _HoleAO;
+            float _EdgeAOWidth, _HoleAOWidth;
         CBUFFER_END
         ENDHLSL
 
@@ -111,7 +116,7 @@ Shader "BWK/DrumWall"
                 float band = step(around, _HoleBand + 1e-3);                       // perforated band around the ceiling
                 half3 bitangent = cross(i.normalWS, i.tangentWS.xyz) * i.tangentWS.w;
 
-                float hole = 0.0, lip = 0.0, inner = 0.0, glowSel = 0.0, groove = 0.0, detail = 1.0;
+                float hole = 0.0, lip = 0.0, inner = 0.0, glowSel = 0.0, groove = 0.0, detail = 1.0, ao = 1.0;
                 float2 dir = float2(0.0, 0.0);
                 half3 glowCol = half3(0.0, 0.0, 0.0);
 
@@ -173,6 +178,12 @@ Shader "BWK/DrumWall"
                     float seamW = fwidth(m.x) * 1.5 + 0.006;
                     float seamX = abs(frac(m.x / (_Circumference / 8.0) + 0.5) - 0.5) * (_Circumference / 8.0);
                     groove = max(groove, (1.0 - smoothstep(0.006, 0.006 + seamW, seamX)) * 0.65);
+                    // ambient occlusion: the drum section is darker where it meets the raised rims / gold rings and in
+                    // a soft halo around every perforation (reference f_003.00s: dark values around the holes)
+                    float eW = max(_EdgeAOWidth, 1e-3);
+                    float edge = smoothstep(0.0, eW, local) * smoothstep(0.0, eW, L - local);
+                    float halo = smoothstep(_HoleAOWidth + 0.01, 0.0, sdf) * (1.0 - hole) * band * detail;
+                    ao = lerp(1.0 - _EdgeAO, 1.0, edge) * (1.0 - _HoleAO * halo);
                 }
 
                 // countersink / bevel normal (dir points from the hole centre line outward, in (around, along))
@@ -183,6 +194,7 @@ Shader "BWK/DrumWall"
                 metal *= 1.0 + _CeilingLight * (1.0 - around);
                 metal *= 1.0 - (1.0 - detail) * 0.12 * band * step(0.5, _Pattern);   // far: average in the hole darkness
                 metal = lerp(metal, _SeamColor.rgb, saturate(groove) * 0.75);
+                metal *= ao;
                 half depthT = smoothstep(0.0, 0.7, inner);
                 half3 holeCol = lerp(_HoleColor.rgb * 1.8 + _HoleGlow.rgb * 0.12, _HoleColor.rgb * 0.35, depthT);
                 half3 albedo = lerp(metal, holeCol, hole);
@@ -207,7 +219,7 @@ Shader "BWK/DrumWall"
                 half spark = step(0.94, sh) * smoothstep(0.16, 0.0, sd) * twinkle * saturate(1.0 - fwidth(sc.x) * 3.0);
                 emission += _SheenColor.rgb * spark * _Sparkle * (1.0 - hole);
 
-                return BWK_PBR(i.positionWS, i.positionCS, n, viewDir, albedo, metallic, smooth, lerp(1.0, 0.4, hole), emission, 1.0, i.fog);
+                return BWK_PBR(i.positionWS, i.positionCS, n, viewDir, albedo, metallic, smooth, lerp(ao, 0.4, hole), emission, 1.0, i.fog);
             }
             ENDHLSL
         }

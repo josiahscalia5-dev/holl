@@ -61,7 +61,7 @@ ELBOW_R, ELBOW_SEGS = 0.8, 12
 # ------------------------------------------------------------------ premium gold ring (profile in (rho, y); +y faces
 # the approaching player, i.e. Unity -Z after the FBX axis fix)
 RING_SEGS = 64                  # 2 segments per bulb pitch: bulbs and plates sit on vertex columns
-RING_BULBS = 32                 # dense marquee row (reference f_003.00s / key 5.0 s: ~28-32 big warm bulbs per ring)
+RING_BULBS = 48                 # dense marquee row (reference f_003.00s / key 5.0 s: ~40-50 warm bulbs per ring, r2)
 RG_BACK_Y, RG_OUT = -0.20, 4.26           # back face; outer surface buried in the drum wall (r 4.2)
 RG_IN_FACE = 3.70                         # inner face (toward the axis) under the rope bead
 RG_IB_C, RG_IB_R = (3.72, 0.10), 0.12     # inner rope bead: apex rho 3.60, front y 0.22

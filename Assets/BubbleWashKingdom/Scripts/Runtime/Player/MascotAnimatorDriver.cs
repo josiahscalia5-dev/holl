@@ -109,7 +109,10 @@ namespace BubbleWash
                                              Mathf.Clamp(-localAcc.x * 0.9f, -pomMaxAngle, pomMaxAngle));
                 pomVel += (target - pomAngle) * pomStiffness * dt - pomVel * pomDamping * dt;
                 pomAngle += pomVel * dt;
-                pomPom.localRotation = pomRest * Quaternion.Euler(pomAngle.x, 0f, pomAngle.z);
+                // additive on top of the clip's own pom-pom follow-through (the Animator rewrites the pose every frame;
+                // without a controller the rest pose is the base)
+                Quaternion animated = hasParams ? pomPom.localRotation : pomRest;
+                pomPom.localRotation = animated * Quaternion.Euler(pomAngle.x, 0f, pomAngle.z);
             }
         }
 

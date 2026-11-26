@@ -30,8 +30,12 @@ Material:
     - _Bevel: 0.6
     - _CeilingLight: 0
     - _Circumference: 4
+    - _EdgeAO: 0
+    - _EdgeAOWidth: 0.45
     - _Glow: 0.2
     - _GlowChance: 0.07
+    - _HoleAO: 0
+    - _HoleAOWidth: 0.07
     - _HoleBand: 1
     - _HoleRadius: 0.25
     - _HoleSpacing: 0.8
