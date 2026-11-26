@@ -29,7 +29,17 @@ stopped after a final snapshot (restart it, see step 3).
   `Tools/trellis_client.py`, library in gitignored `Tools/.pylibs_gradio`). First call 11:33 REFUSED: anonymous ZeroGPU
   quota ("120s requested vs. 143s left", retry in 24 h). Needs the owner's own FREE Hugging Face login on this PC
   (docs: 5 min/day free vs 2 min anonymous; the Space reserves 120 s per step, 2 steps per model -> ~1 model/day at best).
-- NEXT: wave 2 = `args: ["character", "lighting"]` after the window reset (15:40 local); then wave 3 env + water fixes
+- 11:58 TRELLIS.2 ran with the owner's own HF login (device flow, token in ~/.cache/huggingface): mascot GLB 297k tris
+  in 105 s (`Captures/trellis/mascot/out_s0/model.glb`, sheet `trellis_vs_ref_sheet.png`). Front recognisable (~5/10) but
+  flat (depth 0.54 x width 0.94) and TWO-FACED from behind (back ~1/10), pom-pom wrong -> not usable as the rear-camera
+  game mascot. Free quota ~1 model/day. Possible 2nd attempt: a rear frame (0-3 s) as input.
+- 12:00 OWNER'S NEW BRIEF: rebuild the ENTIRE level's scenery section by section (priority scenery > water > placement >
+  mascot > lighting). Prepared `Tools/workflows/bwk-round7-wholelevel.js` (agents tunnel S3-S7 / hall S1-S2 + portal S7 /
+  water everywhere; env agents may run safe_build). Lead added partial hooks BuildHallExtras / BuildPortalExtras in
+  SceneBuilder.cs (implemented by the hall agent in SceneBuilder.Hall.cs). "Previous build" stills saved in
+  `Captures/stills_r6_1142/`. LAUNCH at the 15:40 window reset: Workflow({scriptPath: ".../bwk-round7-wholelevel.js"}).
+  After it: lead safe_build, all-section sheets reference | previous | newest, scores, full-level recording, checkpoint.
+- LATER: wave = `args: ["character", "lighting"]` of the round-6 workflow (mascot export fix + lighting); then wave 3 env + water fixes
   (items 4-6 above + the owner's S5 decision). Owner asked (11:12) whether a free image-to-3D website may be tried for the
   mascot (upload of one crop) - no answer yet; do not upload without a yes.
 
