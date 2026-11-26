@@ -18,11 +18,11 @@ namespace BubbleWash.EditorTools
                 // holes lit from behind, grooves + seams, sparkles. Albedo is kept deep because the tunnel post / lights
                 // lift it a lot (r2: the pale lavender read was the main wall gap).
                 // _BandOffset / _BandLength are rewritten by SceneBuilder.BuildRings to match the placed rims.
-                C(m, "_BaseColor", "#5B44A6"); C(m, "_HighlightColor", "#8D75D8"); C(m, "_HoleColor", "#0B0620");
+                C(m, "_BaseColor", "#7461BE"); C(m, "_HighlightColor", "#A493DC"); C(m, "_HoleColor", "#0B0620");
                 C(m, "_HoleGlow", "#4A2E9A"); F(m, "_Circumference", 26.39f); F(m, "_VTile", 4f);
                 F(m, "_Pattern", 1f); F(m, "_BandLength", 8.5f / 3f); F(m, "_BandOffset", 65f);
-                F(m, "_PlainBack", 0.42f); F(m, "_PlainFront", 0.36f); F(m, "_Rows", 3f); F(m, "_SlotPitch", 0.62f);
-                F(m, "_SlotLength", 0.42f); F(m, "_SlotWidth", 0.17f); F(m, "_SlotVariation", 0.35f); F(m, "_LipWidth", 0.04f);
+                F(m, "_PlainBack", 0.40f); F(m, "_PlainFront", 0.34f); F(m, "_Rows", 3f); F(m, "_SlotPitch", 0.64f);
+                F(m, "_SlotLength", 0.46f); F(m, "_SlotWidth", 0.21f); F(m, "_SlotVariation", 0.3f); F(m, "_LipWidth", 0.045f);
                 F(m, "_Bevel", 0.7f); F(m, "_GlowChance", 0.05f);
                 m.SetColor("_GlowColorA", new Color(1.7f, 0.85f, 1.6f)); m.SetColor("_GlowColorB", new Color(0.75f, 1.35f, 1.9f));
                 C(m, "_SeamColor", "#2A1858"); C(m, "_SheenColor", "#B9A2F2"); F(m, "_SheenStrength", 0.28f);

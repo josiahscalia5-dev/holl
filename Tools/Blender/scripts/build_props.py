@@ -461,6 +461,113 @@ def build_suds(M, name, seed, spread, count, lod=0):
     return out
 
 
+def build_suds_meta(M, name, seed, spread, count, lod=0):
+    """Soft soap-cloud cluster (reference f_003.00s banks: big satin puffs fused with SOFT crevices, a few tiny glossy
+    micro-bubbles on top). The puff layout is the one build_suds uses; the puffs are fused as metaballs (smooth liquid
+    fillets instead of hard sphere intersections), polygonised, cut flat underneath and decimated. Tiny bubbles stay
+    separate crisp spheres. Vertex colour 'Col': R = baked crevice AO, G = per-puff random (BWK/Soft Mode 5)."""
+    import numpy as np
+    rng = random.Random(seed)
+    spheres = []
+    for i in range(int(count * 1.5)):
+        a = rng.uniform(0, 2 * math.pi)
+        d = rng.uniform(0, 1) ** 0.75
+        x = math.cos(a) * d * spread[0]
+        y = math.sin(a) * d * spread[1]
+        r = rng.uniform(0.22, 0.40) * (1.2 - 0.45 * d)
+        z = r * rng.uniform(0.0, 0.35) + (1 - d) * 0.2
+        spheres.append((x, y, z, r))
+    prim = list(spheres)
+    for (x, y, z, r) in prim:                       # smaller puffs bulging out of the big ones
+        for _ in range(rng.randint(1, 3)):
+            th = rng.uniform(0, 2 * math.pi)
+            ph = rng.uniform(0.15, 1.25)
+            dirv = Vector((math.cos(th) * math.sin(ph), math.sin(th) * math.sin(ph), math.cos(ph)))
+            rs = r * rng.uniform(0.42, 0.66)
+            c = Vector((x, y, z)) + dirv * (r - rs * 0.1)
+            if c.z > 0.03:
+                spheres.append((c.x, c.y, c.z, rs))
+    # --- fused puffs (metaballs)
+    mb = bpy.data.metaballs.new("MB_" + name)
+    res = 0.022 if lod == 0 else 0.05
+    mb.resolution = res
+    mb.render_resolution = res
+    mb.threshold = 0.6
+    mbo = bpy.data.objects.new("MB_" + name, mb)
+    bpy.context.scene.collection.objects.link(mbo)
+    for (x, y, z, r) in spheres:
+        e = mb.elements.new(type='BALL')
+        e.co = (x, y, z)
+        e.radius = r * 1.62
+        e.stiffness = 2.4
+    bpy.context.view_layer.update()
+    me = bpy.data.meshes.new_from_object(mbo.evaluated_get(bpy.context.evaluated_depsgraph_get()))
+    bpy.data.objects.remove(mbo, do_unlink=True)
+    bpy.data.metaballs.remove(mb)
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bpy.data.meshes.remove(me)
+    bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=(0, 0, 0.0),
+                           plane_no=(0, 0, 1), clear_inner=True)
+    obj = new_obj(name, bm)
+    target = 9000 if lod == 0 else 1400
+    tris = C.tri_count(obj)
+    if tris > target:
+        C.select_only([obj])
+        mod = obj.modifiers.new("dec", 'DECIMATE')
+        mod.ratio = target / tris
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+    # --- tiny glossy micro-bubbles sitting on the surface (LOD0 only)
+    if lod == 0:
+        tb = bmesh.new()
+        for _ in range(int(count * 5)):
+            x, y, z, r = spheres[rng.randrange(len(spheres))]
+            th = rng.uniform(0, 2 * math.pi)
+            ph = rng.uniform(0.0, 1.3)
+            dirv = Vector((math.cos(th) * math.sin(ph), math.sin(th) * math.sin(ph), math.cos(ph)))
+            rt = rng.uniform(0.012, 0.032)
+            c = Vector((x, y, z)) + dirv * (r * 0.97 + rt * 0.3)
+            if c.z < 0.03:
+                continue
+            sub = bmesh.new()
+            bmesh.ops.create_uvsphere(sub, u_segments=8, v_segments=6, radius=rt)
+            bmesh.ops.translate(sub, verts=sub.verts, vec=c)
+            tmp = bpy.data.meshes.new("tmp")
+            sub.to_mesh(tmp)
+            sub.free()
+            tb.from_mesh(tmp)
+            bpy.data.meshes.remove(tmp)
+        tobj = new_obj(name + "_tiny", tb)
+        obj = C.join([obj, tobj], name)
+    for p in obj.data.polygons:
+        p.use_smooth = True
+    # --- baked crevice AO + per-puff random tint into vertex colours
+    me = obj.data
+    me.update()
+    pts = [tuple(v.co) for v in me.vertices]
+    nrm = [tuple(v.normal) for v in me.vertices]
+    occl = [(x, y, z, r * 0.82) for (x, y, z, r) in spheres]
+    ao = _bake_ao(pts, nrm, np.full(len(pts), -1), occl)
+    ao = np.clip(0.22 + 0.78 * ao ** 1.3, 0.0, 1.0)
+    S = np.array([s[:3] for s in spheres])
+    P = np.array(pts)
+    nearest = np.argmin(((P[:, None, :] - S[None, :, :]) ** 2).sum(2), axis=1)
+    prng = random.Random(seed + 99)
+    puff_r = [prng.random() for _ in spheres]
+    ca = me.color_attributes.new(name="Col", type='BYTE_COLOR', domain='CORNER')
+    for poly in me.polygons:
+        for li in poly.loop_indices:
+            vi = me.loops[li].vertex_index
+            col = (float(ao[vi]), float(puff_r[int(nearest[vi])]), 0.0, 1.0)
+            try:
+                ca.data[li].color_srgb = col
+            except AttributeError:
+                ca.data[li].color = col
+    C.assign_materials(obj, [M["M_Foam"]])
+    planar_uv(obj, lambda co: (co.x * 0.5 + 0.5, (co.z + co.y * 0.5) * 0.5 + 0.5))
+    return obj
+
+
 def build_foam(M, name, seed, spread, count, max_tris=2000, useg_override=None):
     """Cumulus foam: overlapping smooth spheres (distinct round puffs like the reference), underside cut flat."""
     rng = random.Random(seed)
@@ -645,8 +752,8 @@ def main():
     objs.append(build_chevron(M))
     for nm, seed, spread, cnt in (("SM_Foam_A", 11, (0.9, 0.55), 9), ("SM_Foam_B", 23, (1.3, 0.65), 12),
                                   ("SM_Foam_C", 37, (0.55, 0.45), 6)):
-        objs.append(build_suds(M, nm, seed, spread, cnt, lod=0))
-        objs.append(build_suds(M, nm + "_LOD1", seed, spread, cnt, lod=1))
+        objs.append(build_suds_meta(M, nm, seed, spread, cnt, lod=0))
+        objs.append(build_suds_meta(M, nm + "_LOD1", seed, spread, cnt, lod=1))
     for s in ("SM_Sock_A", "SM_Sock_B", "SM_Sock_C"):
         objs.append(build_sock(M, s))
     objs.append(build_towel(M))

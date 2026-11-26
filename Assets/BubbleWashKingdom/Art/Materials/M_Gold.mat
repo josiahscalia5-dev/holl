@@ -104,7 +104,7 @@ Material:
     - _EnvRoughness: 0.22
     - _EnvTint: 0.9
     - _EnvironmentReflections: 1
-    - _FogAmount: 0.8
+    - _FogAmount: 0.5
     - _GlintStrength: 2.4
     - _GlossMapScale: 0
     - _Glossiness: 0

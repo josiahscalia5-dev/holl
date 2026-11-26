@@ -15,7 +15,7 @@ namespace BubbleWash.EditorTools
             // gradient across flat ring faces, partly gold-tinted reflections of the violet tunnel and sharp bulb glints.
             GoldLook("M_Gold", high: "#FFF8D8", mid: "#FAC232", low: "#8A4208", rim: "#FFE6A0", band: "#FFF0B8",
                 brightness: 1.3f, glow: 0.08f, contrast: 1.5f, viewGradient: 1f, env: 0.35f, envTint: 0.9f, envRough: 0.22f,
-                specPower: 150f, specStrength: 2.2f, glints: 2.4f, sparkle: 0f, fog: 0.8f, highlightSize: 8f);
+                specPower: 150f, specStrength: 2.2f, glints: 2.4f, sparkle: 0f, fog: 0.5f, highlightSize: 8f);
             GoldLook("M_GoldDark", high: "#FFE6A6", mid: "#D88E1C", low: "#552406", rim: "#FFD080", band: "#FFDF98",
                 brightness: 1.1f, glow: 0.03f, contrast: 1.6f, viewGradient: 1f, env: 0.5f, envTint: 0.65f, envRough: 0.3f,
                 specPower: 120f, specStrength: 1.8f, glints: 2f, sparkle: 0f, fog: 0.8f, highlightSize: 8f);
@@ -36,15 +36,15 @@ namespace BubbleWash.EditorTools
             // Saturated neon tubes (reference: thick YELLOW / CYAN / PINK tubes, white-hot only in a thin core line): pure
             // hues (no minor channel) at ~3x so they stay coloured after tonemapping and bloom into tinted halos; a sharp
             // _CorePower makes the white line only where the tube faces the camera.
-            EmissiveLook("M_Neon", "#00D4FF", 3.0f, core: 0.55f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
-            EmissiveLook("M_Neon_Cyan", "#00D4FF", 3.0f, core: 0.55f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
-            EmissiveLook("M_Neon_Pink", "#FF3AB4", 3.2f, core: 0.5f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
-            EmissiveLook("M_Neon_Yellow", "#FFC000", 2.9f, core: 0.5f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
+            EmissiveLook("M_Neon", "#00D4FF", 4.2f, core: 0.45f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
+            EmissiveLook("M_Neon_Cyan", "#00D4FF", 4.2f, core: 0.45f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
+            EmissiveLook("M_Neon_Pink", "#FF3AB4", 4.4f, core: 0.42f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
+            EmissiveLook("M_Neon_Yellow", "#FFC000", 4.0f, core: 0.42f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
 
             // soft coloured glow cards behind every neon star (additive BWK/LightBlob): the star's light spilling over the wall
-            StarGlow("M_StarGlow_Yellow", "#FFAE1A", 0.85f);
-            StarGlow("M_StarGlow_Cyan", "#14C6FF", 0.85f);
-            StarGlow("M_StarGlow_Pink", "#FF2EB2", 0.85f);
+            StarGlow("M_StarGlow_Yellow", "#FFA010", 1.25f);
+            StarGlow("M_StarGlow_Cyan", "#10C0FF", 1.2f);
+            StarGlow("M_StarGlow_Pink", "#FF2EB2", 1.2f);
 
             // soft violet contact shadow under the mascot (multiply card, BWK/LightBlob)
             Mat("M_ContactShadow", "BWK/LightBlob", m =>
@@ -58,7 +58,7 @@ namespace BubbleWash.EditorTools
         {
             Mat(name, "BWK/LightBlob", m =>
             {
-                C(m, "_Color", hex); F(m, "_Strength", strength); F(m, "_Softness", 1f); F(m, "_Core", 2.1f);
+                C(m, "_Color", hex); F(m, "_Strength", strength); F(m, "_Softness", 1f); F(m, "_Core", 2.6f);
                 F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
             }, (int)RenderQueue.Transparent - 10);
         }

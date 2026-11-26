@@ -99,8 +99,8 @@ Shader "BWK/Glass"
                     win += WindowMask(nv.xy, half2(0.42, -0.36), half2(0.07, 0.04), 0.06) * 0.65;
                     win *= step(0.0, nv.z);
                     half3 bc = bubbleFilm * filmVis * 0.75 + refl * _Reflectivity * (0.08 + rim * 0.9);
-                    bc += half3(1, 1, 1) * (win * _WindowStrength + rim * 0.25 + spec * 0.4);
-                    half ba = saturate(_Alpha + filmVis * 0.45 + rim * 0.55 + win * _WindowStrength * 0.8);
+                    bc += half3(1, 1, 1) * (win * _WindowStrength + rim * 0.6 + spec * 0.4);   // crisp white rim (reference)
+                    half ba = saturate(_Alpha + filmVis * 0.45 + rim * 0.75 + win * _WindowStrength * 0.8);
                     c = lerp(c, bc, _Bubble);
                     alpha = lerp(alpha, ba, _Bubble);
                 }

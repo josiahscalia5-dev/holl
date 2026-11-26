@@ -243,7 +243,7 @@ namespace BubbleWash.EditorTools
                 return Sub(fx.spray, n, "M_FX_Milk", new Vector3(side * 0.5f, 0.2f, 0.05f), dir, ps =>
                 {
                     var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.3f, 0.6f); m.startSpeed = new ParticleSystem.MinMaxCurve(1.3f, 2.8f);
-                    m.startSize = new ParticleSystem.MinMaxCurve(0.028f, 0.075f); m.gravityModifier = 1.3f; m.simulationSpace = ParticleSystemSimulationSpace.Local;
+                    m.startSize = new ParticleSystem.MinMaxCurve(0.018f, 0.05f); m.gravityModifier = 1.3f; m.simulationSpace = ParticleSystemSimulationSpace.Local;
                     m.maxParticles = 140; m.startColor = Color.white;
                     var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Cone; sh.angle = 30f; sh.radius = 0.16f;
                     var sz = ps.sizeOverLifetime; sz.enabled = true;
@@ -280,8 +280,22 @@ namespace BubbleWash.EditorTools
                 var r = ps.GetComponent<ParticleSystemRenderer>(); r.renderMode = ParticleSystemRenderMode.Stretch; r.velocityScale = 0.06f; r.lengthScale = 3f;
                 Seed(ps, 24);
             });
-            fx.extra = new[] { dropsL, dropsR, splashBubbles, speedLines };
-            fx.extraRates = new[] { 34f, 34f, 16f, 30f };
+            // clear soap bubbles skimming the water in the lower foreground, between the two crowns (reference f_003.00s)
+            var frontBubbles = Sub(fx.spray, "FrontBubbles", "M_Bubble", new Vector3(0f, 0.16f, -0.75f), Vector3.zero, ps =>
+            {
+                var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(1.2f, 2.2f); m.startSpeed = 0f;
+                m.startSize = new ParticleSystem.MinMaxCurve(0.045f, 0.12f); m.gravityModifier = -0.01f; m.simulationSpace = ParticleSystemSimulationSpace.Local;
+                m.maxParticles = 24; m.prewarm = true;
+                var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Box; sh.scale = new Vector3(1.1f, 0.22f, 0.9f);
+                var vel = ps.velocityOverLifetime; vel.enabled = true; vel.space = ParticleSystemSimulationSpace.Local;
+                vel.x = new ParticleSystem.MinMaxCurve(-0.08f, 0.08f); vel.y = new ParticleSystem.MinMaxCurve(0.0f, 0.06f); vel.z = new ParticleSystem.MinMaxCurve(-0.35f, -0.1f);
+                var sz = ps.sizeOverLifetime; sz.enabled = true; sz.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, 0.3f), new Keyframe(0.15f, 1f), new Keyframe(0.9f, 1f), new Keyframe(1f, 0f)));
+                var e = ps.emission; e.rateOverTime = 9f;
+                MeshParticles(ps, bubbleMesh, false);
+                Seed(ps, 25);
+            });
+            fx.extra = new[] { dropsL, dropsR, splashBubbles, speedLines, frontBubbles };
+            fx.extraRates = new[] { 34f, 34f, 16f, 30f, 9f };
             fx.sheets = new ParticleSystem[0];   // flat crown sprites replaced by the 3D crowns below
 
             // lacy milk foam on the water around and behind the feet

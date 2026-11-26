@@ -45,8 +45,7 @@ namespace BubbleWash.EditorTools
                 Rebuild("SideChambers", () => BuildPortholes(env));
                 Rebuild("ChamberPipes", () => BuildPipes(env, L));
                 Debug.Log("[BWK] preview: environment rings / chambers / pipes rebuilt in memory");
-                string outArg = PreviewOutArg() ?? "";
-                if (outArg.Contains("agents/environment")) EnvPreviewShots(outArg);
+                // chamber-section shots (EnvPreviewShots) are paused: hero frame only (lead directive 22:55)
             }
             catch (System.Exception e) { Debug.LogWarning("[BWK] preview: environment rebuild failed: " + e.Message); }
             finally { envSave = true; rng = savedRng; }

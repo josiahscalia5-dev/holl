@@ -66,13 +66,14 @@ RG_BACK_Y, RG_OUT = -0.20, 4.26           # back face; outer surface buried in t
 RG_IN_FACE = 3.70                         # inner face (toward the axis) under the rope bead
 RG_IB_C, RG_IB_R = (3.72, 0.10), 0.12     # inner rope bead: apex rho 3.60, front y 0.22
 RG_CORNER_R = 0.10                        # rounded back-inner corner
-RG_FLOOR_Y = 0.05                         # recessed bulb channel floor (dark gold)
+RG_FLOOR_Y = 0.05                         # recessed bulb channel rim height (polished gold trough, r2)
+RG_TROUGH = 0.035                         # trough depth below RG_FLOOR_Y at the channel centre
 RG_OB_C, RG_OB_R = (4.13, 0.10), 0.09     # outer bead against the wall: front y 0.19
 RG_BULB_RHO = 3.942                       # channel centre line
-BULB_R2, BULB_H2 = 0.088, 0.097           # glass bulb half-width / half-height (marquee lamp, slightly tall)
-BULB_Y = RG_FLOOR_Y + 0.112               # bulb centre: crown ~0.04 above the rope bead
+BULB_R2, BULB_H2 = 0.102, 0.110           # glass bulb half-width / half-height (big warm marquee lamps, r2)
+BULB_Y = RG_FLOOR_Y + 0.118               # bulb centre: crown ~0.06 above the rope bead
 BULB_TILT = math.radians(10.0)            # bulbs lean toward the tunnel axis (gameplay camera)
-CUP_RO, CUP_RI, CUP_TOP = 0.106, 0.082, 0.064
+CUP_RO, CUP_RI, CUP_TOP = 0.118, 0.096, 0.064
 PLATES = 8                                # bolted clamp plates across the channel (segment joints)
 
 # ------------------------------------------------------------------ lavender drum rim (nested-drum lips between rings)
@@ -475,6 +476,21 @@ def tangent_angle(c, r, p, upper):
     return math.degrees(base + off if upper else base - off)
 
 
+def trough_pts(r0, r1, y0, depth, segs):
+    """Concave channel from (r0, y0) to (r1, y0), deepest (y0 - depth) in the middle; normals face +y / the trough
+    centre, so the polished gold catches a rolling highlight instead of reading as a flat brown band (r2)."""
+    mid, hw = 0.5 * (r0 + r1), 0.5 * (r1 - r0)
+    out = []
+    for k in range(segs + 1):
+        r = r0 + (r1 - r0) * k / segs
+        t = (r - mid) / hw
+        y = y0 - depth * (1.0 - t * t)
+        dy = depth * 2.0 * t / hw                     # dy/dr
+        ln = math.hypot(dy, 1.0)
+        out.append((r, y, (-dy / ln, 1.0 / ln)))
+    return out
+
+
 def ring_parts():
     """Closed ring cross-section as separately revolved parts (hard creases between parts):
     back face + rounded back-inner corner + inner face | inner rope bead | dark channel floor | outer bead | buried."""
@@ -495,7 +511,7 @@ def ring_parts():
     parts = [
         (back_inner, 0),
         (arc_pts(RG_IB_C, RG_IB_R, a_in, a_fl, 20), 0),                              # rope bead (polished)
-        (line_pts((floor0, RG_FLOOR_Y), (floor1, RG_FLOOR_Y), (0.0, 1.0), 2), 1),    # recessed channel
+        (trough_pts(floor0, floor1, RG_FLOOR_Y, RG_TROUGH, 8), 0),                   # polished concave channel
         (arc_pts(RG_OB_C, RG_OB_R, b_fl, 0.0, 12), 0),                               # outer bead
         (chain(line_pts((ox + RG_OB_R, oy), (RG_OUT, oy), (0.0, 1.0)),
                line_pts((RG_OUT, oy), (RG_OUT, RG_BACK_Y), (1.0, 0.0))), 1),         # buried in the wall

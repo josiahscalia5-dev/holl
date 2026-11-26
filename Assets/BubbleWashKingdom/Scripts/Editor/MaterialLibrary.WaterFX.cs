@@ -61,7 +61,7 @@ namespace BubbleWash.EditorTools
             Mat("M_FX_Milk", "BWK/Soft", m =>
             {
                 // milky crown splashes + 3D droplets (Mode 6): creamy white, blue-grey shading, cool water bounce, wet highlights
-                F(m, "_Mode", 6); C(m, "_ColorA", "#FFFFFF"); C(m, "_ShadowColor", "#93A8D4"); C(m, "_ColorB", "#8FD3F0"); F(m, "_Wrap", 0.35f);
+                F(m, "_Mode", 6); C(m, "_ColorA", "#FFFFFF"); C(m, "_ShadowColor", "#A4B8E2"); C(m, "_ColorB", "#8FD3F0"); F(m, "_Wrap", 0.5f);
                 F(m, "_RimPower", 2.0f); F(m, "_RimStrength", 0.6f); F(m, "_SpecStrength", 1.1f); F(m, "_ReflectBoost", 0.45f); F(m, "_Glow", 0.08f);
                 F(m, "_Wobble", 0.01f); F(m, "_WobbleFreq", 7f);
             });

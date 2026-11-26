@@ -44,11 +44,11 @@ Material:
     - _Stripes: 4
     - _Wobble: 0.01
     - _WobbleFreq: 7
-    - _Wrap: 0.35
+    - _Wrap: 0.5
     m_Colors:
     - _ColorA: {r: 1, g: 1, b: 1, a: 1}
     - _ColorB: {r: 0.56078434, g: 0.827451, b: 0.9411765, a: 1}
     - _ColorC: {r: 0.54999995, g: 0.29999998, b: 0.85, a: 1}
-    - _ShadowColor: {r: 0.5764706, g: 0.65882355, b: 0.83137256, a: 1}
+    - _ShadowColor: {r: 0.6431373, g: 0.72156864, b: 0.8862745, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
