@@ -63,3 +63,6 @@ desktop.ini
 # Python bytecode
 __pycache__/
 *.pyc
+
+# third-party Python libraries for hosted-demo API clients (never published)
+Tools/.pylibs_gradio/
