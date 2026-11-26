@@ -331,15 +331,17 @@ namespace BubbleWash.EditorTools
                     {
                         if (hall)
                         {
-                            Place(f, side * Rand(2.45f, 2.9f), Rand(-0.15f, 0.03f), Rand(1.0f, 1.4f), 0);
-                            Place(f, side * Rand(3.1f, 7.5f), Rand(-0.35f, 0.05f), Rand(1.2f, 1.9f), r.NextDouble() < 0.5 ? 0 : 1);
+                            Place(f, side * Rand(2.42f, 2.75f), Rand(0.40f, 0.56f), Rand(1.0f, 1.4f), 0);
+                            Place(f, side * Rand(3.1f, 7.5f), Rand(-0.2f, 0.3f), Rand(1.4f, 2.2f), r.NextDouble() < 0.5 ? 0 : 1);
                         }
                         else
                         {
-                            Place(f, side * Rand(2.40f, 2.62f), Rand(-0.06f, 0.04f), Rand(0.9f, 1.25f), 0);
-                            if (r.NextDouble() < 0.7) Place(f, side * Rand(2.75f, 3.15f), Rand(0.0f, 0.28f), Rand(1.0f, 1.55f), 1);
+                            // v1 preview: at water level (h ~0) the banks hid behind the rail tubes (+-2.22 m, 0.72 m high) ->
+                            // seated at the rail line so 0.3-0.5 m of foam shows above the rail like the reference
+                            Place(f, side * Rand(2.40f, 2.62f), Rand(0.42f, 0.58f), Rand(0.95f, 1.3f), 0);
+                            if (r.NextDouble() < 0.7) Place(f, side * Rand(2.72f, 3.1f), Rand(0.55f, 0.8f), Rand(1.05f, 1.55f), 1);
                         }
-                        if (r.NextDouble() < 0.45) Place(f, side * Rand(2.26f, 2.40f), Rand(0.02f, 0.10f), Rand(0.85f, 1.2f), 2);
+                        if (r.NextDouble() < 0.45) Place(f, side * Rand(2.36f, 2.46f), Rand(0.52f, 0.64f), Rand(0.85f, 1.15f), 2);
                         placed++;
                     }
                     if (d - chunkStart > ChunkLength) { FlushChunk(); chunkStart = d; }
@@ -588,7 +590,8 @@ namespace BubbleWash.EditorTools
         // .924) replace the perforated SM_FX_Crown_xx flipbook. They are authored for the front reference camera in runner-local
         // space; turned 180 deg for the rear gameplay camera (v2_L then sits at the LEFT foot, v2_R at the right), pushed
         // outward so both sole pads stay visible, a little taller (the hero reference crowns rise beside the feet).
-        const float CrownV2Out = 0.26f, CrownV2Fwd = 0.12f, CrownV2Scale = 1.3f, CrownV2Lift = 1.2f;
+        // (v1 preview: the right asset's band starts ~0.7 m further out than the left one -> per-side offsets; lift 1.2 -> 1.45)
+        const float CrownV2OutL = 0.26f, CrownV2OutR = -0.42f, CrownV2Fwd = 0.12f, CrownV2Scale = 1.3f, CrownV2Lift = 1.45f;
         const int CrownV2Frames = 6;
 
         /// <summary>Stop-motion frames for one v2 crown: the measured mesh with a travelling liquid swell (displacement along
@@ -643,7 +646,7 @@ namespace BubbleWash.EditorTools
             foreach (float side in new[] { -1f, 1f })
             {
                 var go = Child(holder, side < 0 ? "CrownL" : "CrownR");
-                go.transform.localPosition = new Vector3(side * CrownV2Out, 0f, CrownV2Fwd);
+                go.transform.localPosition = new Vector3(side < 0 ? -CrownV2OutL : CrownV2OutR, 0f, CrownV2Fwd);
                 go.transform.localRotation = rot;
                 go.transform.localScale = s;
                 var mf = go.AddComponent<MeshFilter>();
@@ -658,7 +661,7 @@ namespace BubbleWash.EditorTools
             sc.baseScale = new[] { s, s };
             sc.baseRotation = new[] { rot, rot };
             sc.phase = new[] { 0, CrownV2Frames / 2 };
-            Debug.Log($"[BWK] waterfx crowns v2: SM_FX_Crown_v2_L/R x{CrownV2Frames} frames, yaw 180, out {CrownV2Out} fwd {CrownV2Fwd} scale {CrownV2Scale} lift {CrownV2Lift}, M_FX_Milk_v2");
+            Debug.Log($"[BWK] waterfx crowns v2: SM_FX_Crown_v2_L/R x{CrownV2Frames} frames, yaw 180, out L {CrownV2OutL} R {CrownV2OutR} fwd {CrownV2Fwd} scale {CrownV2Scale} lift {CrownV2Lift}, M_FX_Milk_v2");
             return true;
         }
 

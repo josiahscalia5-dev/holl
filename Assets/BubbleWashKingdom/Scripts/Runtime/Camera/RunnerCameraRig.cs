@@ -127,6 +127,16 @@ namespace BubbleWash
             initialized = true;
         }
 
+        /// <summary>Capture tools: jumps straight to the settled finale framing (before the slow push-in). Call Snap() after.</summary>
+        public void SnapFinale()
+        {
+            if (runner == null || runner.track == null) return;
+            introTime = -1f;
+            finaleTime = finaleBlendTime;
+            Step(0f, true);
+            initialized = true;
+        }
+
         /// <summary>Track frame that continues straight beyond the ends of the track (the opening crane may start behind 0 m).</summary>
         static TrackFrame EvaluateExtended(TrackPath track, float d)
         {

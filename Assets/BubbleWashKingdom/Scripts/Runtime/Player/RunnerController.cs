@@ -138,6 +138,14 @@ namespace BubbleWash
             SnapToTrack();
         }
 
+        /// <summary>Editor capture tools: poses the finishing turn (0 = facing the travel direction, 180 = facing the camera).</summary>
+        public void PoseFinishForCapture(float yawDegrees)
+        {
+            finishYaw = yawDegrees;
+            finishHop = 0f;
+            SnapToTrack();
+        }
+
         void OnSwipe(SwipeDir dir)
         {
             if (State != RunnerState.Running) return;

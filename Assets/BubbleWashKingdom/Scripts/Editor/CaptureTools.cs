@@ -464,6 +464,32 @@ namespace BubbleWash.EditorTools
                 }
             }
 
+            // 10_finale (lead 2026-11-26, owner corrections 7 + 8): the finishing sequence's front-facing celebration exactly as
+            // the game shows it - the mascot at rest in front of the golden portal, turned toward the rear gameplay camera,
+            // which has eased into its finale framing (RunnerCameraRig finale offsets). The game's version of the reference's
+            // 14.5 s composition = the S7 comparison still (section_triptych.sh prefers it).
+            {
+                runner.TeleportTo(runner.FinishRestDistance, 0f);
+                runner.PoseFinishForCapture(180f);
+                AnimationClip cel = animator != null && animator.runtimeAnimatorController != null
+                    ? animator.runtimeAnimatorController.animationClips.FirstOrDefault(c => c.name == "Celebrate") : null;
+                if (cel != null) cel.SampleAnimation(animator.gameObject, cel.length * 0.45f);
+                else if (slide != null) slide.SampleAnimation(animator.gameObject, 0.25f);
+                var fxRoot = runner.GetComponentInChildren<SplashFX>();
+                if (fxRoot != null) foreach (var ps in fxRoot.GetComponentsInChildren<ParticleSystem>()) ps.Clear(true);
+                foreach (var (w, h, tag) in new[] { (1280, 720, "16x9"), (720, 1280, "9x16") })
+                {
+                    rig.aspectOverride = w / (float)h;
+                    rig.SnapFinale();
+                    var lens = rig.vcam.Lens;
+                    cam.transform.SetPositionAndRotation(rig.transform.position, rig.transform.rotation * Quaternion.Euler(0f, 0f, lens.Dutch));
+                    cam.fieldOfView = lens.FieldOfView;
+                    RenderWithBackground(cam, w, h, outDir, $"10_finale_{tag}.png", mascot);
+                }
+                runner.PoseFinishForCapture(0f);
+                rig.Snap();
+            }
+
             // Front-facing comparison angles (reference 3.75-15 s camera) - comparison only, never used in gameplay.
             // C4 / C5 (2026-11-26): front angles for video sections S4 (first sock window, 6-7 s) and S6 (chamber tunnel 2,
             // 9-12.75 s), so every section of Docs/VideoCoverageChecklist.md has a comparable camera angle.

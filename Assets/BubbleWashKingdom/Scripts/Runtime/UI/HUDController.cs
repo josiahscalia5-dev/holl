@@ -55,8 +55,20 @@ namespace BubbleWash
             completeGo = new GameObject("Complete", typeof(RectTransform));
             completeGo.transform.SetParent(canvasGo.transform, false);
             var cr = (RectTransform)completeGo.transform;
-            cr.anchorMin = cr.anchorMax = new Vector2(0.5f, 0.72f);
-            cr.sizeDelta = new Vector2(1000f, 320f);
+            // 2026-11-26 finishing sequence: the banner sits above the golden portal burst on a soft violet panel so it
+            // stays readable over the bright portal (it was unreadable white-on-white in the round-7 recording)
+            cr.anchorMin = cr.anchorMax = new Vector2(0.5f, 0.79f);
+            cr.sizeDelta = new Vector2(860f, 270f);
+            var panel = new GameObject("Panel", typeof(RectTransform), typeof(Image));
+            panel.transform.SetParent(completeGo.transform, false);
+            var prt = (RectTransform)panel.transform;
+            prt.anchorMin = Vector2.zero; prt.anchorMax = Vector2.one;
+            prt.offsetMin = prt.offsetMax = Vector2.zero;
+            var pimg = panel.GetComponent<Image>();
+            pimg.sprite = RoundedSprite();
+            pimg.type = Image.Type.Sliced;
+            pimg.color = new Color(0.20f, 0.06f, 0.36f, 0.66f);
+            pimg.raycastTarget = false;
             completeText = MakeText(completeGo.transform, font, 76, TextAnchor.MiddleCenter, "");
             completeGroup = completeGo.AddComponent<CanvasGroup>();
             completeGroup.blocksRaycasts = false;
@@ -90,6 +102,8 @@ namespace BubbleWash
             rt.anchoredPosition = offset;
             rt.sizeDelta = new Vector2(300f, 110f);
             var bg = go.GetComponent<Image>();
+            bg.sprite = RoundedSprite();
+            bg.type = Image.Type.Sliced;
             bg.color = new Color(0.22f, 0.08f, 0.38f, 0.55f);
 
             var icon = new GameObject("Icon", typeof(RectTransform), typeof(Image));
@@ -106,6 +120,29 @@ namespace BubbleWash
             lr.offsetMin = new Vector2(anchor.x < 0.5f ? 110f : 24f, 0f);
             lr.offsetMax = new Vector2(anchor.x < 0.5f ? -24f : -110f, 0f);
             return irt;
+        }
+
+        static Sprite roundedSprite;
+
+        /// <summary>Procedural 9-sliced rounded-rectangle sprite (no texture asset needed) for the HUD pills and banner.</summary>
+        static Sprite RoundedSprite()
+        {
+            if (roundedSprite != null) return roundedSprite;
+            const int S = 64; const float R = 26f;
+            var tex = new Texture2D(S, S, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+            var px = new Color32[S * S];
+            for (int y = 0; y < S; y++)
+                for (int x = 0; x < S; x++)
+                {
+                    float dx = Mathf.Max(0f, Mathf.Max(R - x - 0.5f, x + 0.5f - (S - R)));
+                    float dy = Mathf.Max(0f, Mathf.Max(R - y - 0.5f, y + 0.5f - (S - R)));
+                    float d = Mathf.Sqrt(dx * dx + dy * dy);
+                    px[y * S + x] = new Color32(255, 255, 255, (byte)(255f * Mathf.Clamp01(R - d + 0.5f)));
+                }
+            tex.SetPixels32(px);
+            tex.Apply(false, true);
+            roundedSprite = Sprite.Create(tex, new Rect(0, 0, S, S), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect, new Vector4(R, R, R, R));
+            return roundedSprite;
         }
 
         static Text MakeText(Transform parent, Font font, int size, TextAnchor align, string value)
