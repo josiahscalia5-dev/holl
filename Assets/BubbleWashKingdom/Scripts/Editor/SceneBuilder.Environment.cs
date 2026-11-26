@@ -27,7 +27,9 @@ namespace BubbleWash.EditorTools
         /// </summary>
         static partial void PreviewEnvironmentDomain(GameObject root, float L)
         {
-            if (!PreviewRebuildsEnvironment) { Debug.Log("[BWK] preview: environment = saved scene (r7 dressing needs a full build)"); return; }
+            // r8 masters (asset artist): -bwkEnvChambers = rebuild ONLY the side chambers in memory (master door check)
+            bool chambersOnly = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-bwkEnvChambers") >= 0;
+            if (!PreviewRebuildsEnvironment && !chambersOnly) { Debug.Log("[BWK] preview: environment = saved scene (r7 dressing needs a full build)"); return; }
             var savedRng = rng;
             try
             {
@@ -41,6 +43,18 @@ namespace BubbleWash.EditorTools
                     var old = env.transform.Find(name);
                     if (old != null) Object.DestroyImmediate(old.gameObject);
                     build();
+                }
+                if (!PreviewRebuildsEnvironment)
+                {
+                    // BuildPortholes also adds the r7 stars + wall coins (own seeded sequences): drop the saved ones first
+                    foreach (var n in new[] { "TunnelStarsV2", "WallCoins" })
+                    {
+                        var o = env.transform.Find(n);
+                        if (o != null) Object.DestroyImmediate(o.gameObject);
+                    }
+                    Rebuild("SideChambers", () => BuildPortholes(env));
+                    Debug.Log("[BWK] preview: side chambers rebuilt in memory (-bwkEnvChambers)");
+                    return;
                 }
                 Rebuild("Rings", () => BuildRings(env, L));
                 Rebuild("SideChambers", () => BuildPortholes(env));
@@ -327,6 +341,33 @@ namespace BubbleWash.EditorTools
         {
             DrainLegacyPortholeRng();
             var holder = Child(env, "SideChambers");
+            // r8 MASTER door (asset artist, library assets 11 + 12): one prefab at every chamber-window position, same
+            // position / rotation / mirroring / scale as the v2 window (v2 below stays the fallback)
+            var door = WashDoorMasterPrefab();
+            if (door != null)
+            {
+                int nd = 0;
+                foreach (var (d, side) in ChamberWindows())
+                {
+                    var f = track.Evaluate(d);
+                    float ang = side * WindowAngle * Mathf.Deg2Rad;
+                    var radial = f.flatRight * Mathf.Sin(ang) + f.flatUp * Mathf.Cos(ang);
+                    var pos = f.FlatPoint(0, TunnelCenter) + radial * ChamberWindowPlaneRadius - Vector3.up * WindowDrop;
+                    var inward = Vector3.ProjectOnPlane(-radial, Vector3.up).normalized;
+                    var rot = Quaternion.AngleAxis(side * WindowYaw, Vector3.up) * Quaternion.LookRotation(inward, Vector3.up);
+                    var go = (GameObject)PrefabUtility.InstantiatePrefab(door);
+                    go.name = $"WashDoor_{d:000}_{(side > 0 ? "R" : "L")}";
+                    go.transform.SetParent(holder.transform, false);
+                    go.transform.SetPositionAndRotation(pos, rot);
+                    // the travel-right door is mirrored (hinge on the camera side, as v2)
+                    go.transform.localScale = new Vector3(side > 0 ? -WindowScale : WindowScale, WindowScale, WindowScale);
+                    nd++;
+                }
+                Debug.Log($"[BWK] r8 master doors: {nd} PF_WashDoor_Master between {ChamberStart} and {ChamberEnd} m");
+                BuildTunnelStarsV2(env);
+                BuildWallCoins(env);
+                return;
+            }
             var prefab = ModelPrefab("Machinery", "SM_ChamberWindow_v2");
             if (prefab == null) { Debug.LogWarning("[BWK] SM_ChamberWindow_v2 missing - chamber windows skipped"); }
             else
@@ -382,6 +423,70 @@ namespace BubbleWash.EditorTools
             }
             BuildTunnelStarsV2(env);
             BuildWallCoins(env);
+        }
+
+        public const string WashDoorPrefabPath = "Assets/BubbleWashKingdom/Prefabs/PF_WashDoor_Master.prefab";
+
+        /// <summary>
+        /// r8 MASTER door (asset artist, library assets 11 + 12): (re)creates PF_WashDoor_Master.prefab from
+        /// SM_WashDoor_Master.fbx (Tools/Blender/scripts/build_master_door.py) in the asset-space holder Spawn() uses (same
+        /// axes as the v2 window), with the project materials by slot name (gold / glass / drum masters, M_DoorRainbow_r8,
+        /// sock variant M_DoorSock_r8), no shadows, an LOD group (LOD0 / LOD1 ~27 %, the 5 socks in both) and a slow float
+        /// on every sock. Returns the prefab asset, or null when the FBX is missing.
+        /// </summary>
+        static GameObject WashDoorMasterPrefab()
+        {
+            var model = ModelPrefab("Machinery", "SM_WashDoor_Master");
+            if (model == null) return null;
+            var holder = Spawn(model);
+            holder.name = "PF_WashDoor_Master";
+            try
+            {
+                foreach (var r in holder.GetComponentsInChildren<Renderer>(true))
+                {
+                    var mats = r.sharedMaterials;
+                    for (int k = 0; k < mats.Length; k++)
+                    {
+                        if (mats[k] == null) continue;
+                        var lib = MaterialLibrary.Get(mats[k].name);
+                        if (lib != null) mats[k] = lib;
+                        else Debug.LogWarning("[BWK] PF_WashDoor_Master: no project material " + mats[k].name);
+                    }
+                    r.sharedMaterials = mats;
+                    r.shadowCastingMode = ShadowCastingMode.Off;
+                }
+                var all = holder.GetComponentsInChildren<Transform>(true);
+                Transform Find(string n) => all.FirstOrDefault(t => t.name == n);
+                var sockR = new List<Renderer>();
+                for (int s = 0; s < 8; s++)
+                {
+                    var t = Find($"Sock_{s}");
+                    if (t == null) continue;
+                    var bob = t.gameObject.AddComponent<FloatBob>();
+                    bob.orbitAxis = Vector3.forward;
+                    bob.orbitRadius = 0.12f;
+                    bob.orbitSpeed = 32f + 9f * s;
+                    bob.amplitude = 0.04f;
+                    bob.swayDegrees = 8f;
+                    sockR.AddRange(t.GetComponentsInChildren<Renderer>(true));
+                }
+                var lod0 = Find("WashDoor_LOD0");
+                var lod1 = Find("WashDoor_LOD1");
+                if (lod0 != null && lod1 != null)
+                {
+                    // the importer may already add a LODGroup for the _LOD0 / _LOD1 names: reuse it
+                    var g = holder.GetComponentInChildren<LODGroup>(true);
+                    if (g == null) g = holder.AddComponent<LODGroup>();
+                    var r0 = lod0.GetComponentsInChildren<Renderer>(true).Concat(sockR).ToArray();
+                    var r1 = lod1.GetComponentsInChildren<Renderer>(true).Concat(sockR).ToArray();
+                    g.SetLODs(new[] { new LOD(0.22f, r0), new LOD(0.004f, r1) });
+                    g.RecalculateBounds();
+                }
+                if (!AssetDatabase.IsValidFolder("Assets/BubbleWashKingdom/Prefabs"))
+                    AssetDatabase.CreateFolder("Assets/BubbleWashKingdom", "Prefabs");
+                return PrefabUtility.SaveAsPrefabAsset(holder, WashDoorPrefabPath);
+            }
+            finally { Object.DestroyImmediate(holder); }
         }
 
         /// <summary>

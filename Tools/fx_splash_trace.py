@@ -28,6 +28,18 @@ WINGS = {
 }
 # glowing chevron under the mascot (its white-cyan core has the milk's colour): triangle apex / base corners
 CHEVRON = ((612, 592), (440, 720), (812, 720))
+CYAN_GR = 34            # g - r above this (and g > 232) = chevron glow, not milk
+# round 8 masters (owner: crowns = thick rounded connected liquid traced from the REAR gameplay frames): preset for the hero
+# target f_03.00s (rear camera). L = left of the mascot (coin + left foam bank excluded), R = right crown + its droplets
+# down to the lower-right corner; soles excluded; the cyan chevron under the feet is removed by colour (g - r > 26), not
+# by a triangle (the right crown's base overlaps its right arm).
+if os.environ.get("BWK_TRACE_PRESET", "") == "rear0300":
+    WINGS = {
+        "L": {"box": (395, 405, 602, 652), "excl_circles": [(551, 492, 46)], "excl_boxes": [(395, 405, 470, 446)]},
+        "R": {"box": (678, 380, 1002, 714), "excl_circles": [(726, 490, 46)], "excl_boxes": []},
+    }
+    CHEVRON = None
+    CYAN_GR = 26
 
 
 def splash_mask(img):
@@ -35,7 +47,9 @@ def splash_mask(img):
     r, g, b = f[..., 0], f[..., 1], f[..., 2]
     mx, mn = f.max(-1), f.min(-1)
     white = (mn > 150) & (b > 175) & ((mx - mn) < 72)
-    cyan = (g - r > 34) & (g > 232)            # glowing chevron core / rim (cyan-white, greener than the milk)
+    cyan = (g - r > CYAN_GR) & (g > 225)       # glowing chevron core / rim (cyan-white, greener than the milk)
+    if os.environ.get("BWK_TRACE_PRESET", "") == "rear0300":
+        white &= (b > r + 8) & (g > r)            # rear frame: pink rail highlights / fur are warm (r >= b), milk is cool white
     return white & ~cyan
 
 
@@ -125,7 +139,8 @@ def main():
             m &= (xx - cx) ** 2 + (yy - cy) ** 2 > cr * cr
         for (bx0, by0, bx1, by1) in spec["excl_boxes"]:
             m[by0:by1, bx0:bx1] = False
-        m &= ~in_triangle(xx, yy, CHEVRON)
+        if CHEVRON:
+            m &= ~in_triangle(xx, yy, CHEVRON)
         m = majority(majority(m))
         if dbg:
             write_png(os.path.join(dbg, "trace_bin_%s_%s.png" % (name, os.path.splitext(os.path.basename(src))[0])),
@@ -158,7 +173,7 @@ def main():
         json.dump(res, f, indent=1)
     print("wrote", out)
     if dbg:
-        write_png(os.path.join(dbg, "trace_mask_%s.png" % os.path.splitext(os.path.basename(src))[0]), vis[470:720, 240:1020])
+        write_png(os.path.join(dbg, "trace_mask_%s.png" % os.path.splitext(os.path.basename(src))[0]), vis[370:720, 240:1020])
 
 
 if __name__ == "__main__":

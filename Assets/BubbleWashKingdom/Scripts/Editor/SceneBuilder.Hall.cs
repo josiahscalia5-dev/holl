@@ -322,11 +322,13 @@ namespace BubbleWash.EditorTools
 
             // rainbow sock chamber on the left wall before the portal + the transparent cyan pipe curving down from it
             var fwin = track.Evaluate(portalD - 11f);
-            var win = ModelPrefab("Machinery", "SM_ChamberWindow_v2");
-            if (win != null)
+            // r8 masters (asset artist): the master door prefab replaces the v2 window here too (v2 = fallback)
+            var door = WashDoorMasterPrefab();
+            var win = door != null ? null : ModelPrefab("Machinery", "SM_ChamberWindow_v2");
+            if (door != null || win != null)
             {
-                var go = Spawn(win);
-                go.name = "PortalChamber_r7";
+                var go = door != null ? (GameObject)PrefabUtility.InstantiatePrefab(door) : Spawn(win);
+                go.name = door != null ? "PortalChamber_r8" : "PortalChamber_r7";
                 go.transform.SetParent(env.transform, false);
                 go.transform.SetPositionAndRotation(fwin.FlatPoint(-3.45f, TunnelCenter + 0.2f),
                     Quaternion.LookRotation(Vector3.ProjectOnPlane(fwin.flatRight - fwin.forward * 0.75f, Vector3.up).normalized, Vector3.up));

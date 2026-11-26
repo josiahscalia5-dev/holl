@@ -1,3 +1,4 @@
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -74,6 +75,25 @@ namespace BubbleWash.EditorTools
             Mat("M_Sock_r8", "BWK/Soft", m =>
             {
                 F(m, "_Mode", 4); C(m, "_ColorA", "#FFFFC6"); F(m, "_Smoothness", 0.2f); F(m, "_Glow", 0.5f); F(m, "_BumpScale", 2f);
+            });
+
+            // ---------------------------------------------------------------- 11 + 12 MASTER washing-machine door (r8 masters)
+            // SM_WashDoor_Master (build_master_door.py, prefab PF_WashDoor_Master): the 7 raised rainbow arches + the turquoise
+            // water pool carry LINEAR vertex colours under ONE glossy candy material (mode 4 = albedo x vertex colour through
+            // BWK_PBR: smoothness .9 = sharp highlights + baked probe reflections). Cream tint + colour-true glow keep the bands
+            // from going violet under the blue tunnel light (the loss measured on the r8 socks / roller).
+            Mat("M_DoorRainbow_r8", "BWK/Soft", m =>
+            {
+                F(m, "_Mode", 4); C(m, "_ColorA", "#FFF6E0"); F(m, "_Smoothness", 0.9f); F(m, "_Metallic", 0f);
+                F(m, "_Glow", 0.45f); F(m, "_BumpScale", 0.5f); F(m, "_RimPower", 3f); F(m, "_RimStrength", 0.25f);
+            });
+            // door socks = material VARIANT of the sock master M_Sock_r8 (overrides tint / glow only)
+            var sockMaster = AssetDatabase.LoadAssetAtPath<Material>($"{Dir}/M_Sock_r8.mat");
+            Mat("M_DoorSock_r8", "BWK/Soft", m =>
+            {
+                try { if (sockMaster != null && m.parent != sockMaster) m.parent = sockMaster; }
+                catch (System.Exception e) { Debug.LogWarning("[BWK] M_DoorSock_r8 variant: " + e.Message); }
+                F(m, "_Mode", 4); C(m, "_ColorA", "#FFFFD8"); F(m, "_Smoothness", 0.25f); F(m, "_Glow", 0.5f); F(m, "_BumpScale", 2f);
             });
 
             // ---------------------------------------------------------------- 24 golden starburst geometry (r8 v2)
