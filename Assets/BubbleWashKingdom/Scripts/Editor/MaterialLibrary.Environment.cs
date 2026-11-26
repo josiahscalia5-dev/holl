@@ -23,16 +23,18 @@ namespace BubbleWash.EditorTools
                 // broken rows; the side walls carry big rounded ovals stacked in columns (3 per 3.3 m panel, rows 1.6 m
                 // apart); the zone edge is a panel seam with plain metal beside it. Less saturated, pinker mauve side walls
                 // (ref #7652a8 vs ours #5d36b5), weaker blue depth tint, purple-grey holes, pale steel-blue bay sheen.
-                C(m, "_BaseColor", "#BA9EC6"); C(m, "_HighlightColor", "#D4B6E8"); C(m, "_HoleColor", "#120A22");
+                // r7 shared look: deeper, richer metallic blue-purple (ref wall V 0.63-0.71 vs ours 0.77-0.84; lit upper wall mauve
+                // ~#a87ea0, deep violet in shadow) and bigger dark oval perforations
+                C(m, "_BaseColor", "#9C80B4"); C(m, "_HighlightColor", "#BE9CD2"); C(m, "_HoleColor", "#0C0618");
                 C(m, "_HoleGlow", "#4A2C78"); F(m, "_Circumference", 26.39f); F(m, "_VTile", 4f);
                 C(m, "_CeilingColor", "#46729C"); F(m, "_CeilingTint", 0.9f); F(m, "_CeilingWidth", 0.55f);
                 F(m, "_Pattern", 1f); F(m, "_BandLength", 12.75f); F(m, "_BandOffset", 71.5f); F(m, "_RimPhase", 0.40f);
                 F(m, "_PlainBack", 0.85f); F(m, "_PlainFront", 0.75f); F(m, "_Rows", 5f); F(m, "_RowPitch", 0.85f);
-                F(m, "_SlotPitch", 0.55f); F(m, "_SlotLength", 0.32f); F(m, "_SlotWidth", 0.17f); F(m, "_SlotVariation", 0.2f);
-                F(m, "_SideZone", 0.25f); F(m, "_SideSlotPitch", 1.1f); F(m, "_SideSlotLength", 0.56f); F(m, "_SideSlotWidth", 0.42f);
+                F(m, "_SlotPitch", 0.58f); F(m, "_SlotLength", 0.40f); F(m, "_SlotWidth", 0.22f); F(m, "_SlotVariation", 0.2f);
+                F(m, "_SideZone", 0.25f); F(m, "_SideSlotPitch", 1.1f); F(m, "_SideSlotLength", 0.64f); F(m, "_SideSlotWidth", 0.48f);
                 F(m, "_SideRowPitch", 1.6f); F(m, "_SeamMargin", 0.06f); F(m, "_SlotDropout", 0.18f);
                 F(m, "_LipWidth", 0.035f); F(m, "_Bevel", 0.7f); F(m, "_GlowChance", 0.04f); F(m, "_HoleDepth", 0.10f);
-                F(m, "_InnerWall", 0.65f);
+                F(m, "_InnerWall", 0.38f);
                 m.SetColor("_GlowColorA", new Color(1.7f, 0.85f, 1.6f)); m.SetColor("_GlowColorB", new Color(0.75f, 1.35f, 1.9f));
                 C(m, "_SeamColor", "#2A1858"); C(m, "_SheenColor", "#F0B0F0"); F(m, "_SheenStrength", 0.05f);
                 F(m, "_Sparkle", 0.25f); F(m, "_CeilingLight", 0.04f); F(m, "_Glow", 0.14f);
@@ -96,6 +98,7 @@ namespace BubbleWash.EditorTools
             Mat("M_Glass", "BWK/Glass", m => { C(m, "_Tint", "#B9D8FF"); F(m, "_Alpha", 0.06f); F(m, "_Glow", 0.06f); }, (int)RenderQueue.Transparent);
             Mat("M_PipeWater", "BWK/FlowGlow", m => { F(m, "_Mode", 0); C(m, "_ColorA", "#1FD2FF"); C(m, "_ColorB", "#FF3FC8"); F(m, "_Intensity", 1.6f); F(m, "_Speed", 1.2f); });
             // glowing pink liquid in the glass risers beside the side chambers (reference key 7.5 s)
+            Mat("M_PipeWaterCyan", "BWK/FlowGlow", m => { F(m, "_Mode", 0); C(m, "_ColorA", "#1FC8FF"); C(m, "_ColorB", "#9AF6FF"); F(m, "_Intensity", 1.8f); F(m, "_Speed", 1.5f); F(m, "_Scale", 2.0f); });
             Mat("M_PipeWaterPink", "BWK/FlowGlow", m => { F(m, "_Mode", 0); C(m, "_ColorA", "#FF3FB8"); C(m, "_ColorB", "#FFB3EE"); F(m, "_Intensity", 1.7f); F(m, "_Speed", 0.9f); F(m, "_Scale", 2.5f); });
             Mat("M_ChamberSwirl", "BWK/FlowGlow", m => { F(m, "_Mode", 1); C(m, "_ColorA", "#9FE8FF"); F(m, "_Intensity", 1.15f); F(m, "_Speed", 1f); });
             Mat("M_PortalRays", "BWK/FlowGlow", m =>

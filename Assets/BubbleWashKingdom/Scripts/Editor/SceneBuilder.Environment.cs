@@ -27,6 +27,7 @@ namespace BubbleWash.EditorTools
         /// </summary>
         static partial void PreviewEnvironmentDomain(GameObject root, float L)
         {
+            if (!PreviewRebuildsEnvironment) { Debug.Log("[BWK] preview: environment = saved scene (r7 dressing needs a full build)"); return; }
             var savedRng = rng;
             try
             {
@@ -176,7 +177,7 @@ namespace BubbleWash.EditorTools
         const float RimLamps = 24f;                           // SM_DrumRim pink LED lamps (build_track RIM_LEDS, r4: was 32)
         internal const float RimPhase = 0.40f;
         internal const float GoldRingSpacing = 12.75f;
-        const float ChamberStart = 190f, ChamberEnd = 262f;   // stills 07_chambers (215 m) / C2 (220 m)
+        const float ChamberStart = 160f, ChamberEnd = 314f;   // r7: window gaps 160.75-301 m (S4-S6), 1-2 windows / gap
         const float ChamberPlaneRadius = 3.62f;               // SM_Porthole fallback: window plane distance from the axis
         const float ChamberWindowPlaneRadius = 3.40f;         // SM_ChamberWindow (build_machinery CW_PLANE_R, 1.4x porthole)
         internal static float FirstRingDistance => tunnelStart + 9.5f;
@@ -264,62 +265,109 @@ namespace BubbleWash.EditorTools
             Debug.Log($"[BWK] rings: {rings} gold (bulbs built in: {ringHasBulbs}), {rims} lavender rims, drum sections {band:F3} m (rim at +{rimOffset:F2} m) from {FirstRingDistance} m");
         }
 
-        const float ChamberAngle = 84f;        // window centre, degrees from the ceiling: big windows low beside the slide
-        const float ChamberPipeOffset = 2.75f;  // glass riser this far past the window centre (before the next gold ring)
+        // ---------------------------------------------------------------- round 7 tunnel dressing (S3-S7, 110 m -> portal)
+        // Measured on the reference front frames (Captures/agents/environment/r7/section_specs.md). The video's front camera
+        // looks back along the slide, so its screen-LEFT wall is the travel-RIGHT wall: the sock chamber windows, pink glass
+        // risers and the cyan water pipe sit on the travel-right wall (S6 adds windows on the travel-left wall), the
+        // decorative coin lines on the travel-left wall. Window gaps (ChamberGaps) skip their drum rim.
+        const float WindowScale = 0.9f;          // SM_ChamberWindow_v2 frame outer r 2.32 m -> 2.09 m (ref near window 3.9-4.6 m)
+        const float WindowAngle = 76f;           // window centre, degrees from the ceiling: mid-wall, bottom ~1 m above the slide
+        const float WindowYaw = 12f;             // turned toward the travel direction so the socks read in the front views
+        const float CyanPipeAngle = 35f, CyanPipeRadius = 2.8f, CyanPipeScale = 2.0f, CyanPipeStart = 238f;
+        static readonly bool PreviewRebuildsEnvironment = false;   // r7: agent previews keep the saved scene's environment
+
+        /// <summary>Chamber windows (track distance, side +1 = travel-right). In-gap offsets put the near window of the front
+        /// comparison stills C4 / C2 / C5 6-9 m from their camera (reference 6.75 / 8.25 / 11.0 s: big window at the left).</summary>
+        static List<(float d, int side)> ChamberWindows()
+        {
+            var list = new List<(float d, int side)>();
+            foreach (float g in ChamberGaps())
+            {
+                float off = 6.4f;
+                if (Mathf.Abs(g - 173.5f) < 0.2f) off = 10.1f;        // C4 (190 m)
+                else if (Mathf.Abs(g - 211.75f) < 0.2f) off = 4.3f;   // C2 (220 m)
+                else if (Mathf.Abs(g - 275.5f) < 0.2f) off = 2.5f;    // C5 (280 m)
+                list.Add((g + off, 1));
+                if (g >= 236f && g < 300f) list.Add((g + 9.5f, -1)); // S6: windows on both walls
+            }
+            return list;
+        }
+
+        /// <summary>True when p lies inside the fixed hero camera's (16:9-wide) frustum closer than maxDepth: the hero frame
+        /// (S2) keeps its designed layout, so round-7 dressing skips those spots.</summary>
+        static System.Func<Vector3, bool> HeroViewTest(float maxDepth)
+        {
+            HeroCameraPose(out var camPos, out var camRot);
+            float tanV = Mathf.Tan(HeroCamFov * 0.5f * Mathf.Deg2Rad) * 1.15f, tanH = tanV * (16f / 9f);
+            var inv = Quaternion.Inverse(camRot);
+            return p =>
+            {
+                var c = inv * (p - camPos);
+                return c.z > 0.3f && c.z < maxDepth && Mathf.Abs(c.x) < c.z * tanH && Mathf.Abs(c.y) < c.z * tanV;
+            };
+        }
 
         /// <summary>
-        /// Side washing chambers (reference key 7.5 s / 10.5 s): big gold-framed porthole windows on the drum wall, one per
-        /// chamber gap, alternating left / right, with laundry floating in front of the swirling rainbow water. The whole
-        /// window (frame, shallow drum, swirl) sits in front of the tunnel wall; its lavender skirt is shaped in Blender to
-        /// meet the r 4.2 drum exactly when the window plane is ChamberPlaneRadius from the axis (no hole in the tunnel).
+        /// Side washing chambers v2 (reference 6.75-13.5 s): SM_ChamberWindow_v2 (thick polished gold band, hinge block,
+        /// rainbow arch, foam bank) upright at MID-WALL facing the tunnel axis, turned a little toward the travel direction,
+        /// with 3-4 big striped socks floating in front of the swirling rainbow water (as the shot-matched 8.25 s window).
         /// </summary>
         static void BuildPortholes(GameObject env)
         {
             DrainLegacyPortholeRng();
-            var prefab = ModelPrefab("Machinery", "SM_ChamberWindow");
-            float plane = ChamberWindowPlaneRadius, size = 1.4f;
-            if (prefab == null) { prefab = ModelPrefab("Machinery", "SM_Porthole"); plane = ChamberPlaneRadius; size = 1f; }
-            if (prefab == null) { Debug.LogWarning("[BWK] SM_Porthole missing - portholes skipped"); return; }
-            string[] socks = { "SM_Sock_A", "SM_Sock_B", "SM_Sock_C", "SM_Towel", "SM_Sock_A", "SM_Shirt", "SM_Sock_B" };
-            var crng = new System.Random(7031);   // own sequence: the shared rng feeds the gameplay item layout
             var holder = Child(env, "SideChambers");
-            int i = 0;
-            foreach (float g in ChamberGaps())
+            var prefab = ModelPrefab("Machinery", "SM_ChamberWindow_v2");
+            if (prefab == null) { Debug.LogWarning("[BWK] SM_ChamberWindow_v2 missing - chamber windows skipped"); }
+            else
             {
-                float d = g + GoldRingSpacing * 0.5f;
-                int side = i % 2 == 0 ? -1 : 1;   // left wall first
-                var f = track.Evaluate(d);
-                float ang = side * ChamberAngle * Mathf.Deg2Rad;
-                var radial = f.flatRight * Mathf.Sin(ang) + f.flatUp * Mathf.Cos(ang);
-                var pos = f.FlatPoint(0, TunnelCenter) + radial * plane;
-                var go = Spawn(prefab);
-                go.name = $"Chamber_{d:000}";
-                go.transform.SetParent(holder.transform, false);
-                go.transform.SetPositionAndRotation(pos, Quaternion.LookRotation(-radial, f.forward));
-                // mirrored on the right wall so the swirl disc's "up" (-U, rainbow arch / foam bank) is world up on both
-                // sides and the hinge stays toward the travel direction's back edge
-                if (side > 0) go.transform.localScale = new Vector3(-1f, 1f, 1f);
-                // floating laundry inside the shallow drum, between the glass and the swirling water
-                for (int s = 0; s < 4; s++)
+                string[] sockSet = { "SM_Sock_A", "SM_Sock_B", "SM_Sock_C" };
+                var socks = new (Vector3 p, Vector3 e)[]
                 {
-                    var sp = ModelPrefab("Props", socks[(s + i * 3) % socks.Length]);
-                    if (sp == null) continue;
-                    var sock = Spawn(sp);
-                    sock.transform.SetParent(go.transform, false);
-                    float a = (s / 4f + i * 0.13f) * Mathf.PI * 2f;
-                    sock.transform.localPosition = new Vector3(Mathf.Cos(a) * 0.52f * size, Mathf.Sin(a) * 0.52f * size, -0.17f * size);
-                    sock.transform.localRotation = Quaternion.Euler((float)crng.NextDouble() * 360f, (float)crng.NextDouble() * 360f, 0);
-                    sock.transform.localScale = Vector3.one * 1.35f * Mathf.Sqrt(size);
-                    var bob = sock.AddComponent<FloatBob>();
-                    bob.orbitAxis = Vector3.forward;
-                    bob.orbitRadius = 0.22f * size;
-                    bob.orbitSpeed = 50f + s * 9f;
-                    bob.amplitude = 0.05f;
-                    foreach (var r in sock.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
+                    (new Vector3(-0.25f, 0.70f, -0.10f), new Vector3(20f, 70f, -25f)),
+                    (new Vector3(-0.75f, -0.25f, -0.10f), new Vector3(-10f, 80f, 35f)),
+                    (new Vector3(0.35f, -0.55f, -0.10f), new Vector3(15f, 95f, 120f)),
+                    (new Vector3(0.80f, 0.25f, -0.12f), new Vector3(-25f, 60f, 200f)),
+                };
+                var crng = new System.Random(7031);   // own sequence: the shared rng feeds the gameplay item layout
+                int i = 0;
+                foreach (var (d, side) in ChamberWindows())
+                {
+                    var f = track.Evaluate(d);
+                    float ang = side * WindowAngle * Mathf.Deg2Rad;
+                    var radial = f.flatRight * Mathf.Sin(ang) + f.flatUp * Mathf.Cos(ang);
+                    var pos = f.FlatPoint(0, TunnelCenter) + radial * ChamberWindowPlaneRadius;
+                    var inward = Vector3.ProjectOnPlane(-radial, Vector3.up).normalized;
+                    var rot = Quaternion.AngleAxis(side * WindowYaw, Vector3.up) * Quaternion.LookRotation(inward, Vector3.up);
+                    var go = Spawn(prefab);
+                    go.name = $"ChamberV2_{d:000}_{(side > 0 ? "R" : "L")}";
+                    go.transform.SetParent(holder.transform, false);
+                    go.transform.SetPositionAndRotation(pos, rot);
+                    // the travel-right window is mirrored (ShotMatchTool v3: hinge on the camera side)
+                    go.transform.localScale = new Vector3(side > 0 ? -WindowScale : WindowScale, WindowScale, WindowScale);
+                    foreach (var r in go.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
+                    int n = 3 + (i % 2);
+                    for (int s = 0; s < n; s++)
+                    {
+                        var sp = ModelPrefab("Props", sockSet[(s + i) % sockSet.Length]);
+                        if (sp == null) continue;
+                        var sock = Spawn(sp);
+                        sock.transform.SetParent(go.transform, false);
+                        sock.transform.localPosition = socks[s].p;
+                        sock.transform.localRotation = Quaternion.Euler(socks[s].e + new Vector3(0f, 0f, (float)crng.NextDouble() * 50f - 25f));
+                        sock.transform.localScale = Vector3.one * 2.6f;
+                        var bob = sock.AddComponent<FloatBob>();
+                        bob.orbitAxis = Vector3.forward;
+                        bob.orbitRadius = 0.25f;
+                        bob.orbitSpeed = 45f + 10f * s;
+                        bob.amplitude = 0.05f;
+                        foreach (var r in sock.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
+                    }
+                    i++;
                 }
-                i++;
+                Debug.Log($"[BWK] r7 chamber windows v2: {i} between {ChamberStart} and {ChamberEnd} m");
             }
-            Debug.Log($"[BWK] side chambers: {i} windows between {ChamberStart} and {ChamberEnd} m");
+            BuildTunnelStarsV2(env);
+            BuildWallCoins(env);
         }
 
         /// <summary>
@@ -337,27 +385,182 @@ namespace BubbleWash.EditorTools
                 }
         }
 
+        /// <summary>Positions of the lighting domain's sparse tunnel stars (SceneBuilder.Lighting BuildNeonStars, seed 5150),
+        /// replayed so the round-7 stars never overlap them.</summary>
+        static List<Vector3> LegacyTunnelStarPositions()
+        {
+            var list = new List<Vector3>();
+            var r = new System.Random(5150);
+            float Rand() => (float)r.NextDouble();
+            for (float d = tunnelStart + 3f; d < portalD - 4f; d += 4.5f + Rand() * 4f)
+            {
+                float ringPhase = Mathf.Repeat(d - FirstRingDistance, GoldRingSpacing);
+                if (ringPhase < 0.9f || ringPhase > GoldRingSpacing - 0.9f) continue;
+                var f = track.Evaluate(d);
+                float side = Rand() < 0.5f ? -1f : 1f;
+                float angDeg = Rand() < 0.06f ? Mathf.Lerp(-10f, 10f, Rand()) : side * Mathf.Lerp(26f, 66f, Rand());
+                float ang = angDeg * Mathf.Deg2Rad;
+                var radial = f.flatRight * Mathf.Sin(ang) + f.flatUp * Mathf.Cos(ang);
+                float scale = Rand() < 0.55f ? Mathf.Lerp(1.6f, 2.2f, Rand()) : Mathf.Lerp(1.1f, 1.5f, Rand());
+                list.Add(f.FlatPoint(0, TunnelCenter) + radial * (TunnelRadius - 0.38f - 0.18f * scale));
+                Rand(); Rand(); Rand();   // tilt, roll, colour
+            }
+            return list;
+        }
+
         /// <summary>
-        /// The reference hero frame has no pipes crossing the tunnel view. Glass risers with glowing pink liquid stand beside
-        /// the side chamber windows instead (reference key 7.5 s), in the drum plane between two gold rings
-        /// (SM_ChamberPipe is authored for the left wall; the right wall uses it turned 180 degrees about up).
+        /// Dense big neon tube stars v2 (reference S3-S7: 8-15 per frame, pink / cyan / yellow-orange, near ones 120-180 px
+        /// = 0.9-1.4 m tall). Each star stands in the tunnel cross-section plane just inside the drum (tips ~0.15 m from the
+        /// wall), so both the rear gameplay camera and the front comparison camera see it face-on like the reference, with a
+        /// soft double-sided glow card in the same plane. Colour mix per section as measured; never inside the hero frame.
+        /// </summary>
+        static void BuildTunnelStarsV2(GameObject env)
+        {
+            var star = ModelParts("Lighting", "SM_NeonStarTube_v2");
+            if (star.Count == 0) { Debug.LogWarning("[BWK] SM_NeonStarTube_v2 missing - r7 stars skipped"); return; }
+            var mats = new[] { Mat("M_Neon_Pink"), Mat("M_Neon_Cyan"), Mat("M_Neon_Yellow") };
+            var glowMats = new[] { Mat("M_StarGlow_Pink"), Mat("M_StarGlow_Cyan"), Mat("M_StarGlow_Yellow") };
+            if (mats.Any(m => m == null)) { Debug.LogWarning("[BWK] neon materials missing - r7 stars skipped"); return; }
+            var quad = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
+            var tinted = mats.Select(m => star.Select(p => new Part(p.mesh, Enumerable.Repeat(m, Mathf.Max(1, p.mesh.subMeshCount)).ToArray(), p.local)).ToList()).ToArray();
+            var legacy = LegacyTunnelStarPositions();
+            var windows = ChamberWindows();
+            var inHero = HeroViewTest(30f);   // far stars (>30 m) may show small deep in the hero tunnel
+            var holder = Child(env, "TunnelStarsV2");
+            var comb = new EnvCombiner();
+            var glow = new EnvCombiner();
+            var r = new System.Random(7707);
+            float Rand() => (float)r.NextDouble();
+            int count = 0, chunk = 0, last = -1, k = 0;
+            float chunkStart = 110f;
+            for (float d = 110f; d < portalD - 2.5f; d += 1.1f + Rand() * 0.5f)
+            {
+                k++;
+                float ph = Mathf.Repeat(d - FirstRingDistance, GoldRingSpacing);
+                if (ph < 1.0f || ph > GoldRingSpacing - 1.0f) continue;                       // gold ring planes
+                float g = d - ph;
+                bool windowGap = g >= ChamberStart - 0.01f && g + GoldRingSpacing <= ChamberEnd + 0.01f;
+                if (!windowGap && Mathf.Abs(ph - RimPhase * GoldRingSpacing) < 0.9f) continue;  // drum rim plane
+                // spread around the upper 3/4 of the drum (0 = ceiling, + = travel-right) with a golden-ratio sequence
+                float u = Mathf.Repeat(k * 0.618034f + Rand() * 0.12f, 1f);
+                float angDeg = Mathf.Lerp(-100f, 100f, u);
+                float s = Rand() < 0.3f ? Mathf.Lerp(0.8f, 0.95f, Rand()) : Mathf.Lerp(0.5f, 0.75f, Rand());
+                float roll = Rand() * 50f - 25f;
+                float cr = Rand();
+                bool blocked = false;
+                foreach (var w in windows)
+                    if (Mathf.Abs(d - w.d) < 2.5f && Mathf.Abs(angDeg - w.side * WindowAngle) < 46f) { blocked = true; break; }
+                if (d > 184f && d < 240f && angDeg > 40f)   // pink risers 3 m before the S4-S5 windows
+                    foreach (var w in windows)
+                        if (w.side > 0 && Mathf.Abs(d - (w.d - 3f)) < 1.0f) { blocked = true; break; }
+                if (d > CyanPipeStart - 1f && Mathf.Abs(angDeg - CyanPipeAngle) < 22f) blocked = true;
+                if (d > 173f && d < 237f && ph > 1.5f && ph < 8.5f && angDeg < -66f) blocked = true;   // wall coin rows
+                if (blocked) continue;
+                var f = track.Evaluate(d);
+                float ang = angDeg * Mathf.Deg2Rad;
+                var radial = f.flatRight * Mathf.Sin(ang) + f.flatUp * Mathf.Cos(ang);
+                var pos = f.FlatPoint(0, TunnelCenter) + radial * (TunnelRadius - 0.2f - 1.07f * s);
+                if (legacy.Any(p => (p - pos).sqrMagnitude < 1.8f * 1.8f)) continue;
+                if (inHero(pos)) continue;
+                float pink, cyan;
+                if (d < 170f) { pink = 0.33f; cyan = 0.36f; }
+                else if (d < 205f) { pink = 0.42f; cyan = 0.25f; }
+                else if (d < 240f) { pink = 0.58f; cyan = 0.17f; }
+                else if (d < 310f) { pink = 0.36f; cyan = 0.40f; }
+                else { pink = 0.36f; cyan = 0.36f; }
+                int ci = cr < pink ? 0 : cr < pink + cyan ? 1 : 2;
+                if (ci == last) ci = (ci + 1 + (k % 2)) % 3;
+                last = ci;
+                var rot = Quaternion.LookRotation(f.forward, f.flatUp) * Quaternion.Euler(0f, 0f, roll);
+                comb.Add(tinted[ci], Matrix4x4.TRS(pos, rot, Vector3.one * s));
+                if (quad != null && glowMats[ci] != null)
+                    glow.Add(new List<Part> { new Part(quad, new[] { glowMats[ci] }, Matrix4x4.identity) }, Matrix4x4.TRS(pos, rot, new Vector3(3.2f * s, 3.2f * s, 1f)));
+                count++;
+                if (d - chunkStart > ChunkLength)
+                {
+                    comb.Flush(holder, $"StarsV2_{chunk:00}", false);
+                    glow.Flush(holder, $"StarGlowV2_{chunk:00}", false);
+                    chunk++; chunkStart = d;
+                }
+            }
+            comb.Flush(holder, $"StarsV2_{chunk:00}", false);
+            glow.Flush(holder, $"StarGlowV2_{chunk:00}", false);
+            Debug.Log($"[BWK] r7 neon stars v2: {count} from 110 m to {portalD - 2.5f:F0} m (+{legacy.Count} lighting stars kept)");
+        }
+
+        /// <summary>Decorative gold paw coins in lines on the travel-left wall in S4-S5 (reference 6.75-8.25 s, screen-right),
+        /// static scenery without colliders (the gameplay coins stay TrackItems on the slide).</summary>
+        static void BuildWallCoins(GameObject env)
+        {
+            var coin = ModelParts("Props", "SM_Coin");
+            if (coin.Count == 0) return;
+            var holder = Child(env, "WallCoins");
+            var comb = new EnvCombiner();
+            int n = 0;
+            foreach (float g in ChamberGaps())
+            {
+                if (g < 173f || g > 230f) continue;
+                for (int i = 0; i < 5; i++)
+                {
+                    float d = g + 2.2f + i * 1.3f;
+                    var f = track.Evaluate(d);
+                    comb.Add(coin, Matrix4x4.TRS(f.FlatPoint(-2.95f, 1.95f + 0.12f * i), f.FlatRotation, Vector3.one * 1.3f));
+                    n++;
+                }
+            }
+            comb.Flush(holder, "WallCoins", false);
+            Debug.Log($"[BWK] r7 wall coins: {n}");
+        }
+
+        /// <summary>
+        /// Pink glass risers v2 (reference 7.5-8.75 s: vertical pipe with glowing magenta liquid and a gold clamp collar) 3 m
+        /// before each S4-S5 window, and the flowing cyan glass water pipe along the travel-right upper wall from S6 to the
+        /// portal (reference 10-15 s), bent along the track inside the gold rings, with polished gold couplers.
         /// </summary>
         static void BuildPipes(GameObject env, float L)
         {
-            var riser = ModelParts("Machinery", "SM_ChamberPipe");
-            if (riser.Count == 0) { Debug.Log("[BWK] SM_ChamberPipe not built - no tunnel pipes"); return; }
             var holder = Child(env, "ChamberPipes");
-            var comb = new EnvCombiner();
-            int i = 0;
-            foreach (float g in ChamberGaps())
+            var pink = ModelPrefab("Machinery", "SM_GlassPipe_Pink_v2");
+            int np = 0;
+            if (pink != null)
+                foreach (var (d, side) in ChamberWindows())
+                {
+                    if (side < 0 || d < 185f || d > 240f) continue;
+                    float dp = d - 3f;
+                    var f = track.Evaluate(dp);
+                    var inward = Vector3.ProjectOnPlane(-f.flatRight * side, Vector3.up).normalized;
+                    var go = Spawn(pink);
+                    go.name = $"PinkPipe_{dp:000}";
+                    go.transform.SetParent(holder.transform, false);
+                    go.transform.SetPositionAndRotation(f.FlatPoint(side * 3.45f, -0.7f), Quaternion.LookRotation(inward, Vector3.up));
+                    go.transform.localScale = Vector3.one * 0.9f;
+                    foreach (var r in go.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
+                    np++;
+                }
+            var glass = ModelParts("Track", "SM_GlassPipe_Module");
+            int nc = 0;
+            if (glass.Count > 0 && portalD - 3f > CyanPipeStart + 5f)
             {
-                int side = i % 2 == 0 ? -1 : 1;
-                var f = track.Evaluate(g + GoldRingSpacing * 0.5f + ChamberPipeOffset);
-                var rot = f.FlatRotation * (side < 0 ? Quaternion.identity : Quaternion.Euler(0f, 180f, 0f));
-                comb.Add(riser, Matrix4x4.TRS(f.FlatPoint(0, TunnelCenter), rot, Vector3.one));
-                i++;
+                float a = CyanPipeAngle * Mathf.Deg2Rad;
+                float lat = Mathf.Sin(a) * CyanPipeRadius, h = TunnelCenter + Mathf.Cos(a) * CyanPipeRadius;
+                var cyan = Mat("M_PipeWaterCyan") ?? Mat("M_PipeWater");
+                var mats = glass[0].mats.Select(m => m != null && m.name == "M_PipeWater" ? cyan : m).ToArray();
+                BendChunks(holder, "CyanPipe", new Part(glass[0].mesh, mats, Matrix4x4.identity), CyanPipeStart, portalD - 3f, false,
+                           new Vector3(CyanPipeScale, CyanPipeScale, 1f), lat, h, 4f, false);
+                var coupler = ModelParts("Track", "SM_Pipe_Coupler");
+                if (coupler.Count > 0)
+                {
+                    var comb = new EnvCombiner();
+                    for (float d = CyanPipeStart + 0.15f; d < portalD - 3f; d += GoldRingSpacing * 0.5f)
+                    {
+                        var f = track.Evaluate(d);
+                        comb.Add(coupler, Matrix4x4.TRS(f.FlatPoint(lat, h), f.FlatRotation, new Vector3(CyanPipeScale, CyanPipeScale, CyanPipeScale * 1.4f)));
+                        nc++;
+                    }
+                    comb.Flush(holder, "CyanPipeCouplers", false);
+                }
             }
-            comb.Flush(holder, "ChamberPipes", false);
+            Debug.Log($"[BWK] r7 pipes: {np} pink risers v2, cyan wall pipe {CyanPipeStart}-{portalD - 3f:F0} m with {nc} gold couplers");
         }
 
         static void BuildHallMachinery(GameObject env)
