@@ -22,6 +22,11 @@ namespace BubbleWash.EditorTools
     /// </summary>
     public static partial class SceneBuilder
     {
+        // Round 7 (2026-11-26) hooks for the opening hall (S1-S2) and the portal finale (S7). Implemented ONLY in
+        // SceneBuilder.Hall.cs (hall/portal agent); without an implementation the compiler drops the calls.
+        static partial void BuildHallExtras(GameObject env, float trackLength);
+        static partial void BuildPortalExtras(GameObject env, RunnerController runner);
+
         public const string ScenePath = "Assets/BubbleWashKingdom/Scenes/Level01_RainbowRush.unity";
         const string GenDir = "Assets/BubbleWashKingdom/Generated/Level01";
         const string ModelsDir = "Assets/BubbleWashKingdom/Art/Models";
@@ -187,6 +192,7 @@ namespace BubbleWash.EditorTools
             BuildPipes(env, L);
             BuildFoam(env, L);
             BuildHallMachinery(env);
+            BuildHallExtras(env, L);       // round 7 hook: implemented by the hall/portal agent in SceneBuilder.Hall.cs
             BuildFloatingBubbles(env, L);
 
             // ---------------------------------------------------------------- gameplay items
@@ -199,6 +205,7 @@ namespace BubbleWash.EditorTools
             var runnerGo = new GameObject("Runner");
             var runner = runnerGo.AddComponent<RunnerController>();
             BuildPortal(env, runner);
+            BuildPortalExtras(env, runner); // round 7 hook: implemented by the hall/portal agent in SceneBuilder.Hall.cs
 
             // ---------------------------------------------------------------- lighting and post
             BuildLighting(root, L);
