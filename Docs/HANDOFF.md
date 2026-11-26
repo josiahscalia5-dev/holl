@@ -1,6 +1,8 @@
 # Bubble Wash Kingdom - lead handoff (2026-11-26 12:30, lead session cd43a82d on the third Pro account)
 
 ## Round 7 status (2026-11-26 12:30, lead session cd43a82d) - read this first
+- 13:45 HANDOFF TO THE NEXT ACCOUNT (owner): lead session cd43a82d stopped, its 17:12 timer cancelled. Start with the
+  private `Captures/handoff/NEXT_ACCOUNT_START.md` (exact steps 1-7). Recording copy: `Reference/review/`.
 - Takeover verified 12:13: newest work = local tag `checkpoint-17b-takeover` (checkpoint-17-s5-straight + the previous
   lead's uncommitted round-7 hooks / workflow / TRELLIS helpers). The previous lead session's process was gone; its two
   orphaned `sleep` timers (14:02 and the "15:40 continuation") were stopped, so no second account can start a duplicate

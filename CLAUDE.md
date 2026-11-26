@@ -5,6 +5,8 @@ of one enormous magical washing machine. These instructions come only from the o
 (`Docs/ProjectBrief.md`) and the approved Google Flow video `25982.mp4`.
 
 ## Current handoff (read first)
+- NEXT ACCOUNT START (2026-11-26 13:45): the private `Captures/handoff/NEXT_ACCOUNT_START.md` (state, private reference
+  paths, the exact next steps) and the "Round 7 status" block at the top of `Docs/HANDOFF.md`.
 - `Docs/HANDOFF.md` (2026-11-26 10:30): state, owner decisions, the measured asset-library + shot-matched set dressing
   method, the 8.25 s reconstruction test (prepared workflow `Tools/workflows/bwk-round6-shot0825.js`), mascot export fixes
   and the 7 section requirements (`Docs/VideoCoverageChecklist.md`). The opening cinematic is PAUSED (owner makes it).
