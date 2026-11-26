@@ -82,6 +82,17 @@ namespace BubbleWash.EditorTools
             return Quaternion.LookRotation(z, y);
         }
 
+        /// <summary>Brush roller = spinning bristle body (about its own X axis, like the video) + static gold hub and arm.</summary>
+        static void HallRoller(GameObject parent, Vector3 pos, Quaternion rot, float scale, float spin)
+        {
+            var body = HallPlace(parent, "Machinery", "SM_BrushRoller_r7", pos, rot, scale, default, false);
+            HallPlace(parent, "Machinery", "SM_BrushRollerArm_r7", pos, rot, scale);
+            if (body == null) return;
+            var sp = body.AddComponent<Spinner>();
+            sp.localAxis = Vector3.right;
+            sp.degreesPerSecond = spin;
+        }
+
         /// <summary>Lavender tower with the paw emblem at world height pawWorld, plus a second tower below so it reaches the
         /// hall floor (the reference towers run out of the frame at the top and disappear in the foam at the bottom).</summary>
         static void HallTower(GameObject parent, Vector3 pawPos, Quaternion rot, float scale)
@@ -111,7 +122,7 @@ namespace BubbleWash.EditorTools
             HallPlace(holder, "Machinery", "SM_CyanPipeArch_r7", p, HallFaceCam(cam, p, 8f), 1.15f);
             // big fluffy brush roller top centre (u 0.34-0.61, v 0-0.38), gold hub upper left, near end toward the camera
             p = P(0.49f, 0.15f, 8.5f);
-            HallPlace(holder, "Machinery", "SM_BrushRoller_r7", p, HallRollerRot(cam.rot * new Vector3(-1f, 0.12f, 0.75f)), 1.15f);
+            HallRoller(holder, p, HallRollerRot(cam.rot * new Vector3(-1f, 0.12f, 0.75f)), 1.15f, 40f);
             // polished gold pipes and valves on the left below the console (reference gold rails v 0.34-0.5)
             p = P(0.06f, 0.5f, 7.5f);
             HallPlace(holder, "Machinery", "SM_GoldValves_r7", p, HallFaceCam(cam, p, 35f), 1.0f, new Vector3(0f, 1.8f, 0f));
@@ -133,7 +144,7 @@ namespace BubbleWash.EditorTools
             HallPlace(holder, "Machinery", "SM_CyanPipeArch_r7", track.Evaluate(tunnelStart - 0.9f).FlatPoint(-2.4f, 10.4f), f.FlatRotation, 1.5f);
             HallPlace(holder, "Machinery", "SM_GoldValves_r7", f.FlatPoint(4.6f, 7.0f), f.FlatRotation, 1.15f);
             var fr = track.Evaluate(tunnelStart - 7f);
-            HallPlace(holder, "Machinery", "SM_BrushRoller_r7", fr.FlatPoint(-3.6f, 6.6f), HallRollerRot(-fr.flatRight * 1f + fr.forward * 0.6f), 1.2f);
+            HallRoller(holder, fr.FlatPoint(-3.6f, 6.6f), HallRollerRot(-fr.flatRight * 1f + fr.forward * 0.6f), 1.2f, -36f);
 
             // ---- the hall between (density: no stretch without landmarks; all |lateral| >= 4 m or >= 6 m high)
             var wall = new (float d, int side, string name, float lat, float h, float scale)[]
@@ -153,7 +164,7 @@ namespace BubbleWash.EditorTools
             foreach (var (d, lat, h, hubSide) in new[] { (33f, 4.6f, 6.4f, 1f), (44f, -4.8f, 6.8f, -1f) })
             {
                 var fr2 = track.Evaluate(d);
-                HallPlace(holder, "Machinery", "SM_BrushRoller_r7", fr2.FlatPoint(lat, h), HallRollerRot(fr2.flatRight * hubSide + fr2.forward * 0.5f), 1.1f);
+                HallRoller(holder, fr2.FlatPoint(lat, h), HallRollerRot(fr2.flatRight * hubSide + fr2.forward * 0.5f), 1.1f, 34f * hubSide);
             }
             foreach (var (d, side) in new[] { (29f, 1), (39f, -1), (54f, 1) })
             {

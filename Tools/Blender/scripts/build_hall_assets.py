@@ -4,7 +4,8 @@ S1/S2 opening hall (reference 0.00-2.00 s, 4K crops in Captures/agents/hall/crop
   SM_HallConsole_r7   pink washing-machine console: gold-framed blue screen with a cyan neon T-shirt icon, round yellow /
                       blue / pink buttons with gold rims, stacks of folded pink / white / blue towels on top, gold rail below
   SM_BrushRoller_r7   big fluffy brush roller: dense bristle discs in bands pink / lilac / pink / white / sky-blue / white /
-                      pink / blue, gold hub with a lilac flange and a gold L-arm hanging it from above
+                      pink / blue with a lilac flange (spins in Unity about its X axis)
+  SM_BrushRollerArm_r7  its static gold hub + gold L-arm hanging it from above (same origin)
   SM_GoldValves_r7    polished gold machinery: pipes, flanges, two valve wheels, a pressure gauge
   SM_CyanPipeArch_r7  glowing cyan glass pipes: three concentric arches (glass shell + glowing water core)
   SM_HallPillar_r7    lavender-pink tower with gold bands, a gold-rimmed cream paw emblem and a gold elbow pipe on top
@@ -246,14 +247,18 @@ def build_roller(M):
     PARTS.append(o)
     # gold hub, lilac flange, axle caps and the gold L-arm (hub on the -X end = Unity +X / right end)
     hx = -total / 2
+    # the spinning part (bristles, lilac flange, far axle cap) and the static gold hub + L-arm share one origin, so
+    # Unity spins SM_BrushRoller_r7 about its own X axis while SM_BrushRollerArm_r7 stays put (reference: rollers spin)
     cyl(M["lav"], 0.78, 0.12, (hx - 0.08, 0, 0), rot=(0, PI / 2, 0), verts=40)
-    cyl(M["gold"], 0.44, 0.55, (hx - 0.4, 0, 0), rot=(0, PI / 2, 0), verts=32)
     tor(M["gold"], 0.44, 0.06, (hx - 0.12, 0, 0), rot=(0, PI / 2, 0), seg=32, mseg=8)
-    cyl(M["gold"], 0.3, 0.2, (hx - 0.75, 0, 0), rot=(0, PI / 2, 0), verts=28)
     cyl(M["gold"], 0.16, 0.25, (total / 2 + 0.1, 0, 0), rot=(0, PI / 2, 0))
+    body = finish("SM_BrushRoller_r7", smooth=60.0)
+    cyl(M["gold"], 0.44, 0.55, (hx - 0.4, 0, 0), rot=(0, PI / 2, 0), verts=32)
+    cyl(M["gold"], 0.3, 0.2, (hx - 0.75, 0, 0), rot=(0, PI / 2, 0), verts=28)
     tube(M["gold"], [(hx - 0.8, 0, 0), (hx - 1.15, 0, 0), (hx - 1.2, 0, 0.5), (hx - 1.2, 0, 1.6), (hx - 1.2, 0, 3.2)], 0.17)
     cyl(M["gold"], 0.26, 0.14, (hx - 1.2, 0, 3.15))
-    return finish("SM_BrushRoller_r7", smooth=60.0)
+    arm = finish("SM_BrushRollerArm_r7", smooth=60.0)
+    return body, arm
 
 
 def build_valves(M):
@@ -393,7 +398,7 @@ def main():
     C.ensure_dir(REVIEW)
     M = make_materials()
     console = build_console(M)
-    roller = build_roller(M)
+    roller, roller_arm = build_roller(M)
     valves = build_valves(M)
     arch = build_arch(M)
     pillar = build_pillar(M)
@@ -407,14 +412,15 @@ def main():
         pass
     # hall lineup (front, as the player meets them)
     console.location = (-7.0, 0, 0)
-    roller.location = (-2.2, 1.0, 4.2)
-    roller.rotation_euler = (0, 0, math.radians(-35))
+    for o in (roller, roller_arm):
+        o.location = (-2.2, 1.0, 4.2)
+        o.rotation_euler = (0, 0, math.radians(-35))
     valves.location = (2.6, 0, 0)
     arch.location = (-6.6, -1.5, 3.6)
     pillar.location = (7.6, 0, 0)
-    lineup_preview([console, roller, valves, arch, pillar], os.path.join(REVIEW, "pv_hall_r7.png"),
+    lineup_preview([console, roller, roller_arm, valves, arch, pillar], os.path.join(REVIEW, "pv_hall_r7.png"),
                    (0.0, 17.0, 4.2), (0.0, 0.0, 2.4), 30.0, (1280, 640))
-    for o in (console, roller, valves, arch, pillar):
+    for o in (console, roller, roller_arm, valves, arch, pillar):
         o.location = (0, 0, 0)
         o.rotation_euler = (0, 0, 0)
     # portal: ring + starburst + curving cyan pipe on the left (screen left = Blender +X when seen from +Y)
