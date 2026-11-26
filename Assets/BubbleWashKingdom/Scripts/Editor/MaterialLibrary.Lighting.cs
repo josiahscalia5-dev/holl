@@ -16,9 +16,9 @@ namespace BubbleWash.EditorTools
             // Ring gold (reference f_003.00s): warm COPPER-ORANGE polished gold - the band reads rose / mauve-copper in its
             // shade (#8d537f..#b06a87 measured), salmon-peach around the bulbs (#c27f72..#eec79b) and orange-gold overall, with
             // crisp white-gold streaks. Never lemon yellow. Violet lows pick up the tunnel; part of the probe stays untinted.
-            GoldLook("M_Gold", high: "#FFE9C0", mid: "#F08A28", low: "#5A1A40", rim: "#FFB878", band: "#FFD8A0",
-                brightness: 1.25f, glow: 0.06f, contrast: 1.45f, viewGradient: 1f, env: 0.5f, envTint: 0.5f, envRough: 0.24f,
-                specPower: 150f, specStrength: 2.4f, glints: 2.2f, sparkle: 0f, fog: 0.5f, highlightSize: 8f, streak: 1.0f,
+            GoldLook("M_Gold", high: "#FFF4D0", mid: "#F7901A", low: "#6A2418", rim: "#FFC070", band: "#FFE0A0",
+                brightness: 1.3f, glow: 0.06f, contrast: 1.5f, viewGradient: 1f, env: 0.45f, envTint: 0.7f, envRough: 0.24f,
+                specPower: 150f, specStrength: 2.8f, glints: 2.4f, sparkle: 0f, fog: 0.5f, highlightSize: 8f, streak: 1.4f,
                 probeTint: "#8C4E8C");
             GoldLook("M_GoldDark", high: "#FFE0B0", mid: "#C8702A", low: "#4A1636", rim: "#FFB070", band: "#FFCF96",
                 brightness: 1.0f, glow: 0.03f, contrast: 1.6f, viewGradient: 1f, env: 0.5f, envTint: 0.55f, envRough: 0.3f,
@@ -37,8 +37,8 @@ namespace BubbleWash.EditorTools
             // Warm AMBER marquee bulbs (lead: hot pale-orange cores ~#ffc060, orange halos ~#ff8a20). With the Neutral
             // tonemapper a source of about (6, 1.4, 0.3) linear shows as a pale warm-orange core and its weaker bloom halo as
             // saturated orange: deep red-orange edge colour + warm-orange core tint (never lemon: G stays < 0.25 R).
-            EmissiveLook("M_Bulb", "#FF6527", 9f, core: 0.6f, corePower: 2f, halo: 0.3f, edgeSat: 0.5f, chase: 1f, chaseMin: 0.75f,
-                pulse: 0.05f, fog: 0.08f, coreColor: "#FF8C44", probeDim: 0.2f);
+            EmissiveLook("M_Bulb", "#FF5A1E", 12f, core: 0.5f, corePower: 1.6f, halo: 0.6f, edgeSat: 0.5f, chase: 1f, chaseMin: 0.75f,
+                pulse: 0.05f, fog: 0.08f, coreColor: "#FF8A3A", probeDim: 0.15f);
             // end-of-tunnel portal disc (BuildPortal core): radiant warm white-gold, bright but not a screen-filling flare
             EmissiveLook("M_PortalCore", "#FFC860", 3.4f, core: 0.55f, corePower: 2f, halo: 0.3f, edgeSat: 0.3f, pulse: 0.06f, fog: 0.05f);
             // Neon tubes (reference: thick tubes with PALE hot cores - yellow #fbe496, cyan #78eaf5 - inside saturated colour

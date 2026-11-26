@@ -53,7 +53,7 @@ namespace BubbleWash.EditorTools
             RenderSettings.ambientSkyColor = new Color(0.40f, 0.38f, 1.0f);
             RenderSettings.ambientEquatorColor = new Color(0.56f, 0.34f, 0.96f);
             RenderSettings.ambientGroundColor = new Color(0.36f, 0.50f, 1.0f);
-            RenderSettings.ambientIntensity = 0.9f;
+            RenderSettings.ambientIntensity = 1.05f;
             // Aerial perspective: saturated lavender-violet (never pale grey): the near tunnel stays clear and rich, the far
             // tunnel melts into a lighter violet glow while the warm bulbs still punch through (emissives use little fog).
             RenderSettings.fog = true;
@@ -154,12 +154,12 @@ namespace BubbleWash.EditorTools
             probe.farClipPlane = 120f;
         }
 
-        /// <summary>One warm point light per gold ring (positions follow BuildRings: tunnelStart + 3 m, every RingSpacing).</summary>
+        /// <summary>One warm point light per gold ring (positions follow BuildRings: FirstRingDistance, every GoldRingSpacing).</summary>
         static void BuildRingLights(GameObject lights)
         {
             var holder = Child(lights, "RingLights");
             int k = 0;
-            for (float d = tunnelStart + 3f; d < portalD - 5f; d += RingSpacing, k++)
+            for (float d = FirstRingDistance; d < portalD - 5f; d += GoldRingSpacing, k++)
             {
                 var f = track.Evaluate(d);
                 var go = Child(holder, $"RingLight_{d:000}");
@@ -352,9 +352,9 @@ namespace BubbleWash.EditorTools
             int count = 0;
             for (float d = tunnelStart + 3f; d < portalD - 4f; d += 4.5f + Rand() * 4f)
             {
-                // keep clear of the gold rings (BuildRings: tunnelStart + 3 + k * RingSpacing)
-                float ringPhase = Mathf.Repeat(d - (tunnelStart + 3f), RingSpacing);
-                if (ringPhase < 0.9f || ringPhase > RingSpacing - 0.9f) continue;
+                // keep clear of the gold rings (BuildRings: FirstRingDistance + k * GoldRingSpacing)
+                float ringPhase = Mathf.Repeat(d - FirstRingDistance, GoldRingSpacing);
+                if (ringPhase < 0.9f || ringPhase > GoldRingSpacing - 0.9f) continue;
                 var f = track.Evaluate(d);
                 // upper side walls (26-66 deg from the ceiling, both sides) with an occasional ceiling star
                 float side = Rand() < 0.5f ? -1f : 1f;

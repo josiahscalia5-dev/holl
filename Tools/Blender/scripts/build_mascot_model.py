@@ -89,12 +89,12 @@ BLUSH_X, BLUSH_Z, BLUSH_R = 0.235, 0.47 + FACE_DZ, 0.058
 # Reference rear view: the arms leave the body sides just under the cuff and rise ~45 deg, so the paws sit at cuff
 # height OUTSIDE the hat silhouette. Seen from behind = back of the mitt (no palm pads), tips a little lighter.
 ARM_Z = 0.480                              # root height on the body side (rest; just under the cuff when seated)
-ARM_UP, ARM_BACK = 44.0, 0.03              # rest direction: 44 deg above horizontal, very slightly back
+ARM_UP, ARM_BACK = 49.0, 0.03              # rest direction: 44 deg above horizontal, very slightly back
 ARM_SEG = 20
 ARM_PROFILE = [(-0.10, 0.072), (-0.05, 0.082), (0.0, 0.088), (0.06, 0.091), (0.12, 0.094), (0.18, 0.099),
                (0.235, 0.106), (0.275, 0.108), (0.307, 0.102), (0.332, 0.087), (0.350, 0.064), (0.362, 0.035),
                (0.366, 0.0)]
-ARM_TIP_FROM, ARM_TIP_TO, ARM_TIP_CREAM = 0.20, 0.35, 0.42   # Col.a fades toward the cream coat at the paw tip
+ARM_TIP_FROM, ARM_TIP_TO, ARM_TIP_CREAM = 0.22, 0.36, 0.22   # Col.a fades toward the cream coat at the paw tip
 PALM_FACING = Vector((0.0, -0.55, 0.85))   # palm side (front/up): only used as the seam-free side reference
 
 # ------------------------------------------------------------------ legs + feet (seated): the reference rear view shows
@@ -114,7 +114,7 @@ TAIL_R, TAIL_Z, TAIL_OUT = 0.042, 0.17, 0.05   # small tail puff radius, height,
 WHITE = (1.0, 1.0, 1.0, 1.0)
 # Unity passes vertex colours to shaders raw (no sRGB decode), so these are the linear multipliers BWK/Character
 # (M_PawPad, fabric mode) applies: (0.90, 0.30, 0.42) displays as a soft candy pink ~#F294AD under white light.
-PAD_PINK = (0.90, 0.30, 0.42, 1.0)
+PAD_PINK = (0.95, 0.45, 0.56, 1.0)
 BLUSH_COL = (1.0, 0.70, 0.72)              # Col tint (sRGB) at the blush centre
 
 HAT_R = Matrix.Rotation(math.radians(HAT_TILT), 3, 'X')

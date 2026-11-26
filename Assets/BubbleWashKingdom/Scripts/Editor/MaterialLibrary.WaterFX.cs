@@ -18,12 +18,12 @@ namespace BubbleWash.EditorTools
                 C(m, "_DeepColor", "#103C9E"); C(m, "_ShallowColor", "#1E6CC4"); C(m, "_StreakColor", "#B8F6FF");
                 C(m, "_CausticColor", "#7FE9FF"); C(m, "_ChevronColor", "#2FE6FF"); C(m, "_EdgeTint", "#E66AC8");
                 F(m, "_FlowSpeed", 7.5f); F(m, "_Width", 3.6f); F(m, "_Glow", 0.1f); F(m, "_Smoothness", 0.95f);
-                F(m, "_StreakAmount", 0.55f); F(m, "_StreakDensity", 1.25f); F(m, "_EdgeTintAmount", 0.28f); F(m, "_SparkleAmount", 1.1f);
+                F(m, "_StreakAmount", 0.35f); F(m, "_StreakDensity", 1.25f); F(m, "_EdgeTintAmount", 0.28f); F(m, "_SparkleAmount", 1.1f);
                 F(m, "_RainbowAmount", 0.32f); F(m, "_RippleStrength", 0.9f); F(m, "_EdgeFoam", 0.6f);
                 F(m, "_CausticAmount", 0.5f); F(m, "_Depth", 0.22f); F(m, "_NearBrighten", 0.15f); F(m, "_ReflectBoost", 0.35f); F(m, "_CenterGlow", 0.08f);
                 // light pools under the decor chevrons: same period / scale as SceneBuilder.BuildDecorChevrons
                 F(m, "_ChevronStart", SceneBuilder.ChevronStart); F(m, "_ChevronSpacing", SceneBuilder.ChevronSpacing);
-                F(m, "_ChevronScale", SceneBuilder.ChevronScale); F(m, "_ChevronGlow", 0.55f);
+                F(m, "_ChevronScale", SceneBuilder.ChevronScale); F(m, "_ChevronWidth", SceneBuilder.ChevronWidth); F(m, "_ChevronGlow", 0.55f);
             });
             Mat("M_RailRainbow", "BWK/Soft", m =>
             {
@@ -44,8 +44,8 @@ namespace BubbleWash.EditorTools
             Mat("M_Bubble", "BWK/Glass", m =>
             {
                 // soap bubbles: clear centre, thin bright rim, thin-film colour patches, studio window highlights
-                C(m, "_Tint", "#EAF6FF"); F(m, "_Alpha", 0.04f); F(m, "_Iridescence", 0.4f); F(m, "_FresnelPower", 2.2f); F(m, "_Glow", 0.5f);
-                F(m, "_Reflectivity", 0.7f); F(m, "_Bubble", 1f); F(m, "_FilmStrength", 0.5f); F(m, "_WindowStrength", 1.1f); F(m, "_RimWidth", 2.4f);
+                C(m, "_Tint", "#EAF6FF"); F(m, "_Alpha", 0.08f); F(m, "_Iridescence", 0.4f); F(m, "_FresnelPower", 2.2f); F(m, "_Glow", 0.5f);
+                F(m, "_Reflectivity", 0.7f); F(m, "_Bubble", 1f); F(m, "_FilmStrength", 0.5f); F(m, "_WindowStrength", 1.6f); F(m, "_RimWidth", 2.0f);
             }, (int)RenderQueue.Transparent);
             // speed-boost chevrons (BWK/Soft Mode 7): luminous teal glass, mint-white arm centres, HDR so bloom catches them
             Mat("M_Arrow", "BWK/Soft", m =>

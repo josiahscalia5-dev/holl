@@ -28,13 +28,13 @@ Material:
     - _BandLength: 3.1875
     - _BandOffset: 71.5
     - _Bevel: 0.7
-    - _CeilingLight: 0.12
-    - _CeilingTint: 0.7
+    - _CeilingLight: 0.1
+    - _CeilingTint: 0.75
     - _CeilingWidth: 0.42
     - _Circumference: 26.39
     - _EdgeAO: 0.45
     - _EdgeAOWidth: 0.5
-    - _Glow: 0.18
+    - _Glow: 0.17
     - _GlowChance: 0.05
     - _HoleAO: 0.55
     - _HoleAOWidth: 0.1
@@ -57,11 +57,11 @@ Material:
     - _SlotVariation: 0.3
     - _SlotWidth: 0.34
     - _Smoothness: 0.72
-    - _Sparkle: 0.45
+    - _Sparkle: 0.25
     - _VTile: 4
     m_Colors:
-    - _BaseColor: {r: 0.6039216, g: 0.47058824, b: 0.8392157, a: 1}
-    - _CeilingColor: {r: 0.53333336, g: 0.5647059, b: 0.84705883, a: 1}
+    - _BaseColor: {r: 0.6117647, g: 0.4862745, b: 0.8235294, a: 1}
+    - _CeilingColor: {r: 0.5019608, g: 0.53333336, b: 0.8, a: 1}
     - _GlowColorA: {r: 1.7, g: 0.85, b: 1.6, a: 1}
     - _GlowColorB: {r: 0.75, g: 1.35, b: 1.9, a: 1}
     - _HighlightColor: {r: 0.7529412, g: 0.65882355, b: 0.9490196, a: 1}

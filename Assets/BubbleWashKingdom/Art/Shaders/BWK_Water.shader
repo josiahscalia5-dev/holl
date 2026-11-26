@@ -38,6 +38,7 @@ Shader "BWK/Water"
         _ChevronStart ("Chevron Start (m)", Float) = 6
         _ChevronSpacing ("Chevron Spacing (m, 0 = off)", Float) = 0
         _ChevronScale ("Chevron Scale", Float) = 1.5
+        _ChevronWidth ("Chevron Width Factor", Float) = 1
         _ChevronGlow ("Chevron Light Pool", Range(0,3)) = 1
     }
     SubShader
@@ -51,7 +52,7 @@ Shader "BWK/Water"
             half _StreakAmount, _EdgeFoam, _EdgeTintAmount, _Smoothness, _Glow, _RippleStrength, _SparkleAmount, _RainbowAmount;
             float _WaveHeight;
             half _CausticAmount, _Depth, _NearBrighten, _ReflectBoost, _CenterGlow;
-            float _ChevronStart, _ChevronSpacing, _ChevronScale;
+            float _ChevronStart, _ChevronSpacing, _ChevronScale, _ChevronWidth;
             half _ChevronGlow;
         CBUFFER_END
 
@@ -178,7 +179,7 @@ Shader "BWK/Water"
                 {
                     float s = _ChevronScale;
                     float ly = m.y - _ChevronStart - round((m.y - _ChevronStart) / _ChevronSpacing) * _ChevronSpacing;
-                    float lx = abs(m.x - _Width * 0.5);
+                    float lx = abs(m.x - _Width * 0.5) / max(_ChevronWidth, 0.1);
                     float dv = (ly - (0.26 * s - min(lx, 0.6 * s))) * 0.7071;   // distance from the arm centre line
                     half pool = exp(-dv * dv / (0.035 * s * s)) * smoothstep(0.85 * s, 0.5 * s, lx);
                     half wide = exp(-(ly * ly) / (0.35 * s * s)) * smoothstep(1.3 * s, 0.2 * s, lx);

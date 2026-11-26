@@ -26,23 +26,24 @@ Material:
     m_Ints: []
     m_Floats:
     - _CausticAmount: 0.5
-    - _CenterGlow: 0.1
-    - _ChevronGlow: 0.9
+    - _CenterGlow: 0.08
+    - _ChevronGlow: 0.55
     - _ChevronScale: 1.35
-    - _ChevronSpacing: 1.1
-    - _ChevronStart: 6
+    - _ChevronSpacing: 0.95
+    - _ChevronStart: 6.4
+    - _ChevronWidth: 0.74
     - _Depth: 0.22
     - _EdgeFoam: 0.6
     - _EdgeTintAmount: 0.28
     - _FlowSpeed: 7.5
-    - _Glow: 0.16
+    - _Glow: 0.1
     - _NearBrighten: 0.15
     - _RainbowAmount: 0.32
-    - _ReflectBoost: 0.45
+    - _ReflectBoost: 0.35
     - _RippleStrength: 0.9
     - _Smoothness: 0.95
     - _SparkleAmount: 1.1
-    - _StreakAmount: 0.85
+    - _StreakAmount: 0.35
     - _StreakDensity: 1.25
     - _VTile: 4
     - _WaveHeight: 0.025
@@ -50,9 +51,9 @@ Material:
     m_Colors:
     - _CausticColor: {r: 0.49803922, g: 0.9137255, b: 1, a: 1}
     - _ChevronColor: {r: 0.18431373, g: 0.9019608, b: 1, a: 1}
-    - _DeepColor: {r: 0.047058824, g: 0.27450982, b: 0.72156864, a: 1}
+    - _DeepColor: {r: 0.0627451, g: 0.23529412, b: 0.61960787, a: 1}
     - _EdgeTint: {r: 0.9019608, g: 0.41568628, b: 0.78431374, a: 1}
-    - _ShallowColor: {r: 0.10980392, g: 0.5254902, b: 0.8627451, a: 1}
+    - _ShallowColor: {r: 0.11764706, g: 0.42352942, b: 0.76862746, a: 1}
     - _StreakColor: {r: 0.72156864, g: 0.9647059, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

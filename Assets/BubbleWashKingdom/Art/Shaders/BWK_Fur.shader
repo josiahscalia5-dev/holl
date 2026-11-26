@@ -146,7 +146,7 @@ Shader "BWK/Fur"
                 half3 pawC = lerp(_PawRootColor.rgb, _PawTipColor.rgb, saturate(h * 1.4 + 0.2));
                 half coat = lerp(1.0, i.color.a, _UseVertexTint);
                 half3 col = lerp(pawC, pinkC, coat) * lerp(half3(1, 1, 1), i.color.rgb, _UseVertexTint);
-                col *= lerp(0.95, 1.04, strand);   // low strand contrast: plush, not needles
+                col *= lerp(0.86, 1.06, strand);   // low strand contrast: plush, not needles
                 half3 light = BWK_WrapLight(i.positionWS, n, _Wrap);
                 half ao = lerp(1.0 - _AO, 1.0, h);
                 half rim = BWK_Fresnel(n, v, _RimPower) * _RimStrength * (0.4 + 0.6 * h);

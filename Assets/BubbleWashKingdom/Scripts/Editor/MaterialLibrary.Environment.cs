@@ -19,16 +19,16 @@ namespace BubbleWash.EditorTools
                 // from behind, grooves + seams, a few sparkles.
                 // _BandOffset / _BandLength are rewritten by SceneBuilder.BuildRings to match the placed rims (m1: gold
                 // every 12.75 m from 71.5 m, a lip every 3.19 m).
-                C(m, "_BaseColor", "#9A78D6"); C(m, "_HighlightColor", "#C0A8F2"); C(m, "_HoleColor", "#080418");
+                C(m, "_BaseColor", "#9C7CD2"); C(m, "_HighlightColor", "#C0A8F2"); C(m, "_HoleColor", "#080418");
                 C(m, "_HoleGlow", "#4A2E9A"); F(m, "_Circumference", 26.39f); F(m, "_VTile", 4f);
-                C(m, "_CeilingColor", "#7480D6"); F(m, "_CeilingTint", 0.8f); F(m, "_CeilingWidth", 0.42f);
+                C(m, "_CeilingColor", "#8088CC"); F(m, "_CeilingTint", 0.75f); F(m, "_CeilingWidth", 0.42f);
                 F(m, "_Pattern", 1f); F(m, "_BandLength", 12.75f / 4f); F(m, "_BandOffset", 71.5f);
                 F(m, "_PlainBack", 0.62f); F(m, "_PlainFront", 0.34f); F(m, "_Rows", 3f); F(m, "_SlotPitch", 0.86f);
                 F(m, "_SlotLength", 0.60f); F(m, "_SlotWidth", 0.34f); F(m, "_SlotVariation", 0.3f); F(m, "_LipWidth", 0.05f);
                 F(m, "_Bevel", 0.7f); F(m, "_GlowChance", 0.05f); F(m, "_HoleDepth", 0.14f); F(m, "_InnerWall", 0.7f);
                 m.SetColor("_GlowColorA", new Color(1.7f, 0.85f, 1.6f)); m.SetColor("_GlowColorB", new Color(0.75f, 1.35f, 1.9f));
                 C(m, "_SeamColor", "#2A1858"); C(m, "_SheenColor", "#D2A6F4"); F(m, "_SheenStrength", 0.18f);
-                F(m, "_Sparkle", 0.25f); F(m, "_CeilingLight", 0.10f); F(m, "_Glow", 0.13f);
+                F(m, "_Sparkle", 0.25f); F(m, "_CeilingLight", 0.10f); F(m, "_Glow", 0.17f);
                 F(m, "_Metallic", 0.55f); F(m, "_Smoothness", 0.72f); F(m, "_HoleBand", 1f);
                 F(m, "_EdgeAO", 0.45f); F(m, "_EdgeAOWidth", 0.5f); F(m, "_HoleAO", 0.55f); F(m, "_HoleAOWidth", 0.10f);
             });
