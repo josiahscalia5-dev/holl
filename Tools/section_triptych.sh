@@ -22,7 +22,7 @@ ROWS=(
   "S4|f_06.75s|R4_front_S4_like_7s_16x9.png C4_front_window_like_7s_16x9.png 06_tunnel_lane_right_16x9.png"
   "S5|f_08.25s|R5_front_S5_like_8s_16x9.png C2_front_chambers_like_10s_16x9.png"
   "S6|f_11.00s|R6_front_S6_like_11s_16x9.png C5_front_chambers2_like_11s_16x9.png 08_sweep_16x9.png"
-  "S7|f_14.50s|09_portal_16x9.png C3_front_portal_like_14s_16x9.png"
+  "S7|f_14.50s|10_finale_16x9.png 09_portal_16x9.png C3_front_portal_like_14s_16x9.png"
 )
 ALL=(); ALLBG=()
 for row in "${ROWS[@]}"; do

@@ -237,9 +237,23 @@ namespace BubbleWash.EditorTools
             var r = new System.Random(4471);
             float Rand(float a, float b) => Mathf.Lerp(a, b, (float)r.NextDouble());
             // LOD0 = full soap-suds clusters near the camera, LOD1 = low-poly twins for distant chunks (same placement)
-            string[] names = { "SM_Foam_A", "SM_Foam_B", "SM_Foam_C" };
-            var lod0 = names.Select(n => ModelParts("Props", n)).Where(v => v.Count > 0).ToArray();
-            var lod1 = names.Select(n => { var p = ModelParts("Props", n + "_LOD1"); return p.Count > 0 ? p : ModelParts("Props", n); }).Where(v => v.Count > 0).ToArray();
+            // round 7 (owner 13:30 "replace the artificial foam blobs throughout the level"; asset library 17 "many small,
+            // rounded foam bubbles ... never huge opaque cloud blobs"): the v2 bubble clusters (build_fx_v2.py: core + ~190
+            // half-sunk 3.5-7.5 cm bubbles, baked crevice AO in vertex colour R, LOD1 twins) replace SM_Foam_A-C everywhere,
+            // all on the measured M_Foam_v2 (#F4F6FC / #B6BCDC). Old assets only as a fallback.
+            string[] names = { "SM_Foam_v2_Bank", "SM_Foam_v2_Mound", "SM_Foam_v2_Puffs" };
+            var foamV2 = new[] { Mat("M_Foam_v2") };
+            List<Part> V2(string n) => ModelParts("FX", n).Select(p => new Part(p.mesh, foamV2, p.local)).ToList();
+            var lod0 = names.Select(V2).Where(v => v.Count > 0).ToArray();
+            var lod1 = names.Select(n => { var p = V2(n + "_LOD1"); return p.Count > 0 ? p : V2(n); }).Where(v => v.Count > 0).ToArray();
+            bool v2 = lod0.Length == names.Length && lod1.Length == names.Length;
+            if (!v2)
+            {
+                Debug.LogWarning("[BWK] foam v2 assets missing - falling back to SM_Foam_A-C");
+                names = new[] { "SM_Foam_A", "SM_Foam_B", "SM_Foam_C" };
+                lod0 = names.Select(n => ModelParts("Props", n)).Where(v => v.Count > 0).ToArray();
+                lod1 = names.Select(n => { var p = ModelParts("Props", n + "_LOD1"); return p.Count > 0 ? p : ModelParts("Props", n); }).Where(v => v.Count > 0).ToArray();
+            }
             if (lod0.Length == 0)
             {
                 var s = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -278,6 +292,39 @@ namespace BubbleWash.EditorTools
                 var m = Matrix4x4.TRS(f.FlatPoint(lat, h), rot, new Vector3(sc, sc * yS, sc));
                 comb0.Add(lod0[vi], m);
                 comb1.Add(lod1[Mathf.Min(vi, lod1.Length - 1)], m);
+            }
+            int placed = 0;
+            if (v2)
+            {
+                // v2 sizes (Bank 1.77 x 0.61 x 0.38 m, Mound 0.96 x 0.50 x 0.28, Puffs = flat pillows): a continuous front bank
+                // along each rail (1.3 m steps, banks ~1.9 m long overlap), a taller back row of mounds stacked against the
+                // wall base and small pillows spilling onto the rail top - reference 8.00-10.00 s: 0.3-0.45 m tall cumulus
+                // banks of 17-33 px bubbles at 720p on BOTH sides from S3 on; the hall keeps wider scattered clusters.
+                for (float d = 0f; d < L; d += (d < tunnelStart ? 1.6f : 1.3f))
+                {
+                    var f = track.Evaluate(d);
+                    heroD = d;
+                    bool hall = d < tunnelStart;
+                    foreach (int side in new[] { -1, 1 })
+                    {
+                        if (hall)
+                        {
+                            Place(f, side * Rand(2.45f, 2.9f), Rand(-0.08f, 0.04f), Rand(0.95f, 1.35f), 0);
+                            Place(f, side * Rand(3.1f, 7.5f), Rand(-0.3f, 0.1f), Rand(1.1f, 1.9f), r.NextDouble() < 0.5 ? 0 : 1);
+                        }
+                        else
+                        {
+                            Place(f, side * Rand(2.40f, 2.62f), Rand(-0.06f, 0.04f), Rand(0.9f, 1.25f), 0);
+                            if (r.NextDouble() < 0.7) Place(f, side * Rand(2.75f, 3.15f), Rand(0.0f, 0.28f), Rand(1.0f, 1.55f), 1);
+                        }
+                        if (r.NextDouble() < 0.45) Place(f, side * Rand(2.26f, 2.40f), Rand(0.02f, 0.10f), Rand(0.85f, 1.2f), 2);
+                        placed++;
+                    }
+                    if (d - chunkStart > ChunkLength) { FlushChunk(); chunkStart = d; }
+                }
+                FlushChunk();
+                Debug.Log($"[BWK] waterfx foam v2: {placed} bank slots, {chunk} chunks (SM_Foam_v2_Bank / Mound / Puffs, M_Foam_v2)");
+                return;
             }
             for (float d = 0f; d < L; d += (d < tunnelStart ? 1.9f : 1.75f))
             {

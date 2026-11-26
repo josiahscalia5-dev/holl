@@ -56,26 +56,86 @@ namespace BubbleWash
         [Tooltip("> 0 forces an aspect (used by capture tools); otherwise the output camera aspect is used.")]
         public float aspectOverride = 0f;
 
+        // Owner 2026-11-26 (review of the round-7 recording): the old front-facing intro orbit crowded the mascot and its hat
+        // and its blend to this rig passed through the hat; the celebration orbit flew past the portal into empty space.
+        // Both are now offsets on THIS rear rig (no camera switch, no blend through the mascot). They are zero in gameplay and
+        // in every capture (Snap() clears them), so the frozen hero framing 2.75 / 1.3 / 10 / 58 is unchanged.
+        [Header("Opening crane (rear, eases into the gameplay framing)")]
+        [Tooltip("The opening starts this much further back than the gameplay framing (metres along the track).")]
+        public float introExtraBack = 4.4f;
+        [Tooltip("...and this much higher (metres).")]
+        public float introExtraHeight = 1.7f;
+        [Tooltip("...and pitched this much further down (degrees), so the shot reveals the hall and the slide ahead.")]
+        public float introExtraPitch = 7f;
+
+        [Header("Finale (rear camera, mascot turned to face it, golden portal behind the mascot)")]
+        public float finaleExtraBack = 1.4f;
+        public float finaleExtraHeight = 0.15f;
+        [Tooltip("Degrees of LESS downward pitch, so the top of the portal's bulb ring is in frame.")]
+        public float finalePitchUp = 5f;
+        public float finaleFovDelta = 5f;
+        public float finaleBlendTime = 1.7f;
+        [Tooltip("Slow push-in after the finale blend (metres over finalePushTime seconds).")]
+        public float finalePushIn = 0.45f;
+        public float finalePushTime = 5f;
+
         Vector3 posVel, lookVel, smoothedLook;
         float smLat, smH, latV, hV;
         float dutch, dutchVel, fov, fovVel;
+        float introTime = -1f, introDuration = 1f, finaleTime = -1f;
         bool initialized;
         Camera outputCamera;
+
+        /// <summary>0..1 weight of the opening crane (1 = start pose, 0 = gameplay framing).</summary>
+        public float IntroWeight => introTime < 0f ? 0f : 1f - SmootherStep(introTime / Mathf.Max(0.01f, introDuration));
+        /// <summary>0..1 weight of the finale framing.</summary>
+        public float FinaleWeight => finaleTime < 0f ? 0f : SmootherStep(finaleTime / Mathf.Max(0.01f, finaleBlendTime));
+
+        static float SmootherStep(float x) { x = Mathf.Clamp01(x); return x * x * x * (x * (x * 6f - 15f) + 10f); }
+
+        /// <summary>Starts the opening crane: the camera begins further back / higher and eases into the gameplay framing.</summary>
+        public void PlayIntro(float duration)
+        {
+            introDuration = Mathf.Max(0.1f, duration);
+            introTime = 0f;
+            finaleTime = -1f;
+            initialized = false; // snap to the crane's start pose (new run / loop restart)
+        }
+
+        /// <summary>Eases into (true) or clears (false, immediate) the finale framing.</summary>
+        public void SetFinale(bool on) { finaleTime = on ? Mathf.Max(0f, finaleTime) : -1f; }
 
         void OnEnable() { initialized = false; }
 
         void LateUpdate()
         {
             if (runner == null || runner.track == null) return;
-            Step(Time.deltaTime, !initialized);
+            float dt = Time.deltaTime;
+            if (introTime >= 0f) { introTime += dt; if (introTime >= introDuration) introTime = -1f; }
+            if (finaleTime >= 0f) finaleTime += dt;
+            Step(dt, !initialized);
             initialized = true;
         }
 
+        /// <summary>Jumps straight to the plain gameplay framing (capture tools, tests): cancels the opening / finale offsets.</summary>
         public void Snap()
         {
             if (runner == null || runner.track == null) return;
+            introTime = -1f;
+            finaleTime = -1f;
             Step(0f, true);
             initialized = true;
+        }
+
+        /// <summary>Track frame that continues straight beyond the ends of the track (the opening crane may start behind 0 m).</summary>
+        static TrackFrame EvaluateExtended(TrackPath track, float d)
+        {
+            if (d >= 0f && d <= track.Length) return track.Evaluate(d);
+            float edge = d < 0f ? 0f : track.Length;
+            TrackFrame f = track.Evaluate(edge);
+            f.position += f.forward * (d - edge);
+            f.distance = d;
+            return f;
         }
 
         public float CurrentAspect()
@@ -93,9 +153,21 @@ namespace BubbleWash
             float back = Mathf.Lerp(distanceBack, distanceBackPortrait, portrait);
             float h = Mathf.Lerp(height, heightPortrait, portrait);
             float baseFov = Mathf.Lerp(fovLandscape, fovPortrait, portrait);
+            float pitch = Mathf.Lerp(pitchDown, pitchDownPortrait, portrait);
+
+            // Opening crane / finale framing (both 0 during gameplay and captures).
+            float wi = IntroWeight, wf = FinaleWeight;
+            if (wi > 0f || wf > 0f)
+            {
+                float push = finaleTime > finaleBlendTime ? finalePushIn * SmootherStep((finaleTime - finaleBlendTime) / Mathf.Max(0.1f, finalePushTime)) : 0f;
+                back += wi * introExtraBack + wf * finaleExtraBack - push;
+                h += wi * introExtraHeight + wf * finaleExtraHeight;
+                pitch += wi * introExtraPitch - wf * finalePitchUp;
+                baseFov += wf * finaleFovDelta;
+            }
 
             float d = runner.Distance;
-            TrackFrame fc = track.Evaluate(d - back);
+            TrackFrame fc = EvaluateExtended(track, d - back);
             TrackFrame fr = runner.Frame;
             TrackFrame fl = track.Evaluate(d + lookAhead);
 
@@ -128,7 +200,7 @@ namespace BubbleWash
             }
 
             Vector3 dir = smoothedLook - transform.position;
-            if (dir.sqrMagnitude > 1e-4f) transform.rotation = Quaternion.LookRotation(dir, fc.flatUp) * Quaternion.Euler(Mathf.Lerp(pitchDown, pitchDownPortrait, portrait), 0f, 0f);
+            if (dir.sqrMagnitude > 1e-4f) transform.rotation = Quaternion.LookRotation(dir, fc.flatUp) * Quaternion.Euler(pitch, 0f, 0f);
 
             // Bank with the slide (a fraction of its roll) so curves read clearly without making players dizzy.
             float targetDutch = Mathf.Clamp(-fr.roll * bankFactor, -maxDutch, maxDutch);

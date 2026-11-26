@@ -13,10 +13,15 @@ namespace BubbleWash
         public RunnerController runner;
 
         Text coinText, gemText, hintText, completeText;
-        GameObject hintGo, completeGo;
+        GameObject hintGo, completeGo, fadeGo;
         int shownCoins = -1, shownGems = -1;
         float coinPulse, gemPulse;
         RectTransform coinIcon, gemIcon;
+        // finishing sequence polish (2026-11-26): the banner pops in, a soft violet fade bridges the loop restart
+        CanvasGroup completeGroup;
+        Image fadeImage;
+        float completeAnim = 1f, fadeAlpha, fadeTarget, fadeSpeed = 2f;
+        static readonly Color FadeColor = new Color(0.16f, 0.07f, 0.30f, 1f);
 
         static readonly Color Gold = new Color(1f, 0.82f, 0.25f);
         static readonly Color Purple = new Color(0.72f, 0.35f, 1f);
@@ -53,7 +58,27 @@ namespace BubbleWash
             cr.anchorMin = cr.anchorMax = new Vector2(0.5f, 0.72f);
             cr.sizeDelta = new Vector2(1000f, 320f);
             completeText = MakeText(completeGo.transform, font, 76, TextAnchor.MiddleCenter, "");
+            completeGroup = completeGo.AddComponent<CanvasGroup>();
+            completeGroup.blocksRaycasts = false;
             completeGo.SetActive(false);
+
+            fadeGo = new GameObject("Fade", typeof(RectTransform), typeof(Image));
+            fadeGo.transform.SetParent(canvasGo.transform, false);
+            var fr = (RectTransform)fadeGo.transform;
+            fr.anchorMin = Vector2.zero; fr.anchorMax = Vector2.one;
+            fr.offsetMin = fr.offsetMax = Vector2.zero;
+            fadeImage = fadeGo.GetComponent<Image>();
+            fadeImage.raycastTarget = false;
+            fadeImage.color = new Color(FadeColor.r, FadeColor.g, FadeColor.b, 0f);
+            fadeGo.transform.SetAsLastSibling();
+            fadeGo.SetActive(false);
+        }
+
+        /// <summary>Fades a full-screen soft violet overlay to <paramref name="alpha"/> over <paramref name="seconds"/>.</summary>
+        public void Fade(float alpha, float seconds)
+        {
+            fadeTarget = Mathf.Clamp01(alpha);
+            fadeSpeed = 1f / Mathf.Max(0.01f, seconds);
         }
 
         RectTransform Pill(Transform parent, string name, Vector2 anchor, Vector2 offset, Color iconColor, Font font, out Text label)
@@ -111,13 +136,32 @@ namespace BubbleWash
         public void ShowComplete(bool show, int coins, int gems)
         {
             if (!completeGo) return;
+            bool wasShown = completeGo.activeSelf;
             completeGo.SetActive(show);
             if (show) completeText.text = $"Fresh & Fluffy!\n<size=56>{coins} coins   {gems} gems</size>";
             completeText.supportRichText = true;
+            if (show && !wasShown) completeAnim = 0f; // pop in
         }
 
         void Update()
         {
+            float dt = Time.deltaTime;
+            // banner pop: scale 0.6 -> 1.06 -> 1 with a quick alpha fade-in
+            if (completeGo && completeGo.activeSelf && completeAnim < 1f)
+            {
+                completeAnim = Mathf.Min(1f, completeAnim + dt / 0.45f);
+                float u = completeAnim;
+                float s = u < 0.7f ? Mathf.Lerp(0.6f, 1.06f, Mathf.SmoothStep(0f, 1f, u / 0.7f)) : Mathf.Lerp(1.06f, 1f, (u - 0.7f) / 0.3f);
+                completeGo.transform.localScale = Vector3.one * s;
+                if (completeGroup) completeGroup.alpha = Mathf.Clamp01(u * 2.5f);
+            }
+            if (fadeImage)
+            {
+                fadeAlpha = Mathf.MoveTowards(fadeAlpha, fadeTarget, fadeSpeed * dt);
+                fadeImage.color = new Color(FadeColor.r, FadeColor.g, FadeColor.b, fadeAlpha);
+                bool on = fadeAlpha > 0.002f;
+                if (fadeGo.activeSelf != on) fadeGo.SetActive(on);
+            }
             if (items == null) return;
             if (items.Coins != shownCoins) { shownCoins = items.Coins; coinText.text = shownCoins.ToString(); coinPulse = 1f; }
             if (items.Gems != shownGems) { shownGems = items.Gems; gemText.text = shownGems.ToString(); gemPulse = 1f; }

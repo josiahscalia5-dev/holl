@@ -4,8 +4,9 @@ using UnityEngine;
 namespace BubbleWash
 {
     /// <summary>
-    /// Level flow: front-facing intro (mascot waiting) -> blend to the rear gameplay camera -> run -> celebration
-    /// (front-facing) -> restart. Also applies mobile frame-rate settings and the optional autopilot.
+    /// Level flow: opening crane on the rear camera (mascot waiting in the hall) -> run -> the mascot brakes to a stop in
+    /// front of the golden portal, turns to face the camera and celebrates (front-facing) -> soft fade -> restart.
+    /// Also applies mobile frame-rate settings and the optional autopilot.
     /// </summary>
     public class GameManager : MonoBehaviour
     {
@@ -52,7 +53,9 @@ namespace BubbleWash
             RunStarted = false;
             Celebrating = false;
             if (hud) { hud.ShowComplete(false, 0, 0); hud.ShowHint(true); }
-            if (director) director.Show(CameraDirector.Shot.Intro);
+            // Opening crane on the rear camera: settles into the frozen gameplay framing just before the run starts.
+            if (director) director.Show(CameraDirector.Shot.Intro, introDuration + blendToGameplay * 0.8f);
+            if (hud) hud.Fade(0f, 0.6f);
             yield return new WaitForSeconds(introDuration);
             if (director) director.Show(CameraDirector.Shot.Gameplay);
             yield return new WaitForSeconds(blendToGameplay);
@@ -74,12 +77,17 @@ namespace BubbleWash
                 PerfStats.Instance.WriteSummary(perfOutput, "standalone-autopilot-run");
                 Application.Quit();
             }
-            yield return new WaitForSeconds(0.8f);
+            // Continuous finish: the camera eases into the finale framing while the mascot brakes in front of the portal;
+            // the banner appears once the mascot has turned to face the camera.
             if (director) director.Show(CameraDirector.Shot.Celebrate);
+            float t = 0f;
+            while (!runner.InCelebrationPose && t < 4f) { t += Time.deltaTime; yield return null; }
             if (hud && items) hud.ShowComplete(true, items.Coins, items.Gems);
             yield return new WaitForSeconds(celebrationDuration);
             if (loopAfterCelebration && !CaptureMode)
             {
+                if (hud) hud.Fade(1f, 0.6f);
+                yield return new WaitForSeconds(0.65f);
                 runner.ResetRun();
                 yield return RunIntro();
             }

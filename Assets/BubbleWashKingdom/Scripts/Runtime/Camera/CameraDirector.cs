@@ -4,9 +4,15 @@ using UnityEngine;
 namespace BubbleWash
 {
     /// <summary>
-    /// Switches between the three cameras. Front-facing shots are used ONLY for the opening (mascot waiting,
-    /// not moving) and the celebration; normal gameplay always uses the rear <see cref="RunnerCameraRig"/>.
-    /// Cinemachine's brain blends between them (no hard cuts).
+    /// Drives the three level shots. Owner review 2026-11-26 of the round-7 recording: the old front-facing intro orbit got
+    /// too close to the mascot and its hat (and its blend to the rear camera passed through the hat), and the old
+    /// celebration orbit flew past the portal into empty space. All three shots now use the ONE rear gameplay camera
+    /// (<see cref="RunnerCameraRig"/>), so there is never a blend through the mascot or a jump in perspective:
+    ///  - Intro: an opening crane that starts behind / above and eases into the frozen gameplay framing while the mascot waits.
+    ///  - Gameplay: the frozen rear framing (2.75 back / 1.3 up / pitch 10 / FOV 58 portrait).
+    ///  - Celebrate: the mascot stops in front of the golden portal and turns to face the camera (front-facing celebration,
+    ///    reference 14.5 s composition) while the camera eases back a little so the portal frames it.
+    /// The old intro / celebrate CinemachineCameras stay in the scene (serialized references) but are no longer used.
     /// </summary>
     [DefaultExecutionOrder(110)]
     public class CameraDirector : MonoBehaviour
@@ -18,49 +24,30 @@ namespace BubbleWash
         public CinemachineCamera gameplayCam;
         public CinemachineCamera celebrateCam;
 
-        [Header("Intro orbit (front-facing, mascot stationary)")]
-        public float introDistance = 2.6f;
-        public float introHeight = 0.95f;
-        public float introStartAngle = 25f;
-        public float introOrbitSpeed = 9f;
-
-        [Header("Celebration (front-facing)")]
-        public float celebrateDistance = 3.0f;
-        public float celebrateHeight = 1.2f;
-        public float celebrateOrbitSpeed = 14f;
-
         public Shot Current { get; private set; } = Shot.Intro;
-        float shotTime;
+        RunnerCameraRig rig;
 
-        public void Show(Shot shot)
+        void Awake()
         {
-            Current = shot;
-            shotTime = 0f;
-            if (introCam) introCam.gameObject.SetActive(shot == Shot.Intro);
-            if (gameplayCam) gameplayCam.gameObject.SetActive(shot == Shot.Gameplay);
-            if (celebrateCam) celebrateCam.gameObject.SetActive(shot == Shot.Celebrate);
-            LateUpdate();
+            // Only the rear gameplay camera is ever live, from the very first frame (no Cinemachine blend at start-up).
+            if (introCam) introCam.gameObject.SetActive(false);
+            if (celebrateCam) celebrateCam.gameObject.SetActive(false);
+            if (gameplayCam) gameplayCam.gameObject.SetActive(true);
+            rig = gameplayCam ? gameplayCam.GetComponent<RunnerCameraRig>() : null;
         }
 
-        void LateUpdate()
+        /// <summary>Switches the shot. <paramref name="duration"/> is the opening crane's length (Intro only).</summary>
+        public void Show(Shot shot, float duration = 2.4f)
         {
-            if (runner == null) return;
-            shotTime += Time.deltaTime;
-            Transform r = runner.transform;
-            Vector3 focus = r.position + r.up * 0.55f;
-            if (Current == Shot.Intro && introCam)
+            Current = shot;
+            if (gameplayCam && !gameplayCam.gameObject.activeSelf) gameplayCam.gameObject.SetActive(true);
+            if (rig == null && gameplayCam) rig = gameplayCam.GetComponent<RunnerCameraRig>();
+            if (rig == null) return;
+            switch (shot)
             {
-                float a = (introStartAngle + shotTime * introOrbitSpeed) * Mathf.Deg2Rad;
-                Vector3 offset = (r.forward * Mathf.Cos(a) + r.right * Mathf.Sin(a)) * introDistance + r.up * introHeight;
-                introCam.transform.position = r.position + offset;
-                introCam.transform.rotation = Quaternion.LookRotation(focus - introCam.transform.position, r.up);
-            }
-            else if (Current == Shot.Celebrate && celebrateCam)
-            {
-                float a = (-30f + shotTime * celebrateOrbitSpeed) * Mathf.Deg2Rad;
-                Vector3 offset = (r.forward * Mathf.Cos(a) + r.right * Mathf.Sin(a)) * celebrateDistance + r.up * celebrateHeight;
-                celebrateCam.transform.position = r.position + offset;
-                celebrateCam.transform.rotation = Quaternion.LookRotation(focus - celebrateCam.transform.position, r.up);
+                case Shot.Intro: rig.PlayIntro(duration); break;
+                case Shot.Gameplay: rig.SetFinale(false); break;
+                case Shot.Celebrate: rig.SetFinale(true); break;
             }
         }
     }

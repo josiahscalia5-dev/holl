@@ -68,7 +68,10 @@ namespace BubbleWash
         void OnJump() { Trigger(JumpId); Squash(-0.18f); }
         void OnLand() { Trigger(LandId); Squash(0.22f); }
         void OnBump() { Trigger(BumpId); Squash(0.15f); }
-        void OnFinish() { Trigger(CelebrateId); }
+        // Finishing sequence (2026-11-26): the mascot first brakes to a stop in front of the portal; the celebration clip
+        // starts when it begins its turn toward the camera (see Update), so the arms go up while it turns.
+        void OnFinish() { celebrated = false; }
+        bool celebrated;
 
         void Trigger(int id) { if (hasParams) animator.SetTrigger(id); }
 
@@ -84,6 +87,13 @@ namespace BubbleWash
             animator.SetBool(GroundedId, runner.Grounded);
             animator.SetBool(BoostId, runner.Boosting || runner.Frame.slope < -14f);
             animator.SetBool(RunningId, runner.State == RunnerState.Running);
+            if (runner.State == RunnerState.Running) celebrated = false;
+            else if (!celebrated && (runner.FinishTurning || (runner.State == RunnerState.Finished && runner.finishRestBeforeEnd <= 0f)))
+            {
+                celebrated = true;
+                Trigger(CelebrateId);
+                Squash(-0.14f); // stretch up into the happy hop
+            }
         }
 
         void LateUpdate()

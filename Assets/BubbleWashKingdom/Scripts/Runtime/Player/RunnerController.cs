@@ -35,7 +35,18 @@ namespace BubbleWash
         public float boostSpeed = 6.5f;
         public float boostDuration = 2.4f;
         public float startDistance = 3f;
+        [Tooltip("Legacy finish point (track end - margin, 6 m PAST the portal). Used only when finishRestBeforeEnd <= 0.")]
         public float finishMargin = 6f;
+
+        [Header("Finish (owner 2026-11-26: polished, continuous finishing sequence at the golden portal)")]
+        [Tooltip("The mascot comes to rest this far before the track end: in front of the golden portal (portal = end - 12 m), " +
+                 "so the camera never flies through the portal glow into the empty space behind it.")]
+        public float finishRestBeforeEnd = 17.5f;
+        [Tooltip("The finish triggers this far before the rest point; the mascot brakes smoothly over this distance.")]
+        public float finishBrakeDistance = 8f;
+        [Tooltip("After stopping, the mascot hops and turns to face the camera (front-facing celebration) over this time.")]
+        public float finishTurnTime = 0.85f;
+        public float finishHopHeight = 0.32f;
 
         [Header("Lanes")]
         public float laneWidth = 1.15f;
@@ -75,9 +86,20 @@ namespace BubbleWash
 
         public IRunnerBrain brain;
         public event Action Jumped, Landed, BoostStarted, Bumped, FinishedRun, LaneChanged;
+        /// <summary>Fired once the mascot has stopped in front of the portal and turned to face the camera.</summary>
+        public event Action CelebrationPose;
         public event Action<TrackItem> Collected;
 
+        /// <summary>Distance where the run ends (the mascot comes to rest in front of the portal).</summary>
+        public float FinishRestDistance => track == null ? 0f
+            : finishRestBeforeEnd > 0f ? track.Length - finishRestBeforeEnd : track.Length - finishMargin;
+        /// <summary>True once the finishing turn is complete (front-facing celebration pose).</summary>
+        public bool InCelebrationPose { get; private set; }
+        /// <summary>True from the moment the stopped mascot starts its finishing turn.</summary>
+        public bool FinishTurning => State == RunnerState.Finished && turnStart >= 0f;
+
         float latVel, verticalVel, drift, stumble, lean, pitch;
+        float brakeDecel, finishTime, turnStart = -1f, finishYaw, finishHop;
 
         void Awake()
         {
@@ -101,6 +123,7 @@ namespace BubbleWash
             State = RunnerState.Waiting;
             Distance = startDistance;
             Lane = 0; Lateral = 0f; Height = 0f; verticalVel = 0f; Speed = 0f; BoostTime = 0f; stumble = 0f; drift = 0f;
+            brakeDecel = 0f; finishTime = 0f; turnStart = -1f; finishYaw = 0f; finishHop = 0f; InCelebrationPose = false;
             items?.ResetAll();
             SnapToTrack();
         }
@@ -175,17 +198,36 @@ namespace BubbleWash
                 Distance += Speed * dt;
                 BoostTime = Mathf.Max(0f, BoostTime - dt);
                 stumble = Mathf.Max(0f, stumble - dt);
-                if (Distance >= track.Length - finishMargin)
+                float rest = FinishRestDistance;
+                float trigger = finishRestBeforeEnd > 0f ? rest - finishBrakeDistance : rest;
+                if (Distance >= trigger)
                 {
-                    Distance = track.Length - finishMargin;
                     State = RunnerState.Finished;
+                    finishTime = 0f; turnStart = -1f; finishYaw = 0f; finishHop = 0f; InCelebrationPose = false;
+                    // constant deceleration that brings the mascot to rest exactly at the rest point, centred on the slide
+                    brakeDecel = finishRestBeforeEnd > 0f ? Speed * Speed / (2f * Mathf.Max(0.5f, rest - Distance)) : 14f;
+                    Lane = 0; BoostTime = 0f;
                     FinishedRun?.Invoke();
                 }
             }
             else if (State == RunnerState.Finished)
             {
-                Speed = Mathf.MoveTowards(Speed, 0f, 14f * dt);
-                Distance = Mathf.Min(Distance + Speed * dt, track.Length - 0.5f);
+                finishTime += dt;
+                float rest = FinishRestDistance;
+                Speed = Mathf.Max(0f, Speed - brakeDecel * dt);
+                Distance = Mathf.Min(Distance + Speed * dt, finishRestBeforeEnd > 0f ? rest : track.Length - 0.5f);
+                if (finishRestBeforeEnd > 0f)
+                {
+                    if (turnStart < 0f && (Speed < 0.6f || Distance >= rest - 0.05f)) { turnStart = finishTime; Speed = 0f; }
+                    if (turnStart >= 0f)
+                    {
+                        float u = Mathf.Clamp01((finishTime - turnStart) / Mathf.Max(0.05f, finishTurnTime));
+                        float e = u * u * u * (u * (u * 6f - 15f) + 10f);
+                        finishYaw = 180f * e;                                   // turn to face the camera
+                        finishHop = finishHopHeight * Mathf.Sin(Mathf.PI * u);    // little happy hop while turning
+                        if (u >= 1f && !InCelebrationPose) { InCelebrationPose = true; CelebrationPose?.Invoke(); }
+                    }
+                }
             }
 
             // Lateral: lane target plus outward drift up the wall in curves.
@@ -248,7 +290,9 @@ namespace BubbleWash
                 lean = Mathf.Lerp(lean, targetLean, 1f - Mathf.Exp(-leanResponse * dt));
                 float targetPitch = Boosting ? -6f : Mathf.Clamp(f.slope * 0.4f, -10f, 6f); // seated rider leans back downhill
                 pitch = Mathf.Lerp(pitch, targetPitch, 1f - Mathf.Exp(-5f * dt));
-                visual.localRotation = Quaternion.Euler(pitch, 0f, lean);
+                // finishYaw / finishHop are 0 except in the finishing turn (front-facing celebration in front of the portal)
+                visual.localRotation = Quaternion.Euler(0f, finishYaw, 0f) * Quaternion.Euler(pitch, 0f, lean);
+                visual.localPosition = new Vector3(0f, finishHop, 0f);
             }
         }
 

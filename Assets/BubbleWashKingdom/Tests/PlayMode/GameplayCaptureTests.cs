@@ -54,6 +54,10 @@ namespace BubbleWash.Tests
 #endif
             float startDistance = runner.Distance;
             int frames = 0, rearChecks = 0, rearViolations = 0, celebrateFrames = 0, stills = 0;
+            // portal plane (LightPortal sits at track end - 12 m, facing along the track)
+            var portalGo = GameObject.Find("LightPortal");
+            Transform portal = portalGo != null ? portalGo.transform : runner.transform;
+            float maxCamPastPortal = float.NegativeInfinity;
             while (frames < 30 * 75)
             {
                 yield return null;
@@ -69,7 +73,9 @@ namespace BubbleWash.Tests
                     rearChecks++;
                     if (Vector3.Dot(cam.transform.forward, runner.transform.forward) < 0.35f) rearViolations++;
                 }
-                if (gm.Celebrating && ++celebrateFrames > 120) break;
+                // 2026-11-26 finishing sequence: brake in front of the portal, turn, banner, slow push-in (~7 s recorded)
+                if (gm.Celebrating && ++celebrateFrames > 210) break;
+                maxCamPastPortal = Mathf.Max(maxCamPastPortal, Vector3.Dot(cam.transform.position - portal.position, portal.forward));
                 frames++;
             }
 #if UNITY_EDITOR
@@ -78,10 +84,13 @@ namespace BubbleWash.Tests
             Time.captureFramerate = 0;
             File.WriteAllText(Path.Combine(OutDir, "run_summary.txt"),
                 $"frames={frames}\nstart={startDistance:F1}\nend={runner.Distance:F1}\ntrack={runner.track.Length:F1}\n" +
-                $"coins={gm.items.Coins}\ngems={gm.items.Gems}\nrearChecks={rearChecks}\nrearViolations={rearViolations}\nfinished={gm.Celebrating}\n");
+                $"coins={gm.items.Coins}\ngems={gm.items.Gems}\nrearChecks={rearChecks}\nrearViolations={rearViolations}\nfinished={gm.Celebrating}\n" +
+                $"celebrationPose={runner.InCelebrationPose}\nfinishRest={runner.FinishRestDistance:F1}\nmaxCameraPastPortal={maxCamPastPortal:F2}\n");
             Assert.Greater(runner.Distance - startDistance, runner.track.Length * 0.8f, "mascot did not travel the section");
             Assert.AreEqual(0, rearViolations, "camera was not behind the mascot during gameplay");
             Assert.IsTrue(gm.Celebrating, "run did not reach the finish");
+            Assert.IsTrue(runner.InCelebrationPose, "finishing sequence did not reach the front-facing celebration pose");
+            Assert.Less(maxCamPastPortal, -2f, "camera flew into / past the portal (empty space behind it)");
         }
 
         [UnityTest, Timeout(600000)]
