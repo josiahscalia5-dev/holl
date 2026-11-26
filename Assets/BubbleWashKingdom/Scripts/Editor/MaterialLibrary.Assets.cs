@@ -87,10 +87,13 @@ namespace BubbleWash.EditorTools
                 F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
                 F(m, "_NearFade", 0f);
             }, (int)RenderQueue.Transparent - 9);
-            Burst("M_BurstRays_r8", "#FF9A2E", 1.3f, 1.3f);
-            Burst("M_BurstSparkle_r8", "#FFC860", 1.8f, 1.2f);
-            Burst("M_BurstGlow_r8", "#FF8A1A", 0.55f, 1.6f);
-            Burst("M_BurstCore_r8", "#FFE2B0", 1.0f, 1.5f);
+            // v2 build (10_finale bg, portal crop 360-920 x 0-560): gold 14.1 % vs ref 21.8 % (v1 hard lemon 25.3 %), the ring
+            // interior stayed bare violet (#674799 at 700,200; ref haze #F4E6A4) -> golden haze + rays stronger and yellower,
+            // cream core weaker (the centre already reads cream #FDE9C2 with the metal's Core disc)
+            Burst("M_BurstRays_r8", "#FFB040", 2.2f, 1.2f);
+            Burst("M_BurstSparkle_r8", "#FFC860", 2.0f, 1.2f);
+            Burst("M_BurstGlow_r8", "#FFD27A", 1.15f, 1.15f);
+            Burst("M_BurstCore_r8", "#FFD58A", 0.6f, 1.5f);
 
             // the screen read as a pale grey-white card (M_Screen emissive #5E8FC7 x 1.6); reference = deep blue glass behind
             // the cyan neon T-shirt (the icon keeps M_Neon_Cyan)

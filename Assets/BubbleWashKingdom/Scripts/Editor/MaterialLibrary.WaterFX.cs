@@ -30,6 +30,9 @@ namespace BubbleWash.EditorTools
                 // blue-grey again; library 16 "turquoise flowing water with glossy streaks"): a lighter turquoise shallow
                 // colour, more turquoise flow patches and a little more of the glossy flow streaks
                 C(m, "_ShallowColor", "#1C84C8"); F(m, "_PatchAmount", 0.36f);
+                // p4 (rear stills p3: water p50 S1 #4476CD / S4 #3E71CB, hue ~222, vs reference water p50 #4BA5DB hue ~203):
+                // turquoise-leaning deep + shallow colours and a less violet probe-reflection tint
+                C(m, "_DeepColor", "#146CBC"); C(m, "_ShallowColor", "#1A8ECC"); C(m, "_ReflectTint", "#8CD4FF");
                 C(m, "_CausticColor", "#7FE9FF"); C(m, "_ChevronColor", "#24E0DA"); C(m, "_EdgeTint", "#E66AC8");
                 F(m, "_FlowSpeed", 7.5f); F(m, "_Width", 3.6f); F(m, "_Glow", 0.1f); F(m, "_Smoothness", 0.6f);   // PBR gloss low: at 0.95 the pink CharLight_RimFront drew a wavy streak behind him; the glossy look comes from _ReflectBoost
                 F(m, "_StreakAmount", 0.18f); F(m, "_StreakDensity", 1.25f); F(m, "_EdgeTintAmount", 0.28f); F(m, "_SparkleAmount", 0.9f);

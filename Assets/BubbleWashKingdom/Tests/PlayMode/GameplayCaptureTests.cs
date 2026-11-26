@@ -210,4 +210,21 @@ namespace BubbleWash.Tests
                 if (runner.State == RunnerState.Running)
                 {
                     rearChecks++;
-                    if (Vecto
+                    if (Vector3.Dot(cam.transform.forward, runner.transform.forward) < 0.35f) rearViolations++;
+                }
+                frames++;
+            }
+#if UNITY_EDITOR
+            encoder.Dispose();
+#endif
+            Time.captureFramerate = 0;
+            float realSeconds = Time.realtimeSinceStartup - realStart;
+            File.WriteAllText(Path.Combine(OutDir, name + "_summary.txt"),
+                $"scene={scenePath}\nframes={frames}\nvideoSeconds={frames / 30f:F2}\nstart={d0:F1}\nend={runner.Distance:F1}\n" +
+                $"coins={gm.items.Coins}\ngems={gm.items.Gems}\nrearChecks={rearChecks}\nrearViolations={rearViolations}\n" +
+                $"editorRenderFps={(realSeconds > 0f ? frames / realSeconds : 0f):F1} (editor batch, not a device measurement)\n");
+            Assert.Greater(runner.Distance, start + (end - start) * 0.8f, "mascot did not travel the segment");
+            Assert.AreEqual(0, rearViolations, "camera was not behind the mascot during gameplay");
+        }
+    }
+}
