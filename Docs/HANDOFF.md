@@ -35,13 +35,35 @@
   S1 4/4, S2 5/5, S3 3.5/4 (C1 still does not show S3), S4 4/4.5, S5 4/4.5, S6 4.5/5, S7 4.5/5; whole ~4.2 / ~4.6
   (round 6: ~3.8 / ~3.9). Sheets were sent to the owner. Comparison cameras (front C stills) frame too little of the upper
   tunnel - add reference-matched TEMPORARY comparison cameras next round (keep the old ones for continuity).
-- AFTER THE 17:10 RESET (owner 13:20, order fixed): (1) finish round-7 water/foam/splash:
+- 13:25 recording sent (Play Mode 2 passed / 0 failed, `gameplay_autopilot_9x16.mp4` 13:16). OWNER 13:22: water first,
+  then round 8 = a SUBSTANTIAL visual-quality transformation (polished gold, rich metal, FLUFFY roller bristles, GLOSSY
+  RAINBOW RAILS, turquoise flowing water, soft soap bubbles, warm reflections; improve every visible asset, no more stars /
+  machinery), correct the S3 comparison camera, use the official Unity rendering skills + Blender + Unity.
+- 13:25 lead: CaptureStills now also renders REFERENCE-MATCHED front cameras R3 158 m / R4 190 / R5 220 / R6 280 (from
+  shot0825/camera.json: 2.6 m ahead, 1.3 m up, 0.3 m right, vFOV 52, mascot at (522,397)); section_triptych.sh uses R
+  stills when both builds have them, else the C stills (cs_check OK, not yet rendered).
+- 13:30 OWNER reviewed our full recording (uploaded as `~/.claude/uploads/cd43a82d-.../f84dc061-Bubble_Wash_Kingdom_4K_Claude.mp4`,
+  22.8 MB; owner calls it 26403.mp4) and added corrections on top of the water pass + round 8: (1) the OPENING CAMERA gets
+  too close to the mascot and its hat; (2) richer materials + more accurate scenery proportions everywhere; (3) replace the
+  foam blobs and flat lace splashes throughout; (4) restore the glossy multicoloured slide rails; (5) reduce the cyan
+  arrow brightness; (6) golden portal = controlled golden starburst, not white; (7) the empty purple environment and the
+  AWKWARD CAMERA MOVEMENT around 26-29 s of the recording; (8) a polished, continuous FINISHING SEQUENCE. References: the
+  video + "three annotated visual comparison sheets" (not found in this session's uploads at 13:30 - asked the owner).
+  Ownership: (3)+(5) round-7 water resume prompt; (2)(4)(6)(7 scenery) round-8 prompts; (1)(7 camera)(8) LEAD (camera rig,
+  gameplay) - the owner's request counts as approval for fixing the opening / end camera behaviour; the hero framing
+  2.75/1.3/10/58 stays; show [reference | before | after] for each camera fix.
+- AFTER THE 17:10 RESET (order fixed by the owner): (00) LEAD reviews the uploaded recording first (extract frames 0-5 s,
+  24-31 s and the ending with Tools/extract_frames_blender.py into Captures/review_r7/, one contact sheet) and the annotated
+  sheets; (0) R-camera baseline of the round-7 scene:
+  `bash Tools/unity_run.sh BubbleWash.EditorTools.CaptureTools.CaptureStillsBatch lead_r7_rcam -bwkOut Captures/stills_r7 -bwkHero`;
+  (1) finish round-7 water/foam/splash:
   `Workflow({scriptPath: "C:/Users/josia/thanksgiving/Tools/workflows/bwk-round7-wholelevel.js", args: ["water"]})`
   (its prompt has a RESUME note) -> lead `bash Tools/safe_build.sh lead_r7w` -> copy stills to `Captures/stills_r7w/` ->
-  `bash Tools/section_triptych.sh r7w Captures/stills_r7 Captures/stills_r7w` -> send; (2) then round 8:
-  `Workflow({scriptPath: ".../bwk-round8-cinematic.js", args: {base: "<newest checkpoint>", before: "Captures/stills_r7w"}})`
-  -> lead build -> triptych r8 (before r7w) -> verify workflow {tag: "r8"} -> send. Owner: match the reference's premium
-  animated-movie look; never just brighter or more objects; 9/10 per section. The lead session set a wake timer for 17:12.
+  `bash Tools/section_triptych.sh r7w Captures/stills_r7 Captures/stills_r7w` -> send -> commit `checkpoint-19-r7w`;
+  (2) then round 8 (3 agents: metal / assets / water; max 2 run at once):
+  `Workflow({scriptPath: ".../bwk-round8-cinematic.js", args: {base: "checkpoint-19-r7w", before: "Captures/stills_r7w"}})`
+  -> lead build -> triptych r8 (before r7w) -> verify workflow {tag: "r8"} -> recording -> send. Round 8 will likely span two
+  usage windows (stop at ~80 %, resume with resumeFromRunId). The lead session set a wake timer for 17:12.
 - 12:55 OWNER (added after round 7, plan otherwise unchanged): a CINEMATIC LOOK pass for the whole level with the existing
   URP features (reflection probes, post volume, our URP shaders; Shader Graph only if clearly easier; no Needle Engine, no
   new packages, no purchases): polished gold, realistic glass pipes, rich metallic walls, glossy flowing water, iridescent
