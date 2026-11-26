@@ -96,6 +96,12 @@ of one enormous magical washing machine. These instructions come only from the o
 ## Git
 - Local repo on `main`, remote `origin` = https://github.com/josiahscalia5-dev/holl (PUBLIC).
 - Ask the owner before any push. Never force-push, rewrite history or delete branches.
+- Owner-approved auto-save (2026-11-25): `Tools/autosave.sh 300` (run while a session is open) exports the chat as
+  text (`Tools/export_chat.py` -> `ChatHistory/`, no images / tool outputs / e-mails) and pushes 5-minute snapshots of
+  the working tree via the local branch `github-main` -> `origin/main`, built on `0c51785` and leaving out files that show
+  the private reference video (`PRIVATE_PATHS`, e.g. `Docs/AssetPreviews/SK_Mascot_vs_reference.png`). Local `main` and
+  checkpoint tags 4+ stay local (they contain that image); tags 0-3 are on GitHub. Never put reference frames in tracked
+  files (comparison images belong in `Captures/`, which is gitignored).
 - `Reference/`, `Captures/`, `Tools/Blender/work/`, `Library/`, `Temp/`, `Logs/`, `UserSettings/` stay out of git.
   Binary art (fbx, png, blend, audio) goes through Git LFS (`.gitattributes`).
 - Commit meaningful checkpoints (tag `checkpoint-*`) before major changes.
