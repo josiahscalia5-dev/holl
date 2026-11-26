@@ -72,12 +72,12 @@ namespace BubbleWash.EditorTools
             // a wide soft warm-lavender halo + a tight warm-white core, both fading out when the camera gets close
             Mat("M_VanishGlow", "BWK/LightBlob", m =>
             {
-                C(m, "_Color", "#FFC8EC"); F(m, "_Strength", 0.75f); F(m, "_Softness", 1f); F(m, "_Core", 1.6f); F(m, "_NearFade", 14f);
+                C(m, "_Color", "#FFC8EC"); F(m, "_Strength", 1.5f); F(m, "_Softness", 1f); F(m, "_Core", 1.6f); F(m, "_NearFade", 14f);
                 F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
             }, (int)RenderQueue.Transparent - 9);
             Mat("M_VanishCore", "BWK/LightBlob", m =>
             {
-                C(m, "_Color", "#FFF0D8"); F(m, "_Strength", 1.6f); F(m, "_Softness", 1f); F(m, "_Core", 2.4f); F(m, "_NearFade", 14f);
+                C(m, "_Color", "#FFF0D8"); F(m, "_Strength", 2.6f); F(m, "_Softness", 1f); F(m, "_Core", 2.4f); F(m, "_NearFade", 14f);
                 F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
             }, (int)RenderQueue.Transparent - 8);
 

@@ -68,12 +68,12 @@ CUFF_PROFILE = [  # (u, r, rib weight): roll under -> tall ribbed outer face -> 
     (0.215, 0.470, 1.0), (0.248, 0.468, 1.0), (0.272, 0.463, 0.9), (0.287, 0.454, 0.5), (0.295, 0.443, 0.2),
     (0.295, 0.432, 0.0), (0.288, 0.424, 0.0)]
 STRIPE_U = (0.293, 0.373)                  # pale ribbed band right above the cuff (~9 % of the hat width)
-DOME_U0, DOME_H, DOME_R, DOME_EXP = 0.381, 0.15, 0.372, 2.0     # soft round dome (elliptical profile)
+DOME_U0, DOME_H, DOME_R, DOME_EXP = 0.381, 0.19, 0.372, 2.0     # soft round dome (elliptical profile)
 TOP_STRIPE_PHI, TOP_STRIPE_HW = 47.0, 5.5  # extra pale stripe on the dome front (deg of the dome angle), fades out
 TOP_STRIPE_FULL, TOP_STRIPE_END = 45.0, 78.0    # ... over the front only (deg from the front): never seen from behind
 STAR_U, STAR_PHI, STAR_ROT = 0.192, 33.0, -12.0  # star badge on the cuff, 33 deg toward HIS LEFT (+X)
 STAR_RO, STAR_RI = 0.072, 0.032
-POMPOM_R, POMPOM_LIFT = 0.262, 0.70        # pom-pom radius; centre this many radii above the dome top
+POMPOM_R, POMPOM_LIFT = 0.262, 0.52        # pom-pom radius; centre this many radii above the dome top
 POMPOM_SEG = 12
 
 # ------------------------------------------------------------------ face (unchanged design, follows the body centre)
@@ -114,7 +114,7 @@ TAIL_R, TAIL_Z, TAIL_OUT = 0.042, 0.17, 0.05   # small tail puff radius, height,
 WHITE = (1.0, 1.0, 1.0, 1.0)
 # Unity passes vertex colours to shaders raw (no sRGB decode), so these are the linear multipliers BWK/Character
 # (M_PawPad, fabric mode) applies: (0.90, 0.30, 0.42) displays as a soft candy pink ~#F294AD under white light.
-PAD_PINK = (0.95, 0.45, 0.56, 1.0)
+PAD_PINK = (0.98, 0.50, 0.46, 1.0)
 BLUSH_COL = (1.0, 0.70, 0.72)              # Col tint (sRGB) at the blush centre
 
 HAT_R = Matrix.Rotation(math.radians(HAT_TILT), 3, 'X')

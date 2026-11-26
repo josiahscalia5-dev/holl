@@ -73,7 +73,7 @@ namespace BubbleWash.EditorTools
             BuildRingLights(lights);
             // soft lavender-white fill on the upper-right drum wall just ahead of the hero camera (reference upper-right wall
             // is a lit mid-violet #8069ad, ours read deep indigo): lifts value and lowers saturation there only
-            AddPoint(lights, HeroDistance + 3.5f, 2.6f, 4.3f, new Color(0.86f, 0.74f, 1f), 2.6f, 6.5f);
+            AddPoint(lights, HeroDistance + 8.5f, 2.4f, 4.6f, new Color(0.9f, 0.8f, 1f), 4.5f, 8f);
 
             // Reflection probes: hall probes + one per 30 m tunnel chunk, box = bounds of that bent tunnel segment.
             for (float d = 18f; d < tunnelStart; d += 30f)
@@ -351,7 +351,7 @@ namespace BubbleWash.EditorTools
             // warm-white core there facing the hero camera (LightBlob _NearFade: they vanish as the runner approaches)
             {
                 Vector3 best = Vector3.zero; float bestErr = float.MaxValue, bestDepth = 0f;
-                for (float a = 35f; a <= 75f; a += 1f)
+                for (float a = 30f; a <= 55f; a += 1f)
                 {
                     var p = track.Evaluate(HeroDistance + a).FlatPoint(0, TunnelCenter - 0.3f);
                     var c = Quaternion.Inverse(camRot) * (p - camPos);
@@ -364,7 +364,7 @@ namespace BubbleWash.EditorTools
                 {
                     var q = Quaternion.LookRotation(best - camPos, camUp);
                     AddCard(Mat("M_VanishGlow"), best, q, 13f);
-                    AddCard(Mat("M_VanishCore"), best - (best - camPos).normalized * 0.5f, q, 5.5f);
+                    AddCard(Mat("M_VanishCore"), best - (best - camPos).normalized * 0.5f, q, 7f);
                     var c = Quaternion.Inverse(camRot) * (best - camPos);
                     Debug.Log($"[BWK] vanishing glow at depth {bestDepth:F1} m, screen ({0.5f + 0.5f * c.x / (c.z * tanH):F2},{0.5f - 0.5f * c.y / (c.z * tanV):F2})");
                 }

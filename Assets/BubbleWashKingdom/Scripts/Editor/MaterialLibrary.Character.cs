@@ -17,14 +17,14 @@ namespace BubbleWash.EditorTools
                 // reference beanie dome: violet ribbed knit. The ribs are geometry (build_mascot_model.py CROWN_RIBS = 72,
                 // UV.x = 0..1 around, UV.y = arc length in metres): _StitchU must equal CROWN_RIBS, _StitchV = rows per metre.
                 // albedo chosen so the dome renders like the reference crown (~#76319f) under the tunnel's violet light
-                F(m, "_Mode", 2); C(m, "_ColorA", "#74457E"); C(m, "_ColorB", "#EDE6FF"); F(m, "_Stripes", 3); F(m, "_StripeWidth", 0.0f);
+                F(m, "_Mode", 2); C(m, "_ColorA", "#7A467A"); C(m, "_ColorB", "#EDE6FF"); F(m, "_Stripes", 3); F(m, "_StripeWidth", 0.0f);
                 F(m, "_StitchU", 72); F(m, "_StitchV", 55); F(m, "_BumpStrength", 0.75f); F(m, "_Smoothness", 0.14f); F(m, "_Glow", 0.08f);
             });
             Mat("M_HatCuff", "BWK/Character", m =>
             {
                 // tall folded cuff: CUFF_RIBS = 96 deep geometric ribs
                 // warmer, lighter violet than before (rendered indigo #5414a9; reference cuff ~#74329e)
-                F(m, "_Mode", 2); C(m, "_ColorA", "#86598E"); C(m, "_ColorB", "#86598E"); F(m, "_StripeWidth", 0f);
+                F(m, "_Mode", 2); C(m, "_ColorA", "#8E5A88"); C(m, "_ColorB", "#8E5A88"); F(m, "_StripeWidth", 0f);
                 F(m, "_StitchU", 96); F(m, "_StitchV", 60); F(m, "_BumpStrength", 0.8f); F(m, "_Smoothness", 0.12f); F(m, "_Glow", 0.12f);
             });
             Mat("M_HatStripe", "BWK/Character", m =>
@@ -66,7 +66,7 @@ namespace BubbleWash.EditorTools
             {
                 // dense soft yarn pom-pom: short, very dense, little thinning so the silhouette stays round and soft
                 // deeper violet yarn (reference ~#8741b3, dark centre, lighter radiating tips): straight radial fibres
-                C(m, "_RootColor", "#42205A"); C(m, "_BaseColor", "#7A3E8E"); C(m, "_TipColor", "#C08ED6");
+                C(m, "_RootColor", "#4A2058"); C(m, "_BaseColor", "#86408A"); C(m, "_TipColor", "#CA90D0");
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
                 F(m, "_Density", 190); F(m, "_FurLength", 0.042f); F(m, "_Gravity", 0.0f); F(m, "_Thinning", 0.8f); F(m, "_AO", 0.4f);
                 F(m, "_Curl", 0.12f); F(m, "_Underfur", 0.8f); F(m, "_ClumpAmount", 0.3f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.3f);
