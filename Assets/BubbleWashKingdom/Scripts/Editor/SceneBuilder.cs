@@ -40,9 +40,15 @@ namespace BubbleWash.EditorTools
             new Vector3(5.6f, -4.3f, 48), new Vector3(10.4f, -5.6f, 59), new Vector3(15.6f, -6.6f, 70), new Vector3(20f, -7.8f, 82),
             new Vector3(22f, -10.5f, 96), new Vector3(21f, -13.6f, 110), new Vector3(17f, -15.4f, 124), new Vector3(11f, -17f, 138),
             new Vector3(7.5f, -18.8f, 153), new Vector3(8f, -20.8f, 168), new Vector3(12f, -22.8f, 182), new Vector3(19f, -24.6f, 194),
-            new Vector3(28f, -26.2f, 203), new Vector3(39f, -27.6f, 208), new Vector3(50f, -29f, 207), new Vector3(60f, -30.4f, 201),
-            new Vector3(67f, -31.8f, 191), new Vector3(70f, -33.2f, 178), new Vector3(70f, -35f, 163), new Vector3(68f, -36.6f, 148),
-            new Vector3(68f, -38f, 133), new Vector3(69f, -39f, 118), new Vector3(69f, -39.6f, 104),
+            // 2026-11-26 owner decision "Straighten S5" (round 6): the old U-turn after knot 15 (28,203 / 39,208 / 50,207 / 60,201 /
+            // 67,191 / 70,178 / 70,163 / 68,148 / 68,133 / 69,118 / 69,104: ~180 deg at 1-2.3 deg/m, ~13 deg bank) hid the 8.25 s
+            // chamber window and pink pipe behind the rail. Replaced by the video's layout: S5 (205-240 m) straight at a ~35 deg
+            // heading, S6 a gentle left bend (~0.4 deg/m), S7 nearly straight toward the portal. Segment lengths and heights are
+            // kept, so every section distance (and the portal at ~351 m) stays where it was.
+            new Vector3(26.28f, -26.2f, 204.40f), new Vector3(33.23f, -27.6f, 214.33f), new Vector3(39.55f, -29f, 223.35f),
+            new Vector3(45.36f, -30.4f, 233.41f), new Vector3(49.94f, -31.8f, 244.74f), new Vector3(53.39f, -33.2f, 257.62f),
+            new Vector3(56.51f, -35f, 272.28f), new Vector3(59.65f, -36.6f, 287.07f), new Vector3(63.29f, -38f, 301.65f),
+            new Vector3(66.93f, -39f, 316.24f), new Vector3(70.31f, -39.6f, 329.81f),
         };
 
         /// <summary>Round 3 (2026-11-26): the reference tunnel bends RIGHT at the hero frame (vanishing point right of the
