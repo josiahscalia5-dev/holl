@@ -122,16 +122,17 @@ Shader "BWK/Fur"
                 float2 base = float2(i.uv.x * 2.0, i.uv.y);              // UV.x unit = 2x UV.y unit in metres -> square cells
                 // domain-warped tuft cells: irregular organic clumps instead of a visible square grid
                 float2 tuv = base * _TuftScale;
-                tuv += (float2(BWK_ValueNoise(tuv * 0.37 + 3.1), BWK_ValueNoise(tuv * 0.37 + 17.9)) - 0.5) * 2.2;
+                tuv += (float2(BWK_ValueNoise(tuv * 0.37 + 3.1), BWK_ValueNoise(tuv * 0.37 + 17.9)) - 0.5) * 1.3;
                 float2 tcell = floor(tuv);
                 float2 tc = tcell + 0.5 + (float2(BWK_Hash21(tcell + 21.7), BWK_Hash21(tcell + 4.3)) - 0.5) * 0.45;
                 half tRnd = BWK_Hash21(tcell + 11.9);
                 float pull = _TuftAmount * h * (0.7 + 0.6 * tRnd);
-                float2 rel = (tuv - tc) / max(1.0 - pull, 0.2);
+                float2 relSkin = tuv - tc;
+                float2 rel = relSkin / max(1.0 - pull, 0.2);
                 float2 rootOff = abs(tc + rel - (tcell + 0.5));          // root outside its own tuft cell -> parting
                 half parting = (_TuftAmount > 0.001 && h > 0.001) ? saturate(1.0 - (length(rootOff) - 0.55) * 2.5) : 1.0;
                 parting = lerp(1.0, parting, saturate(h * 1.6));           // partings only open toward the tips
-                float2 rootUV = (_TuftAmount > 0.001) ? (tc + rel) / _TuftScale : base;
+                float2 rootUV = base + (rel - relSkin) / _TuftScale;      // = base on the skin; expands toward the tips
                 float2 suv = rootUV * _Density;
                 float2 cell = floor(suv);
                 float2 jit = float2(BWK_Hash21(cell), BWK_Hash21(cell + 17.3)) - 0.5;
@@ -168,7 +169,7 @@ Shader "BWK/Fur"
                 half coat = lerp(1.0, i.color.a, _UseVertexTint);
                 half3 col = lerp(pawC, pinkC, coat) * lerp(half3(1, 1, 1), i.color.rgb, _UseVertexTint);
                 col *= lerp(0.86, 1.06, strand);   // low strand contrast: plush, not needles
-                col *= lerp(1.0, lerp(0.84, 1.04, tRnd), saturate(_TuftAmount * 1.6));   // tufts vary a little in tone
+                col *= lerp(1.0, lerp(0.92, 1.04, tRnd), saturate(_TuftAmount * 1.6));   // tufts vary a little in tone
                 half3 light = BWK_WrapLight(i.positionWS, n, _Wrap);
                 half ao = lerp(1.0 - _AO, 1.0, h);
                 half rim = BWK_Fresnel(n, v, _RimPower) * _RimStrength * (0.4 + 0.6 * h);

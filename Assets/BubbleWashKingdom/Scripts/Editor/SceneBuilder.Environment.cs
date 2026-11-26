@@ -165,8 +165,9 @@ namespace BubbleWash.EditorTools
         // (out of frame), ~19.5 m and ~32 m ahead of the camera and three lips (0.69 / 0.51 / 0.41 W) in between - the
         // same radii as the reference. The lighting ring lights / star spacing should follow FirstRingDistance and
         // GoldRingSpacing (lead's RingSpacing 8.5 stays for code that has not moved yet).
+        // Round 3: ONE big lavender rim per gap at RimPhase (see below) instead of three lips -> broad perforated bays.
         // BWK_DrumWall (_Pattern 1) lines its plain metal / slot rows up with these positions: BuildRings writes
-        // _BandOffset = FirstRingDistance and _BandLength = GoldRingSpacing / (RimsPerGap + 1) into M_DrumWall.
+        // _BandOffset = FirstRingDistance, _BandLength = GoldRingSpacing and _RimPhase = RimPhase into M_DrumWall.
         // Chamber gaps (side porthole windows) skip their rims so the big windows fit between two gold rings.
         // Round 3 (mirrored track, reference f_003.00s measured on the ceiling): gold ring ~7 m (off frame), ONE big lavender
         // rim at ~12.2 m (on-screen r ~0.55 W), a broad perforated bay, gold ring 19.75 m (0.33 W), bay, rim ~25 m, gold

@@ -58,13 +58,13 @@ namespace BubbleWash.EditorTools
                 // Short dense minky pile, soft alpha-to-coverage strands, little clumping/curl: plush, not needles.
                 // round 3 (owner: "longer irregular plush clumps, avoid uniformly short fuzz"): longer pile, strong clump
                 // length variation, more lean/swirl, lighter tips; the seat blends toward the cream coat (vertex alpha)
-                C(m, "_RootColor", "#C45E58"); C(m, "_BaseColor", "#E8786A"); C(m, "_TipColor", "#FAC2B2");
+                C(m, "_RootColor", "#D06C66"); C(m, "_BaseColor", "#F28C7E"); C(m, "_TipColor", "#FFD0C2");
                 C(m, "_PawRootColor", "#FFF0E2"); C(m, "_PawTipColor", "#FFF9EE"); F(m, "_PawGlow", 0.45f);   // warm white: reads WHITE under the violet light
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
                 F(m, "_Density", 200); F(m, "_FurLength", 0.052f); F(m, "_Gravity", 0.012f); F(m, "_Thinning", 0.8f); F(m, "_ClumpAmount", 0.8f); F(m, "_ClumpScale", 5f);
                 F(m, "_AO", 0.2f); F(m, "_Curl", 1.5f); F(m, "_Underfur", 0.8f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.45f);
-                F(m, "_TuftScale", 24f); F(m, "_TuftAmount", 0.55f);   // ~5.5 cm plush tufts converging toward their tips
-                C(m, "_RimColor", "#FFD0C8"); F(m, "_Glow", 0.14f); F(m, "_RimStrength", 0.5f);
+                F(m, "_TuftScale", 20f); F(m, "_TuftAmount", 0.3f);   // ~6.5 cm irregular plush tufts converging toward their tips
+                C(m, "_RimColor", "#FFD0C8"); F(m, "_Glow", 0.2f); F(m, "_RimStrength", 0.5f);
             }, (int)RenderQueue.AlphaTest);
             Mat("M_PomPom", "BWK/Fur", m =>
             {

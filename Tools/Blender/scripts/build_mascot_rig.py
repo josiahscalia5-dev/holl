@@ -70,7 +70,8 @@ ARM_HAND = 0.15           # elbow-ish joint along the arm (hand bone = the mitt)
 SEAT_DROP = 0.05          # body lowered so the fur-ball underside rests ~2 cm above the slide surface
 SEAT_LEAN = -4.0          # body pitch (negative = recline)
 HEAD_PITCH = 6.0          # head (and beanie) nod forward a little: at the approved hero camera the hat reads side-on
-FOOT_FLOOR = 0.012        # lowest paw point in the seated pose (heel on the surface)
+FOOT_FLOOR = 0.045        # lowest paw point in the seated pose (round 3: heels lifted a little while sliding,
+                          # so the white soles show fully above the water as in the reference; the body still sits)
 FOOT_MIN_Z = 0.006        # floor clamp for animated paws
 ARM_RAISE_MAX = 26.0      # extra raise above the modelled 30 deg: soft cap + per-frame cuff collision solve
 TILT_RADIUS = 0.40        # effective bottom radius: lift that keeps the bottom on the surface when leaning

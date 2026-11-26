@@ -80,7 +80,7 @@ namespace BubbleWash.EditorTools
             // round 3: pink reflections on the near-left drum rims (reference / owner sheet 04: hot pink-magenta glints on the
             // big near ring at the upper left, from the pink rails and neon) - a pink light inside the upper-left wall ~6 m ahead
             // (the wall around the big yellow star), which also tints that wall lighter mauve like the reference (#a87ea0)
-            AddPoint(lights, HeroDistance + 6f, -2.5f, 4.1f, new Color(1f, 0.40f, 0.76f), 6f, 8f);
+            AddPoint(lights, HeroDistance + 6f, -2.5f, 4.1f, new Color(1f, 0.40f, 0.76f), 5f, 8f);
 
             // Reflection probes: hall probes + one per 30 m tunnel chunk, box = bounds of that bent tunnel segment.
             for (float d = 18f; d < tunnelStart; d += 30f)

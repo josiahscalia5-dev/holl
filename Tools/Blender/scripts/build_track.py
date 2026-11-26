@@ -7,10 +7,10 @@ Builds, exports (FBX -> Assets/BubbleWashKingdom/Art/Models/Track/) and previews
   SM_GlassPipe_Module  glass tube r 0.28 around a glowing core r 0.20  M_Glass, M_PipeWater
   SM_Pipe_Coupler      gold band r 0.33 x 0.12 with 6 hex bolt heads   M_Gold
   SM_Pipe_Elbow        90 degree glass elbow, bend radius 0.8          M_Glass, M_PipeWater
-  SM_Ring              polished gold band r 3.65-4.26 x 0.33: inner + outer rolled beads, shallow dark-gold
-                       trough with 28 warm marquee bulbs half sunk in gold cups (m1)              M_Gold, M_GoldDark, M_Bulb
-  SM_DrumRim           fat rolled lavender drum lip r 3.74-4.26 (short front bevel, long back slope) with 32 soft
-                       LED studs, 3 between two gold rings (nested-drum depth, m1)                 M_DrumRim, M_RimLight
+  SM_Ring              thick polished gold band r 3.50-4.26 x 0.33 (r3, was 3.65): inner + outer rolled beads,
+                       wide gold trough with 28 warm marquee bulbs half sunk in gold cups         M_Gold, M_GoldDark, M_Bulb
+  SM_DrumRim           big rolled lavender drum lip r 3.66-4.26 (short front bevel, long back slope) with 32 soft
+                       pink LED studs, ONE per gold-ring gap at 0.40 of the gap (r3)               M_DrumRim, M_RimLight
   SM_Bulb              warm marquee bulb, origin at its base, +Z       M_Bulb (legacy, not placed by BuildRings)
 
 Every surface is swept or revolved from an analytic 2D profile with exact per-vertex normals (stored as
@@ -93,7 +93,8 @@ BULB_SIDES, BULB_BANDS = 6, 4                  # even band count -> equator ring
 
 # ------------------------------------------------------------------ gameplay layout mirrored from SceneBuilder (previews)
 RING_SPACING = 12.75                      # SceneBuilder.GoldRingSpacing (Environment, m1): gold rings
-RIMS_PER_GAP = 3                          # lavender rims between two gold rings (every 3.19 m)
+RIMS_PER_GAP = 1                          # r3: ONE big lavender rim per gap (SceneBuilder.RimsPerGap), was 3
+RIM_PHASE = 0.40                          # r3: rim at RIM_PHASE of the gap (SceneBuilder.RimPhase): ~12 m ahead in the hero
 
 X_AXIS, Y_AXIS, Z_AXIS = Vector((1.0, 0.0, 0.0)), Vector((0.0, 1.0, 0.0)), Vector((0.0, 0.0, 1.0))
 
@@ -742,7 +743,7 @@ def preview_materials(mats):
 
 HERO_D = 105.5                                   # track distance of the Unity hero shot (mascot); preview y = -(d - 105.5)
 FIRST_RING_D = 71.5                              # SceneBuilder.FirstRingDistance (Environment, m1): tunnelStart + 9.5 m
-BAND_LEN = RING_SPACING / (RIMS_PER_GAP + 1)     # drum section length: one rim or ring every 2.83 m
+BAND_LEN = RING_SPACING / (RIMS_PER_GAP + 1)     # preview drum wall bands (approximate: Unity splits each gap at RIM_PHASE)
 
 
 def drum_wall_preview_nodes(mat):
@@ -878,7 +879,8 @@ def ring_layout():
         d = FIRST_RING_D + k * RING_SPACING
         rings.append(-(d - HERO_D))
         for r in range(1, RIMS_PER_GAP + 1):
-            rims.append(-(d + r * BAND_LEN - HERO_D))
+            off = RIM_PHASE * RING_SPACING if RIMS_PER_GAP == 1 else r * BAND_LEN
+            rims.append(-(d + off - HERO_D))
     return rings, rims
 
 

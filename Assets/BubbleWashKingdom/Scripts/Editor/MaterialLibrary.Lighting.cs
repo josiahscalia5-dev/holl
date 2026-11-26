@@ -81,12 +81,12 @@ namespace BubbleWash.EditorTools
             {
                 // round 3: the m3 glow clipped to a big white blob (p90 #ffffff, mean #eddbe9 vs reference #ba8ed3):
                 // half the strength, warmer pink-lavender, smaller cards (SceneBuilder) -> soft luminous end, not a flare
-                C(m, "_Color", "#F8A8E0"); F(m, "_Strength", 0.55f); F(m, "_Softness", 1f); F(m, "_Core", 1.5f); F(m, "_NearFade", 14f);
+                C(m, "_Color", "#E8A0EC"); F(m, "_Strength", 0.5f); F(m, "_Softness", 1f); F(m, "_Core", 1.5f); F(m, "_NearFade", 14f);
                 F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
             }, (int)RenderQueue.Transparent - 9);
             Mat("M_VanishCore", "BWK/LightBlob", m =>
             {
-                C(m, "_Color", "#FFE2C4"); F(m, "_Strength", 1.05f); F(m, "_Softness", 1f); F(m, "_Core", 2.2f); F(m, "_NearFade", 14f);
+                C(m, "_Color", "#FFE4D8"); F(m, "_Strength", 1.0f); F(m, "_Softness", 1f); F(m, "_Core", 2.2f); F(m, "_NearFade", 14f);
                 F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
             }, (int)RenderQueue.Transparent - 8);
 

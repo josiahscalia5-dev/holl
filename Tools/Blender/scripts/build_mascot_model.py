@@ -43,7 +43,7 @@ QUICK = os.environ.get("BWK_QUICK", "") == "1"
 # above the slide, stripe top ~0.87 m, pom-pom ~0.47 m across with its top ~1.38 m, body ~0.90 m wide below the cuff,
 # paws at cuff height ~0.64 m out from the centre, feet centred ~0.30 m out and ~0.30 m behind, 0.17 m up.
 BODY_C = Vector((0.0, 0.0, 0.53))          # body centre (rest; the seated pose lowers it 5 cm)
-BODY_W, BODY_D, BODY_H = 0.85, 0.82, 0.92  # width, depth, height: an upright plush pear, so the fluffy back below the
+BODY_W, BODY_D, BODY_H = 0.82, 0.80, 0.92  # width, depth, height: an upright plush pear, so the fluffy back below the
                                            # beanie is the dominant mass (round 3: narrower, the hat overhangs it)
 BODY_EGG = 0.20                            # >0: fuller toward the bottom (soft pear: narrow under the hat, round seat)
 FACE_DZ = BODY_C.z - 0.57                  # face landmarks were designed for a body centre at 0.57
@@ -83,7 +83,7 @@ POMPOM_SEG = 9                             # the dome top (it sinks a little int
 POM_FIBRES = 2200                          # fibre count over the whole sphere (the ones pointing into the hat are skipped)
 POM_FIB_IN, POM_FIB_LEN = 0.80, (0.040, 0.078)   # root depth (x core radius) and length range beyond the core
 POM_FIB_W = (0.0075, 0.0022)               # root / tip half width (triangular cross-section, tapering)
-POM_COL_ROOT, POM_COL_MID, POM_COL_TIP = (0.24, 0.08, 0.40), (0.46, 0.22, 0.68), (0.84, 0.68, 0.98)
+POM_COL_ROOT, POM_COL_MID, POM_COL_TIP = (0.17, 0.04, 0.30), (0.40, 0.14, 0.62), (0.74, 0.54, 0.94)
 
 # ------------------------------------------------------------------ face (unchanged design, follows the body centre)
 EYE_X, EYE_Z = 0.155, 0.585 + FACE_DZ      # eye centres on the front surface
@@ -114,11 +114,11 @@ PALM_FACING = Vector((0.0, -0.55, 0.85))   # palm side (front/up): only used as 
 # ------------------------------------------------------------------ legs + feet (seated): the reference rear view shows
 # big cream feet with pink beans at the bottom-left / bottom-right of the body, SOLES FACING THE CAMERA (toes up and
 # splayed out ~20 deg) while he sits on his bottom: the short legs fold back under him (plush W-sit).
-PAW_C = Vector((0.300, 0.220, 0.255))      # paw centre (his left; mirrored), beside/behind the seat on the camera side
-HIP = Vector((0.205, 0.000, 0.240))        # hip joint inside the lower body
+PAW_C = Vector((0.312, 0.300, 0.265))      # paw centre (his left; mirrored), beside/behind the seat on the camera side
+HIP = Vector((0.205, 0.040, 0.240))        # hip joint inside the lower body
 SOLE_UP, SOLE_OUT, TOE_OUT = 26.0, 0.20, 20.0   # sole normal tilt up toward the camera / outward turn; toes lean out
 LEG_SEG, LEG_R0, LEG_R1 = 18, 0.092, 0.082 # around, radius at hip / ankle
-PAW_HALF = (0.128, 0.150, 0.078)           # half width (lateral), half length (heel->toe), half thickness
+PAW_HALF = (0.140, 0.168, 0.080)           # half width (lateral), half length (heel->toe), half thickness
 PAW_SEG = 8
 SOLE_PADS = [(0.0, -0.045, 0.058, 0.052, 0.012),         # big pad (heel side): (lat, along, r_lat, r_along, h)
              (-0.074, 0.056, 0.022, 0.025, 0.010), (-0.027, 0.090, 0.023, 0.026, 0.010),
