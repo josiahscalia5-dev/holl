@@ -75,8 +75,8 @@ namespace BubbleWash.EditorTools
             BuildRingLights(lights);
             // soft lavender-white fill on the upper-right drum wall just ahead of the hero camera (reference upper-right wall
             // is a lit mid-violet #8069ad, ours read deep indigo): lifts value and lowers saturation there only
-            // round 3 (mirrored track): upper-right now reads too light (L50 .54 vs .40) -> weaker, bluer
-            AddPoint(lights, HeroDistance + 8.5f, 2.4f, 4.6f, new Color(0.72f, 0.66f, 1f), 1.1f, 8f);
+            // round 3 (mirrored track): the upper-right fill (HeroDistance + 8.5, lat 2.4, h 4.6) is no longer needed
+            // (removed in round 3 v5: with 8 lights per object the upper-right read too light, L50 .48 vs .40)
             // round 3: pink reflections on the near-left drum rims (reference / owner sheet 04: hot pink-magenta glints on the
             // big near ring at the upper left, from the pink rails and neon) - a pink light inside the upper-left wall ~6 m ahead
             // (the wall around the big yellow star), which also tints that wall lighter mauve like the reference (#a87ea0)
@@ -141,8 +141,8 @@ namespace BubbleWash.EditorTools
             // soft far tunnel (premium film depth): mascot, coins and near rings stay crisp
             var dof = profile.Add<DepthOfField>(true);
             // round 3: a little softer far tunnel (reference is dreamier / softer behind the second ring)
-            dof.mode.Override(DepthOfFieldMode.Gaussian); dof.gaussianStart.Override(20f); dof.gaussianEnd.Override(62f);
-            dof.gaussianMaxRadius.Override(1.3f); dof.highQualitySampling.Override(true);
+            dof.mode.Override(DepthOfFieldMode.Gaussian); dof.gaussianStart.Override(18f); dof.gaussianEnd.Override(55f);
+            dof.gaussianMaxRadius.Override(1.5f); dof.highQualitySampling.Override(true);
             foreach (var c in profile.components) AssetDatabase.AddObjectToAsset(c, profile);
             vol.sharedProfile = profile;
         }
@@ -449,7 +449,7 @@ namespace BubbleWash.EditorTools
             var group = Child(runnerGo, "CharacterLights");
             // warm bulb glow on the top of the hat / pom-pom (slightly ahead, so it grazes over the top toward the camera)
             // round 3: higher + a bit weaker -> no near-field hotspot on the pom-pom (ours p50 #c892e3 vs reference #8a41b9)
-            CharLight(group, "CharLight_WarmTop", new Vector3(0.35f, 2.75f, 0.55f), new Color(1f, 0.74f, 0.44f), 2.4f, 4.4f);
+            CharLight(group, "CharLight_WarmTop", new Vector3(0.35f, 2.75f, 0.55f), new Color(1f, 0.74f, 0.44f), 2.0f, 4.4f);
             // soft pink fill on the fluffy back the rear camera sees
             // round 3: warmer coral-pink (reference back fur ~#e58c98 lit; ours read mauve under the violet ambient)
             CharLight(group, "CharLight_PinkBack", new Vector3(-0.35f, 1.7f, -1.6f), new Color(1f, 0.72f, 0.6f), 3.0f, 3.6f);

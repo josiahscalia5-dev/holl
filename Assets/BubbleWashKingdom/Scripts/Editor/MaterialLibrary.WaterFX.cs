@@ -17,8 +17,8 @@ namespace BubbleWash.EditorTools
                 // round 3: deep azure body (#1a5fd0 .. #3095d5 in the reference), cyan streaks, cyan light only around the chevrons
                 // round 3b (owner correction 03: deep blue, turquoise variation, no flat cyan / broad white streaks / grid): reference
                 // water samples #2F89CD (left of the arrows) .. #49BDE3 (right), hue ~200-206 (ours read #3F6CD8 / periwinkle)
-                C(m, "_DeepColor", "#0B4AA8"); C(m, "_ShallowColor", "#1A80C8"); C(m, "_StreakColor", "#B8F6FF");
-                C(m, "_TurquoiseColor", "#27B4D8"); F(m, "_PatchAmount", 0.45f); F(m, "_DetailStrength", 0.7f); C(m, "_ReflectTint", "#8CC8FF");
+                C(m, "_DeepColor", "#0B4AA8"); C(m, "_ShallowColor", "#1E90D2"); C(m, "_StreakColor", "#B8F6FF");
+                C(m, "_TurquoiseColor", "#2CC0DC"); F(m, "_PatchAmount", 0.6f); F(m, "_DetailStrength", 0.7f); C(m, "_ReflectTint", "#8CC8FF");
                 C(m, "_CausticColor", "#7FE9FF"); C(m, "_ChevronColor", "#2FE6FF"); C(m, "_EdgeTint", "#E66AC8");
                 F(m, "_FlowSpeed", 7.5f); F(m, "_Width", 3.6f); F(m, "_Glow", 0.1f); F(m, "_Smoothness", 0.6f);   // PBR gloss low: at 0.95 the pink CharLight_RimFront drew a wavy streak behind him; the glossy look comes from _ReflectBoost
                 F(m, "_StreakAmount", 0.12f); F(m, "_StreakDensity", 1.25f); F(m, "_EdgeTintAmount", 0.28f); F(m, "_SparkleAmount", 0.9f);
@@ -26,7 +26,7 @@ namespace BubbleWash.EditorTools
                 F(m, "_CausticAmount", 0.28f); F(m, "_Depth", 0.22f); F(m, "_NearBrighten", 0.12f); F(m, "_ReflectBoost", 0.45f); F(m, "_CenterGlow", 0.06f);
                 // light pools under the decor chevrons: same period / scale as SceneBuilder.BuildDecorChevrons
                 F(m, "_ChevronStart", SceneBuilder.ChevronStart); F(m, "_ChevronSpacing", SceneBuilder.ChevronSpacing);
-                F(m, "_ChevronScale", SceneBuilder.ChevronScale); F(m, "_ChevronWidth", SceneBuilder.ChevronWidth); F(m, "_ChevronGlow", 0.55f);
+                F(m, "_ChevronScale", SceneBuilder.ChevronScale); F(m, "_ChevronWidth", SceneBuilder.ChevronWidth); F(m, "_ChevronGlow", 0.75f);
             });
             Mat("M_RailRainbow", "BWK/Soft", m =>
             {
@@ -56,7 +56,7 @@ namespace BubbleWash.EditorTools
                 // round 3: turquoise (#3ef0e6) with a mint core; white-cyan (#e0fff8) and hotter right under / behind the mascot
                 // round 3b: A = light cyan toward the edges, B = turquoise core, C = crisp white-cyan rim; less white-hot / bloom
                 F(m, "_Mode", 7); C(m, "_ColorA", "#8CF6F2"); C(m, "_ColorB", "#1FCFCB"); C(m, "_ColorC", "#E6FFFD");
-                F(m, "_Glow", 0.31f); F(m, "_StreakAmount", 0.2f); F(m, "_StreakSpeed", 1.6f); F(m, "_ReflectBoost", 0.4f);
+                F(m, "_Glow", 0.36f); F(m, "_StreakAmount", 0.2f); F(m, "_StreakSpeed", 1.6f); F(m, "_ReflectBoost", 0.4f);
                 F(m, "_HotNear", 1.75f); F(m, "_HotFar", 2.05f); F(m, "_HotBoost", 0.3f);
             });
             Mat("M_Foam", "BWK/Soft", m =>
@@ -70,8 +70,9 @@ namespace BubbleWash.EditorTools
             Mat("M_FX_Milk", "BWK/Soft", m =>
             {
                 // milky crown splashes + 3D droplets (Mode 6): creamy white, blue-grey shading, cool water bounce, wet highlights
-                F(m, "_Mode", 6); C(m, "_ColorA", "#FFFFFF"); C(m, "_ShadowColor", "#8DB0EA"); C(m, "_ColorB", "#86CCF4"); F(m, "_Wrap", 0.55f);
-                F(m, "_RimPower", 1.6f); F(m, "_RimStrength", 0.8f); F(m, "_SpecStrength", 1.0f); F(m, "_ReflectBoost", 0.3f); F(m, "_Glow", 0.3f);
+                // round 3b: brighter milky white sheets (reference: white cores, faint blue in thin / shaded parts)
+                F(m, "_Mode", 6); C(m, "_ColorA", "#FFFFFF"); C(m, "_ShadowColor", "#A8C2F0"); C(m, "_ColorB", "#8AD2F6"); F(m, "_Wrap", 0.65f);
+                F(m, "_RimPower", 1.8f); F(m, "_RimStrength", 0.7f); F(m, "_SpecStrength", 1.0f); F(m, "_ReflectBoost", 0.3f); F(m, "_Glow", 0.4f);
                 F(m, "_Wobble", 0.01f); F(m, "_WobbleFreq", 7f);
             });
             Particle("M_FX_Splash", $"{Tex}/T_Splash.png", additive: false, "#FFFFFF");

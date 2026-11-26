@@ -29,7 +29,7 @@ Material:
     - _BumpStrength: 0.5
     - _DstBlend: 0
     - _GlintAmount: 0.5
-    - _Glow: 0.31
+    - _Glow: 0.36
     - _HotBoost: 0.3
     - _HotFar: 2.05
     - _HotNear: 1.75

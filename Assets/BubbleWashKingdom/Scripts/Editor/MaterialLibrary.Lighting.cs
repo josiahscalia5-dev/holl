@@ -44,7 +44,7 @@ namespace BubbleWash.EditorTools
             // channel (~2.1 linear) tonemapped to 0.9 -> pale lemon cores. x5.6 with a half-amber core keeps G ~1.0 linear:
             // core tonemaps to golden amber (~#FCC95E), the grazing edge to deep orange, the bloom halo stays orange.
             EmissiveLook("M_Bulb", "#FF6A10", 5.6f, core: 0.5f, corePower: 1.3f, halo: 1.0f, edgeSat: 0.5f, chase: 1f, chaseMin: 0.75f,
-                pulse: 0.05f, fog: 0.08f, coreColor: "#FFA040", probeDim: 0.3f);
+                pulse: 0.05f, fog: 0.08f, coreColor: "#FF9030", probeDim: 0.3f);
             // end-of-tunnel portal disc (BuildPortal core): radiant warm white-gold, bright but not a screen-filling flare
             EmissiveLook("M_PortalCore", "#FFC860", 3.4f, core: 0.55f, corePower: 2f, halo: 0.3f, edgeSat: 0.3f, pulse: 0.06f, fog: 0.05f);
             // Neon tubes (reference: thick tubes with PALE hot cores - yellow #fbe496, cyan #78eaf5 - inside saturated colour
@@ -81,7 +81,7 @@ namespace BubbleWash.EditorTools
             {
                 // round 3: the m3 glow clipped to a big white blob (p90 #ffffff, mean #eddbe9 vs reference #ba8ed3):
                 // half the strength, warmer pink-lavender, smaller cards (SceneBuilder) -> soft luminous end, not a flare
-                C(m, "_Color", "#E8A0EC"); F(m, "_Strength", 0.5f); F(m, "_Softness", 1f); F(m, "_Core", 1.5f); F(m, "_NearFade", 14f);
+                C(m, "_Color", "#D898F0"); F(m, "_Strength", 0.42f); F(m, "_Softness", 1f); F(m, "_Core", 1.5f); F(m, "_NearFade", 14f);
                 F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
             }, (int)RenderQueue.Transparent - 9);
             Mat("M_VanishCore", "BWK/LightBlob", m =>

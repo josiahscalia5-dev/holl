@@ -27,7 +27,7 @@ Material:
     m_Floats:
     - _CausticAmount: 0.28
     - _CenterGlow: 0.06
-    - _ChevronGlow: 0.55
+    - _ChevronGlow: 0.75
     - _ChevronScale: 1.35
     - _ChevronSpacing: 0.95
     - _ChevronStart: 6.1
@@ -39,7 +39,7 @@ Material:
     - _FlowSpeed: 7.5
     - _Glow: 0.1
     - _NearBrighten: 0.12
-    - _PatchAmount: 0.45
+    - _PatchAmount: 0.6
     - _RainbowAmount: 0.32
     - _ReflectBoost: 0.45
     - _RippleStrength: 0.9
@@ -56,8 +56,8 @@ Material:
     - _DeepColor: {r: 0.043137256, g: 0.2901961, b: 0.65882355, a: 1}
     - _EdgeTint: {r: 0.9019608, g: 0.41568628, b: 0.78431374, a: 1}
     - _ReflectTint: {r: 0.54901963, g: 0.78431374, b: 1, a: 1}
-    - _ShallowColor: {r: 0.101960786, g: 0.5019608, b: 0.78431374, a: 1}
+    - _ShallowColor: {r: 0.11764706, g: 0.5647059, b: 0.8235294, a: 1}
     - _StreakColor: {r: 0.72156864, g: 0.9647059, b: 1, a: 1}
-    - _TurquoiseColor: {r: 0.15294118, g: 0.7058824, b: 0.84705883, a: 1}
+    - _TurquoiseColor: {r: 0.17254902, g: 0.7529412, b: 0.8627451, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

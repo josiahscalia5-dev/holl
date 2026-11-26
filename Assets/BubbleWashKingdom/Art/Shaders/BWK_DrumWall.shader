@@ -68,6 +68,10 @@ Shader "BWK/DrumWall"
         _ShadowTint ("Indigo amount mid-section", Range(0,1)) = 0
         _FlangeWidth ("Raised flange next to rims / rings (m, 0 = off)", Float) = 0
         _FlangeColor ("Flange color", Color) = (0.72, 0.56, 0.95, 1)
+        _DepthTint ("Depth tint (lavender near -> indigo-blue mid distance)", Range(0,1)) = 0
+        _DepthTintColor ("Depth tint color", Color) = (0.3, 0.4, 0.7, 1)
+        _DepthTintStart ("Depth tint start (m from camera)", Float) = 9
+        _DepthTintEnd ("Depth tint full (m from camera)", Float) = 16
     }
     SubShader
     {
@@ -90,6 +94,9 @@ Shader "BWK/DrumWall"
             half _PinkSpillStrength, _SeamHighlight, _ShadowTint;
             float _FlangeWidth;
             half4 _FlangeColor;
+            half _DepthTint;
+            half4 _DepthTintColor;
+            float _DepthTintStart, _DepthTintEnd;
         CBUFFER_END
 
         // Round 3: sections between gold rings (_BandLength = gold spacing) split by one lavender rim at _RimPhase
@@ -281,6 +288,10 @@ Shader "BWK/DrumWall"
                 half rimDist = secLocal >= 0.0 ? min(secLocal, secLen - secLocal) : 0.0;
                 half midW = smoothstep(0.6, max(secLen * 0.5, 0.7), rimDist) * step(0.5, _Pattern);
                 baseCol = lerp(baseCol, _ShadowColor.rgb, _ShadowTint * midW);
+                // r3 v4: reference f_003.00s - the near drum (upper left, ~7-12 m) is lit lavender, the bays further
+                // ahead turn steel-blue / indigo before the portal haze: tint by distance from the camera
+                float camDist = length(_WorldSpaceCameraPos.xyz - i.positionWS);
+                baseCol = lerp(baseCol, _DepthTintColor.rgb, _DepthTint * smoothstep(_DepthTintStart, _DepthTintEnd, camDist));
                 half3 metal = lerp(baseCol, _HighlightColor.rgb, saturate(variation * 0.55 + lip * 0.45));
                 metal = lerp(metal, _HighlightColor.rgb * 1.2, saturate(seamHi * _SeamHighlight * detail));
                 metal *= 1.0 + _CeilingLight * (1.0 - around);

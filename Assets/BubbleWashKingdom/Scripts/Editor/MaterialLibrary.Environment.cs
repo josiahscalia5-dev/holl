@@ -19,7 +19,7 @@ namespace BubbleWash.EditorTools
                 // SMALL ROUNDED OVAL HOLES (~0.36 x 0.25 m, 0.62 m apart around, rows ~1 m apart) with real depth.
                 // Sections: gold ring - bay - one lavender rim at _RimPhase (0.40) - bay - gold ring; _BandOffset /
                 // _BandLength / _RimPhase are rewritten by SceneBuilder.BuildRings (gold every 12.75 m from 71.5 m).
-                C(m, "_BaseColor", "#B4A4C8"); C(m, "_HighlightColor", "#CDB6F0"); C(m, "_HoleColor", "#0A0620");
+                C(m, "_BaseColor", "#BEAED2"); C(m, "_HighlightColor", "#D2BCF2"); C(m, "_HoleColor", "#0A0620");
                 C(m, "_HoleGlow", "#4A2E9A"); F(m, "_Circumference", 26.39f); F(m, "_VTile", 4f);
                 C(m, "_CeilingColor", "#6A9AB8"); F(m, "_CeilingTint", 0.9f); F(m, "_CeilingWidth", 0.55f);
                 F(m, "_Pattern", 1f); F(m, "_BandLength", 12.75f); F(m, "_BandOffset", 71.5f); F(m, "_RimPhase", 0.40f);
@@ -29,10 +29,11 @@ namespace BubbleWash.EditorTools
                 F(m, "_InnerWall", 0.65f);
                 m.SetColor("_GlowColorA", new Color(1.7f, 0.85f, 1.6f)); m.SetColor("_GlowColorB", new Color(0.75f, 1.35f, 1.9f));
                 C(m, "_SeamColor", "#2A1858"); C(m, "_SheenColor", "#F0B0F0"); F(m, "_SheenStrength", 0.05f);
-                F(m, "_Sparkle", 0.25f); F(m, "_CeilingLight", 0.04f); F(m, "_Glow", 0.11f);
+                F(m, "_Sparkle", 0.25f); F(m, "_CeilingLight", 0.04f); F(m, "_Glow", 0.13f);
                 F(m, "_Metallic", 0.5f); F(m, "_Smoothness", 0.52f); F(m, "_HoleBand", 1f);
                 F(m, "_EdgeAO", 0.35f); F(m, "_EdgeAOWidth", 0.5f); F(m, "_HoleAO", 0.45f); F(m, "_HoleAOWidth", 0.07f);
-                C(m, "_ShadowColor", "#3A4A96"); F(m, "_ShadowTint", 0.6f);
+                C(m, "_ShadowColor", "#3A4A96"); F(m, "_ShadowTint", 0.3f);
+                C(m, "_DepthTintColor", "#5A86C0"); F(m, "_DepthTint", 0.6f); F(m, "_DepthTintStart", 10f); F(m, "_DepthTintEnd", 17f);
                 C(m, "_PinkSpill", "#FF6ED2"); F(m, "_PinkSpillStrength", 0.4f); F(m, "_PinkSpillWidth", 0.75f);
                 F(m, "_SeamHighlight", 0.5f); F(m, "_FlangeWidth", 0.2f); C(m, "_FlangeColor", "#9A74DE");
             });

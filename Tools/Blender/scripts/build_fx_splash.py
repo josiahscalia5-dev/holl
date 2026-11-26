@@ -87,9 +87,9 @@ SHEETS = [
          fan=((0.05, 0.30, 0.95), (0.16, 0.30, 0.94), (0.30, 0.30, 0.90), (0.46, 0.34, 0.82)),
          flen=(0.40, 0.72, 0.80, 0.62), flare=0.34, hole=(0.024, 0.090), solid=0.12, fingers=13, roll=0.024, drops=3.0),
     dict(name="skirt",
-         root=((0.44, 0.44), (0.26, 0.66), (0.02, 0.84), (-0.26, 0.96)),
+         root=((0.44, 0.44), (0.30, 0.66), (0.12, 0.84), (-0.06, 0.96)),
          fan=((0.40, 0.22, 0.89), (0.22, 0.26, 0.94), (0.10, 0.30, 0.95), (0.0, 0.32, 0.95)),
-         flen=(0.34, 0.26, 0.19, 0.12), flare=0.22, hole=(0.018, 0.050), solid=0.16, fingers=8, roll=0.013, drops=1.2),
+         flen=(0.32, 0.22, 0.13, 0.07), flare=0.22, hole=(0.018, 0.046), solid=0.16, fingers=7, roll=0.012, drops=1.0),
 ]
 SHEET_STEP = 0.019     # metaball grid spacing on the sheet (m)
 SHEET_R = 0.0125       # sheet ball radius -> ~3.5 cm thick milky sheet
@@ -166,7 +166,17 @@ def sheet_elements(E, sh, rng, tau, salt):
 
     def P(S, V):
         s = S / Stot
-        return sh.point(s, V, 0.025 * math.sin(tw + s * 5.0 + salt))
+        sw = 0.025 * math.sin(tw + s * 5.0 + salt)
+        p = sh.point(s, V, sw)
+        # liquid undulation across the sheet face (the sheet never reads as a flat slab), travelling with the loop
+        a = sh.point(min(1.0, s + 0.01), V, sw) - sh.point(max(0.0, s - 0.01), V, sw)
+        b = sh.point(s, V + 0.01, sw) - sh.point(s, max(0.0, V - 0.01), sw)
+        n = a.cross(b)
+        if n.length > 1e-8:
+            n.normalize()
+            amp = smoothstep(0.0, 0.12, V)
+            p = p + n * amp * (0.020 * math.sin(S * 17.0 + V * 11.0 + tw + salt) + 0.010 * math.sin(S * 31.0 - V * 7.0 - 1.3 * tw))
+        return p
 
     holes = []
     hmin, hmax = sh.hole
