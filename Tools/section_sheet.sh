@@ -18,7 +18,7 @@ ROWS=(
   "S4|f_006.75s|C4_front_window_like_7s_16x9.png 06_tunnel_lane_right_16x9.png"
   "S5|f_008.25s|C2_front_chambers_like_10s_16x9.png"
   "S6|f_011.00s|C5_front_chambers2_like_11s_16x9.png 08_sweep_16x9.png"
-  "S7|f_014.50s|C3_front_portal_like_14s_16x9.png"
+  "S7|f_014.50s|09_portal_16x9.png C3_front_portal_like_14s_16x9.png"
 )
 ALL=()
 for row in "${ROWS[@]}"; do

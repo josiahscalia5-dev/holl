@@ -441,7 +441,15 @@ namespace BubbleWash.EditorTools
                 Vector3 camPos = runner.transform.position + f.forward * 2.6f + f.flatUp * 0.95f;
                 cam.transform.SetPositionAndRotation(camPos, Quaternion.LookRotation(runner.transform.position + f.flatUp * 0.55f - camPos, f.flatUp));
                 cam.fieldOfView = 46f;
+                // A coin / gem right in front of the front camera hid the mascot (2026-11-26): hide track items within 4 m of
+                // the camera for this comparison still only.
+                var hiddenItems = new List<Renderer>();
+                foreach (var it in Object.FindObjectsByType<BubbleWash.TrackItem>(FindObjectsSortMode.None))
+                    if ((it.transform.position - camPos).sqrMagnitude < 16f)
+                        foreach (var r in it.GetComponentsInChildren<Renderer>())
+                            if (r.enabled) { r.enabled = false; hiddenItems.Add(r); }
                 Render(cam, 1280, 720, $"{OutDir}/{name}_16x9.png");
+                foreach (var r in hiddenItems) r.enabled = true;
             }
             rig.aspectOverride = 0f;
             if (brain) brain.enabled = true;
