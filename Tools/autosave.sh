@@ -34,6 +34,19 @@ snapshot() {
       echo "$(date '+%F %T') kept private (not published): $p" >> "$LOG"
     fi
   done < <(GIT_INDEX_FILE="$INDEX" git ls-files)
+  # Exact copies of private reference material (frames, videos, correction sheets, owner uploads) stay local under ANY
+  # name or folder: compare blob hashes against everything in Reference/ and the Claude upload folder. Archives never go.
+  local reflist; reflist=$(mktemp)
+  find Reference "$HOME/.claude/uploads" -type f 2>/dev/null | grep -iE '\.(png|jpe?g|webp|gif|bmp|tga|exr|tiff?|mp4|mov|webm|mkv|avi|m4v|zip)$' \
+    | git hash-object --stdin-paths 2>/dev/null | sort -u > "$reflist"
+  GIT_INDEX_FILE="$INDEX" git ls-files -s | awk -v F="$reflist" -v Q="'" '
+      BEGIN { while ((getline h < F) > 0) bad[h] = 1 }
+      { split($0, a, "\t"); split(a[1], m, " "); n = tolower(a[2]); if ((m[2] in bad) || n ~ /\.(zip|7z|rar)$/) print a[2] }' \
+    | while IFS= read -r p; do
+        GIT_INDEX_FILE="$INDEX" git rm -q --cached --ignore-unmatch -- "$p"
+        echo "$(date '+%F %T') kept private (reference copy or archive): $p" >> "$LOG"
+      done
+  rm -f "$reflist"
   local tree parent commit
   tree=$(GIT_INDEX_FILE="$INDEX" git write-tree) || return 1
   parent=$(git rev-parse -q --verify $PUBLIC_REF || git rev-parse $BASE)
