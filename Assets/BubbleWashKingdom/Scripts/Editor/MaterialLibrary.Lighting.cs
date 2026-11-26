@@ -81,12 +81,12 @@ namespace BubbleWash.EditorTools
             {
                 // round 3: the m3 glow clipped to a big white blob (p90 #ffffff, mean #eddbe9 vs reference #ba8ed3):
                 // half the strength, warmer pink-lavender, smaller cards (SceneBuilder) -> soft luminous end, not a flare
-                C(m, "_Color", "#FFB8D8"); F(m, "_Strength", 0.75f); F(m, "_Softness", 1f); F(m, "_Core", 1.5f); F(m, "_NearFade", 14f);
+                C(m, "_Color", "#F8A8E0"); F(m, "_Strength", 0.55f); F(m, "_Softness", 1f); F(m, "_Core", 1.5f); F(m, "_NearFade", 14f);
                 F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
             }, (int)RenderQueue.Transparent - 9);
             Mat("M_VanishCore", "BWK/LightBlob", m =>
             {
-                C(m, "_Color", "#FFE2C4"); F(m, "_Strength", 1.25f); F(m, "_Softness", 1f); F(m, "_Core", 2.2f); F(m, "_NearFade", 14f);
+                C(m, "_Color", "#FFE2C4"); F(m, "_Strength", 1.05f); F(m, "_Softness", 1f); F(m, "_Core", 2.2f); F(m, "_NearFade", 14f);
                 F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
             }, (int)RenderQueue.Transparent - 8);
 
@@ -94,7 +94,7 @@ namespace BubbleWash.EditorTools
             Mat("M_ContactShadow", "BWK/LightBlob", m =>
             {
                 // round 3 (owner: "seated on the slide, not floating"): deeper, broader violet-blue occlusion
-                C(m, "_Color", "#24145A"); F(m, "_Strength", 0.92f); F(m, "_Softness", 0.9f); F(m, "_Core", 1.1f);
+                C(m, "_Color", "#24145A"); F(m, "_Strength", 0.82f); F(m, "_Softness", 0.9f); F(m, "_Core", 1.2f);
                 F(m, "_Mode", 0f); F(m, "_SrcBlend", (float)BlendMode.DstColor); F(m, "_DstBlend", (float)BlendMode.Zero);
             }, (int)RenderQueue.Transparent - 20);
         }

@@ -43,9 +43,9 @@ QUICK = os.environ.get("BWK_QUICK", "") == "1"
 # above the slide, stripe top ~0.87 m, pom-pom ~0.47 m across with its top ~1.38 m, body ~0.90 m wide below the cuff,
 # paws at cuff height ~0.64 m out from the centre, feet centred ~0.30 m out and ~0.30 m behind, 0.17 m up.
 BODY_C = Vector((0.0, 0.0, 0.53))          # body centre (rest; the seated pose lowers it 5 cm)
-BODY_W, BODY_D, BODY_H = 0.80, 0.79, 0.92  # width, depth, height: an upright plush pear, so the fluffy back below the
+BODY_W, BODY_D, BODY_H = 0.85, 0.82, 0.92  # width, depth, height: an upright plush pear, so the fluffy back below the
                                            # beanie is the dominant mass (round 3: narrower, the hat overhangs it)
-BODY_EGG = 0.24                            # >0: fuller toward the bottom (soft pear: narrow under the hat, round seat)
+BODY_EGG = 0.20                            # >0: fuller toward the bottom (soft pear: narrow under the hat, round seat)
 FACE_DZ = BODY_C.z - 0.57                  # face landmarks were designed for a body centre at 0.57
 BODY_SEG = 16                              # quad sphere: 6*16*16 quads = 3072 tris
 FUR_U, FUR_V = 2.64, 1.32                  # metres per fur UV unit (around, along)
@@ -65,24 +65,24 @@ HAT_RS = 1.10                              # round 3: cuff + stripe radii x1.10 
 # reference (rear view, W_h = cuff width): folded ribbed brim ~0.07 H tall and wider than the body (overhangs it);
 # thick pale ribbed stripe ~0.045 H knitted into the crown; tall round ribbed crown (~0.9 W_h wide at its base);
 # pom-pom ~0.45 W_h sitting on the crown top.
-CUFF_STRETCH = 1.25                        # brim taller (ref ~0.07 H): profile u stretched about its bottom (0.140)
+CUFF_STRETCH = 1.45                        # brim taller (ref ~0.07 H): profile u stretched about its bottom (0.140)
 CUFF_PROFILE = [(0.140 + (u - 0.140) * CUFF_STRETCH, r * HAT_RS, w) for (u, r, w) in [  # (u, r, rib weight): roll under -> ribbed face -> top fold
     (0.148, 0.432, 0.0), (0.140, 0.448, 0.1), (0.144, 0.460, 0.5), (0.157, 0.466, 0.9), (0.183, 0.469, 1.0),
     (0.215, 0.470, 1.0), (0.248, 0.468, 1.0), (0.272, 0.463, 0.9), (0.287, 0.454, 0.5), (0.295, 0.443, 0.2),
     (0.295, 0.432, 0.0), (0.288, 0.424, 0.0)]]
-STRIPE_U = (0.332, 0.440)                  # thick pale ribbed band above the folded brim (same surface as the crown)
-DOME_U0, DOME_H, DOME_R, DOME_EXP = 0.448, 0.285, 0.452, 2.0    # tall ROUND dome (elliptical profile)
+STRIPE_U = (0.364, 0.468)                  # thick pale ribbed band above the folded brim (same surface as the crown)
+DOME_U0, DOME_H, DOME_R, DOME_EXP = 0.476, 0.215, 0.428, 2.0    # tall ROUND dome (elliptical profile)
 TOP_STRIPE_PHI, TOP_STRIPE_HW = 47.0, 5.5  # extra pale stripe on the dome front (deg of the dome angle), fades out
 TOP_STRIPE_FULL, TOP_STRIPE_END = 45.0, 78.0    # ... over the front only (deg from the front): never seen from behind
 STAR_U, STAR_PHI, STAR_ROT = 0.192, 33.0, -12.0  # star badge on the cuff, 33 deg toward HIS LEFT (+X)
 STAR_RO, STAR_RI = 0.072, 0.032
-POMPOM_R, POMPOM_LIFT = 0.172, 0.34        # pom-pom CORE radius (dark shell-fur ball); centre this many radii above
+POMPOM_R, POMPOM_LIFT = 0.150, 0.05        # pom-pom CORE radius (dark shell-fur ball); centre this many radii above
 POMPOM_SEG = 9                             # the dome top (it sinks a little into the crown)
 # round 3 starburst: real radial yarn fibres (geometry) around the dark core, dark violet roots -> light lilac tips.
 # Material M_PawPad (BWK/Character fabric mode = vertex colour x white), Col = raw shader multipliers (see PAD_PINK).
-POM_FIBRES = 2400                          # fibre count over the whole sphere (the ones pointing into the hat are skipped)
-POM_FIB_IN, POM_FIB_LEN = 0.80, (0.045, 0.086)   # root depth (x core radius) and length range beyond the core
-POM_FIB_W = (0.0080, 0.0024)               # root / tip half width (triangular cross-section, tapering)
+POM_FIBRES = 2200                          # fibre count over the whole sphere (the ones pointing into the hat are skipped)
+POM_FIB_IN, POM_FIB_LEN = 0.80, (0.040, 0.078)   # root depth (x core radius) and length range beyond the core
+POM_FIB_W = (0.0075, 0.0022)               # root / tip half width (triangular cross-section, tapering)
 POM_COL_ROOT, POM_COL_MID, POM_COL_TIP = (0.24, 0.08, 0.40), (0.46, 0.22, 0.68), (0.84, 0.68, 0.98)
 
 # ------------------------------------------------------------------ face (unchanged design, follows the body centre)
@@ -102,12 +102,12 @@ ARM_UP, ARM_BACK = 44.0, 0.22              # chord direction used by the rig (re
 # round 3: SHORT, THICK stubby arms bent at the shoulder: the upper arm runs out almost level UNDER the wide brim
 # (hidden by it from the rear camera), then the forearm/mitt rises ~58 deg outside the brim edge, so the paws sit at
 # brim/stripe height outside the hat silhouette as in the reference, with no hat penetration (no cuff-solve lowering).
-ARM_A0, ARM_A1, ARM_B0, ARM_B1 = 6.0, 60.0, 0.06, 0.30   # elevation (deg) / back component: upper arm, forearm
-ARM_BEND = (0.11, 0.25)                    # arc-length range of the shoulder bend
+ARM_A0, ARM_A1, ARM_B0, ARM_B1 = 6.0, 70.0, 0.06, 0.30   # elevation (deg) / back component: upper arm, forearm
+ARM_BEND = (0.09, 0.23)                    # arc-length range of the shoulder bend
 ARM_SEG = 20
-ARM_PROFILE = [(-0.10, 0.082), (-0.05, 0.094), (0.0, 0.100), (0.08, 0.103), (0.16, 0.106), (0.24, 0.112),
-               (0.300, 0.118), (0.340, 0.118), (0.372, 0.108), (0.395, 0.089), (0.411, 0.063), (0.420, 0.033),
-               (0.423, 0.0)]
+ARM_PROFILE = [(-0.10, 0.076), (-0.05, 0.087), (0.0, 0.092), (0.08, 0.094), (0.16, 0.097), (0.24, 0.103),
+               (0.295, 0.108), (0.332, 0.108), (0.362, 0.099), (0.384, 0.082), (0.399, 0.058), (0.407, 0.030),
+               (0.410, 0.0)]
 ARM_TIP_FROM, ARM_TIP_TO, ARM_TIP_CREAM = 0.26, 0.40, 0.30   # Col.a fades toward the cream coat at the paw tip
 PALM_FACING = Vector((0.0, -0.55, 0.85))   # palm side (front/up): only used as the seam-free side reference
 
@@ -891,9 +891,9 @@ def build_beanie():
     # round 3: the thick pale stripe and the crown are ONE knitted surface (no tube step between them): the stripe
     # rises almost vertically out from behind the brim's top fold and the crown continues it into a tall round dome
     S = HAT_RS
-    prof = [(0.250, 0.412 * S, STRIPE), (0.300, 0.436 * S, STRIPE), (STRIPE_U[0], 0.445 * S, STRIPE),
-            (0.365, 0.446 * S, STRIPE), (0.398, 0.441 * S, STRIPE), (0.424, 0.432 * S, STRIPE),
-            (STRIPE_U[1], 0.422 * S, KNIT), (DOME_U0, DOME_R, KNIT)]
+    prof = [(0.250, 0.412 * S, STRIPE), (0.310, 0.436 * S, STRIPE), (STRIPE_U[0], 0.445 * S, STRIPE),
+            (0.392, 0.444 * S, STRIPE), (0.420, 0.437 * S, STRIPE), (0.446, 0.423 * S, STRIPE),
+            (STRIPE_U[1], 0.405 * S, KNIT), (DOME_U0, DOME_R, KNIT)]
     for phi in (8.0, 16.0, 24.0, 32.0, 40.0, 48.0, 56.0, 64.0, 71.0, 78.0, 84.0):
         u, r = dome_ur(phi)
         prof.append((u, r, KNIT))

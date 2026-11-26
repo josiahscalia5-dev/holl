@@ -44,6 +44,8 @@ Material:
     - _SilhouetteFade: 0.3
     - _StaticMode: 1
     - _Thinning: 0
+    - _TuftAmount: 0
+    - _TuftScale: 24
     - _Underfur: 0.8
     - _UseVertexTint: 1
     - _Wrap: 0.6

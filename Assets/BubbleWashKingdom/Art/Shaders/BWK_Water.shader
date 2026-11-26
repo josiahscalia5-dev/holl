@@ -40,6 +40,10 @@ Shader "BWK/Water"
         _ChevronScale ("Chevron Scale", Float) = 1.5
         _ChevronWidth ("Chevron Width Factor", Float) = 1
         _ChevronGlow ("Chevron Light Pool", Range(0,3)) = 1
+        _TurquoiseColor ("Turquoise Patch Color", Color) = (0.2, 0.75, 0.87, 1)
+        _PatchAmount ("Turquoise Patches", Range(0,1)) = 0
+        _DetailStrength ("Detail Ripple Normals", Range(0,2)) = 0
+        _ReflectTint ("Probe Reflection Tint", Color) = (1, 1, 1, 1)
     }
     SubShader
     {
@@ -54,6 +58,8 @@ Shader "BWK/Water"
             half _CausticAmount, _Depth, _NearBrighten, _ReflectBoost, _CenterGlow;
             float _ChevronStart, _ChevronSpacing, _ChevronScale, _ChevronWidth;
             half _ChevronGlow;
+            half4 _TurquoiseColor, _ReflectTint;
+            half _PatchAmount, _DetailStrength;
         CBUFFER_END
 
         // flowing height field: long swells stretched along the flow + a finer, faster chop
@@ -151,6 +157,16 @@ Shader "BWK/Water"
                 float hx = WaterHeight(m + float2(e, 0), t);
                 float hy = WaterHeight(m + float2(0, e), t);
                 float2 grad = float2(hx - h0, hy - h0) / e * _RippleStrength * 0.1;
+                // round 3b: two finer ripple layers scrolling at different speeds / angles (flow-map look, no tiling grid)
+                if (_DetailStrength > 0.001)
+                {
+                    float2 q1 = float2(m.x * 3.7 + m.y * 0.45, (m.y - t * _FlowSpeed * 1.08) * 1.45);
+                    float2 q2 = float2(m.x * 5.9 - m.y * 0.35 + 9.3, (m.y - t * _FlowSpeed * 0.86) * 2.3 + 4.1);
+                    float d0 = BWK_ValueNoise(q1) + 0.6 * BWK_ValueNoise(q2);
+                    float dx = BWK_ValueNoise(q1 + float2(0.08, 0)) + 0.6 * BWK_ValueNoise(q2 + float2(0.08, 0));
+                    float dy = BWK_ValueNoise(q1 + float2(0, 0.08)) + 0.6 * BWK_ValueNoise(q2 + float2(0, 0.08));
+                    grad += float2(dx - d0, dy - d0) * _DetailStrength;
+                }
                 half3 n = normalize(i.normalWS - (i.tangentWS.xyz * grad.x + bitangent * grad.y));
 
                 float flowY = m.y - t * _FlowSpeed;
@@ -167,6 +183,10 @@ Shader "BWK/Water"
 
                 // ---- body colour: deep blue at the walls -> turquoise centre, swell variation
                 half3 body = lerp(_DeepColor.rgb, _ShallowColor.rgb, saturate(centre * 0.8 + (h0 - 0.5) * 0.7 + 0.12));
+                // slow flowing turquoise patches over the deep blue (reference: blue -> turquoise variation, no bands)
+                half patch = smoothstep(0.42, 0.85, BWK_ValueNoise(float2(md.x * 0.85 + 3.1, (md.y - t * _FlowSpeed * 0.8) * 0.16))
+                                                     * 0.7 + BWK_ValueNoise(float2(md.x * 2.1, flowD * 0.5 + 1.7)) * 0.3);
+                body = lerp(body, _TurquoiseColor.rgb, patch * _PatchAmount * (0.35 + 0.65 * centre));
                 body += _CausticColor.rgb * (caustic * _CausticAmount + deepStreak * 0.35) * (0.3 + 0.7 * centre) * 0.55;
                 // brighter, more translucent where the camera looks down into the water (near the camera)
                 half ndv = saturate(dot(n, viewDir));
@@ -216,7 +236,7 @@ Shader "BWK/Water"
                 // ---- extra glossy probe reflection (tunnel, rings, bulbs) on top of the PBR reflection
                 half fres = BWK_Fresnel(n, viewDir, 4.0);
                 half3 refl = GlossyEnvironmentReflection(reflect(-viewDir, n), i.positionWS, 0.06h, 1.0h, GetNormalizedScreenSpaceUV(i.positionCS));
-                emission += refl * (0.12 + fres * 0.88) * _ReflectBoost * (1.0 - foam);
+                emission += refl * _ReflectTint.rgb * (0.12 + fres * 0.88) * _ReflectBoost * (1.0 - foam);
 
                 return BWK_PBR(i.positionWS, i.positionCS, n, viewDir, albedo, 0.0, smooth, 1.0, emission, 1.0, i.fog);
             }

@@ -28,13 +28,14 @@ Material:
     - _BandLength: 12.75
     - _BandOffset: 71.5
     - _Bevel: 0.7
-    - _CeilingLight: 0.1
-    - _CeilingTint: 0.8
-    - _CeilingWidth: 0.42
+    - _CeilingLight: 0.04
+    - _CeilingTint: 0.85
+    - _CeilingWidth: 0.5
     - _Circumference: 26.39
     - _EdgeAO: 0.35
     - _EdgeAOWidth: 0.5
-    - _Glow: 0.15
+    - _FlangeWidth: 0.2
+    - _Glow: 0.11
     - _GlowChance: 0.04
     - _HoleAO: 0.45
     - _HoleAOWidth: 0.07
@@ -48,26 +49,27 @@ Material:
     - _Metallic: 0.6
     - _PanelLength: 3
     - _Pattern: 1
-    - _PinkSpillStrength: 0.35
-    - _PinkSpillWidth: 0.7
+    - _PinkSpillStrength: 0.45
+    - _PinkSpillWidth: 0.85
     - _PlainBack: 0.85
     - _PlainFront: 0.75
     - _RimPhase: 0.4
     - _RowPitch: 1
     - _Rows: 5
     - _SeamHighlight: 0.5
-    - _ShadowTint: 0.45
-    - _SheenStrength: 0.22
+    - _ShadowTint: 0.55
+    - _SheenStrength: 0.1
     - _SlotLength: 0.36
     - _SlotPitch: 0.62
     - _SlotVariation: 0.15
     - _SlotWidth: 0.25
-    - _Smoothness: 0.75
+    - _Smoothness: 0.68
     - _Sparkle: 0.25
     - _VTile: 4
     m_Colors:
     - _BaseColor: {r: 0.6666667, g: 0.6117647, b: 0.78431374, a: 1}
-    - _CeilingColor: {r: 0.4862745, g: 0.5803922, b: 0.83137256, a: 1}
+    - _CeilingColor: {r: 0.41568628, g: 0.50980395, b: 0.8, a: 1}
+    - _FlangeColor: {r: 0.6039216, g: 0.45490196, b: 0.87058824, a: 1}
     - _GlowColorA: {r: 1.7, g: 0.85, b: 1.6, a: 1}
     - _GlowColorB: {r: 0.75, g: 1.35, b: 1.9, a: 1}
     - _HighlightColor: {r: 0.8039216, g: 0.7137255, b: 0.9411765, a: 1}
@@ -75,7 +77,7 @@ Material:
     - _HoleGlow: {r: 0.2901961, g: 0.18039216, b: 0.6039216, a: 1}
     - _PinkSpill: {r: 1, g: 0.43137255, b: 0.8235294, a: 1}
     - _SeamColor: {r: 0.16470589, g: 0.09411765, b: 0.34509805, a: 1}
-    - _ShadowColor: {r: 0.23529412, g: 0.20392157, b: 0.53333336, a: 1}
+    - _ShadowColor: {r: 0.22352941, g: 0.22352941, b: 0.5568628, a: 1}
     - _SheenColor: {r: 0.9411765, g: 0.6901961, b: 0.9411765, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

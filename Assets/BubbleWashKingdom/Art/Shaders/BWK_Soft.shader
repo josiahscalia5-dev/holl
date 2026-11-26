@@ -248,18 +248,20 @@ Shader "BWK/Soft"
                     // (abs around 0.5), so the look survives any UV flip.
                     half e = saturate(abs(i.uv.x - 0.5) * 2.0);          // 0 arm centre line .. 1 outer / inner edge
                     half along = saturate(abs(i.uv.y - 0.5) * 2.0);      // 0 apex .. 1 arm ends
-                    half core = 1.0 - smoothstep(0.1, 0.85, e);
-                    half3 col = lerp(_ColorB.rgb, _ColorA.rgb, core * 0.8);
-                    half rim = smoothstep(0.8, 0.88, e) * (1.0 - smoothstep(0.92, 0.98, e));   // thin bright line inside the edge
-                    col = lerp(col, _ColorC.rgb, rim * 0.55);
+                    // round 3b (owner: clean glowing arrow IN the water, not a teal slab): turquoise core (_ColorB), lighter
+                    // cyan toward the edges (_ColorA), crisp bright rim line (_ColorC), flat-lit walls = part of the rim
+                    half core = 1.0 - smoothstep(0.15, 0.8, e);
+                    half3 col = lerp(_ColorA.rgb, _ColorB.rgb, core);
+                    half rim = smoothstep(0.78, 0.86, e) * (1.0 - smoothstep(0.93, 0.99, e));   // thin bright line inside the edge
+                    col = lerp(col, _ColorC.rgb, rim * 0.85);
                     float pulse = frac(along * 0.8 + _Time.y * _StreakSpeed * 0.5);            // light racing toward the apex
                     half beam = smoothstep(0.0, 0.15, pulse) * smoothstep(0.5, 0.15, pulse);
                     col += _ColorC.rgb * beam * _StreakAmount * (0.3 + 0.7 * core);
                     // lights up white-cyan as it passes under the mascot (the camera rides a fixed distance behind him)
                     half hot = smoothstep(_HotFar, _HotNear, distance(i.positionWS, _WorldSpaceCameraPos));
-                    col = lerp(col, _ColorC.rgb * 1.15 + _ColorA.rgb * 0.25, hot * (0.55 + 0.45 * core));
+                    col = lerp(col, _ColorC.rgb * 1.05 + _ColorA.rgb * 0.15, hot * (0.3 + 0.3 * core));
                     half top = smoothstep(0.5, 0.85, n.y);                                      // 1 on the top face
-                    col = lerp(_ColorB.rgb * (0.55 + 0.5 * hot), col, top);                    // side walls: deeper teal
+                    col = lerp(lerp(_ColorA.rgb, _ColorC.rgb, 0.6), col, top);                 // walls read as the bright rim
                     half fr = BWK_Fresnel(n, v, 4.0);
                     col += GlossyEnvironmentReflection(reflect(-v, n), i.positionWS, 0.05h, 1.0h, GetNormalizedScreenSpaceUV(i.positionCS)) * (0.05 + fr * 0.4) * _ReflectBoost;
                     col *= _Glow * 4.0 * (1.0 + hot * _HotBoost);

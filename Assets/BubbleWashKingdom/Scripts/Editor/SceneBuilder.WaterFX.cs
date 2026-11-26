@@ -241,17 +241,26 @@ namespace BubbleWash.EditorTools
                 lg.RecalculateBounds();
                 chunk++;
             }
+            // round 3b (reference f_003.00s, owner sheet 03): in the hero view the soft cumulus banks sit on the LEFT bank ahead
+            // (screen x 0-.25, y .35-.50) and the right bank ahead stays clear (the track bends right after the mirror, so
+            // the right bank is in full view there). Same rng draws either way: the rest of the foam layout never shifts.
+            float heroD = 0f;
             void Place(TrackFrame f, float lat, float h, float sc, int vi)
             {
                 // clusters are long along asset X: turn them to run along the track so they never cover the water
                 var rot = f.FlatRotation * Quaternion.Euler(0, 90f + Rand(-20f, 20f) + (r.NextDouble() < 0.5 ? 180f : 0f), 0);
-                var m = Matrix4x4.TRS(f.FlatPoint(lat, h), rot, new Vector3(sc, sc * Rand(0.9f, 1.15f), sc));
+                float yS = Rand(0.9f, 1.15f);
+                bool heroWin = heroD > HeroDistance - 1.5f && heroD < HeroDistance + 15f;
+                if (heroWin && lat > 0f) return;                        // right bank clear in the hero view
+                if (heroWin) { sc *= 1.3f; h += 0.12f; }                  // fuller, taller left banks
+                var m = Matrix4x4.TRS(f.FlatPoint(lat, h), rot, new Vector3(sc, sc * yS, sc));
                 comb0.Add(lod0[vi], m);
                 comb1.Add(lod1[Mathf.Min(vi, lod1.Length - 1)], m);
             }
             for (float d = 0f; d < L; d += (d < tunnelStart ? 1.9f : 1.75f))
             {
                 var f = track.Evaluate(d);
+                heroD = d;
                 bool hall = d < tunnelStart;
                 foreach (int side in new[] { -1, 1 })
                 {
@@ -578,7 +587,8 @@ namespace BubbleWash.EditorTools
             {
                 if (boosts.Any(b => Mathf.Abs(b - d) < 1.4f)) continue;
                 var f = track.Evaluate(d);
-                comb.Add(chevron, Matrix4x4.TRS(f.Point(0, 0.03f), f.Rotation, new Vector3(ChevronScale * ChevronWidth, 1f, ChevronScale)));
+                // flattened (y .3): a glowing arrow lying IN the water, not a thick teal slab (round 3b)
+                comb.Add(chevron, Matrix4x4.TRS(f.Point(0, 0.03f), f.Rotation, new Vector3(ChevronScale * ChevronWidth, 0.3f, ChevronScale)));
                 if (d - chunkStart > ChunkLength) { comb.Flush(holder, $"Chevrons_{chunk++:00}", !preview); chunkStart = d; }
             }
             comb.Flush(holder, $"Chevrons_{chunk:00}", !preview);

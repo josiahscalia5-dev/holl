@@ -65,13 +65,14 @@ ELBOW_R, ELBOW_SEGS = 0.8, 12
 RING_SEGS = 84                  # 3 segments per bulb pitch (smooth silhouette at the hero distance)
 RING_BULBS = 28                 # reference f_003.00s: ~24-28 warm bulbs per ring (measured at the first two gold rings)
 RG_BACK_Y, RG_OUT = -0.12, 4.26           # back face; outer surface buried in the drum wall (r 4.2)
-RG_IN_FACE = 3.66                         # inner face (toward the axis) under the inner bead
-RG_IB_C, RG_IB_R = (3.73, 0.03), 0.085    # inner polished bead: apex rho 3.645, front y 0.115 (m1 v2: fatter band)
+RG_IN_FACE = 3.53                         # inner face (toward the axis) under the inner bead (r3: thicker band)
+RG_IB_C, RG_IB_R = (3.60, 0.035), 0.10    # inner polished bead: apex rho 3.50, front y 0.135 (r3: band 0.70 m, was 0.555;
+                                          # reference f_003.00s ring 1 band ~57 px at 4K vs ours ~45 px)
 RG_CORNER_R = 0.05                        # rounded back-inner corner
 RG_FLOOR_Y = 0.05                         # bulb trough rim height
 RG_TROUGH = 0.02                          # trough depth below RG_FLOOR_Y at the channel centre
 RG_OB_C, RG_OB_R = (4.12, 0.02), 0.075    # outer bead against the wall: front y 0.095
-RG_BULB_RHO = 3.932                       # trough centre line (CHECK printed by ring_parts)
+RG_BULB_RHO = 3.875                       # trough centre line (CHECK printed by ring_parts: r3 trough 3.699..4.051)
 BULB_R2, BULB_H2 = 0.100, 0.100           # fat warm marquee bulbs (lead m1: reference bulbs read big)
 BULB_Y = RG_FLOOR_Y + 0.06                # bulb centre: lower half sunk in the cup
 BULB_TILT = math.radians(10.0)            # bulbs lean toward the tunnel axis (gameplay camera)
@@ -1084,7 +1085,11 @@ def main():
     bpy.context.view_layer.update()
 
     check_slide_profile(assets["slide"])
+    # BWK_TRACK_ONLY=ring,rim (env) re-exports only those FBX files (no churn on unchanged modules)
+    only = [k for k in os.environ.get("BWK_TRACK_ONLY", "").split(",") if k]
     for key in ("slide", "tunnel", "pipe", "coupler", "elbow", "ring", "rim", "bulb"):
+        if only and key not in only:
+            continue
         export(assets[key])
     end_p, end_t = elbow_frames()[-1][0], Vector((0.0, 0.0, 1.0))
     print("CHECK elbow end centre (%.3f, %.3f, %.3f) direction (%.0f, %.0f, %.0f)" % (*end_p, *end_t))
