@@ -13,11 +13,11 @@ namespace BubbleWash.EditorTools
         {
             // Polished jewellery gold: deep amber undersides -> rich yellow body -> pale hot highlights, a view-dependent
             // gradient across flat ring faces, partly gold-tinted reflections of the violet tunnel and sharp bulb glints.
-            GoldLook("M_Gold", high: "#FFF2BE", mid: "#EDA524", low: "#5C2806", rim: "#FFD88C", band: "#FFE6A0",
-                brightness: 1.0f, glow: 0.05f, contrast: 1.7f, viewGradient: 1f, env: 0.6f, envTint: 0.55f, envRough: 0.22f,
+            GoldLook("M_Gold", high: "#FFF6D0", mid: "#F5B42A", low: "#7A3A08", rim: "#FFE09A", band: "#FFEDB0",
+                brightness: 1.25f, glow: 0.06f, contrast: 1.6f, viewGradient: 1f, env: 0.45f, envTint: 0.55f, envRough: 0.22f,
                 specPower: 150f, specStrength: 2.2f, glints: 2.4f, sparkle: 0f, fog: 0.8f, highlightSize: 8f);
-            GoldLook("M_GoldDark", high: "#FFDF96", mid: "#C47A16", low: "#3E1A03", rim: "#FFC873", band: "#FFD98A",
-                brightness: 0.95f, glow: 0.03f, contrast: 1.6f, viewGradient: 1f, env: 0.5f, envTint: 0.65f, envRough: 0.3f,
+            GoldLook("M_GoldDark", high: "#FFE6A6", mid: "#D88E1C", low: "#552406", rim: "#FFD080", band: "#FFDF98",
+                brightness: 1.1f, glow: 0.03f, contrast: 1.6f, viewGradient: 1f, env: 0.5f, envTint: 0.65f, envRough: 0.3f,
                 specPower: 120f, specStrength: 1.8f, glints: 2f, sparkle: 0f, fog: 0.8f, highlightSize: 8f);
             // big premium paw coins: saturated yellow gold, amber rim, crisp highlights and a little twinkle as they spin
             GoldLook("M_Coin", high: "#FFF6D2", mid: "#FFBE1C", low: "#8C4206", rim: "#FFE290", band: "#FFEBA8",
@@ -30,7 +30,7 @@ namespace BubbleWash.EditorTools
 
             // Warm amber marquee bulbs: a moderately hot, fully saturated amber source so the Neutral tonemapper keeps the hue
             // (amber-yellow body, whiter centre from _CoreWhite) and the untinted bloom spreads an amber halo.
-            EmissiveLook("M_Bulb", "#FF9A1E", 5.5f, core: 0.5f, corePower: 5f, halo: 0.25f, edgeSat: 0.8f, chase: 1f, chaseMin: 0.7f, pulse: 0.05f, fog: 0.08f);
+            EmissiveLook("M_Bulb", "#FF8C0A", 6f, core: 0.28f, corePower: 6f, halo: 0.25f, edgeSat: 0.8f, chase: 1f, chaseMin: 0.7f, pulse: 0.05f, fog: 0.08f);
             // end-of-tunnel portal disc (BuildPortal core): radiant warm white-gold, bright but not a screen-filling flare
             EmissiveLook("M_PortalCore", "#FFC860", 3.4f, core: 0.55f, corePower: 2f, halo: 0.3f, edgeSat: 0.3f, pulse: 0.06f, fog: 0.05f);
             // Saturated neon tubes (reference: thick YELLOW / CYAN / PINK tubes, white-hot only in a thin core line): pure
@@ -42,9 +42,9 @@ namespace BubbleWash.EditorTools
             EmissiveLook("M_Neon_Yellow", "#FFC000", 2.9f, core: 0.5f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
 
             // soft coloured glow cards behind every neon star (additive BWK/LightBlob): the star's light spilling over the wall
-            StarGlow("M_StarGlow_Yellow", "#FFAE1A", 0.6f);
-            StarGlow("M_StarGlow_Cyan", "#14C6FF", 0.62f);
-            StarGlow("M_StarGlow_Pink", "#FF2EB2", 0.62f);
+            StarGlow("M_StarGlow_Yellow", "#FFAE1A", 0.85f);
+            StarGlow("M_StarGlow_Cyan", "#14C6FF", 0.85f);
+            StarGlow("M_StarGlow_Pink", "#FF2EB2", 0.85f);
 
             // soft violet contact shadow under the mascot (multiply card, BWK/LightBlob)
             Mat("M_ContactShadow", "BWK/LightBlob", m =>
@@ -65,7 +65,7 @@ namespace BubbleWash.EditorTools
 
         static void GoldLook(string name, string high, string mid, string low, string rim, string band, float brightness, float glow,
             float contrast, float viewGradient, float env, float envTint, float envRough, float specPower, float specStrength,
-            float glints, float sparkle, float fog, float highlightSize, float sparkleScale = 18f, float lightInfluence = 0.35f)
+            float glints, float sparkle, float fog, float highlightSize, float sparkleScale = 18f, float lightInfluence = 0.35f, float streak = 0.9f)
         {
             Mat(name, "BWK/Gold", m =>
             {
@@ -74,7 +74,7 @@ namespace BubbleWash.EditorTools
                 F(m, "_EnvReflect", env); F(m, "_EnvTint", envTint); F(m, "_EnvRoughness", envRough);
                 F(m, "_SpecPower", specPower); F(m, "_SpecStrength", specStrength); F(m, "_GlintStrength", glints);
                 F(m, "_Sparkle", sparkle); F(m, "_SparkleScale", sparkleScale); F(m, "_FogAmount", fog);
-                F(m, "_HighlightSize", highlightSize); F(m, "_BandSharpness", 18f); F(m, "_LightInfluence", lightInfluence);
+                F(m, "_HighlightSize", highlightSize); F(m, "_BandSharpness", 18f); F(m, "_LightInfluence", lightInfluence); F(m, "_StreakStrength", streak); F(m, "_StreakHeight", 0.6f);
             });
         }
 

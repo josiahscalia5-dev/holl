@@ -140,6 +140,7 @@ namespace BubbleWash.EditorTools
         /// <summary>Track distance with the most collectibles 2.5-14 m ahead (side-lane coins count double, gems x3).</summary>
         static float FindHeroDistance(RunnerController runner, TrackItemRegistry registry)
         {
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-bwkHeroSearch") < 0) return SceneBuilder.HeroDistance;
             float L = runner.track.Length;
             float best = 90f; float bestScore = -1f;
             for (float d = 75f; d < L - 45f; d += 0.5f)
@@ -219,6 +220,13 @@ namespace BubbleWash.EditorTools
                     else if (it.kind == TrackItemKind.Boost) score += 1f;
                 }
                 if (score > bestScore) { bestScore = score; best = d; }
+            }
+            // Owner workflow: FIXED reference camera for like-for-like before/after comparisons (item changes must not
+            // move the hero shot). -bwkHeroSearch restores the old automatic search.
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-bwkHeroSearch") < 0)
+            {
+                Debug.Log($"[BWK] hero search would pick {best:F1} m (score {bestScore}); using fixed hero distance {SceneBuilder.HeroDistance:F1} m");
+                best = SceneBuilder.HeroDistance;
             }
             Debug.Log($"[BWK] hero shot at {best:F1} m (score {bestScore})");
             foreach (var it in registry.items)

@@ -40,15 +40,15 @@ namespace BubbleWash.EditorTools
             // Ambient: deep violet from above, magenta-violet around the horizon, cool blue bounce from the water
             // (the "ground" colour is what the tunnel ceiling receives). Kept dim so the walls keep their depth.
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.44f, 0.27f, 0.86f);
-            RenderSettings.ambientEquatorColor = new Color(0.66f, 0.28f, 0.72f);
-            RenderSettings.ambientGroundColor = new Color(0.24f, 0.34f, 0.92f);
-            RenderSettings.ambientIntensity = 0.62f;
+            RenderSettings.ambientSkyColor = new Color(0.5f, 0.33f, 0.9f);
+            RenderSettings.ambientEquatorColor = new Color(0.72f, 0.36f, 0.8f);
+            RenderSettings.ambientGroundColor = new Color(0.5f, 0.4f, 0.98f);
+            RenderSettings.ambientIntensity = 0.8f;
             // Aerial perspective: saturated mid-violet (never pale), light density: near tunnel clear, far tunnel melts
             // into violet while the warm bulbs / portal still punch through (emissives use little fog).
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = new Color(0.40f, 0.25f, 0.78f);
+            RenderSettings.fogColor = new Color(0.6f, 0.46f, 0.98f);
             RenderSettings.fogDensity = 0.0085f;
             RenderSettings.skybox = null;
             RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
@@ -92,17 +92,17 @@ namespace BubbleWash.EditorTools
             // tonemapper keeps their hue and the bloom (untinted, so it carries each source's own colour) makes yellow /
             // cyan / pink / amber halos. Threshold above lit white foam so lit surfaces never veil the frame.
             var bloom = profile.Add<Bloom>(true);
-            bloom.threshold.Override(1.2f); bloom.intensity.Override(0.9f); bloom.scatter.Override(0.62f);
+            bloom.threshold.Override(1.15f); bloom.intensity.Override(1.05f); bloom.scatter.Override(0.62f);
             bloom.tint.Override(Color.white); bloom.highQualityFiltering.Override(true);
             bloom.maxIterations.Override(8);
             // Neutral keeps saturated hues far better than ACES (which pushes bright yellow / cyan to white).
             var tm = profile.Add<Tonemapping>(true); tm.mode.Override(TonemappingMode.Neutral);
             var ca = profile.Add<ColorAdjustments>(true);
-            ca.saturation.Override(30f); ca.contrast.Override(28f); ca.postExposure.Override(-0.3f);
+            ca.saturation.Override(14f); ca.contrast.Override(16f); ca.postExposure.Override(-0.1f);
             // violet, slightly darker shadows / low mids (depth, dark holes) - highlights untouched
             var smh = profile.Add<ShadowsMidtonesHighlights>(true);
-            smh.shadows.Override(new Vector4(0.96f, 0.86f, 1.12f, -0.12f));
-            smh.midtones.Override(new Vector4(1f, 0.97f, 1.04f, -0.04f));
+            smh.shadows.Override(new Vector4(0.96f, 0.88f, 1.12f, -0.03f));
+            smh.midtones.Override(new Vector4(1f, 0.98f, 1.03f, 0f));
             smh.highlights.Override(new Vector4(1.04f, 1f, 0.96f, 0f));
             smh.shadowsStart.Override(0f); smh.shadowsEnd.Override(0.35f); smh.highlightsStart.Override(0.55f); smh.highlightsEnd.Override(1f);
             // gentle warm-highlight / violet-shadow split (neutral grey = 0.5)
@@ -280,9 +280,9 @@ namespace BubbleWash.EditorTools
             // warm bulb glow on the top of the hat / pom-pom (slightly ahead, so it grazes over the top toward the camera)
             CharLight(group, "CharLight_WarmTop", new Vector3(0.35f, 2.3f, 0.6f), new Color(1f, 0.74f, 0.44f), 2.6f, 4f);
             // soft pink fill on the fluffy back the rear camera sees
-            CharLight(group, "CharLight_PinkBack", new Vector3(-0.6f, 1.2f, -1.7f), new Color(1f, 0.7f, 0.86f), 1.0f, 3.4f);
+            CharLight(group, "CharLight_PinkBack", new Vector3(-0.35f, 1.7f, -1.6f), new Color(1f, 0.74f, 0.84f), 2.2f, 3.6f);
             // cool lavender light from the bright tunnel ahead: wraps around the fur silhouette as a rim
-            CharLight(group, "CharLight_RimFront", new Vector3(0f, 1.05f, 2.3f), new Color(0.72f, 0.84f, 1f), 2.4f, 3.6f);
+            CharLight(group, "CharLight_RimFront", new Vector3(0f, 1.15f, 2.2f), new Color(1f, 0.56f, 0.86f), 3.0f, 3.6f);
 
             // soft violet contact shadow card on the water right under him (stays on the surface during jumps)
             var card = GameObject.CreatePrimitive(PrimitiveType.Quad);

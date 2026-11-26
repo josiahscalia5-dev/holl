@@ -49,6 +49,29 @@ namespace BubbleWash.EditorTools
         static TrackPath track;
         static float tunnelStart, portalD;
 
+        /// <summary>Owner workflow (2026-11-25): perfect ONE hero gameplay screen with a FIXED reference camera so every
+        /// before/after comparison is like-for-like. Track distance of the hero shot (target frame f_003.00s).</summary>
+        public const float HeroDistance = 105.5f;
+
+        /// <summary>Agent previews judge only the hero frame: bake just the reflection probes that light what the hero
+        /// camera sees (behind it to well past the visible tunnel) instead of all ~12 probes x 2 passes along the track
+        /// (that alone was ~90 s of every ~150 s preview). Distant probes keep their last full-build cubemaps.</summary>
+        static void BakeProbesForHero()
+        {
+            var all = Object.FindObjectsByType<ReflectionProbe>(FindObjectsSortMode.None);
+            var parked = new List<GameObject>();
+            foreach (var p in all)
+            {
+                var m = System.Text.RegularExpressions.Regex.Match(p.name, @"_(\d+)$");
+                if (!m.Success) continue;
+                float d = float.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+                if (d < HeroDistance - 20f || d > HeroDistance + 65f) { p.gameObject.SetActive(false); parked.Add(p.gameObject); }
+            }
+            try { BakeProbes(); }
+            finally { foreach (var g in parked) g.SetActive(true); }
+            Debug.Log($"[BWK] preview: baked {all.Length - parked.Count} of {all.Length} reflection probes (hero frame only)");
+        }
+
         public static void BuildAllBatch()
         {
             try
@@ -258,7 +281,7 @@ namespace BubbleWash.EditorTools
             string previewProfile = $"{GenDir}/PostFX_Preview.asset";
             AssetDatabase.DeleteAsset(previewProfile);
             BuildLighting(root, track.Length, previewProfile);
-            BakeProbes();
+            BakeProbesForHero();
             var runner = Object.FindFirstObjectByType<RunnerController>();
             var registry = Object.FindFirstObjectByType<TrackItemRegistry>();
             foreach (var n in new[] { "FX", "CharacterLights", "CharLight_WarmTop", "CharLight_PinkBack" })

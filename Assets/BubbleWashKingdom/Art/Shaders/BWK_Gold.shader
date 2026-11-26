@@ -31,6 +31,8 @@ Shader "BWK/Gold"
         _GlintStrength ("Point Light Glints", Range(0, 8)) = 1
         _Sparkle ("Sparkle", Range(0, 6)) = 0
         _SparkleScale ("Sparkle Cells per Unit", Float) = 18
+        _StreakStrength ("Studio Streak Strength", Range(0, 3)) = 0
+        _StreakHeight ("Studio Streak Height (view-space y)", Range(-1, 1)) = 0.6
     }
     SubShader
     {
@@ -41,6 +43,7 @@ Shader "BWK/Gold"
             half4 _HighColor, _MidColor, _LowColor, _RimColor, _BandColor;
             half _HighlightSize, _BandSharpness, _SpecPower, _SpecStrength, _Brightness, _LightInfluence, _Emission, _FogAmount;
             half _Contrast, _ViewGradient, _EnvReflect, _EnvTint, _EnvRoughness, _GlintStrength, _Sparkle, _SparkleScale;
+            half _StreakStrength, _StreakHeight;
         CBUFFER_END
         ENDHLSL
         Pass
@@ -90,6 +93,9 @@ Shader "BWK/Gold"
                 half2 hl2 = d.xy - half2(0.45, 0.3);
                 env += _HighColor.rgb * exp(-dot(hl2, hl2) * _HighlightSize * 1.6) * 0.55;
                 env += _BandColor.rgb * exp(-abs(d.y + 0.08) * _BandSharpness) * 0.45;
+                // long soft-box streaks (polished-jewellery look): a bright strip above and a thinner one below the horizon,
+                // stretched across the whole width, so curved ring tubes get a crisp white-gold specular line along them
+                env += _HighColor.rgb * (exp(-abs(d.y - _StreakHeight) * 22.0) + 0.45 * exp(-abs(d.y + _StreakHeight * 0.55) * 30.0)) * _StreakStrength;
                 return lerp(env, _RimColor.rgb * 1.15, fres * 0.55);
             }
 
