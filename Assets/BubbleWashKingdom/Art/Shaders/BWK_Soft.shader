@@ -4,6 +4,11 @@
 //  _Mode 2 = knit: beanie stripes along UV.y with procedural V-stitch knit bumps
 //  _Mode 3 = eye: glossy brown iris (radial gradient around the UV centre) with a dark pupil
 //  _Mode 4 = fabric: soft cloth (socks, towels) tinted by vertex colour stripes
+//  _Mode 5 = soap suds (foam banks): baked crevice AO in vertex colour R (lavender-blue crevices), per-puff tint in G,
+//            soft wrap light, satin soap gloss, translucent bright rims, tiny bubble glints, gentle wobble
+//  _Mode 6 = milk splash (3D crown splashes, droplet particles): creamy white, cool blue-grey shading and water bounce
+//            from below, crisp wet highlights, bright thin edges, liquid wobble; particle vertex colour tints
+//  _Mode 1 also races rainbow light streaks along the banks (UV.y = distance / 4 m) and adds a clear-coat reflection.
 Shader "BWK/Soft"
 {
     Properties
@@ -25,6 +30,13 @@ Shader "BWK/Soft"
         _Glow ("Self Glow", Range(0,1)) = 0.1
         _RimPower ("Rim Power", Float) = 3
         _RimStrength ("Rim Strength", Range(0,2)) = 0.35
+        _ReflectBoost ("Extra Probe Reflection", Range(0,2)) = 0
+        _StreakAmount ("Rail Light Streaks", Range(0,3)) = 0
+        _StreakSpeed ("Rail Streak Speed (m/s)", Float) = 6
+        _Wobble ("Wobble (m, modes 5/6)", Float) = 0
+        _WobbleFreq ("Wobble Frequency", Float) = 3
+        _SpecStrength ("Gloss Highlight (modes 5/6)", Range(0,3)) = 1
+        _GlintAmount ("Bubble Glints (mode 5)", Range(0,2)) = 0.5
     }
     SubShader
     {
@@ -35,6 +47,7 @@ Shader "BWK/Soft"
             half4 _ColorA, _ColorB, _ColorC, _ShadowColor;
             half _Mode, _Smoothness, _Metallic, _Wrap, _BumpScale, _BumpStrength, _Stripes, _StripeWidth;
             half _StitchU, _StitchV, _Glow, _RimPower, _RimStrength;
+            half _ReflectBoost, _StreakAmount, _StreakSpeed, _Wobble, _WobbleFreq, _SpecStrength, _GlintAmount;
         CBUFFER_END
         ENDHLSL
         Pass
@@ -69,7 +82,16 @@ Shader "BWK/Soft"
                 Varyings o = (Varyings)0;
                 UNITY_SETUP_INSTANCE_ID(i);
                 UNITY_TRANSFER_INSTANCE_ID(i, o);
-                VertexPositionInputs p = GetVertexPositionInputs(i.positionOS.xyz);
+                float3 posOS = i.positionOS.xyz;
+                if (_Mode > 4.5 && _Wobble > 0.0001)
+                {
+                    // suds / milk: slow liquid wobble along the normal (world-space noise, so combined meshes and
+                    // particles stay coherent); positionOS for the surface patterns stays undisplaced
+                    float3 wp = TransformObjectToWorld(posOS);
+                    float w = BWK_ValueNoise3(wp * _WobbleFreq + _Time.y * float3(0.35, 0.55, 0.25)) - 0.5;
+                    posOS += i.normalOS * w * _Wobble;
+                }
+                VertexPositionInputs p = GetVertexPositionInputs(posOS);
                 VertexNormalInputs n = GetVertexNormalInputs(i.normalOS, i.tangentOS);
                 o.positionCS = p.positionCS;
                 o.positionWS = p.positionWS;
@@ -113,6 +135,25 @@ Shader "BWK/Soft"
                     half3 band = t < 0.5 ? lerp(_ColorA.rgb, _ColorB.rgb, smoothstep(0.15, 0.45, t)) : lerp(_ColorB.rgb, _ColorC.rgb, smoothstep(0.55, 0.85, t));
                     albedo = band;
                     emission = band * _Glow;
+                    if (_StreakAmount > 0.001)
+                    {
+                        // rainbow light streaks racing along the bank toward the camera (reference: pink, orange,
+                        // yellow and cyan motion lines); along = metres along the track
+                        float along = i.uv.y * 4.0 + _Time.y * _StreakSpeed;
+                        float r1 = 1.0 - abs(BWK_ValueNoise(float2(t * 7.0, along * 0.05)) * 2.0 - 1.0);
+                        float r2 = 1.0 - abs(BWK_ValueNoise(float2(t * 13.0 + 4.0, along * 0.11 + 9.0)) * 2.0 - 1.0);
+                        float gate = smoothstep(0.3, 0.75, BWK_ValueNoise(float2(t * 3.0 + 5.0, along * 0.12)));
+                        half s = saturate(smoothstep(0.86, 0.985, r1) + smoothstep(0.9, 0.99, r2) * 0.6) * gate;
+                        half3 sc = lerp(BWK_Rainbow(t * 0.7 + along * 0.004 + 0.85), half3(1, 1, 1), 0.45);
+                        emission += sc * s * _StreakAmount;
+                        albedo = lerp(albedo, half3(1, 1, 1), s * 0.25);
+                    }
+                    if (_ReflectBoost > 0.001)
+                    {
+                        // clear-coat: crisp probe reflection on top of the candy colour
+                        half fr = BWK_Fresnel(n, v, 3.0);
+                        emission += GlossyEnvironmentReflection(reflect(-v, n), i.positionWS, 0.05h, 1.0h, GetNormalizedScreenSpaceUV(i.positionCS)) * (0.06 + fr * 0.6) * _ReflectBoost;
+                    }
                 }
                 else if (_Mode < 2.5) // knit: vertical rib columns of stacked V stitches (classic ribbed beanie)
                 {
@@ -147,12 +188,79 @@ Shader "BWK/Soft"
                     smooth = 0.98;
                     emission = iris * _Glow + _ColorB.rgb * low * smoothstep(0.45, 0.75, r) * 0.25;
                 }
-                else // fabric
+                else if (_Mode < 4.5) // fabric
                 {
                     albedo = _ColorA.rgb * (i.color.a > 0.001 ? i.color.rgb : half3(1, 1, 1));
                     float fib = BWK_ValueNoise(i.uv * _BumpScale * 20.0);
                     albedo *= lerp(0.9, 1.05, fib);
                     emission = albedo * _Glow;
+                }
+                else if (_Mode < 5.5) // soap suds (foam banks)
+                {
+                    bool hasCol = i.color.a > 0.001;
+                    half ao = hasCol ? i.color.r : 1.0h;        // 1 open, 0 deep crevice between puffs
+                    half puff = hasCol ? i.color.g : 0.5h;      // per-puff random
+                    // fine micro-bubble bump
+                    float3 q = i.positionOS * _BumpScale;
+                    float b0 = BWK_ValueNoise3(q);
+                    float bx = BWK_ValueNoise3(q + float3(0.15, 0, 0));
+                    float by = BWK_ValueNoise3(q + float3(0, 0.15, 0));
+                    n = normalize(n - (i.tangentWS.xyz * (bx - b0) + bitangent * (by - b0)) * _BumpStrength * 4.0);
+#if defined(_MAIN_LIGHT_SHADOWS) || defined(_MAIN_LIGHT_SHADOWS_CASCADE)
+                    Light L = GetMainLight(TransformWorldToShadowCoord(i.positionWS));
+#else
+                    Light L = GetMainLight();
+#endif
+                    half3 light = BWK_WrapLight(i.positionWS, n, _Wrap);
+                    half lum = saturate(dot(light, half3(0.3, 0.5, 0.2)));
+                    half occ = lerp(0.35, 1.0, ao);
+                    half3 col = lerp(_ShadowColor.rgb, _ColorA.rgb, smoothstep(0.08, 0.8, lum * occ + 0.12));
+                    col *= lerp(0.78, 1.0, occ);
+                    col = lerp(col, _ColorB.rgb, saturate(puff - 0.62) * 0.9);       // a few faintly tinted puffs
+                    half fr = BWK_Fresnel(n, v, _RimPower);
+                    col += _ColorA.rgb * fr * _RimStrength * occ;                    // translucent bright rims
+                    half3 hv = normalize(L.direction + v);
+                    half nh = saturate(dot(n, hv));
+                    half3 nv = mul((float3x3)UNITY_MATRIX_V, n);
+                    half key = saturate(dot(nv, half3(-0.35, 0.62, 0.7)));           // soft studio key from upper left
+                    half spec = (pow(nh, 18.0) * 0.22 + pow(nh, 160.0) * 0.9) * L.shadowAttenuation + pow(key, 26.0) * 0.55;
+                    col += spec * _SpecStrength * occ;
+                    col += GlossyEnvironmentReflection(reflect(-v, n), i.positionWS, 0.3h, 1.0h, GetNormalizedScreenSpaceUV(i.positionCS)) * fr * _ReflectBoost * occ;
+                    // tiny bubble glints: sparse bright micro-bubbles (3D cells ~3.5 cm, undisplaced object space)
+                    float3 gq = i.positionOS * 28.0;
+                    float3 gc = floor(gq);
+                    float3 gf = frac(gq) - 0.5 - (float3(BWK_Hash31(gc + 1.7), BWK_Hash31(gc + 3.1), BWK_Hash31(gc + 5.3)) - 0.5) * 0.5;
+                    half glint = smoothstep(0.17, 0.02, length(gf)) * step(0.72, BWK_Hash31(gc));
+                    col += glint * _GlintAmount * (0.3 + pow(key, 4.0) + pow(nh, 8.0)) * occ;
+                    col += _ColorA.rgb * _Glow;
+                    col = MixFog(col, i.fog);
+                    return half4(col, 1);
+                }
+                else // milk splash (crowns, droplets)
+                {
+                    half3 tint = i.color.a > 0.001 ? i.color.rgb : half3(1, 1, 1);
+#if defined(_MAIN_LIGHT_SHADOWS) || defined(_MAIN_LIGHT_SHADOWS_CASCADE)
+                    Light L = GetMainLight(TransformWorldToShadowCoord(i.positionWS));
+#else
+                    Light L = GetMainLight();
+#endif
+                    half3 light = BWK_WrapLight(i.positionWS, n, _Wrap);
+                    half lum = saturate(dot(light, half3(0.3, 0.5, 0.2)));
+                    half3 col = lerp(_ShadowColor.rgb, _ColorA.rgb, smoothstep(0.0, 0.7, lum + 0.2));
+                    half down = saturate(-dot(n, half3(0, 1, 0)) * 0.8 + 0.1);
+                    col = lerp(col, _ColorB.rgb, down * 0.6);                            // cool water bounce from below
+                    half fr = BWK_Fresnel(n, v, _RimPower);
+                    col = lerp(col, _ColorA.rgb * 1.08, fr * _RimStrength);              // bright thin milky edges
+                    half3 hv = normalize(L.direction + v);
+                    half nh = saturate(dot(n, hv));
+                    half3 nv = mul((float3x3)UNITY_MATRIX_V, n);
+                    half key = saturate(dot(nv, half3(-0.4, 0.6, 0.69)));
+                    half spec = pow(nh, 90.0) * L.shadowAttenuation * 1.2 + pow(key, 48.0) * 0.9 + pow(key, 8.0) * 0.12;
+                    col += spec * _SpecStrength;
+                    col += GlossyEnvironmentReflection(reflect(-v, n), i.positionWS, 0.12h, 1.0h, GetNormalizedScreenSpaceUV(i.positionCS)) * (0.05 + fr * 0.45) * _ReflectBoost;
+                    col = col * tint + _ColorA.rgb * _Glow;
+                    col = MixFog(col, i.fog);
+                    return half4(col, 1);
                 }
                 half rim = BWK_Fresnel(n, v, _RimPower) * _RimStrength;
                 emission += albedo * rim;

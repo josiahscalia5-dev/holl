@@ -34,6 +34,8 @@ namespace BubbleWash
         public float lookHeight = 0.6f;
         [Range(0f, 1f)] public float lookAtRunnerWeight = 0.08f;
         [Range(0f, 1f)] public float lateralFollow = 0.55f;
+        [Tooltip("Portrait screens are narrow: follow more of the lane change so the mascot never drifts to the screen edge.")]
+        [Range(0f, 1f)] public float lateralFollowPortrait = 0.8f;
         [Range(0f, 1f)] public float jumpFollow = 0.35f;
         [Tooltip("On slopes the track point behind the mascot is higher/lower than the mascot: remove this fraction of the " +
                  "difference so the camera stays level with the hat band (reference) instead of looking down on downhills.")]
@@ -97,7 +99,7 @@ namespace BubbleWash
             TrackFrame fl = track.Evaluate(d + lookAhead);
 
             // Along-track distance follows exactly (no lag at speed); only lateral and height offsets are smoothed.
-            float targetLat = runner.Lateral * lateralFollow;
+            float targetLat = runner.Lateral * Mathf.Lerp(lateralFollow, lateralFollowPortrait, portrait);
             float targetH = h + runner.Height * jumpFollow;
             if (snap) { smLat = targetLat; smH = targetH; latV = hV = 0f; }
             else

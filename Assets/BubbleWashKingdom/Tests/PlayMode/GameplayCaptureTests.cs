@@ -40,7 +40,7 @@ namespace BubbleWash.Tests
                 canvas.planeDistance = 0.5f;
             }
 
-            const int w = 540, h = 960;
+            const int w = 720, h = 1280;
             var rt = new RenderTexture(w, h, 24, RenderTextureFormat.ARGB32) { antiAliasing = 2 };
             var tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
             Time.captureFramerate = 30;

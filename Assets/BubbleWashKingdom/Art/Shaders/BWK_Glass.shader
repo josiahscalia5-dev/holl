@@ -1,5 +1,8 @@
 // Transparent glass for pipes and porthole windows: light tint, strong fresnel reflections from the reflection
-// probe, crisp specular highlight from the main light. _Iridescence adds a soap-bubble thin-film shimmer (bubbles).
+// probe, crisp specular highlight from the main light. _Iridescence adds a soap-bubble thin-film shimmer.
+// _Bubble = 1 (soap bubbles only; pipes / windows keep 0): reference f_003.00s bubbles - almost clear centre, thin bright
+// rim, swirling thin-film colour patches (pink / cyan / yellow) and soft white "studio window" highlights that sit at a
+// fixed place relative to the camera (upper left + a smaller one lower right).
 Shader "BWK/Glass"
 {
     Properties
@@ -12,6 +15,10 @@ Shader "BWK/Glass"
         _Iridescence ("Iridescence", Range(0,1)) = 0
         _IridescenceScale ("Iridescence Scale", Float) = 1.6
         _Glow ("Edge Glow", Range(0,2)) = 0.15
+        _Bubble ("Soap Bubble Mode", Range(0,1)) = 0
+        _FilmStrength ("Bubble Film Strength", Range(0,2)) = 1
+        _WindowStrength ("Bubble Window Highlights", Range(0,3)) = 1.2
+        _RimWidth ("Bubble Rim Sharpness", Float) = 5
     }
     SubShader
     {
@@ -21,6 +28,7 @@ Shader "BWK/Glass"
         CBUFFER_START(UnityPerMaterial)
             half4 _Tint;
             half _Alpha, _FresnelPower, _Reflectivity, _Smoothness, _Iridescence, _IridescenceScale, _Glow;
+            half _Bubble, _FilmStrength, _WindowStrength, _RimWidth;
         CBUFFER_END
         ENDHLSL
         Pass
@@ -52,6 +60,15 @@ Shader "BWK/Glass"
                 o.positionOS = i.positionOS.xyz;
                 return o;
             }
+
+            // soft rounded rectangle mask in view-normal space (studio window reflection)
+            half WindowMask(half2 p, half2 c, half2 halfSize, half soft)
+            {
+                half2 d = abs(p - c) - halfSize;
+                half dist = length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);
+                return smoothstep(soft, -soft * 0.5, dist);
+            }
+
             half4 frag(Varyings i) : SV_Target
             {
                 half3 n = normalize(i.normalWS);
@@ -65,6 +82,28 @@ Shader "BWK/Glass"
                 half3 tint = lerp(_Tint.rgb, film, _Iridescence);
                 half alpha = saturate(_Alpha + fres * 0.75);
                 half3 c = tint * _Alpha + refl * _Reflectivity * fres * lerp(1.0, film, _Iridescence) + spec * l.color + tint * fres * _Glow;
+                if (_Bubble > 0.5)
+                {
+                    half ndv = saturate(dot(n, v));
+                    // thin film: thickness swirls over the surface (slowly), colour bands strongest toward the rim
+                    float3 fp = i.positionOS * 2.2 + float3(0.0, _Time.y * 0.12, _Time.y * 0.05);
+                    float thick = BWK_ValueNoise3(fp) * 0.9 + BWK_ValueNoise3(fp * 2.7 + 4.1) * 0.35;
+                    half3 bubbleFilm = BWK_Rainbow(thick * 1.6 + (1.0 - ndv) * 0.9 + 0.1);
+                    half patches = smoothstep(0.35, 0.8, BWK_ValueNoise3(fp * 1.3 + 9.0));
+                    half rim = pow(1.0 - ndv, _RimWidth);
+                    half filmVis = saturate(rim * 1.4 + patches * 0.32 + (1.0 - ndv) * 0.2) * _FilmStrength;
+                    // studio window highlights fixed relative to the camera
+                    half3 nv = mul((float3x3)UNITY_MATRIX_V, n);
+                    half win = WindowMask(nv.xy, half2(-0.38, 0.44), half2(0.13, 0.085), 0.07);
+                    win += WindowMask(nv.xy, half2(-0.18, 0.5), half2(0.035, 0.05), 0.05) * 0.8;
+                    win += WindowMask(nv.xy, half2(0.42, -0.36), half2(0.07, 0.04), 0.06) * 0.65;
+                    win *= step(0.0, nv.z);
+                    half3 bc = bubbleFilm * filmVis * 0.75 + refl * _Reflectivity * (0.08 + rim * 0.9);
+                    bc += half3(1, 1, 1) * (win * _WindowStrength + rim * 0.25 + spec * 0.4);
+                    half ba = saturate(_Alpha + filmVis * 0.45 + rim * 0.55 + win * _WindowStrength * 0.8);
+                    c = lerp(c, bc, _Bubble);
+                    alpha = lerp(alpha, ba, _Bubble);
+                }
                 c = MixFog(c, i.fog);
                 return half4(c, alpha);
             }
