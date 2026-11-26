@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Unity.Cinemachine;
@@ -17,10 +18,188 @@ namespace BubbleWash.EditorTools
     {
         public const string OutDir = "Captures/stills";
 
+        public static void MaterialsAndStillsBatch()
+        {
+            try { MaterialLibrary.Run(); CaptureStills(); EditorApplication.Exit(0); }
+            catch (System.Exception e) { Debug.LogError("[BWK] capture failed: " + e); EditorApplication.Exit(1); }
+        }
+
         public static void CaptureStillsBatch()
         {
             try { CaptureStills(); EditorApplication.Exit(0); }
             catch (System.Exception e) { Debug.LogError("[BWK] capture failed: " + e); EditorApplication.Exit(1); }
+        }
+
+        public static void HeroBatch()
+        {
+            try { CaptureHero(); EditorApplication.Exit(0); }
+            catch (System.Exception e) { Debug.LogError("[BWK] hero capture failed: " + e); EditorApplication.Exit(1); }
+        }
+
+        const string CompareDir = "Captures/compare";
+
+        /// <summary>
+        /// Agent preview (no scene save): regenerates textures + materials, rebuilds lighting/post and runner FX in memory,
+        /// then renders the hero screen + reference comparisons into -bwkOut DIR (default Captures/agents/preview).
+        /// Run via: Tools/unity_run.sh BubbleWash.EditorTools.CaptureTools.AgentPreviewBatch LOGNAME -bwkOut Captures/agents/NAME
+        /// </summary>
+        public static void AgentPreviewBatch()
+        {
+            try
+            {
+                string outDir = ArgValue("-bwkOut") ?? "Captures/agents/preview";
+                TextureGenerator.Run();
+                MaterialLibrary.Run();
+                EditorSceneManager.OpenScene(SceneBuilder.ScenePath);
+                SceneBuilder.PreviewRefreshDomains();
+                CaptureHero(outDir, outDir);
+                EditorApplication.Exit(0);
+            }
+            catch (System.Exception e) { Debug.LogError("[BWK] agent preview failed: " + e); EditorApplication.Exit(1); }
+        }
+
+        static string ArgValue(string key)
+        {
+            var args = System.Environment.GetCommandLineArgs();
+            for (int i = 0; i < args.Length - 1; i++) if (args[i] == key) return args[i + 1];
+            return null;
+        }
+        const string RefRear = "Reference/frames/f_003.00s.png";   // rear view inside the tunnel (hero screen target)
+
+        /// <summary>
+        /// Hero gameplay screen: a tunnel position with coins (and ideally a gem) just ahead, rendered through the
+        /// rear gameplay rig at 16:9 and 9:16, then composed side by side with the approved reference rear frame
+        /// (left = reference video, right = real Unity render). Reference stays private: output goes to Captures/.
+        /// </summary>
+        [MenuItem("Bubble Wash/Capture Hero + Comparison")]
+        public static void CaptureHero() => CaptureHero(OutDir, CompareDir);
+
+        public static void CaptureHero(string stillsDir, string compareDir)
+        {
+            if (EditorSceneManager.GetActiveScene().path != SceneBuilder.ScenePath)
+                EditorSceneManager.OpenScene(SceneBuilder.ScenePath);
+            Directory.CreateDirectory(stillsDir);
+            Directory.CreateDirectory(compareDir);
+            var runner = Object.FindFirstObjectByType<RunnerController>();
+            var rig = Object.FindFirstObjectByType<RunnerCameraRig>(FindObjectsInactive.Include);
+            var registry = Object.FindFirstObjectByType<TrackItemRegistry>();
+            var cam = Camera.main;
+            if (runner == null || rig == null || cam == null || registry == null) { Debug.LogError("[BWK] hero: scene objects missing"); return; }
+            var brain = cam.GetComponent<CinemachineBrain>();
+            if (brain) brain.enabled = false;
+            runner.track.Rebuild();
+            float L = runner.track.Length;
+
+            // Score candidate positions: coins 4-16 m ahead (side lanes count double: visible beside the mascot), gems x3.
+            float best = 90f; float bestScore = -1f;
+            for (float d = 75f; d < L - 45f; d += 0.5f)
+            {
+                float score = 0f;
+                foreach (var it in registry.items)
+                {
+                    float a = it.distance - d;
+                    if (a < 2.5f || a > 14f) continue;
+                    // reference 3.0 s: big paw coins right beside the camera in the side lanes
+                    if (it.kind == TrackItemKind.Coin) score += Mathf.Abs(it.lateral) > 0.5f ? (a < 9f ? 3f : 1.5f) : 0.5f;
+                    else if (it.kind == TrackItemKind.Gem) score += 3f;
+                    else if (it.kind == TrackItemKind.Boost) score += 1f;
+                }
+                if (score > bestScore) { bestScore = score; best = d; }
+            }
+            Debug.Log($"[BWK] hero shot at {best:F1} m (score {bestScore})");
+            foreach (var it in registry.items)
+            {
+                float a = it.distance - best;
+                if (a < 0f || a > 14f) continue;
+                var rs = it.GetComponentsInChildren<Renderer>(true);
+                var b = rs.Length > 0 ? rs[0].bounds : new Bounds();
+                var mf = rs.Length > 0 ? rs[0].GetComponent<MeshFilter>() : null;
+                Debug.Log($"[BWK] hero item {it.kind} +{a:F1} m lat {it.lateral:F2} active {it.gameObject.activeInHierarchy} renderers {rs.Length} " +
+                          $"enabled {(rs.Length > 0 && rs[0].enabled)} mesh {(mf != null && mf.sharedMesh != null ? mf.sharedMesh.name : "-")} " +
+                          $"bounds c{b.center} s{b.size} pos {it.transform.position}");
+            }
+
+            var animator = runner.GetComponentInChildren<Animator>();
+            AnimationClip slide = null;
+            if (animator != null && animator.runtimeAnimatorController != null)
+                slide = animator.runtimeAnimatorController.animationClips.FirstOrDefault(c => c.name == "Slide");
+            foreach (var ps in Object.FindObjectsByType<ParticleSystem>(FindObjectsSortMode.None))
+                if (ps.name == "AmbientBubbles") ps.Simulate(4f, true, true);
+            runner.TeleportTo(best, 0f);
+            if (slide != null) slide.SampleAnimation(animator.gameObject, 0.25f);
+            SimulateSlideFX(runner);
+            foreach (var (w, h, tag) in new[] { (1280, 720, "16x9"), (720, 1280, "9x16") })
+            {
+                rig.aspectOverride = w / (float)h;
+                rig.Snap();
+                var lens = rig.vcam.Lens;
+                cam.transform.SetPositionAndRotation(rig.transform.position, rig.transform.rotation * Quaternion.Euler(0f, 0f, lens.Dutch));
+                cam.fieldOfView = lens.FieldOfView;
+                Render(cam, w, h, $"{stillsDir}/hero_{tag}.png");
+            }
+            rig.aspectOverride = 0f;
+            if (brain) brain.enabled = true;
+
+            if (!File.Exists(RefRear)) { Debug.LogWarning("[BWK] reference frame missing - comparison skipped"); return; }
+            var refTex = LoadPng(RefRear);
+            var ours16 = LoadPng($"{stillsDir}/hero_16x9.png");
+            var ours9 = LoadPng($"{stillsDir}/hero_9x16.png");
+            // 16:9 pair: reference | Unity (both 1280x720)
+            SaveSideBySide(new[] { Resize(refTex, 1280, 720), Resize(ours16, 1280, 720) }, $"{compareDir}/hero_vs_reference_16x9.png");
+            // 9:16 pair: centre 9:16 crop of the reference (mascot-centred) | Unity portrait, both 720x1280
+            int cw = Mathf.RoundToInt(refTex.height * 9f / 16f);
+            var crop = Crop(refTex, Mathf.RoundToInt(refTex.width * 0.49f - cw * 0.5f), 0, cw, refTex.height);
+            SaveSideBySide(new[] { Resize(crop, 720, 1280), ours9 }, $"{compareDir}/hero_vs_reference_9x16.png");
+            Debug.Log("[BWK] Hero comparison written to " + Path.GetFullPath(compareDir));
+        }
+
+        static Texture2D LoadPng(string path)
+        {
+            var t = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            t.LoadImage(File.ReadAllBytes(path));
+            return t;
+        }
+
+        static Texture2D Resize(Texture2D src, int w, int h)
+        {
+            if (src.width == w && src.height == h) return src;
+            var dst = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            var px = new Color[w * h];
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                    px[y * w + x] = src.GetPixelBilinear((x + 0.5f) / w, (y + 0.5f) / h);
+            dst.SetPixels(px);
+            dst.Apply(false);
+            return dst;
+        }
+
+        static Texture2D Crop(Texture2D src, int x0, int y0, int w, int h)
+        {
+            x0 = Mathf.Clamp(x0, 0, src.width - w);
+            var dst = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            dst.SetPixels(src.GetPixels(x0, y0, w, h));
+            dst.Apply(false);
+            return dst;
+        }
+
+        /// <summary>Equal-height images side by side with a 12 px dark divider.</summary>
+        static void SaveSideBySide(Texture2D[] imgs, string path)
+        {
+            const int gap = 12;
+            int h = imgs[0].height;
+            int w = imgs.Sum(t => t.width) + gap * (imgs.Length - 1);
+            var outTex = new Texture2D(w, h, TextureFormat.RGB24, false);
+            var fill = new Color[w * h];
+            for (int i = 0; i < fill.Length; i++) fill[i] = new Color(0.08f, 0.05f, 0.14f);
+            outTex.SetPixels(fill);
+            int x = 0;
+            foreach (var t in imgs)
+            {
+                outTex.SetPixels(x, 0, t.width, t.height, t.GetPixels());
+                x += t.width + gap;
+            }
+            outTex.Apply(false);
+            File.WriteAllBytes(path, outTex.EncodeToPNG());
         }
 
         [MenuItem("Bubble Wash/Capture Stills")]
@@ -56,6 +235,7 @@ namespace BubbleWash.EditorTools
             {
                 runner.TeleportTo(s.d, s.lat);
                 if (slide != null) slide.SampleAnimation(animator.gameObject, 0.25f);
+                SimulateSlideFX(runner);
                 foreach (var (w, h, tag) in new[] { (1280, 720, "16x9"), (720, 1280, "9x16") })
                 {
                     rig.aspectOverride = w / (float)h;
@@ -81,6 +261,23 @@ namespace BubbleWash.EditorTools
             rig.aspectOverride = 0f;
             if (brain) brain.enabled = true;
             Debug.Log("[BWK] Stills written to " + Path.GetFullPath(OutDir));
+        }
+
+        /// <summary>Edit-mode stills: run the sliding splash emitters for a moment so the water FX show like in play.</summary>
+        static void SimulateSlideFX(RunnerController runner)
+        {
+            var fx = runner.GetComponentInChildren<SplashFX>();
+            if (fx == null) return;
+            var list = new List<(ParticleSystem ps, float rate)> { (fx.spray, fx.sprayRateAtBase), (fx.foamTrail, fx.trailRateAtBase) };
+            if (fx.sheets != null) foreach (var sh in fx.sheets) list.Add((sh, fx.sheetRateAtBase));
+            foreach (var (ps, rate) in list)
+            {
+                if (ps == null) continue;
+                var em = ps.emission;
+                em.rateOverTime = rate;
+                ps.Simulate(0.8f, true, true);
+                em.rateOverTime = 0f;
+            }
         }
 
         public static void Render(Camera cam, int w, int h, string path)

@@ -114,32 +114,38 @@ Shader "BWK/Soft"
                     albedo = band;
                     emission = band * _Glow;
                 }
-                else if (_Mode < 2.5) // knit
+                else if (_Mode < 2.5) // knit: vertical rib columns of stacked V stitches (classic ribbed beanie)
                 {
                     float sv = i.uv.y * _Stripes;
                     half stripe = step(1.0 - _StripeWidth, frac(sv));
                     albedo = lerp(_ColorA.rgb, _ColorB.rgb, stripe);
-                    float2 st = float2(i.uv.x * _StitchU, i.uv.y * _StitchV);
-                    float2 c = frac(st) - 0.5;
-                    float side = c.x < 0.0 ? 1.0 : -1.0;
-                    float2 e = float2(c.x + side * 0.25, (c.y + abs(c.x) * 0.6) * 1.4);
-                    float d = length(e);
-                    float bump = saturate(1.0 - d * 2.6);
-                    half3 nb = i.tangentWS.xyz * (-side * 0.6) * bump + bitangent * (-c.y) * bump;
+                    float colPhase = frac(i.uv.x * _StitchU) - 0.5;          // across one rib (-0.5..0.5)
+                    float ribH = cos(colPhase * 3.14159);                    // 1 at the rib crest, 0 in the purl valley
+                    float vPhase = frac(i.uv.y * _StitchV + abs(colPhase) * 0.9) - 0.5;   // stacked V stitches
+                    float stitch = 1.0 - abs(vPhase) * 2.0;
+                    float bump = ribH * (0.7 + 0.3 * stitch);
+                    half3 nb = i.tangentWS.xyz * (sin(colPhase * 3.14159) * 0.9) + bitangent * (sign(vPhase) * 0.35 * ribH);
                     n = normalize(n + nb * _BumpStrength);
-                    occlusion = lerp(0.55, 1.0, bump);
-                    albedo *= lerp(0.8, 1.05, bump);
-                    half fuzz = BWK_Fresnel(n, v, 2.0) * 0.25;
+                    occlusion = lerp(0.42, 1.0, ribH);
+                    albedo *= lerp(0.7, 1.08, bump);
+                    half fuzz = BWK_Fresnel(n, v, 2.0) * 0.3;
                     emission = albedo * (_Glow + fuzz);
                 }
                 else if (_Mode < 3.5) // eye
                 {
-                    float r = length(i.uv - 0.5) * 2.0;
-                    half3 iris = lerp(_ColorB.rgb, _ColorA.rgb, smoothstep(0.0, 0.85, r));
-                    iris = lerp(iris, _ColorC.rgb, smoothstep(0.32, 0.12, r)); // pupil
+                    // big glossy cartoon eye: deep brown top, warm amber glow toward the bottom, radial fibres,
+                    // dark limbal ring and a large soft pupil (the white catchlights are separate geometry)
+                    float2 e = i.uv - 0.5;
+                    float r = length(e) * 2.0;
+                    half low = saturate(0.55 - e.y * 1.5);
+                    half3 iris = lerp(_ColorA.rgb, _ColorB.rgb, low * smoothstep(0.2, 0.72, r));
+                    float ang = atan2(e.y, e.x);
+                    iris *= 0.9 + 0.1 * sin(ang * 23.0 + r * 5.0);
+                    iris = lerp(iris, _ColorA.rgb * 0.4, smoothstep(0.8, 0.98, r));
+                    iris = lerp(iris, _ColorC.rgb, smoothstep(0.47, 0.4, r));
                     albedo = iris;
-                    smooth = 0.97;
-                    emission = iris * _Glow;
+                    smooth = 0.98;
+                    emission = iris * _Glow + _ColorB.rgb * low * smoothstep(0.45, 0.75, r) * 0.25;
                 }
                 else // fabric
                 {

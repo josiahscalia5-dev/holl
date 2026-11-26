@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: M_HatCuff
-  m_Shader: {fileID: 4800000, guid: ebad0e801b4b43e49b9b485c14675c19, type: 3}
+  m_Shader: {fileID: 4800000, guid: 499c84189d54007428f8594aec5f1437, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -26,21 +26,21 @@ Material:
     m_Ints: []
     m_Floats:
     - _BumpScale: 6
-    - _BumpStrength: 0.75
-    - _Glow: 0.06
+    - _BumpStrength: 1
+    - _Glow: 0.08
     - _Metallic: 0
     - _Mode: 2
     - _RimPower: 3
     - _RimStrength: 0.35
-    - _Smoothness: 0.18
-    - _StitchU: 96
-    - _StitchV: 7
+    - _Smoothness: 0.16
+    - _StitchU: 40
+    - _StitchV: 9
     - _StripeWidth: 0
     - _Stripes: 4
     - _Wrap: 0.5
     m_Colors:
-    - _ColorA: {r: 0.36862746, g: 0.16470589, b: 0.5803922, a: 1}
-    - _ColorB: {r: 0.36862746, g: 0.16470589, b: 0.5803922, a: 1}
+    - _ColorA: {r: 0.41568628, g: 0.19215687, b: 0.68235296, a: 1}
+    - _ColorB: {r: 0.41568628, g: 0.19215687, b: 0.68235296, a: 1}
     - _ColorC: {r: 0.54999995, g: 0.29999998, b: 0.85, a: 1}
     - _ShadowColor: {r: 0.62, g: 0.62, b: 0.95, a: 1}
   m_BuildTextureStacks: []

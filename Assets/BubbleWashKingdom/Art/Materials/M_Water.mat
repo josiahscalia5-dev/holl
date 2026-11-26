@@ -26,20 +26,22 @@ Material:
     m_Ints: []
     m_Floats:
     - _EdgeFoam: 0.8
-    - _EdgeTintAmount: 0.3
+    - _EdgeTintAmount: 0.25
     - _FlowSpeed: 7.5
-    - _Glow: 0.1
-    - _RippleStrength: 0.6
-    - _Smoothness: 0.85
-    - _StreakAmount: 0.45
+    - _Glow: 0.12
+    - _RainbowAmount: 0.4
+    - _RippleStrength: 0.8
+    - _Smoothness: 0.9
+    - _SparkleAmount: 1.2
+    - _StreakAmount: 0.55
     - _StreakDensity: 1.6
     - _VTile: 4
     - _WaveHeight: 0.025
     - _Width: 3.6
     m_Colors:
-    - _DeepColor: {r: 0.12156863, g: 0.48235294, b: 0.75686276, a: 1}
-    - _EdgeTint: {r: 0.7019608, g: 0.5254902, b: 0.8039216, a: 1}
-    - _ShallowColor: {r: 0.24705882, g: 0.7019608, b: 0.8784314, a: 1}
-    - _StreakColor: {r: 0.7607843, g: 0.9372549, b: 0.9882353, a: 1}
+    - _DeepColor: {r: 0.043137256, g: 0.34509805, b: 0.8156863, a: 1}
+    - _EdgeTint: {r: 0.7607843, g: 0.37254903, b: 0.8392157, a: 1}
+    - _ShallowColor: {r: 0.08627451, g: 0.7411765, b: 0.98039216, a: 1}
+    - _StreakColor: {r: 0.9098039, g: 0.9882353, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

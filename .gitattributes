@@ -9,6 +9,7 @@
 *.json    text eol=lf
 *.asmdef  text eol=lf
 *.inputactions text eol=lf
+*.sh      text eol=lf
 
 # Unity YAML: keep as text, merge with UnityYAMLMerge when configured
 *.unity   text eol=lf merge=unityyamlmerge

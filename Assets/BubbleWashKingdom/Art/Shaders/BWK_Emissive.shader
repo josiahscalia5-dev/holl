@@ -13,6 +13,8 @@ Shader "BWK/Emissive"
         _ChaseScale ("Chase Scale (1/m)", Float) = 1.6
         _ChaseSpeed ("Chase Speed", Float) = 1.5
         _ChaseMin ("Chase Minimum", Range(0,1)) = 0.45
+        _FogAmount ("Fog Amount", Range(0,1)) = 0.35
+        _HaloBoost ("Grazing Halo Boost", Range(0,2)) = 0.6
     }
     SubShader
     {
@@ -21,7 +23,7 @@ Shader "BWK/Emissive"
         #include "BWKCommon.hlsl"
         CBUFFER_START(UnityPerMaterial)
             half4 _Color;
-            half _Intensity, _CoreWhite, _PulseSpeed, _PulseAmount, _Chase, _ChaseScale, _ChaseSpeed, _ChaseMin;
+            half _Intensity, _CoreWhite, _PulseSpeed, _PulseAmount, _Chase, _ChaseScale, _ChaseSpeed, _ChaseMin, _FogAmount, _HaloBoost;
         CBUFFER_END
         ENDHLSL
         Pass
@@ -52,13 +54,14 @@ Shader "BWK/Emissive"
             {
                 half3 v = GetWorldSpaceNormalizeViewDir(i.positionWS);
                 half facing = saturate(dot(normalize(i.normalWS), v));
-                half3 col = lerp(_Color.rgb, half3(1, 1, 1), pow(facing, 3.0) * _CoreWhite);
+                // saturated colour at grazing angles (reads as a coloured halo through bloom), hot core facing the camera
+                half3 col = lerp(_Color.rgb * (1.0 + _HaloBoost * (1.0 - facing)), half3(1, 1, 1), pow(facing, 4.0) * _CoreWhite);
                 float seed = dot(floor(i.pivotWS * 2.0), float3(0.31, 0.17, 0.53));
                 half pulse = 1.0 + sin(_Time.y * _PulseSpeed * 6.2831 + seed * 6.2831) * _PulseAmount;
                 float chasePhase = frac(dot(i.positionWS, float3(0.57, 0.31, 0.77)) * _ChaseScale - _Time.y * _ChaseSpeed);
                 half chase = lerp(1.0, lerp(_ChaseMin, 1.0, smoothstep(0.35, 0.0, abs(chasePhase - 0.5) - 0.15)), _Chase);
                 half3 c = col * _Intensity * pulse * chase;
-                c = MixFog(c, i.fog);
+                c = lerp(c, MixFog(c, i.fog), _FogAmount);
                 return half4(c, 1);
             }
             ENDHLSL

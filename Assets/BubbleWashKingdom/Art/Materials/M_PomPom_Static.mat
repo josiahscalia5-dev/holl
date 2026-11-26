@@ -29,10 +29,11 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AO: 0.5
-    - _ClumpAmount: 0.35
+    - _AO: 0.3
+    - _ClumpAmount: 0.6
     - _ClumpScale: 7
-    - _Density: 46
+    - _Curl: 1.6
+    - _Density: 120
     - _FurLength: 0
     - _Glow: 0.1
     - _Gravity: 0
@@ -40,12 +41,13 @@ Material:
     - _RimStrength: 0.7
     - _StaticMode: 1
     - _Thinning: 0
+    - _Underfur: 0.7
     - _UseVertexTint: 1
     - _Wrap: 0.6
     m_Colors:
-    - _BaseColor: {r: 0.4745098, g: 0.22745098, b: 0.67058825, a: 1}
+    - _BaseColor: {r: 0.45490196, g: 0.27058825, b: 0.7607843, a: 1}
     - _RimColor: {r: 0.8862745, g: 0.8, b: 1, a: 1}
-    - _RootColor: {r: 0.29411766, g: 0.14901961, b: 0.5019608, a: 1}
-    - _TipColor: {r: 0.7058824, g: 0.35686275, b: 0.85882354, a: 1}
+    - _RootColor: {r: 0.27058825, g: 0.15686275, b: 0.5411765, a: 1}
+    - _TipColor: {r: 0.68235296, g: 0.5254902, b: 0.91764706, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

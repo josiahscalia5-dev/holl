@@ -34,15 +34,24 @@ namespace BubbleWash
         Vector3 baseScale;
         Transform flyTarget;
 
-        void Awake()
+        bool captured;
+
+        // The base pose is captured once, lazily: Awake never runs in the editor, and resetting before the capture used to
+        // collapse every item to the origin with zero scale (invisible coins in saved scenes).
+        void CaptureBase()
         {
+            if (captured) return;
             basePos = transform.localPosition;
             baseRot = transform.localRotation;
             baseScale = transform.localScale;
+            captured = true;
         }
+
+        void Awake() { CaptureBase(); }
 
         public void ResetItem()
         {
+            CaptureBase();
             Consumed = false;
             collectT = -1f;
             transform.localPosition = basePos;

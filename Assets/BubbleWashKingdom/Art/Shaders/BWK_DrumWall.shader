@@ -19,6 +19,7 @@ Shader "BWK/DrumWall"
         _Smoothness ("Smoothness", Range(0,1)) = 0.72
         _Glow ("Self Glow", Range(0,1)) = 0.12
         _HoleBand ("Perforated band (0..1 of circumference, centred on the ceiling)", Range(0,1)) = 1
+        _HoleStretch ("Slot elongation around the drum", Range(1, 2.2)) = 1
     }
     SubShader
     {
@@ -28,7 +29,7 @@ Shader "BWK/DrumWall"
         CBUFFER_START(UnityPerMaterial)
             half4 _BaseColor, _HighlightColor, _HoleColor, _HoleGlow;
             float _Circumference, _VTile, _HoleSpacing, _HoleRadius, _Bevel, _PanelLength;
-            half _Metallic, _Smoothness, _Glow, _HoleBand;
+            half _Metallic, _Smoothness, _Glow, _HoleBand, _HoleStretch;
         CBUFFER_END
         ENDHLSL
 
@@ -82,7 +83,7 @@ Shader "BWK/DrumWall"
                 float row = floor(cell.y);
                 cell.x += fmod(abs(row), 2.0) * 0.5; // staggered rows
                 float2 local = frac(cell) - 0.5;
-                float dist = length(local);
+                float dist = length(float2(local.x / _HoleStretch, local.y));   // slots elongated around the drum
                 float r = _HoleRadius;
                 float aa = fwidth(dist) * 1.5 + 1e-4;
 

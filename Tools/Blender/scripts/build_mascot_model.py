@@ -50,7 +50,7 @@ CUFF_PROFILE = [  # (alpha deg, offset from body surface, rib weight): roll unde
 CUFF_OFF = 0.065                           # nominal outer offset (star conforms to it)
 STAR_A, STAR_PHI, STAR_ROT = 61.0, 33.0, -12.0   # on the cuff, 33 deg toward HIS LEFT (+X)
 STAR_RO, STAR_RI = 0.080, 0.035
-POMPOM_R, POMPOM_SINK = 0.18, 0.55
+POMPOM_R, POMPOM_SINK = 0.20, 0.55
 
 EYE_X, EYE_Z = 0.155, 0.52                 # eye centres on the front surface
 EYE_H, EYE_RS, EYE_VS = 0.025, 0.12, 1.06  # protrusion, cap sphere radius, vertical stretch
@@ -302,9 +302,24 @@ def hat_point(alpha_deg, psi, off):
     return BODY_C + d * (body_dist(d) + off)
 
 
+CROWN_TOP_OFF = 0.18      # crown top above the head (build_mascot_rig.CROWN_OFF_TOP must match)
+CROWN_HALF_W = 0.452      # horizontal semi-axis of the dome ellipsoid (just outside the head at the cuff)
+_crown_cache = {}
+
+
 def crown_off(alpha):
-    t = max(0.0, 1.0 - alpha / 53.0)
-    return 0.030 + 0.034 * t * t
+    """Beanie crown offset from the head along direction alpha: the outer surface is a rounded ellipsoidal dome
+    (reference beanie: soft hemisphere ~0.5 x cuff width tall), never closer than 3 cm to the head."""
+    key = round(alpha, 4)
+    if key in _crown_cache:
+        return _crown_cache[key]
+    top = body_dist(hat_dir(0.0, 0.0))
+    a = math.radians(alpha)
+    c = top + CROWN_TOP_OFF
+    r = 1.0 / math.sqrt((math.sin(a) / CROWN_HALF_W) ** 2 + (math.cos(a) / c) ** 2)
+    off = max(0.030, r - body_dist(hat_dir(alpha, 0.0)))
+    _crown_cache[key] = off
+    return off
 
 
 def hat_v(alpha):

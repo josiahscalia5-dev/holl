@@ -26,7 +26,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _DstBlend: 0
-    - _Intensity: 1.8
+    - _Intensity: 1.6
     - _Mode: 0
     - _RayCount: 14
     - _Scale: 3
@@ -34,7 +34,7 @@ Material:
     - _SrcBlend: 1
     - _ZWrite: 1
     m_Colors:
-    - _ColorA: {r: 0.42352942, g: 0.79607844, b: 0.8745098, a: 1}
-    - _ColorB: {r: 0.6627451, g: 0.2627451, b: 0.6509804, a: 1}
+    - _ColorA: {r: 0.12156863, g: 0.8235294, b: 1, a: 1}
+    - _ColorB: {r: 1, g: 0.24705882, b: 0.78431374, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

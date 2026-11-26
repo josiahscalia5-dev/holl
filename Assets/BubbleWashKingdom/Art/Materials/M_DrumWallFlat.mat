@@ -31,6 +31,7 @@ Material:
     - _HoleBand: 1
     - _HoleRadius: 0.25
     - _HoleSpacing: 0.8
+    - _HoleStretch: 1
     - _Metallic: 0.75
     - _PanelLength: 1000
     - _Smoothness: 0.72

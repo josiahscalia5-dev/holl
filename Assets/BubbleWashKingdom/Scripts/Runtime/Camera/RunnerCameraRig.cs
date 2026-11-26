@@ -16,24 +16,30 @@ namespace BubbleWash
         public CinemachineCamera vcam;
 
         [Header("Landscape 16:9 framing (matches the reference rear view)")]
-        public float distanceBack = 2.85f;
-        public float height = 1.3f;
+        public float distanceBack = 2.9f;
+        public float height = 1.6f;
         public float fovLandscape = 52f;
 
         [Header("Portrait 9:16 framing")]
-        public float distanceBackPortrait = 3.9f;
-        public float heightPortrait = 1.6f;
-        public float fovPortrait = 70f;
+        [Tooltip("Owner requirement: rear follow camera slightly above and behind; back of hat, pom-pom, arms and paws visible, route and tunnel visible ahead above the pom-pom.")]
+        public float distanceBackPortrait = 2.7f;
+        public float heightPortrait = 1.75f;
+        public float fovPortrait = 60f;
 
         [Header("Aim")]
         public float lookAhead = 10f;
         [Tooltip("Downward pitch from the track direction (reference: about 8.5 degrees at 16:9).")]
-        public float pitchDown = 11f;
-        public float pitchDownPortrait = 12f;
+        public float pitchDown = 9f;
+        public float pitchDownPortrait = 9.5f;
         public float lookHeight = 0.6f;
         [Range(0f, 1f)] public float lookAtRunnerWeight = 0.08f;
         [Range(0f, 1f)] public float lateralFollow = 0.55f;
         [Range(0f, 1f)] public float jumpFollow = 0.35f;
+        [Tooltip("On slopes the track point behind the mascot is higher/lower than the mascot: remove this fraction of the " +
+                 "difference so the camera stays level with the hat band (reference) instead of looking down on downhills.")]
+        [Range(0f, 1f)] public float slopeCompensation = 0.85f;
+        [Tooltip("Same for the look-ahead point, so the gaze runs along the slide instead of diving on long downhills.")]
+        [Range(0f, 1f)] public float lookSlopeCompensation = 0.5f;
 
         [Header("Banking")]
         [Range(0f, 1f)] public float bankFactor = 0.5f;
@@ -48,6 +54,7 @@ namespace BubbleWash
         public float aspectOverride = 0f;
 
         Vector3 posVel, lookVel, smoothedLook;
+        float smLat, smH, latV, hV;
         float dutch, dutchVel, fov, fovVel;
         bool initialized;
         Camera outputCamera;
@@ -89,9 +96,19 @@ namespace BubbleWash
             TrackFrame fr = runner.Frame;
             TrackFrame fl = track.Evaluate(d + lookAhead);
 
-            Vector3 desiredPos = fc.position + fc.flatRight * (runner.Lateral * lateralFollow)
-                                 + fc.flatUp * (h + runner.Height * jumpFollow);
+            // Along-track distance follows exactly (no lag at speed); only lateral and height offsets are smoothed.
+            float targetLat = runner.Lateral * lateralFollow;
+            float targetH = h + runner.Height * jumpFollow;
+            if (snap) { smLat = targetLat; smH = targetH; latV = hV = 0f; }
+            else
+            {
+                smLat = Mathf.SmoothDamp(smLat, targetLat, ref latV, 0.12f, Mathf.Infinity, dt);
+                smH = Mathf.SmoothDamp(smH, targetH, ref hV, 0.15f, Mathf.Infinity, dt);
+            }
+            Vector3 desiredPos = fc.position + fc.flatRight * smLat + fc.flatUp * smH;
+            desiredPos -= Vector3.up * ((fc.position.y - fr.position.y) * slopeCompensation);
             Vector3 aheadPoint = fl.position + fl.flatRight * (runner.Lateral * 0.3f) + fl.flatUp * (h + runner.Height * jumpFollow);
+            aheadPoint += Vector3.up * ((fr.position.y - fl.position.y) * lookSlopeCompensation);
             Vector3 runnerPoint = runner.transform.position + fr.flatUp * 0.45f;
             Vector3 desiredLook = Vector3.Lerp(aheadPoint, runnerPoint, lookAtRunnerWeight);
 
@@ -103,7 +120,7 @@ namespace BubbleWash
             }
             else
             {
-                transform.position = Vector3.SmoothDamp(transform.position, desiredPos, ref posVel, positionSmoothTime, Mathf.Infinity, dt);
+                transform.position = desiredPos;
                 smoothedLook = Vector3.SmoothDamp(smoothedLook, desiredLook, ref lookVel, lookSmoothTime, Mathf.Infinity, dt);
             }
 

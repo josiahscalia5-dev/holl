@@ -23,6 +23,8 @@ Shader "BWK/Fur"
         _Glow ("Self Glow", Range(0,1)) = 0.12
         _UseVertexTint ("Use Vertex Colour Tint", Range(0,1)) = 1
         _StaticMode ("Ignore Shell UV (static meshes)", Range(0,1)) = 0
+        _Curl ("Curl / Lean (x fur length)", Range(0,3)) = 1.2
+        _Underfur ("Underfur Density", Range(0,1)) = 0.55
     }
     SubShader
     {
@@ -34,7 +36,7 @@ Shader "BWK/Fur"
             half4 _RootColor, _BaseColor, _TipColor, _RimColor;
             float4 _NoiseTex_ST;
             float _Density, _FurLength, _Gravity, _Thinning, _ClumpScale, _RimPower;
-            half _ClumpAmount, _Wrap, _RimStrength, _AO, _Glow, _UseVertexTint, _StaticMode;
+            half _ClumpAmount, _Wrap, _RimStrength, _AO, _Glow, _UseVertexTint, _StaticMode, _Curl, _Underfur;
         CBUFFER_END
         ENDHLSL
 
@@ -84,6 +86,12 @@ Shader "BWK/Fur"
                 float3 posWS = TransformObjectToWorld(i.positionOS.xyz);
                 posWS += nWS * (h * _FurLength * mask);
                 posWS.y -= h * h * _Gravity * mask;
+                // plush: tips lean in a slowly varying swirl (tangent plane) so strands cross instead of standing as spikes
+                float3 pOS = i.positionOS.xyz * 9.0;
+                float3 sw = float3(BWK_ValueNoise3(pOS), BWK_ValueNoise3(pOS + 7.1), BWK_ValueNoise3(pOS + 13.7)) - 0.5;
+                float3 swWS = TransformObjectToWorldDir(sw, false);
+                swWS -= nWS * dot(swWS, nWS);
+                posWS += swWS * (h * h * _FurLength * _Curl * mask);
                 o.positionWS = posWS;
                 o.positionCS = TransformWorldToHClip(posWS);
                 o.normalWS = nWS;
@@ -97,11 +105,24 @@ Shader "BWK/Fur"
             half4 frag(Varyings i) : SV_Target
             {
                 float h = i.shell.x;
-                float2 uv = i.uv * _Density;
-                half strand = SAMPLE_TEXTURE2D(_NoiseTex, sampler_NoiseTex, uv).r;
+                // Procedural strands, resolution independent: guard hairs lean inside their cell with height (soft crossing
+                // tips), lengths vary in clumps, and a denser, shorter underfur layer fills the coat like a plush toy.
+                float2 suv = i.uv * _Density;
+                float2 cell = floor(suv);
+                float2 jit = float2(BWK_Hash21(cell), BWK_Hash21(cell + 17.3)) - 0.5;
+                float2 lean = (float2(BWK_Hash21(cell + 5.7), BWK_Hash21(cell + 9.1)) - 0.5) * 0.8 * h;
+                float d = length(frac(suv) - 0.5 - jit * 0.4 - lean);
+                half rnd = BWK_Hash21(cell + 3.1);
                 half clump = BWK_ValueNoise(i.uv * _ClumpScale);
-                strand = saturate(strand * lerp(1.0, clump * 1.6, _ClumpAmount));
-                if (h > 0.001) clip(strand - pow(h, 0.8) * _Thinning);
+                half lenVar = lerp(1.0, 0.55 + clump * 0.9, _ClumpAmount) * (0.72 + 0.28 * rnd);
+                half guard = saturate(1.0 - d * 1.75) * lenVar;
+                float2 suv2 = i.uv * _Density * 1.85 + 3.7;
+                float2 cell2 = floor(suv2);
+                float2 jit2 = float2(BWK_Hash21(cell2 + 1.3), BWK_Hash21(cell2 + 7.7)) - 0.5;
+                float d2 = length(frac(suv2) - 0.5 - jit2 * 0.4 - lean * 0.6);
+                half under = saturate(1.0 - d2 * 1.8) * 0.5 * _Underfur * (0.8 + 0.4 * clump);
+                half strand = max(guard, under);
+                if (h > 0.001) clip(strand - h * _Thinning * 0.85);
 
                 half3 tint = lerp(half3(1, 1, 1), i.color.rgb, _UseVertexTint * step(0.001, i.color.a));
                 half3 col = h < 0.5 ? lerp(_RootColor.rgb, _BaseColor.rgb, saturate(h * 2.0 + 0.55)) : lerp(_BaseColor.rgb, _TipColor.rgb, h * 2.0 - 1.0);

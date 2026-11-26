@@ -13,8 +13,10 @@ of one enormous magical washing machine. These instructions come only from the o
 
 ## Source of truth
 - `Reference/` (private, gitignored, never publish): frames every 0.25 s (`frames/`), named key frames
-  (`key/`), contact sheets, and `VISUAL_ANALYSIS.md` (the art bible: palette hex values, world scale,
-  camera spec, QA checklist). The original video stays at `C:\Users\josia\Downloads\25982.mp4`.
+  (`key/`) and contact sheets. (A `VISUAL_ANALYSIS.md` art bible was planned but never written: compare
+  against the frames directly.) The original video stays at `C:\Users\josia\Downloads\25982.mp4`.
+- Hero gameplay screen = rear view inside the tunnel, target frame `Reference/frames/f_003.00s.png`. Every full
+  build writes `Captures/compare/hero_vs_reference_{9x16,16x9}.png` (left reference, right real Unity render).
 - The video is the single source of truth for art direction. Camera and gameplay corrections in the
   brief override it: **normal gameplay camera is behind and slightly above the mascot, who faces the
   direction of travel** (back of hat, pom-pom, fluffy back, tail puff and sole pads visible). Front-facing
@@ -54,10 +56,15 @@ of one enormous magical washing machine. These instructions come only from the o
   the bent/combined level meshes in Assets/BubbleWashKingdom/Generated are not in git.
   `Tools/unity_run.sh BubbleWash.EditorTools.SceneBuilder.BuildAllBatch build`
 - Stills only: `Tools/unity_run.sh BubbleWash.EditorTools.CaptureTools.CaptureStillsBatch stills` -> `Captures/stills/`
+- Hero + comparison only: `Tools/unity_run.sh BubbleWash.EditorTools.CaptureTools.HeroBatch hero`
+- No-save agent preview (textures, materials, lighting/post + runner FX rebuilt in memory, hero capture):
+  `Tools/unity_run.sh BubbleWash.EditorTools.CaptureTools.AgentPreviewBatch <log> -bwkOut Captures/agents/<name>`
 - Play Mode test (autopilot run, MP4 + stills + rear-camera assertions + editor FPS) -> `Captures/playmode/`:
   `Unity.exe -batchmode -projectPath . -runTests -testPlatform PlayMode -testResults Captures/playmode/results.xml`
 - Windows dev build for PC perf: `Tools/unity_run.sh BubbleWash.EditorTools.BuildTools.BuildWindowsDevBatch winbuild`
-- Blender assets: `blender --background --factory-startup --python Tools/Blender/scripts/build_<group>.py`
+- Blender assets: `Tools/blender_run.sh Tools/Blender/scripts/build_<group>.py [log]`
+- Every Unity / Blender run goes through `Tools/heavy_lock.sh` (unity_run.sh and blender_run.sh already do):
+  one heavy process at a time on this laptop.
 
 ## Claude Unity Game Studio (selective, fresh-project manual copy)
 - Only these specialists/skills were copied into `.claude/`: art-director, technical-artist, unity-shader-specialist,
@@ -68,6 +75,17 @@ of one enormous magical washing machine. These instructions come only from the o
 - Intel N150 (4 threads), 7.7 GB RAM, Intel iGPU, ~9 GB free disk. Run Unity and Blender one at a time,
   keep Library size in check, prefer short batchmode runs. Performance numbers measured here are PC
   numbers; anything not run on a physical Android device must be reported as untested.
+
+## Parallel specialists (file ownership)
+- Lead developer: scene assembly (`SceneBuilder.cs` core, full builds, scene saves), gameplay, camera rig, capture
+  tools, tests, git. Domain code lives in partial files with one owner each:
+  character = `MaterialLibrary.Character.cs`, `BWK_Fur` / `BWK_Character` shaders, mascot Blender scripts;
+  water/VFX = `SceneBuilder.WaterFX.cs`, `MaterialLibrary.WaterFX.cs`, `BWK_Water` / `BWK_Soft` / `BWK_Glass`,
+  `TextureGenerator.cs`, `SplashFX.cs`, `build_props.py`;
+  environment = `SceneBuilder.Environment.cs`, `MaterialLibrary.Environment.cs`, `BWK_DrumWall` / `BWK_FlowGlow`,
+  `build_track.py`, `build_machinery.py`;
+  lighting = `SceneBuilder.Lighting.cs`, `MaterialLibrary.Lighting.cs`, `BWK_Gold` / `BWK_Emissive`, `BWKCommon.hlsl`,
+  `Assets/Settings/*`. Agents never run the full build or save the scene.
 
 ## Code layout
 - All game content lives under `Assets/BubbleWashKingdom/` (Art, Animation, Prefabs, Scenes, Scripts,

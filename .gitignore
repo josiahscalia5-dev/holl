@@ -59,3 +59,7 @@ desktop.ini
 /Assets/BubbleWashKingdom/Generated.meta
 # Player builds
 /Builds/
+
+# Python bytecode
+__pycache__/
+*.pyc

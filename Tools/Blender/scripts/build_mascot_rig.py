@@ -27,6 +27,7 @@ import math
 import os
 import struct
 import sys
+import tempfile
 import zlib
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -40,7 +41,8 @@ import bwk_common as C  # noqa: E402
 FPS = 30
 ROOT = C.ROOT
 REF_DIR = os.path.join(ROOT, "Reference", "frames")
-SCRATCH = os.path.join(C.WORK, "_rig_preview_cells")
+# temporary contact-sheet cells live outside the project (override with BWK_SCRATCH)
+SCRATCH = os.path.join(os.environ.get("BWK_SCRATCH") or tempfile.gettempdir(), "bwk_mascot_rig_cells")
 
 # ------------------------------------------------------------------ model facts (build_mascot_model.py)
 BODY_C = Vector((0.0, 0.0, 0.49))
@@ -51,8 +53,8 @@ ARM_DIR = Vector((1.0, 0.06, 0.52))
 FOOT_TILT, FOOT_YAW = 64.0, 10.0
 TAIL_Z, TAIL_R = 0.335, 0.07
 CUFF_BOTTOM_A = 74.0
-CROWN_OFF_TOP = 0.064
-POMPOM_R, POMPOM_SINK = 0.18, 0.55
+CROWN_OFF_TOP = 0.180
+POMPOM_R, POMPOM_SINK = 0.20, 0.55
 EYE_SEG, EYE_RINGS = 32, 6
 MOUTH_N, MOUTH_RINGS = 28, 6
 ARM_FUR_VERTS, ARM_VERTS = 99, 219
@@ -61,20 +63,22 @@ FOOT_SHELL_VERTS = 98
 # ------------------------------------------------------------------ seated riding pose
 SEAT_DROP = 0.05          # body lowered so the fur-ball underside rests ~2 cm above the slide surface
 SEAT_LEAN = -8.0          # body pitch (negative = lean back)
-FOOT_SEAT_X = 0.225       # paw centre |x| (wide enough to peek out past the body from the rear camera)
+FOOT_SEAT_X = 0.35        # paw centre |x|: V-sit as in the approved front frames; the only stance whose paws peek
+                          # out past the 0.85 m ball from the rear gameplay camera (measured by ray casts)
 FOOT_SEAT_PITCH = 76.0    # sole turned to face forward, toes up
-FOOT_SEAT_YAW = 16.0      # soles splay outward a little
-FOOT_SEAT_ROLL = 12.0     # toes tilt outward (V shape seen from the front)
+FOOT_SEAT_YAW = 30.0      # soles splay outward (V)
+FOOT_SEAT_ROLL = 18.0     # toes tilt outward (V shape seen from the front)
 FOOT_FLOOR = 0.014        # lowest paw point in the seated pose (heel on the surface)
-FOOT_EMBED = 0.018        # back of the paw tucks this deep into the body surface (fur covers the join)
-HIP_SEAT = Vector((0.13, -0.08, 0.17))
+FOOT_EMBED = 0.012        # back of the paw tucks this deep into the body surface (fur covers the join)
+HIP_SEAT = Vector((0.18, -0.02, 0.24))
 FOOT_MIN_Z = 0.008        # floor clamp for animated paws
+ARM_RAISE_MAX = 19.0      # arm roots sit right under the beanie cuff: soft cap + per-frame cuff collision solve
 TILT_RADIUS = 0.36        # effective bottom radius: lift that keeps the bottom on the surface when leaning
 
 # head pivot = ball centre (rotations slide the face over the near-spherical body); hat chain along the hat axis
 P_HAT = BODY_C + HAT_AXIS * 0.18
-P_TIP = BODY_C + HAT_AXIS * 0.36
-P_POM = BODY_C + HAT_AXIS * 0.44
+P_TIP = BODY_C + HAT_AXIS * 0.47
+P_POM = BODY_C + HAT_AXIS * 0.58
 
 # ------------------------------------------------------------------ fur shells
 N_SHELLS = 12
@@ -162,6 +166,14 @@ def hat_alpha(p):
     return math.degrees(math.acos(max(-1.0, min(1.0, d.dot(HAT_AXIS)))))
 
 
+def soft_cap(x, cap, knee):
+    """Identity below cap - knee, then eases smoothly toward cap (C1 continuous safety limit)."""
+    k0 = cap - knee
+    if x <= k0:
+        return x
+    return cap - knee * math.exp(-(x - k0) / knee)
+
+
 # ------------------------------------------------------------------ model analysis
 def analyze(objs):
     info = {}
@@ -183,6 +195,7 @@ def analyze(objs):
         info['arm_dir'][tag] = Vector((side * ARM_DIR.x, ARM_DIR.y, ARM_DIR.z)).normalized()
         av = [v.co.copy() for v in objs['Arm.' + tag].data.vertices]
         assert len(av) == ARM_VERTS, ("unexpected arm topology", len(av))
+        info.setdefault('arm_rest', {})[tag] = av[:ARM_FUR_VERTS]
         palm = av[ARM_FUR_VERTS:ARM_FUR_VERTS + 42]
         info['palm_c'][tag] = sum(palm, Vector()) / len(palm)
         info['bean_c'][tag] = [sum(av[s:s + 26], Vector()) / 26.0 for s in (141, 167, 193)]
@@ -660,7 +673,7 @@ def clip_lean_left(t, D=0.8):
     P.body_rot[2] += 3.0
     P.body_off.z += 0.006 * s1(2 * p)
     P.head_rot = [4.0, -2.5 + 0.8 * s1(p - 0.1), 4.0]
-    P.arm['R'] = [24.0 + 4.0 * s1(2 * p + 0.2), -4.0, 0.0]
+    P.arm['R'] = [16.0 + 3.0 * s1(2 * p + 0.2), -4.0, 0.0]
     P.arm['L'] = [-22.0 + 3.0 * s1(2 * p), 6.0, 0.0]
     P.hand['R'] = [12.0 + 10.0 * s1(2 * p + 0.4), 0.0, 0.0]
     P.hand['L'] = [-4.0 + 4.0 * s1(2 * p + 0.1), 0.0, 0.0]
@@ -681,7 +694,7 @@ def clip_turn_left(t, D=0.8):
     P.body_rot[0] += 1.0 * s1(2 * p + 0.2)
     P.body_off.z += 0.006 * s1(2 * p)
     P.head_rot = [4.0, -2.0, 9.0 + 1.5 * s1(p - 0.1)]
-    P.arm['R'] = [20.0 + 3.0 * s1(2 * p + 0.2), -26.0, 0.0]
+    P.arm['R'] = [15.0 + 3.0 * s1(2 * p + 0.2), -26.0, 0.0]
     P.arm['L'] = [-8.0 + 3.0 * s1(2 * p), 22.0, 0.0]
     P.hand['R'] = [10.0 + 8.0 * s1(2 * p + 0.4), 0.0, 0.0]
     P.hand['L'] = [5.0 * s1(2 * p + 0.1), 0.0, 0.0]
@@ -702,7 +715,7 @@ def clip_accelerate(t, D=0.6):
     P.body_off.z += 0.012 * s1(2 * p)
     P.head_rot = [10.0 - 1.0 * s1(2 * p + 0.1), -1.0 * s1(p), 0.0]
     for tag, ph in (('L', 0.0), ('R', 0.12)):
-        P.arm[tag] = [40.0 + 4.0 * s1(2 * p + 0.25 + ph), 28.0 + 5.0 * s1(2 * p + 0.4 + ph), 0.0]
+        P.arm[tag] = [15.0 + 3.0 * s1(2 * p + 0.25 + ph), 30.0 + 5.0 * s1(2 * p + 0.4 + ph), 0.0]
         P.hand[tag] = [-15.0 + 8.0 * s1(4 * p + ph), 0.0, 0.0]
         P.leg[tag] = [16.0 + 3.0 * s1(2 * p + 0.3 + ph), 0.0, 0.0]
         P.foot[tag] = [10.0 + 4.0 * s1(2 * p + 0.5 + ph), 0.0, 0.0]
@@ -722,7 +735,7 @@ def clip_balance(t, D=1.2):
     P.body_off.z += 0.005 * s1(2 * p)
     P.head_rot = [4.0 + 2.0 * s1(2 * p), -2.5 * s1(p - 0.08), 3.0 * s1(p + 0.1)]
     for tag, ph in (('L', 0.0), ('R', 0.5)):
-        P.arm[tag] = [25.0 + 38.0 * s1(2 * p + ph), 32.0 * c1(2 * p + ph), 0.0]
+        P.arm[tag] = [3.0 + 16.0 * s1(2 * p + ph), 36.0 * c1(2 * p + ph), 0.0]
         P.hand[tag] = [10.0 * s1(2 * p + ph + 0.2), 0.0, 0.0]
         P.leg[tag] = [4.0 + 8.0 * s1(2 * p + ph + 0.1), 0.0, 0.0]
         P.foot[tag] = [8.0 * s1(2 * p + ph + 0.3), 0.0, 0.0]
@@ -761,9 +774,9 @@ def clip_jump(t, D=0.9):
                               (0.9, 4.0)])
     for tag, lag in (('L', 0.0), ('R', 0.02)):
         tt = max(0.0, t - lag)
-        P.arm[tag] = [track(tt, [(0.0, 5.0), (0.10, -14.0), (0.22, 48.0), (0.42, 68.0), (0.60, 30.0), (0.72, 4.0),
-                                 (0.82, 12.0), (0.9, 5.0)]),
-                      track(tt, [(0.0, -6.0), (0.10, 22.0), (0.22, -4.0), (0.42, -10.0), (0.60, -8.0), (0.72, 6.0),
+        P.arm[tag] = [track(tt, [(0.0, 5.0), (0.10, -14.0), (0.22, 15.0), (0.42, 19.0), (0.60, 12.0), (0.72, 0.0),
+                                 (0.82, 8.0), (0.9, 5.0)]),
+                      track(tt, [(0.0, -6.0), (0.10, 22.0), (0.22, -10.0), (0.42, -26.0), (0.60, -12.0), (0.72, 6.0),
                                  (0.9, -6.0)]), 0.0]
         P.hand[tag] = [track(tt, [(0.0, 6.0), (0.12, -10.0), (0.30, 20.0), (0.45, 25.0), (0.65, 5.0), (0.75, -8.0),
                                   (0.9, 6.0)]), 0.0, 0.0]
@@ -788,9 +801,9 @@ def clip_splash(t, D=0.6):
     P.head_rot[0] = track(t, [(0.0, 4.0), (0.06, 10.0), (0.16, -2.0), (0.30, 6.0), (0.6, 4.0)])
     for tag, lag in (('L', 0.0), ('R', 0.015)):
         tt = max(0.0, t - lag)
-        P.arm[tag] = [track(tt, [(0.0, 5.0), (0.06, 55.0), (0.16, 72.0), (0.30, 40.0), (0.45, 14.0), (0.6, 5.0)]),
-                      track(tt, [(0.0, -6.0), (0.06, 6.0), (0.18, 0.0), (0.6, -6.0)]), 0.0]
-        P.hand[tag] = [track(tt, [(0.0, 6.0), (0.06, 28.0), (0.18, 18.0), (0.30, -6.0), (0.45, 8.0), (0.6, 6.0)]),
+        P.arm[tag] = [track(tt, [(0.0, 5.0), (0.06, 17.0), (0.16, 20.0), (0.30, 12.0), (0.45, 4.0), (0.6, 5.0)]),
+                      track(tt, [(0.0, -6.0), (0.06, 16.0), (0.18, 10.0), (0.6, -6.0)]), 0.0]
+        P.hand[tag] = [track(tt, [(0.0, 6.0), (0.06, 24.0), (0.18, 14.0), (0.30, -6.0), (0.45, 8.0), (0.6, 6.0)]),
                        0.0, 0.0]
         P.leg[tag] = [track(tt, [(0.0, 0.0), (0.06, 14.0), (0.18, 8.0), (0.32, -2.0), (0.6, 0.0)]), 0.0, 0.0]
         P.foot[tag] = [track(tt, [(0.0, 0.0), (0.06, 12.0), (0.2, -4.0), (0.6, 0.0)]), 0.0, 0.0]
@@ -815,7 +828,7 @@ def clip_bump(t, D=0.5):
     e = track(t, [(0.0, 1.0), (0.03, 0.2), (0.16, 0.2), (0.24, 1.1), (0.34, 1.0), (0.5, 1.0)])
     for tag, ph in (('L', 0.0), ('R', 1.7)):
         P.eye_scl[tag] = [1.0 + 0.15 * max(0.0, 1.0 - e), 1.0, e]
-        P.arm[tag] = [5.0 + 30.0 * env * math.sin(w * 5.0 * t + ph), -6.0 + 15.0 * env * math.cos(w * 5.0 * t + ph),
+        P.arm[tag] = [5.0 + 14.0 * env * math.sin(w * 5.0 * t + ph), -6.0 + 18.0 * env * math.cos(w * 5.0 * t + ph),
                       0.0]
         P.hand[tag] = [6.0 + 20.0 * env * math.sin(w * 5.0 * t + ph + 0.8), 0.0, 0.0]
         P.leg[tag] = [14.0 * env * abs(math.sin(w * 4.0 * t + ph)), 0.0, 0.0]
@@ -834,7 +847,7 @@ def clip_swim(t, D=0.8):
     P.body_off.z += -0.07 + 0.012 * s1(2 * p + 0.2)
     P.head_rot = [-16.0 - 2.0 * s1(2 * p), -1.5 * s1(p), -2.0 * s1(p + 0.25)]
     for tag, ph in (('L', 0.0), ('R', 0.5)):
-        P.arm[tag] = [-4.0 + 22.0 * s1(2 * p + ph), -38.0 + 22.0 * c1(2 * p + ph), 0.0]
+        P.arm[tag] = [-4.0 + 17.0 * s1(2 * p + ph), -20.0 + 20.0 * c1(2 * p + ph), 0.0]
         P.hand[tag] = [12.0 * s1(2 * p + ph + 0.25), 0.0, 0.0]
         P.leg[tag] = [-18.0 + 16.0 * s1(2 * p + ph + 0.25), 0.0, 0.0]
         P.foot[tag] = [10.0 * s1(2 * p + ph + 0.4), 0.0, 0.0]
@@ -858,8 +871,8 @@ def clip_celebrate(t, D=1.2):
     P.body_rot[0] += 2.0 * s1(2 * p + 0.1)
     P.head_rot = [3.0 - 4.0 * s1(2 * p + 0.1), 2.5 * s1(p - 0.08), -3.0 * s1(p + 0.25)]
     for tag, ph in (('L', 0.0), ('R', 0.5)):
-        P.arm[tag] = [60.0 + 8.0 * s1(4 * p + ph * 0.5), -8.0 + 6.0 * s1(2 * p + ph), 0.0]
-        P.hand[tag] = [20.0 * s1(4 * p + ph), 0.0, 0.0]
+        P.arm[tag] = [16.0 + 4.0 * s1(4 * p + ph * 0.5), -6.0 + 12.0 * s1(2 * p + ph), 0.0]
+        P.hand[tag] = [8.0 + 16.0 * s1(4 * p + ph), 0.0, 0.0]
         P.leg[tag] = [8.0 + 10.0 * s1(2 * p + ph), 0.0, 0.0]
         P.foot[tag] = [10.0 * s1(4 * p + ph), 0.0, 0.0]
         P.eye_scl[tag] = [1.10, 0.9, 0.22]
@@ -888,6 +901,11 @@ class Rig:
         self.rest_inv = {k: m.inverted() for k, m in self.rest.items()}
         self.parent = {b.name: (b.parent.name if b.parent else None) for b in arm.data.bones}
         self.foot_samples = {tag: info['foot_rest'][tag][:FOOT_SHELL_VERTS] for _s, tag in SIDES}
+        self.arm_probe = {}
+        for _s, tag in SIDES:                    # arm surface points outside the body (h > 3 cm) + skin weight
+            R0, d = info['arm_root'][tag], info['arm_dir'][tag]
+            self.arm_probe[tag] = [(v, smoothstep(0.07, 0.15, (v - R0).dot(d))) for v in info['arm_rest'][tag]
+                                   if (v - R0).dot(d) > 0.03]
 
     def solve(self, P):
         I, seat = self.info, self.seat
@@ -901,29 +919,55 @@ class Rig:
         rp = self.rest['pompom']
         G['pompom'] = (G['hat_tip'] @ about(P_POM, rot_pry(P.pom_rot))
                        @ rp @ diag(1.0 / math.sqrt(s), s, 1.0 / math.sqrt(s)) @ self.rest_inv['pompom'])
+        gh_inv = G['head'].inverted()
         for side, tag in SIDES:
             R0, d = I['arm_root'][tag], I['arm_dir'][tag]
             ra, bk, tw = P.arm[tag]
-            G['arm.' + tag] = gb @ about(R0 - d * 0.03, rz(side * bk) @ ry(-side * ra)
-                                         @ Matrix.Rotation(math.radians(side * tw), 4, d))
             bd, sw, tw2 = P.hand[tag]
-            G['hand.' + tag] = G['arm.' + tag] @ about(R0 + d * 0.10, rz(side * sw) @ ry(-side * bd)
-                                                       @ Matrix.Rotation(math.radians(side * tw2), 4, d))
+            ra = soft_cap(ra, ARM_RAISE_MAX, 6.0)
+
+            def arm_pose(raise_deg, R0=R0, d=d, side=side, bk=bk, tw=tw, bd=bd, sw=sw, tw2=tw2):
+                ga = gb @ about(R0 - d * 0.03, rz(side * bk) @ ry(-side * raise_deg)
+                                @ Matrix.Rotation(math.radians(side * tw), 4, d))
+                gh = ga @ about(R0 + d * 0.10, rz(side * sw) @ ry(-side * bd)
+                                @ Matrix.Rotation(math.radians(side * tw2), 4, d))
+                return ga, gh
+
+            def cuff_depth(ga, gh, tag=tag):
+                return max(hat_depth(gh_inv @ ((ga @ v) * (1.0 - w) + (gh @ v) * w), I['beanie_bvh'])
+                           for v, w in self.arm_probe[tag])
+
+            ga, gh = arm_pose(ra)
+            if cuff_depth(ga, gh) > -0.004:          # arm would touch the beanie cuff: lower it until clear
+                lo, hi = ra - 45.0, ra
+                for _ in range(8):
+                    mid = 0.5 * (lo + hi)
+                    if cuff_depth(*arm_pose(mid)) > -0.004:
+                        hi = mid
+                    else:
+                        lo = mid
+                ga, gh = arm_pose(lo)
+            G['arm.' + tag], G['hand.' + tag] = ga, gh
             re = self.rest['eye.' + tag]
             G['eye.' + tag] = G['head'] @ re @ diag(*P.eye_scl[tag]) @ self.rest_inv['eye.' + tag]
         tk, wg, rl = P.tail_rot
         G['tail'] = gb @ about(self.rest['tail'].translation, rz(wg) @ ry(rl) @ rx(-tk))
         follow = body_G(P, with_scale=False) @ seat['body_inv']        # paws ride with the body
+        squash = gb @ seat['body_inv']                                  # ... and with its squash bulge (anchor only)
         for side, tag in SIDES:
             lift, spread, twist = P.leg[tag]
             flex, splay, roll = P.foot[tag]
+            anchor = seat['O'][tag]
+            bulge = tr((squash @ anchor) - (follow @ anchor))
             hip = about(seat['hip_seat'][tag], rz(side * twist) @ ry(-side * spread) @ rx(-lift))
-            gl = follow @ hip @ seat['T'][tag]
-            gf = follow @ hip @ about(seat['ankle_seat'][tag], rz(side * splay) @ ry(side * roll) @ rx(flex)) @ seat['T'][tag]
+            gl = bulge @ follow @ hip @ seat['T'][tag]
+            gf = (bulge @ follow @ hip @ about(seat['ankle_seat'][tag], rz(side * splay) @ ry(side * roll) @ rx(flex))
+                  @ seat['T'][tag])
             if P.floor_clamp:
                 zmin = min((gf @ v).z for v in self.foot_samples[tag])
                 if zmin < FOOT_MIN_Z:
-                    lift_m = tr((0.0, 0.0, FOOT_MIN_Z - zmin))
+                    dz = FOOT_MIN_Z - zmin          # paw pressed by the slide: lifts and slides out of the body's way
+                    lift_m = tr((side * 1.2 * dz, -0.4 * dz, dz))
                     gl, gf = lift_m @ gl, lift_m @ gf
             G['leg.' + tag], G['foot.' + tag] = gl, gf
         basis = {}
@@ -939,16 +983,59 @@ def apply_pose(arm, basis):
         arm.pose.bones[b].matrix_basis = m
 
 
+def hat_depth(p, bvh):
+    """Depth of a head-space point below the OUTERMOST beanie surface along the ray from the ball centre
+    (cuff roll, band and crown), negative = outside / below the cuff edge."""
+    d = p - BODY_C
+    L = d.length
+    dn = d / L
+    o, far = BODY_C.copy(), None
+    for _ in range(8):
+        hit = bvh.ray_cast(o, dn)
+        if hit[0] is None:
+            break
+        far = (hit[0] - BODY_C).length
+        o = hit[0] + dn * 1e-4
+    return -1.0 if far is None else far - L
+
+
+def collision_probe(rig, G, arm_data):
+    """(arm in beanie, arm in body, paw in body) penetration depths for one posed frame."""
+    bvh, hat_bvh = rig.info['body_bvh'], rig.info['beanie_bvh']
+    gb_inv, gh_inv = G['body'].inverted(), G['head'].inverted()
+    d_hat = d_arm = d_paw = 0.0
+    for _side, tag in SIDES:
+        ga, gh = G['arm.' + tag], G['hand.' + tag]
+        for v, w, h in arm_data[tag]:
+            p = (ga @ v) * (1.0 - w) + (gh @ v) * w
+            if h > 0.03:
+                d_hat = max(d_hat, hat_depth(gh_inv @ p, hat_bvh))
+            if h > 0.07:
+                d_arm = max(d_arm, inside_depth(bvh, gb_inv @ p))
+        gf = G['foot.' + tag]
+        for v in rig.foot_samples[tag]:
+            q = gb_inv @ (gf @ v)
+            near, nrm, _i, _d = bvh.find_nearest(q)
+            d_paw = max(d_paw, -(q - near).dot(nrm))
+    return d_hat, d_arm, d_paw
+
+
 def bake_clips(rig, clips):
     arm = rig.arm
     arm.animation_data_create()
     actions = {}
     body_rest = rig.info['body_verts']
     low_idx = [i for i, v in enumerate(body_rest) if v.z < 0.16]
+    pom_top = arm.data.bones['pompom'].tail_local.copy()
+    arm_data = {}
+    for _side, tag in SIDES:
+        R0, d = rig.info['arm_root'][tag], rig.info['arm_dir'][tag]
+        arm_data[tag] = [(v, smoothstep(0.07, 0.15, (v - R0).dot(d)), (v - R0).dot(d)) for v in rig.info['arm_rest'][tag]]
     for name, dur, loop, fn in clips:
         n = int(round(dur * FPS))
         frames = []
         zmin_body, zmin_foot, zmax = 9.0, 9.0, -9.0
+        hit = [0.0, 0.0, 0.0]
         for f in range(n + 1):
             t = 0.0 if (loop and f == n) else f / FPS
             P = fn(t)
@@ -957,7 +1044,8 @@ def bake_clips(rig, clips):
             zb = min((G['body'] @ body_rest[i]).z for i in low_idx)
             zf = min(min((G['foot.' + tag] @ v).z for v in rig.foot_samples[tag]) for _s, tag in SIDES)
             zmin_body, zmin_foot = min(zmin_body, zb), min(zmin_foot, zf)
-            zmax = max(zmax, (G['pompom'] @ rig.rest['pompom'].translation).z)
+            zmax = max(zmax, (G['pompom'] @ pom_top).z)
+            hit = [max(a, b) for a, b in zip(hit, collision_probe(rig, G, arm_data))]
         act = bpy.data.actions.new(name)
         act.use_fake_user = True
         slot = act.slots.new(id_type='OBJECT', name="Armature")
@@ -989,8 +1077,10 @@ def bake_clips(rig, clips):
         act.frame_start, act.frame_end = 0.0, float(n)
         act.use_cyclic = loop
         actions[name] = (act, slot)
-        print("CLIP %-10s frames 0-%d (%.2f s, %s)  body-bottom zmin %.3f  paw zmin %.3f  pom-pom ztop %.3f" % (
-            name, n, dur, "loop" if loop else "one-shot", zmin_body, zmin_foot, zmax))
+        print("CLIP %-10s frames 0-%d (%.2f s, %s)  body-bottom zmin %.3f  paw zmin %.3f  pom-pom ztop %.3f  "
+              "penetration arm>hat %.3f arm>body %.3f paw>body %.3f (seated design embed %.3f)" % (
+                  name, n, dur, "loop" if loop else "one-shot", zmin_body, zmin_foot, zmax, hit[0], hit[1], hit[2],
+                  FOOT_EMBED))
     return actions
 
 
@@ -1013,6 +1103,14 @@ def emission_material(name, hex_color, strength=1.0):
     em.inputs["Strength"].default_value = strength
     nt.links.new(em.outputs[0], out.inputs["Surface"])
     return mat
+
+
+def sock(coll, identifier):
+    """Socket by identifier (ShaderNodeMix has several sockets named 'A'/'B'/'Result')."""
+    for s in coll:
+        if s.identifier == identifier:
+            return s
+    raise KeyError(identifier)
 
 
 def preview_fur_material(mat, root_hex, tip_hex, density, radius, sheen_hex):
@@ -1053,18 +1151,18 @@ def preview_fur_material(mat, root_hex, tip_hex, density, radius, sheen_hex):
     nt.links.new(alpha, bsdf.inputs["Alpha"])
     mix = nt.nodes.new("ShaderNodeMix")
     mix.data_type = 'RGBA'
-    mix.inputs["A"].default_value = C.hex_rgba(root_hex)
-    mix.inputs["B"].default_value = C.hex_rgba(tip_hex)
-    nt.links.new(math_node('POWER', u, 0.7), mix.inputs["Factor"])
+    sock(mix.inputs, "A_Color").default_value = C.hex_rgba(root_hex)
+    sock(mix.inputs, "B_Color").default_value = C.hex_rgba(tip_hex)
+    nt.links.new(math_node('POWER', u, 0.7), sock(mix.inputs, "Factor_Float"))
     col = nt.nodes.new("ShaderNodeAttribute")
     col.attribute_name = "Col"
     mul = nt.nodes.new("ShaderNodeMix")
     mul.data_type = 'RGBA'
     mul.blend_type = 'MULTIPLY'
-    mul.inputs["Factor"].default_value = 1.0
-    nt.links.new(mix.outputs["Result"], mul.inputs["A"])
-    nt.links.new(col.outputs["Color"], mul.inputs["B"])
-    nt.links.new(mul.outputs["Result"], bsdf.inputs["Base Color"])
+    sock(mul.inputs, "Factor_Float").default_value = 1.0
+    nt.links.new(sock(mix.outputs, "Result_Color"), sock(mul.inputs, "A_Color"))
+    nt.links.new(col.outputs["Color"], sock(mul.inputs, "B_Color"))
+    nt.links.new(sock(mul.outputs, "Result_Color"), bsdf.inputs["Base Color"])
     bsdf.inputs["Roughness"].default_value = 0.8
     if "Sheen Weight" in bsdf.inputs:
         bsdf.inputs["Sheen Weight"].default_value = 0.6
@@ -1101,8 +1199,9 @@ def setup_preview_fur(obj):
     sc = nodes.new("ShaderNodeVectorMath")
     sc.operation = 'SCALE'
     sp = nodes.new("GeometryNodeSetPosition")
+    attr_out = next(s for s in attr.outputs if s.type == 'VECTOR' and s.enabled)
     links.new(gin.outputs[0], sp.inputs["Geometry"])
-    links.new(attr.outputs["Attribute"], sep.inputs[0])
+    links.new(attr_out, sep.inputs[0])
     links.new(sep.outputs[0], m1.inputs[0])
     links.new(sep.outputs[1], m1.inputs[1])
     links.new(m1.outputs[0], m2.inputs[0])
@@ -1112,8 +1211,8 @@ def setup_preview_fur(obj):
     links.new(sp.outputs["Geometry"], gout.inputs[0])
     mod = obj.modifiers.new("PreviewFurPush", 'NODES')
     mod.node_group = ng
-    preview_fur_material(bpy.data.materials["M_Fur"], "#A9487A", "#F79AC9", 240.0, 0.42, "#FFC2DE")
-    preview_fur_material(bpy.data.materials["M_PomPom"], "#4A1886", "#A46BE6", 200.0, 0.46, "#D9B8FF")
+    preview_fur_material(bpy.data.materials["M_Fur"], "#B83A7C", "#FF8EC8", 240.0, 0.42, "#FFB6DA")
+    preview_fur_material(bpy.data.materials["M_PomPom"], "#4C1590", "#A35FEA", 200.0, 0.46, "#D9B8FF")
 
 
 def add_floor():
@@ -1330,7 +1429,11 @@ def compose(path, tiles, cols, rows_n, cw, ch, bg=(0x2A, 0x1B, 0x4A), sep=(0x5A,
 
 # ------------------------------------------------------------------ previews
 REAR_CAM = ((0.0, 2.8, 1.35), (0.0, -1.5, 0.45))
-FRONT_GAME_CAM = ((0.0, -2.9, 1.05), (0.0, 1.5, 0.35))
+FRONT_GAME_CAM = ((0.0, -2.3, 0.98), (0.0, 1.5, 0.30))
+
+
+SIDE_CAM = ((2.75, -0.30, 0.62), (0.0, -0.10, 0.42))
+FRONT_CAM = ((0.0, -2.7, 0.78), (0.0, 0.0, 0.52))
 
 
 def make_previews(arm, actions):
@@ -1340,11 +1443,14 @@ def make_previews(arm, actions):
     setup_preview_fur(mesh)
 
     set_action(arm, actions, "Slide", 0)
-    render(C.preview_path("SK_Mascot_seated_back"), REAR_CAM[0], REAR_CAM[1], 25.0, (1280, 720),
-           label="Slide - rear gameplay camera")
-    render(C.preview_path("SK_Mascot_seated_side"), (2.75, -0.30, 0.62), (0.0, -0.10, 0.42), 50.0, (1000, 1000),
-           subject=(0.0, -0.1, 0.45), label="Slide - side (front = left)")
-    render(C.preview_path("SK_Mascot_front"), (0.0, -2.7, 0.78), (0.0, 0.0, 0.52), 50.0, (1000, 1000),
+    p_rear = os.path.join(SCRATCH, "rear_gameplay.tga")
+    render(p_rear, REAR_CAM[0], REAR_CAM[1], 25.0, (1280, 720), label="Slide - rear gameplay camera",
+           fmt='TARGA_RAW')
+    rear = read_tga(p_rear)
+    write_png(C.preview_path("SK_Mascot_seated_back"), *rear)
+    render(C.preview_path("SK_Mascot_seated_side"), SIDE_CAM[0], SIDE_CAM[1], 50.0, (1000, 1000),
+           subject=(0.0, -0.1, 0.45), label="Slide - side (travel = left)")
+    render(C.preview_path("SK_Mascot_front"), FRONT_CAM[0], FRONT_CAM[1], 50.0, (1000, 1000),
            subject=(0.0, -0.1, 0.5), label="Slide - front")
 
     cw, ch = 256, 240
@@ -1357,30 +1463,23 @@ def make_previews(arm, actions):
         set_action(arm, actions, name, frame)
         p = os.path.join(SCRATCH, "cell_%02d.tga" % i)
         render(p, REAR_CAM[0], REAR_CAM[1], lens, (cw, ch), shift=shift, label="%s  f%d" % (name, frame),
-               fmt='TARGA_RAW', samples=32)
+               fmt='TARGA_RAW', samples=24)
         tiles.append(read_tga(p))
-    set_action(arm, actions, "Slide", 0)
-    p = os.path.join(SCRATCH, "cell_side.tga")
-    render(p, (2.75, -0.30, 0.62), (0.0, -0.10, 0.42), 50.0 * cw / ch * 0.62, (cw, ch), subject=(0.0, -0.1, 0.45),
-           label="Slide side", fmt='TARGA_RAW', samples=32)
-    tiles.append(read_tga(p))
-    set_action(arm, actions, "Celebrate", 9)
-    p = os.path.join(SCRATCH, "cell_front.tga")
-    render(p, (0.0, -2.7, 0.78), (0.0, 0.0, 0.62), 50.0 * cw / ch * 0.62, (cw, ch), subject=(0.0, -0.1, 0.5),
-           label="Celebrate front", fmt='TARGA_RAW', samples=32)
-    tiles.append(read_tga(p))
+    for name, frame, cam, label in (("Slide", 0, SIDE_CAM, "Slide  side"), ("Celebrate", 9, FRONT_CAM, "Celebrate  front")):
+        set_action(arm, actions, name, frame)
+        lens2, shift2 = frame_camera(cam[0], cam[1], (0.0, -0.12, 0.66), 1.55, (cw, ch))
+        p = os.path.join(SCRATCH, "cell_%s.tga" % name)
+        render(p, cam[0], cam[1], lens2, (cw, ch), shift=shift2, label=label, fmt='TARGA_RAW', samples=24)
+        tiles.append(read_tga(p))
     compose(C.preview_path("SK_Mascot_poses"), tiles, 5, 3, cw, ch)
 
     # approved video frames vs. this rig, same camera framing (rear gameplay 2.50 s, tunnel front 5.00 s)
     try:
         set_action(arm, actions, "Slide", 0)
-        p_rear = os.path.join(SCRATCH, "cmp_rear.tga")
-        render(p_rear, REAR_CAM[0], REAR_CAM[1], 25.0, (1280, 720), label="Rig preview - rear (Slide)",
-               fmt='TARGA_RAW')
-        p_front = os.path.join(SCRATCH, "cmp_front.tga")
+        p_front = os.path.join(SCRATCH, "front_gameplay.tga")
         render(p_front, FRONT_GAME_CAM[0], FRONT_GAME_CAM[1], 25.0, (1280, 720), label="Rig preview - front (Slide)",
                fmt='TARGA_RAW', subject=(0.0, -0.1, 0.5))
-        tiles = [downsample2(*read_png(os.path.join(REF_DIR, "f_002.50s.png"))), downsample2(*read_tga(p_rear)),
+        tiles = [downsample2(*read_png(os.path.join(REF_DIR, "f_002.50s.png"))), downsample2(*rear),
                  downsample2(*read_png(os.path.join(REF_DIR, "f_005.00s.png"))), downsample2(*read_tga(p_front))]
         compose(C.preview_path("SK_Mascot_vs_reference"), tiles, 2, 2, 640, 360)
     except Exception as exc:  # comparison is a bonus; never fail the build on it
@@ -1478,4 +1577,5 @@ def main():
     print("MASCOT_RIG_DONE")
 
 
-main()
+if __name__ == "__main__":
+    main()

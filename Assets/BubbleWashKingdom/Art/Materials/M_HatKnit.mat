@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: M_HatKnit
-  m_Shader: {fileID: 4800000, guid: ebad0e801b4b43e49b9b485c14675c19, type: 3}
+  m_Shader: {fileID: 4800000, guid: 499c84189d54007428f8594aec5f1437, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -26,21 +26,21 @@ Material:
     m_Ints: []
     m_Floats:
     - _BumpScale: 6
-    - _BumpStrength: 0.55
-    - _Glow: 0.08
+    - _BumpStrength: 0.9
+    - _Glow: 0.1
     - _Metallic: 0
     - _Mode: 2
     - _RimPower: 3
     - _RimStrength: 0.35
-    - _Smoothness: 0.2
-    - _StitchU: 70
-    - _StitchV: 22
+    - _Smoothness: 0.18
+    - _StitchU: 46
+    - _StitchV: 24
     - _StripeWidth: 0
     - _Stripes: 3
     - _Wrap: 0.5
     m_Colors:
-    - _ColorA: {r: 0.42352942, g: 0.18039216, b: 0.627451, a: 1}
-    - _ColorB: {r: 0.8039216, g: 0.69803923, b: 0.9607843, a: 1}
+    - _ColorA: {r: 0.45882353, g: 0.21176471, b: 0.7372549, a: 1}
+    - _ColorB: {r: 0.92941177, g: 0.9019608, b: 1, a: 1}
     - _ColorC: {r: 0.54999995, g: 0.29999998, b: 0.85, a: 1}
     - _ShadowColor: {r: 0.62, g: 0.62, b: 0.95, a: 1}
   m_BuildTextureStacks: []

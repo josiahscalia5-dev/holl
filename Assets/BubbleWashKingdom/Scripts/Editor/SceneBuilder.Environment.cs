@@ -1,0 +1,222 @@
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Unity.Cinemachine;
+using Unity.Mathematics;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+using UnityEngine.Splines;
+
+namespace BubbleWash.EditorTools
+{
+    // OWNER: Agent 3 - 3D environment & machinery (tunnel modules, rings, bulkheads, side chambers, pipes, hall machinery, portal).
+    // Only this domain's agent edits this file; the lead developer runs the scene build that calls it.
+    public static partial class SceneBuilder
+    {
+        static void BuildBulkheads(GameObject env)
+        {
+            var mouth = track.Evaluate(tunnelStart);
+            var wall = Child(env, "TunnelMouthWall");
+            wall.transform.SetPositionAndRotation(mouth.FlatPoint(0, TunnelCenter), Quaternion.LookRotation(-mouth.forward, mouth.flatUp));
+            var m = ProceduralModules.Annulus(TunnelRadius + 0.05f, 24f);
+            SaveMesh(m);
+            wall.AddComponent<MeshFilter>().sharedMesh = m;
+            wall.AddComponent<MeshRenderer>().sharedMaterial = Mat("M_DrumWallFlat");
+            wall.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off;
+
+            var back = track.Evaluate(0f);
+            var bw = Child(env, "HallBackWall");
+            bw.transform.SetPositionAndRotation(back.FlatPoint(0, TunnelCenter * HallScale) - back.forward * 0.5f, Quaternion.LookRotation(back.forward, back.flatUp));
+            var m2 = ProceduralModules.Annulus(0.01f, TunnelRadius * HallScale + 1f);
+            SaveMesh(m2);
+            bw.AddComponent<MeshFilter>().sharedMesh = m2;
+            bw.AddComponent<MeshRenderer>().sharedMaterial = Mat("M_DrumWallFlat");
+            bw.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off;
+        }
+
+        static void BuildRings(GameObject env, float L)
+        {
+            var ring = ModelParts("Track", "SM_Ring");
+            var bulb = ModelParts("Track", "SM_Bulb");
+            if (ring.Count == 0) { Debug.LogWarning("[BWK] SM_Ring missing - rings skipped"); return; }
+            if (bulb.Count == 0)
+            {
+                var s = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                var sm = s.GetComponent<MeshFilter>().sharedMesh;
+                Object.DestroyImmediate(s);
+                bulb.Add(new Part(sm, new[] { Mat("M_Bulb") }, Matrix4x4.TRS(new Vector3(0, 0.08f, 0), Quaternion.identity, Vector3.one * 0.17f)));
+            }
+            var holder = Child(env, "Rings");
+            var comb = new Combiner();
+            int chunk = 0;
+            float chunkStart = tunnelStart;
+            void PlaceRing(float d, float scale)
+            {
+                var f = track.Evaluate(d);
+                var world = Matrix4x4.TRS(f.FlatPoint(0, TunnelCenter), f.FlatRotation, Vector3.one * scale);
+                comb.Add(ring, world);
+                for (int b = 0; b < BulbsPerRing; b++)
+                {
+                    float a = b / (float)BulbsPerRing * Mathf.PI * 2f;
+                    var radial = new Vector3(Mathf.Sin(a), Mathf.Cos(a), 0f);
+                    var local = Matrix4x4.TRS(radial * BulbRadius, Quaternion.FromToRotation(Vector3.up, -radial), Vector3.one * 1.5f);
+                    comb.Add(bulb, world * local);
+                }
+            }
+            PlaceRing(tunnelStart - 0.3f, 1.18f); // entrance gate
+            for (float d = tunnelStart + 3f; d < portalD - 5f; d += RingSpacing)
+            {
+                PlaceRing(d, 1f);
+                if (d - chunkStart > ChunkLength) { comb.Flush(holder, $"Rings_{chunk++:00}", true); chunkStart = d; }
+            }
+            comb.Flush(holder, $"Rings_{chunk:00}", true);
+        }
+
+        static void BuildPortholes(GameObject env)
+        {
+            var prefab = ModelPrefab("Machinery", "SM_Porthole");
+            if (prefab == null) { Debug.LogWarning("[BWK] SM_Porthole missing - portholes skipped"); return; }
+            string[] socks = { "SM_Sock_A", "SM_Sock_B", "SM_Sock_C", "SM_Towel", "SM_Shirt" };
+            var holder = Child(env, "SideChambers");
+            int side = -1;
+            for (float d = tunnelStart + 14f; d < portalD - 10f; d += 13f + (float)rng.NextDouble() * 6f)
+            {
+                var f = track.Evaluate(d);
+                float ang = side * 68f * Mathf.Deg2Rad;
+                var radial = f.flatRight * Mathf.Sin(ang) + f.flatUp * Mathf.Cos(ang);
+                var pos = f.FlatPoint(0, TunnelCenter) + radial * (TunnelRadius - 0.12f);
+                var go = Spawn(prefab);
+                go.name = $"Porthole_{d:000}";
+                go.transform.SetParent(holder.transform, false);
+                go.transform.SetPositionAndRotation(pos, Quaternion.LookRotation(-radial, f.forward));
+                // floating laundry inside the drum, behind the glass
+                for (int s = 0; s < 4; s++)
+                {
+                    var sp = ModelPrefab("Props", socks[(s + (int)d) % socks.Length]);
+                    if (sp == null) continue;
+                    var sock = Spawn(sp);
+                    sock.transform.SetParent(go.transform, false);
+                    float a = s / 4f * Mathf.PI * 2f;
+                    sock.transform.localPosition = new Vector3(Mathf.Cos(a) * 0.55f, Mathf.Sin(a) * 0.55f, -0.45f);
+                    sock.transform.localRotation = Quaternion.Euler((float)rng.NextDouble() * 360f, (float)rng.NextDouble() * 360f, 0);
+                    sock.transform.localScale = Vector3.one * 0.8f;
+                    var bob = sock.AddComponent<FloatBob>();
+                    bob.orbitAxis = Vector3.forward;
+                    bob.orbitRadius = 0.25f;
+                    bob.orbitSpeed = 55f + s * 7f;
+                    bob.amplitude = 0.08f;
+                }
+                side = -side;
+            }
+        }
+
+        static void BuildPipes(GameObject env, float L)
+        {
+            var pipe = ModelParts("Track", "SM_GlassPipe_Module");
+            if (pipe.Count == 0) { Debug.LogWarning("[BWK] SM_GlassPipe_Module missing - pipes skipped"); return; }
+            float a = 76f * Mathf.Deg2Rad; // side walls above the foam banks (reference), clear of the ceiling view
+            float lat = Mathf.Sin(a) * (TunnelRadius - 0.45f), up = TunnelCenter + Mathf.Cos(a) * (TunnelRadius - 0.45f);
+            BendChunks(env, "GlassPipeLeft", pipe[0], tunnelStart + 1f, portalD - 3f, false, Vector3.one, -lat, up, 4f, false);
+            BendChunks(env, "GlassPipeRight", pipe[0], tunnelStart + 1f, portalD - 3f, false, Vector3.one, lat, up, 4f, false);
+            var coupler = ModelParts("Track", "SM_Pipe_Coupler");
+            if (coupler.Count == 0) return;
+            var holder = Child(env, "PipeCouplers");
+            var comb = new Combiner();
+            for (float d = tunnelStart + 3f; d < portalD - 3f; d += 12f)
+            {
+                var f = track.Evaluate(d);
+                foreach (float sx in new[] { -lat, lat })
+                    comb.Add(coupler, Matrix4x4.TRS(f.FlatPoint(sx, up), f.FlatRotation, Vector3.one));
+            }
+            comb.Flush(holder, "Couplers", false);
+        }
+
+        static void BuildHallMachinery(GameObject env)
+        {
+            var holder = Child(env, "HallMachinery");
+            void Place(string group, string name, float d, float lat, float h, Vector3 euler, float scale, float spin = 0f, Vector3 spinAxis = default)
+            {
+                var p = ModelPrefab(group, name);
+                if (p == null) return;
+                var f = track.Evaluate(d);
+                var go = Spawn(p);
+                go.transform.SetParent(holder.transform, false);
+                go.transform.SetPositionAndRotation(f.FlatPoint(lat, h), f.FlatRotation * Quaternion.Euler(euler));
+                go.transform.localScale = Vector3.one * scale;
+                if (spin != 0f)
+                {
+                    var sp = go.AddComponent<Spinner>();
+                    sp.degreesPerSecond = spin;
+                    sp.localAxis = spinAxis == default ? Vector3.right : spinAxis;
+                }
+            }
+            // big fluffy brush rollers high on the left (reference top-left), spinning
+            Place("Machinery", "SM_BrushRoller", 20f, -3.6f, 3.3f, new Vector3(0, 32, 12), 1.15f, 45f, Vector3.right);
+            Place("Machinery", "SM_BrushRoller", 44f, -6.2f, 6.0f, new Vector3(0, 25, 8), 1.15f, -40f, Vector3.right);
+            Place("Machinery", "SM_BrushRoller", 30f, 6.8f, 7.5f, new Vector3(0, -30, -6), 1.0f, 38f, Vector3.right);
+            // control console on the left, facing the slide
+            Place("Machinery", "SM_ControlPanel", 24f, -5.0f, 1.4f, new Vector3(0, 120, 0), 1.2f);
+            // lavender pillars with gold bands on the right
+            Place("Machinery", "SM_Pillar", 19f, 3.7f, -1.0f, new Vector3(0, -90, 0), 1.0f);
+            Place("Machinery", "SM_Pillar", 38f, 5.0f, -2.0f, new Vector3(0, -90, 0), 1.0f);
+            Place("Machinery", "SM_Pillar", 56f, 5.4f, -2.5f, new Vector3(0, -90, 0), 1.0f);
+            Place("Machinery", "SM_Pillar", 50f, -6.5f, -2.5f, new Vector3(0, 90, 0), 1.0f);
+            // agitator column and golden plumbing in the background
+            Place("Machinery", "SM_Agitator", 34f, -11f, -4f, Vector3.zero, 1.6f, 25f, Vector3.up);
+            for (int i = 0; i < 5; i++)
+            {
+                Place("Machinery", "SM_GoldPipe_Straight", 12f + i * 2.05f, -4.4f, 2.5f, new Vector3(0, 180, 0), 1f);
+                Place("Machinery", "SM_GoldPipe_Straight", 28f + i * 2.05f, 7.4f, 4.2f, new Vector3(0, 180, 0), 1f);
+            }
+            Place("Machinery", "SM_ValveWheel", 17f, -4.1f, 2.5f, new Vector3(0, 90, 0), 1f, 30f, Vector3.forward);
+            Place("Machinery", "SM_Porthole", 40f, -9.5f, 3.5f, new Vector3(0, 70, 0), 1.6f);
+        }
+
+        static void BuildPortal(GameObject env, RunnerController runner)
+        {
+            var f = track.Evaluate(portalD);
+            var portal = Child(env, "LightPortal");
+            portal.transform.SetPositionAndRotation(f.FlatPoint(0, TunnelCenter), f.FlatRotation);
+            var ring = ModelPrefab("Track", "SM_Ring");
+            if (ring != null)
+            {
+                var r = Spawn(ring);
+                r.transform.SetParent(portal.transform, false);
+                r.transform.localScale = Vector3.one * 0.98f;
+            }
+            var rays = Child(portal, "Rays");
+            rays.transform.localPosition = new Vector3(0, 0, 1.5f);
+            rays.transform.localRotation = Quaternion.Euler(0, 180, 0);
+            var quad = ProceduralModules.Quad(9.5f);
+            SaveMesh(quad);
+            rays.AddComponent<MeshFilter>().sharedMesh = quad;
+            var rr = rays.AddComponent<MeshRenderer>();
+            rr.sharedMaterial = Mat("M_PortalRays");
+            rr.shadowCastingMode = ShadowCastingMode.Off;
+            var core = Child(portal, "Core");
+            core.transform.localPosition = new Vector3(0, 0, 3f);
+            core.transform.localRotation = Quaternion.Euler(0, 180, 0);
+            var coreMesh = ProceduralModules.Annulus(0.01f, 3.7f);
+            SaveMesh(coreMesh);
+            core.AddComponent<MeshFilter>().sharedMesh = coreMesh;
+            var cr = core.AddComponent<MeshRenderer>();
+            cr.sharedMaterial = Mat("M_Bulb");
+            cr.shadowCastingMode = ShadowCastingMode.Off;
+            var lightGo = Child(portal, "PortalLight");
+            lightGo.transform.localPosition = new Vector3(0, 0, -1.5f);
+            var light = lightGo.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.color = new Color(1f, 0.85f, 0.55f);
+            light.range = 28f;
+            light.intensity = 2f;
+            var glow = portal.AddComponent<PortalGlow>();
+            glow.runner = runner;
+            glow.trackDistance = portalD;
+            glow.rays = new Renderer[] { rr };
+            glow.portalLight = light;
+        }
+    }
+}

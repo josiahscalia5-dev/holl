@@ -16,8 +16,11 @@ namespace BubbleWash
         public ParticleSystem speedStreaks;
         public ParticleSystem pickupSparkles;
         public ParticleSystem gemSparkles;
-        public float sprayRateAtBase = 60f;
-        public float trailRateAtBase = 24f;
+        [Tooltip("Milky crown splash sheets flanking the mascot (reference 1.75-7.5 s).")]
+        public ParticleSystem[] sheets;
+        public float sprayRateAtBase = 46f;
+        public float sheetRateAtBase = 11f;
+        public float trailRateAtBase = 14f;
 
         void OnEnable()
         {
@@ -41,11 +44,15 @@ namespace BubbleWash
             if (items != null) items.OnCollected -= OnPickup;
         }
 
-        void OnLand() { if (crown) crown.Emit(40); }
+        void OnLand()
+        {
+            if (crown) crown.Emit(18);
+            if (sheets != null) foreach (var sh in sheets) if (sh) sh.Emit(3);
+        }
 
         void OnBoost()
         {
-            if (crown) crown.Emit(28);
+            if (crown) crown.Emit(14);
             if (speedStreaks) speedStreaks.Play();
         }
 
@@ -76,6 +83,13 @@ namespace BubbleWash
                 var em = foamTrail.emission;
                 em.rateOverTime = sliding ? trailRateAtBase * speedK : 0f;
             }
+            if (sheets != null)
+                foreach (var sh in sheets)
+                {
+                    if (sh == null) continue;
+                    var em = sh.emission;
+                    em.rateOverTime = sliding ? sheetRateAtBase * speedK : 0f;
+                }
             if (speedStreaks && !runner.Boosting && speedStreaks.isPlaying) speedStreaks.Stop();
         }
     }

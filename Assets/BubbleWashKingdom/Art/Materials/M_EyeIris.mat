@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: M_EyeIris
-  m_Shader: {fileID: 4800000, guid: ebad0e801b4b43e49b9b485c14675c19, type: 3}
+  m_Shader: {fileID: 4800000, guid: 499c84189d54007428f8594aec5f1437, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -27,11 +27,11 @@ Material:
     m_Floats:
     - _BumpScale: 6
     - _BumpStrength: 0.5
-    - _Glow: 0.05
+    - _Glow: 0.1
     - _Metallic: 0
     - _Mode: 3
     - _RimPower: 3
-    - _RimStrength: 0.1
+    - _RimStrength: 0.05
     - _Smoothness: 0.35
     - _StitchU: 64
     - _StitchV: 26
@@ -39,9 +39,9 @@ Material:
     - _Stripes: 4
     - _Wrap: 0.5
     m_Colors:
-    - _ColorA: {r: 0.3529412, g: 0.18039216, b: 0.078431375, a: 1}
-    - _ColorB: {r: 0.65882355, g: 0.39215687, b: 0.16470589, a: 1}
-    - _ColorC: {r: 0.07058824, g: 0.03137255, b: 0.015686275, a: 1}
+    - _ColorA: {r: 0.18039216, g: 0.078431375, b: 0.03529412, a: 1}
+    - _ColorB: {r: 0.76862746, g: 0.4862745, b: 0.20392157, a: 1}
+    - _ColorC: {r: 0.02745098, g: 0.011764706, b: 0.007843138, a: 1}
     - _ShadowColor: {r: 0.62, g: 0.62, b: 0.95, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
