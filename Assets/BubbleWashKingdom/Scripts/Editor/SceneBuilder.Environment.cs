@@ -270,10 +270,11 @@ namespace BubbleWash.EditorTools
         // looks back along the slide, so its screen-LEFT wall is the travel-RIGHT wall: the sock chamber windows, pink glass
         // risers and the cyan water pipe sit on the travel-right wall (S6 adds windows on the travel-left wall), the
         // decorative coin lines on the travel-left wall. Window gaps (ChamberGaps) skip their drum rim.
-        const float WindowScale = 0.9f;          // SM_ChamberWindow_v2 frame outer r 2.32 m -> 2.09 m (ref near window 3.9-4.6 m)
-        const float WindowAngle = 76f;           // window centre, degrees from the ceiling: mid-wall, bottom ~1 m above the slide
-        const float WindowYaw = 12f;             // turned toward the travel direction so the socks read in the front views
+        const float WindowScale = 1.0f;          // SM_ChamberWindow_v2 frame outer r 2.32 m (ref near window 3.9-4.6 m)
+        const float WindowAngle = 86f;           // window centre, degrees from the ceiling: mid-wall (v1 76 deg sat above the C-still frame top)
+        const float WindowYaw = 14f;             // turned toward the travel direction so the socks read in the front views
         const float CyanPipeAngle = 35f, CyanPipeRadius = 2.8f, CyanPipeScale = 2.0f, CyanPipeStart = 238f;
+        const float CyanPipeEnd = 312f;          // the hall agent's portal set (318-351 m) has its own curved cyan pipe (travel-left)
         static readonly bool PreviewRebuildsEnvironment = false;   // r7: agent previews keep the saved scene's environment
 
         /// <summary>Chamber windows (track distance, side +1 = travel-right). In-gap offsets put the near window of the front
@@ -286,7 +287,7 @@ namespace BubbleWash.EditorTools
                 float off = 6.4f;
                 if (Mathf.Abs(g - 173.5f) < 0.2f) off = 10.1f;        // C4 (190 m)
                 else if (Mathf.Abs(g - 211.75f) < 0.2f) off = 4.3f;   // C2 (220 m)
-                else if (Mathf.Abs(g - 275.5f) < 0.2f) off = 2.5f;    // C5 (280 m)
+                else if (Mathf.Abs(g - 275.5f) < 0.2f) off = 2.7f;    // C5 (280 m)
                 list.Add((g + off, 1));
                 if (g >= 236f && g < 300f) list.Add((g + 9.5f, -1)); // S6: windows on both walls
             }
@@ -433,7 +434,7 @@ namespace BubbleWash.EditorTools
             float Rand() => (float)r.NextDouble();
             int count = 0, chunk = 0, last = -1, k = 0;
             float chunkStart = 110f;
-            for (float d = 110f; d < portalD - 2.5f; d += 1.1f + Rand() * 0.5f)
+            for (float d = 110f; d < portalD - 2.5f; d += 0.75f + Rand() * 0.4f)
             {
                 k++;
                 float ph = Mathf.Repeat(d - FirstRingDistance, GoldRingSpacing);
@@ -443,24 +444,26 @@ namespace BubbleWash.EditorTools
                 if (!windowGap && Mathf.Abs(ph - RimPhase * GoldRingSpacing) < 0.9f) continue;  // drum rim plane
                 // spread around the upper 3/4 of the drum (0 = ceiling, + = travel-right) with a golden-ratio sequence
                 float u = Mathf.Repeat(k * 0.618034f + Rand() * 0.12f, 1f);
-                float angDeg = Mathf.Lerp(-100f, 100f, u);
+                float a2 = 2f * u - 1f;   // v2: warped toward the side walls (the cameras see the near side walls, the ceiling only far away)
+                float angDeg = 105f * Mathf.Sign(a2) * Mathf.Pow(Mathf.Abs(a2), 0.7f);
                 float s = Rand() < 0.3f ? Mathf.Lerp(0.8f, 0.95f, Rand()) : Mathf.Lerp(0.5f, 0.75f, Rand());
                 float roll = Rand() * 50f - 25f;
                 float cr = Rand();
                 bool blocked = false;
                 foreach (var w in windows)
-                    if (Mathf.Abs(d - w.d) < 2.5f && Mathf.Abs(angDeg - w.side * WindowAngle) < 46f) { blocked = true; break; }
+                    if (Mathf.Abs(d - w.d) < 2.7f && Mathf.Abs(angDeg - w.side * WindowAngle) < 42f) { blocked = true; break; }
                 if (d > 184f && d < 240f && angDeg > 40f)   // pink risers 3 m before the S4-S5 windows
                     foreach (var w in windows)
                         if (w.side > 0 && Mathf.Abs(d - (w.d - 3f)) < 1.0f) { blocked = true; break; }
-                if (d > CyanPipeStart - 1f && Mathf.Abs(angDeg - CyanPipeAngle) < 22f) blocked = true;
-                if (d > 173f && d < 237f && ph > 1.5f && ph < 8.5f && angDeg < -66f) blocked = true;   // wall coin rows
+                if (d > CyanPipeStart - 1f && d < CyanPipeEnd + 1f && Mathf.Abs(angDeg - CyanPipeAngle) < 22f) blocked = true;
+                if (d > portalD - 10f && angDeg < -35f) blocked = true;   // hall agent: portal chamber window + cyan pipe curve (travel-left)
+                if (d > 173f && d < 237f && ph > 1.3f && ph < 9.6f && angDeg < -72f) blocked = true;   // wall coin rows
                 if (blocked) continue;
                 var f = track.Evaluate(d);
                 float ang = angDeg * Mathf.Deg2Rad;
                 var radial = f.flatRight * Mathf.Sin(ang) + f.flatUp * Mathf.Cos(ang);
                 var pos = f.FlatPoint(0, TunnelCenter) + radial * (TunnelRadius - 0.2f - 1.07f * s);
-                if (legacy.Any(p => (p - pos).sqrMagnitude < 1.8f * 1.8f)) continue;
+                if (legacy.Any(p => (p - pos).sqrMagnitude < 1.3f * 1.3f)) continue;
                 if (inHero(pos)) continue;
                 float pink, cyan;
                 if (d < 170f) { pink = 0.33f; cyan = 0.36f; }
@@ -502,9 +505,9 @@ namespace BubbleWash.EditorTools
                 if (g < 173f || g > 230f) continue;
                 for (int i = 0; i < 5; i++)
                 {
-                    float d = g + 2.2f + i * 1.3f;
+                    float d = g + 2.0f + i * 1.7f;
                     var f = track.Evaluate(d);
-                    comb.Add(coin, Matrix4x4.TRS(f.FlatPoint(-2.95f, 1.95f + 0.12f * i), f.FlatRotation, Vector3.one * 1.3f));
+                    comb.Add(coin, Matrix4x4.TRS(f.FlatPoint(-3.05f, 1.35f + (i % 2) * 0.35f), f.FlatRotation, Vector3.one * 1.3f));   // v2: lower zigzag line
                     n++;
                 }
             }
@@ -539,19 +542,20 @@ namespace BubbleWash.EditorTools
                 }
             var glass = ModelParts("Track", "SM_GlassPipe_Module");
             int nc = 0;
-            if (glass.Count > 0 && portalD - 3f > CyanPipeStart + 5f)
+            float pipeEnd = Mathf.Min(CyanPipeEnd, portalD - 3f);
+            if (glass.Count > 0 && pipeEnd > CyanPipeStart + 5f)
             {
                 float a = CyanPipeAngle * Mathf.Deg2Rad;
                 float lat = Mathf.Sin(a) * CyanPipeRadius, h = TunnelCenter + Mathf.Cos(a) * CyanPipeRadius;
                 var cyan = Mat("M_PipeWaterCyan") ?? Mat("M_PipeWater");
                 var mats = glass[0].mats.Select(m => m != null && m.name == "M_PipeWater" ? cyan : m).ToArray();
-                BendChunks(holder, "CyanPipe", new Part(glass[0].mesh, mats, Matrix4x4.identity), CyanPipeStart, portalD - 3f, false,
+                BendChunks(holder, "CyanPipe", new Part(glass[0].mesh, mats, Matrix4x4.identity), CyanPipeStart, pipeEnd, false,
                            new Vector3(CyanPipeScale, CyanPipeScale, 1f), lat, h, 4f, false);
                 var coupler = ModelParts("Track", "SM_Pipe_Coupler");
                 if (coupler.Count > 0)
                 {
                     var comb = new EnvCombiner();
-                    for (float d = CyanPipeStart + 0.15f; d < portalD - 3f; d += GoldRingSpacing * 0.5f)
+                    for (float d = CyanPipeStart + 0.15f; d < pipeEnd + 0.1f; d = d + GoldRingSpacing * 0.5f > pipeEnd - 0.3f && d < pipeEnd - 0.2f ? pipeEnd - 0.12f : d + GoldRingSpacing * 0.5f)
                     {
                         var f = track.Evaluate(d);
                         comb.Add(coupler, Matrix4x4.TRS(f.FlatPoint(lat, h), f.FlatRotation, new Vector3(CyanPipeScale, CyanPipeScale, CyanPipeScale * 1.4f)));
@@ -560,7 +564,7 @@ namespace BubbleWash.EditorTools
                     comb.Flush(holder, "CyanPipeCouplers", false);
                 }
             }
-            Debug.Log($"[BWK] r7 pipes: {np} pink risers v2, cyan wall pipe {CyanPipeStart}-{portalD - 3f:F0} m with {nc} gold couplers");
+            Debug.Log($"[BWK] r7 pipes: {np} pink risers v2, cyan wall pipe {CyanPipeStart}-{Mathf.Min(CyanPipeEnd, portalD - 3f):F0} m with {nc} gold couplers");
         }
 
         static void BuildHallMachinery(GameObject env)

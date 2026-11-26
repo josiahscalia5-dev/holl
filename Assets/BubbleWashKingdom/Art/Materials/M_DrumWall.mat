@@ -27,7 +27,7 @@ Material:
     m_Floats:
     - _BandLength: 12.75
     - _BandOffset: 71.5
-    - _BaySheen: 0.3
+    - _BaySheen: 0.18
     - _BaySheenPos: 0.6
     - _BaySheenWidth: 0.25
     - _Bevel: 0.7
@@ -41,7 +41,7 @@ Material:
     - _EdgeAO: 0.35
     - _EdgeAOWidth: 0.5
     - _FlangeWidth: 0.2
-    - _Glow: 0.14
+    - _Glow: 0.08
     - _GlowChance: 0.04
     - _HoleAO: 0.45
     - _HoleAOWidth: 0.07
@@ -80,14 +80,14 @@ Material:
     - _Sparkle: 0.25
     - _VTile: 4
     m_Colors:
-    - _BaseColor: {r: 0.6117647, g: 0.5019608, b: 0.7058824, a: 1}
+    - _BaseColor: {r: 0.54901963, g: 0.44705883, b: 0.65882355, a: 1}
     - _BaySheenColor: {r: 0.5254902, g: 0.65882355, b: 0.9019608, a: 1}
-    - _CeilingColor: {r: 0.27450982, g: 0.44705883, b: 0.6117647, a: 1}
+    - _CeilingColor: {r: 0.23529412, g: 0.36862746, b: 0.54901963, a: 1}
     - _DepthTintColor: {r: 0.32941177, g: 0.4392157, b: 0.65882355, a: 1}
     - _FlangeColor: {r: 0.6039216, g: 0.45490196, b: 0.87058824, a: 1}
     - _GlowColorA: {r: 1.7, g: 0.85, b: 1.6, a: 1}
     - _GlowColorB: {r: 0.75, g: 1.35, b: 1.9, a: 1}
-    - _HighlightColor: {r: 0.74509805, g: 0.6117647, b: 0.8235294, a: 1}
+    - _HighlightColor: {r: 0.68235296, g: 0.5568628, b: 0.7764706, a: 1}
     - _HoleColor: {r: 0.047058824, g: 0.023529412, b: 0.09411765, a: 1}
     - _HoleGlow: {r: 0.2901961, g: 0.17254902, b: 0.47058824, a: 1}
     - _PinkSpill: {r: 1, g: 0.43137255, b: 0.8235294, a: 1}
