@@ -88,7 +88,7 @@ Material:
     - _BandSharpness: 18
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
-    - _Brightness: 1.2
+    - _Brightness: 1
     - _BumpScale: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
@@ -102,7 +102,7 @@ Material:
     - _Emission: 0.08
     - _EnvReflect: 0.36
     - _EnvRoughness: 0.2
-    - _EnvTint: 0.86
+    - _EnvTint: 0.9
     - _EnvironmentReflections: 1
     - _FogAmount: 0.4
     - _GlintStrength: 3.2
@@ -126,22 +126,22 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _StreakHeight: 0.6
-    - _StreakStrength: 1.45
+    - _StreakStrength: 0.9
     - _Surface: 0
     - _ViewGradient: 1
     - _WorkflowMode: 1
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
-    - _BandColor: {r: 1, g: 0.84705883, b: 0.59607846, a: 1}
+    - _BandColor: {r: 0.9411765, g: 0.65882355, b: 0.34509805, a: 1}
     - _BaseColor: {r: 0.9411765, g: 0.72156864, b: 0.3529412, a: 1}
     - _Color: {r: 0.9411765, g: 0.72156864, b: 0.35294116, a: 1}
     - _EmissionColor: {r: 0.3529412, g: 0.22745098, b: 0.0627451, a: 1}
-    - _HighColor: {r: 1, g: 0.9411765, b: 0.78431374, a: 1}
-    - _LowColor: {r: 0.41568628, g: 0.1882353, b: 0.09411765, a: 1}
-    - _MidColor: {r: 0.9411765, g: 0.627451, b: 0.2509804, a: 1}
+    - _HighColor: {r: 1, g: 0.84705883, b: 0.5647059, a: 1}
+    - _LowColor: {r: 0.3529412, g: 0.1254902, b: 0.0627451, a: 1}
+    - _MidColor: {r: 0.8784314, g: 0.5411765, b: 0.17254902, a: 1}
     - _ProbeBakeTint: {r: 0.54901963, g: 0.30588236, b: 0.54901963, a: 1}
-    - _RimColor: {r: 0.65882355, g: 0.3529412, b: 0.14117648, a: 1}
+    - _RimColor: {r: 0.5411765, g: 0.2509804, b: 0.09411765, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

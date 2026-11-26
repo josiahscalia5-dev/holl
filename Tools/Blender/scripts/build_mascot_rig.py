@@ -49,8 +49,26 @@ PRIVATE_OUT = os.path.join(ROOT, "Captures", "agents", "character")     # gitign
 # temporary contact-sheet cells live outside the project (override with BWK_SCRATCH)
 SCRATCH = os.path.join(os.environ.get("BWK_SCRATCH") or tempfile.gettempdir(), "bwk_mascot_rig_cells")
 
+# Optional env overrides (round 5, v4 game candidate). Unset = the original SK_Mascot pipeline, unchanged:
+#   BWK_RIG_MODEL_BLEND  input model .blend        (default Tools/Blender/work/mascot_model.blend)
+#   BWK_RIG_MODEL_JSON   input landmark contract   (default Tools/Blender/work/mascot_model.json)
+#   BWK_RIG_FBX          output FBX                (default Assets/.../Characters/SK_Mascot.fbx)
+#   BWK_RIG_WORK_BLEND   output rig .blend         (default Tools/Blender/work/mascot_rig.blend)
+#   BWK_RIG_PREVIEW      preview name prefix       (default SK_Mascot -> Docs/AssetPreviews/SK_Mascot_*.png)
+MODEL_BLEND = os.environ.get("BWK_RIG_MODEL_BLEND") or C.work_path("mascot_model")
+MODEL_JSON = os.environ.get("BWK_RIG_MODEL_JSON") or os.path.join(C.WORK, "mascot_model.json")
+FBX_OUT = os.environ.get("BWK_RIG_FBX") or C.model_path("Characters", "SK_Mascot")
+WORK_BLEND = os.environ.get("BWK_RIG_WORK_BLEND") or C.work_path("mascot_rig")
+PREVIEW_PREFIX = os.environ.get("BWK_RIG_PREVIEW") or "SK_Mascot"
+
+
+def prev(name):
+    """Preview path for a default 'SK_Mascot...' name, re-prefixed by BWK_RIG_PREVIEW."""
+    return C.preview_path(PREVIEW_PREFIX + name[len("SK_Mascot"):])
+
+
 # ------------------------------------------------------------------ model facts (mascot_model.json)
-with open(os.path.join(C.WORK, "mascot_model.json")) as _fh:
+with open(MODEL_JSON) as _fh:
     CONTRACT = json.load(_fh)
 
 
@@ -1467,30 +1485,30 @@ def make_previews(arm, actions):
     setup_preview_fur(mesh)
 
     set_action(arm, actions, "Slide", 7)            # the Unity hero capture samples Slide at 0.25 s
-    render_game_view(C.preview_path("SK_Mascot_game_9x16"))
+    render_game_view(prev("SK_Mascot_game_9x16"))
     if QUICK:
         set_action(arm, actions, "Slide", 7)
-        render(C.preview_path("SK_Mascot_seated_side"), SIDE_CAM[0], SIDE_CAM[1], 50.0, (700, 700),
+        render(prev("SK_Mascot_seated_side"), SIDE_CAM[0], SIDE_CAM[1], 50.0, (700, 700),
                subject=(0.0, -0.1, 0.45), label="Slide - side (travel = left)", samples=24)
         tag = os.environ.get("BWK_INSPECT", "")
         if tag:                                     # named inspection set (our renders only: public folder)
-            render(C.preview_path("SK_Mascot_%s_game_9x16" % tag), *game_view_cam(), 0.0, (540, 960),
+            render(prev("SK_Mascot_%s_game_9x16" % tag), *game_view_cam(), 0.0, (540, 960),
                    label="Slide f7 - hero camera", vfov=GAME_VFOV, subject=(0.0, -0.05, 0.5), samples=40)
-            render(C.preview_path("SK_Mascot_%s_rear" % tag), REAR_CAM[0], REAR_CAM[1], 50.0, (700, 700),
+            render(prev("SK_Mascot_%s_rear" % tag), REAR_CAM[0], REAR_CAM[1], 50.0, (700, 700),
                    subject=(0.0, 0.0, 0.62), label="Slide - rear", samples=32)
-            render(C.preview_path("SK_Mascot_%s_side" % tag), SIDE_CAM[0], SIDE_CAM[1], 45.0, (700, 700),
+            render(prev("SK_Mascot_%s_side" % tag), SIDE_CAM[0], SIDE_CAM[1], 45.0, (700, 700),
                    subject=(0.0, -0.1, 0.62), label="Slide - side (travel = left)", samples=32)
-            render(C.preview_path("SK_Mascot_%s_front" % tag), FRONT_CAM[0], FRONT_CAM[1], 45.0, (700, 700),
+            render(prev("SK_Mascot_%s_front" % tag), FRONT_CAM[0], FRONT_CAM[1], 45.0, (700, 700),
                    subject=(0.0, -0.1, 0.62), label="Slide - front", samples=32)
         return
     set_action(arm, actions, "Slide", 0)
     p_rear = os.path.join(SCRATCH, "rear_gameplay.tga")
     render(p_rear, REAR_CAM[0], REAR_CAM[1], 25.0, (1280, 720), label="Slide - rear", fmt='TARGA_RAW')
     rear = read_tga(p_rear)
-    write_png(C.preview_path("SK_Mascot_seated_back"), *rear)
-    render(C.preview_path("SK_Mascot_seated_side"), SIDE_CAM[0], SIDE_CAM[1], 50.0, (900, 900),
+    write_png(prev("SK_Mascot_seated_back"), *rear)
+    render(prev("SK_Mascot_seated_side"), SIDE_CAM[0], SIDE_CAM[1], 50.0, (900, 900),
            subject=(0.0, -0.1, 0.45), label="Slide - side (travel = left)")
-    render(C.preview_path("SK_Mascot_front"), FRONT_CAM[0], FRONT_CAM[1], 50.0, (900, 900),
+    render(prev("SK_Mascot_front"), FRONT_CAM[0], FRONT_CAM[1], 50.0, (900, 900),
            subject=(0.0, -0.1, 0.5), label="Slide - front")
     if QUICK:
         return
@@ -1513,7 +1531,7 @@ def make_previews(arm, actions):
         p = os.path.join(SCRATCH, "cell_%s.tga" % name)
         render(p, cam[0], cam[1], lens2, (cw, ch), shift=shift2, label=label, fmt='TARGA_RAW', samples=20)
         tiles.append(read_tga(p))
-    compose(C.preview_path("SK_Mascot_poses"), tiles, 5, 3, cw, ch)
+    compose(prev("SK_Mascot_poses"), tiles, 5, 3, cw, ch)
 
     # approved video frames vs. this rig (PRIVATE: written to Captures/, never to tracked folders)
     try:
@@ -1523,7 +1541,7 @@ def make_previews(arm, actions):
                fmt='TARGA_RAW', subject=(0.0, -0.1, 0.5))
         tiles = [downsample2(*read_png(os.path.join(REF_DIR, "f_003.00s.png"))), downsample2(*rear),
                  downsample2(*read_png(os.path.join(REF_DIR, "f_005.00s.png"))), downsample2(*read_tga(p_front))]
-        compose(os.path.join(PRIVATE_OUT, "SK_Mascot_vs_reference.png"), tiles, 2, 2, 640, 360)
+        compose(os.path.join(PRIVATE_OUT, PREVIEW_PREFIX + "_vs_reference.png"), tiles, 2, 2, 640, 360)
     except Exception as exc:  # comparison is a bonus; never fail the build on it
         print("WARNING comparison sheet skipped:", exc)
 
@@ -1551,7 +1569,7 @@ def verify_fbx(path):
 
 # ------------------------------------------------------------------ main
 def main():
-    bpy.ops.wm.open_mainfile(filepath=C.work_path("mascot_model"))
+    bpy.ops.wm.open_mainfile(filepath=MODEL_BLEND)
     scene = bpy.context.scene
     scene.render.fps, scene.render.fps_base = FPS, 1.0
     names = ['Body', 'Eye.L', 'Eye.R', 'Catchlight.L1', 'Catchlight.L2', 'Catchlight.R1', 'Catchlight.R2', 'Mouth',
@@ -1610,12 +1628,12 @@ def main():
     assert not any(m.type == 'NODES' for m in body.modifiers)
     arm.scale = (MASCOT_SCALE, MASCOT_SCALE, MASCOT_SCALE)
     bpy.context.view_layer.update()
-    path = C.export_fbx([arm], C.model_path("Characters", "SK_Mascot"), anim=True)
+    path = C.export_fbx([arm], FBX_OUT, anim=True)
 
     set_action(arm, actions, "Slide", 0)
     scene.frame_start, scene.frame_end = 0, 30
-    C.save_work("mascot_rig")
-    print("SAVED", C.work_path("mascot_rig"))
+    bpy.ops.wm.save_as_mainfile(filepath=WORK_BLEND, compress=True)
+    print("SAVED", WORK_BLEND)
 
     make_previews(arm, actions)
     if not QUICK:

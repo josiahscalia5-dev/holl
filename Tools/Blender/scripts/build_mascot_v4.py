@@ -64,13 +64,13 @@ BODY_ELEMS = [  # (centre, semi-axes x/y/z, stiffness): lower belly + upper head
 # rising ~60 deg outside the cuff radius, ending in a mitt at cuff height (rear hero: paws outside the hat silhouette)
 # round 5: ONE straight stubby limb (no elbow) raised ~44 deg and slightly forward; paws lower + closer (1b: arm span
 # 1.60 -> ref 1.40-1.47 cuff widths, paw top 0.26 -> ref 0.18-0.23 above the cuff bottom from the hero camera)
-ARM_A, ARM_E, ARM_B, ARM_RAD, ARM_S = (Vector((0.320, -0.010, 0.420)), Vector((0.435, -0.040, 0.530)),
-                                       Vector((0.550, -0.070, 0.640)), 0.098, 5.0)
-MITT_C, MITT_AX, MITT_S = Vector((0.590, -0.080, 0.680)), (0.104, 0.088, 0.112), 5.0   # along, palm-normal, across
+ARM_A, ARM_E, ARM_B, ARM_RAD, ARM_S = (Vector((0.360, -0.010, 0.430)), Vector((0.4925, -0.040, 0.5475)),
+                                       Vector((0.625, -0.070, 0.665)), 0.100, 5.0)
+MITT_C, MITT_AX, MITT_S = Vector((0.668, -0.080, 0.700)), (0.112, 0.092, 0.122), 5.0   # along, palm-normal, across
 PALM_N = Vector((-0.10, -0.80, 0.45)).normalized()     # palm faces front / up (pads visible from the front)
 HIP, ANKLE, LEG_RAD = Vector((0.205, 0.080, 0.200)), Vector((0.285, 0.245, 0.165)), 0.078
 PAW_C = Vector((0.318, 0.312, 0.178))
-PAW_AX = (0.128, 0.152, 0.080)                          # lateral, heel->toe, thickness
+PAW_AX = (0.140, 0.166, 0.084)                          # lateral, heel->toe, thickness
 TOE_DIR = Vector((0.22, -0.42, 0.88)).normalized()      # toes up (+ a little forward / out)
 SOLE_N0 = Vector((0.18, 0.90, 0.40))                    # soles face back / up toward the rear camera
 # FRONT pose (opening / celebration shots, reference 03 / 05): legs forward, soles toward the front camera.
@@ -103,9 +103,9 @@ STAR_H, STAR_PSI, STAR_ROT, STAR_RO, STAR_RI = 0.246, 30.0, -12.0, 0.100, 0.045
 
 # ------------------------------------------------------------------ face (placed on the body surface)
 EYE_DX, EYE_R, EYE_PROT = 0.200, 0.130, 0.040           # eye centre x, footprint radius, protrusion
-EYE_UNDER = 0.100                      # eye centre this far below the cuff bottom (top tucks under the cuff edge)
-IRIS_R, PUPIL_IN, PUPIL_DOWN = 0.117, 0.010, -0.004
-NOSE_DZ, MOUTH_TOP_DZ, MOUTH_W, MOUTH_H = 0.072, 0.098, 0.172, 0.150
+EYE_UNDER = 0.125                      # eye centre this far below the cuff bottom (top tucks under the cuff edge)
+IRIS_R, PUPIL_IN, PUPIL_DOWN = 0.124, 0.012, -0.004
+NOSE_DZ, MOUTH_TOP_DZ, MOUTH_W, MOUTH_H = 0.068, 0.090, 0.192, 0.160
 BLUSH_DX, BLUSH_DZ, BLUSH_R = 0.300, 0.125, 0.085
 
 # ------------------------------------------------------------------ fur (hair curves)
@@ -377,8 +377,8 @@ def knit_material(name, hex_col, hex_dark, tile, bump=0.35):
 
 
 def eye_material():
-    m, b = principled("M_EyeIris", "#2A1418", rough=0.08, coat=1.0, spec=0.6)
-    _inp(b, "Coat Roughness", 0.02)
+    m, b = principled("M_EyeIris", "#2A1418", rough=0.14, coat=1.0, spec=0.5)
+    _inp(b, "Coat Roughness", 0.10)
     nt = m.node_tree
     uv = nt.nodes.new("ShaderNodeUVMap")
     uv.uv_map = "UVMap"
@@ -395,7 +395,7 @@ def eye_material():
     cr.elements[0].color = C.hex_rgba("#0B0507")
     cr.elements[1].position = 1.0
     cr.elements[1].color = C.hex_rgba("#F7F0F2")
-    for pos, hx in ((0.19, "#0E0608"), (0.235, "#34161F"), (0.33, "#55283A"), (0.42, "#7A4660"),
+    for pos, hx in ((0.19, "#0B0406"), (0.235, "#1F0C13"), (0.33, "#3C1C2A"), (0.42, "#62364A"),
                     (0.468, "#24121A"), (0.50, "#1A0C10"), (0.525, "#F2E8EC")):
         e = cr.elements.new(pos)
         e.color = C.hex_rgba(hx)
@@ -628,7 +628,7 @@ def build_eye(surf, side, z_e):
         ring = []
         for j in range(seg):
             ps = math.pi / 2 + 2 * math.pi * j / seg
-            lx, ly = r * math.cos(ps), r * math.sin(ps) * 1.12
+            lx, ly = r * math.cos(ps), r * math.sin(ps) * 1.04
             ring.append(md.vert(S + ex * lx + ey * ly + f * (h - 0.004)))
             loc.append((lx, ly))
         rings.append(ring)
@@ -721,7 +721,7 @@ def build_mouth(surf, z_top):
         bridge(md, rings[k], rings[k + 1], mat)
     for j in range(len(outline)):
         md.face((rings[-1][j], rings[-1][(j + 1) % len(outline)], centre), 0)
-    tongue = ellipsoid(place(0.0, -MOUTH_H / 2 + 0.042, 0.001), ex, ey, f, 0.056, 0.042, 0.013, seg=16, rings=8)
+    tongue = ellipsoid(place(0.0, -MOUTH_H / 2 + 0.044, -0.004), ex, ey, f, 0.060, 0.044, 0.008, seg=16, rings=8)
     return md, tongue, S, dict(S=S, f=f, ex=ex, ey=ey, zc=zc)
 
 
@@ -1270,7 +1270,7 @@ def main():
         g = 1.0
         rgb = [g, g, g]
         for bp in blush_pts:
-            w = 0.9 * math.exp(-((p - bp).length / BLUSH_R) ** 2)
+            w = 0.95 * math.exp(-((p - bp).length / BLUSH_R) ** 2)
             rgb = [c * (1.0 - w) + t * w for c, t in zip(rgb, (1.0, 0.62, 0.68))]
         under = smoothstep(0.30, 0.05, p.z)
         rgb = [c * (1.0 - 0.5 * under) + 1.0 * 0.5 * under for c in rgb]
@@ -1380,7 +1380,7 @@ def main():
         keep &= ~(on_palm & (np.linalg.norm(rel, axis=1) < 0.13))
     # face zone: shorter fur on the front of the head
     face_w = np_smooth(-0.30, -0.42, P[:, 1]) * np_smooth(0.30, 0.42, P[:, 2]) * np_smooth(0.36, 0.28, np.abs(P[:, 0]))
-    Lmul *= 1.0 - 0.58 * face_w
+    Lmul *= 1.0 - 0.70 * face_w
     Lmul *= np.where(np.abs(P[:, 0]) > 0.50, 0.55, 1.0)            # shorter plush on the arms / paws
     P, N, Lmul, face_w = P[keep], N[keep], Lmul[keep], face_w[keep]
     n = len(P)
@@ -1398,7 +1398,7 @@ def main():
     away = away - N * np.sum(away * N, axis=1)[:, None]
     comb = normalize_rows(comb + normalize_rows(away) * face_w[:, None] * 1.5 + 1e-6)
     jitter = normalize_rows(rng.normal(0.0, 1.0, (n, 3)))
-    D = normalize_rows(N * (0.98 - 0.30 * face_w)[:, None] + comb * 0.55 + jitter * 0.20)
+    D = normalize_rows(N * (0.98 - 0.30 * face_w)[:, None] + comb * 0.45 + jitter * 0.24)
     tip = P + D * L[:, None]
     # clumps: tips converge toward their clump's tip (plush tufts)
     kd = KDTree(CLUMPS)
@@ -1418,7 +1418,7 @@ def main():
     for i in range(FUR_PTS):
         t = i / (FUR_PTS - 1)
         radii[:, i] = FUR_RAD[0] * (1 - t) ** 0.9 + FUR_RAD[1] * t
-    radii *= (0.85 + 0.3 * rng.random(n))[:, None]
+    radii *= ((0.85 + 0.3 * rng.random(n)) * (1.0 - 0.45 * face_w))[:, None]   # finer velvet strands on the face
     # colours
     base = hexlin(COL_FUR)
     under = hexlin(COL_FUR_UNDER)
@@ -1427,7 +1427,7 @@ def main():
     wu = 0.85 * np_smooth(0.36, 0.05, P[:, 2])
     col = col * (1 - wu[:, None]) + under * wu[:, None]
     for bp in blush_pts:
-        wb = 0.85 * np.exp(-(np.linalg.norm(P - np.array(bp), axis=1) / (BLUSH_R * 1.05)) ** 2)
+        wb = 0.95 * np.exp(-(np.linalg.norm(P - np.array(bp), axis=1) / (BLUSH_R * 1.10)) ** 2)
         col = col * (1 - wb[:, None]) + blush * wb[:, None]
     col *= (0.90 + 0.12 * (0.5 + 0.5 * nz2) + 0.06 * rng.random(n))[:, None]
     curves = {}

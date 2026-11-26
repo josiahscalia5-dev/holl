@@ -29,9 +29,11 @@ namespace BubbleWash.EditorTools
             // vs ours 18 deg (salmon, V10 #d7937b) - round 4's rose shift went the wrong way. Back to golden amber, and the
             // fresnel rim colour (was a BRIGHT salmon, so every grazing bevel brightened) becomes a DARK amber: faces toward the
             // camera stay bright, rolled edges darken -> a bevelled band instead of a flat one; stronger glints / streaks.
-            GoldLook("M_Gold", high: "#FFF0C8", mid: "#F0A040", low: "#6A3018", rim: "#A85A24", band: "#FFD898",
-                brightness: 1.2f, glow: 0.08f, contrast: 1.8f, viewGradient: 1f, env: 0.36f, envTint: 0.86f, envRough: 0.2f,
-                specPower: 170f, specStrength: 3.4f, glints: 3.2f, sparkle: 0f, fog: 0.4f, highlightSize: 9f, streak: 1.45f,
+            // v2: v1 (mid #F0A040 x1.2, cream streaks 1.45) read as a PALE golden-tan band; the 4K reference band is a deeper
+            // saturated orange-amber (~#d08838) with darker brown-orange edges and the bulbs clearly brighter than the band.
+            GoldLook("M_Gold", high: "#FFD890", mid: "#E08A2C", low: "#5A2010", rim: "#8A4018", band: "#F0A858",
+                brightness: 1.0f, glow: 0.08f, contrast: 1.8f, viewGradient: 1f, env: 0.36f, envTint: 0.9f, envRough: 0.2f,
+                specPower: 170f, specStrength: 3.4f, glints: 3.2f, sparkle: 0f, fog: 0.4f, highlightSize: 9f, streak: 0.9f,
                 probeTint: "#8C4E8C");
             GoldLook("M_GoldDark", high: "#FFE0B0", mid: "#C8702A", low: "#4A1636", rim: "#FFB070", band: "#FFCF96",
                 brightness: 1.0f, glow: 0.03f, contrast: 1.6f, viewGradient: 1f, env: 0.5f, envTint: 0.55f, envRough: 0.3f,
@@ -99,6 +101,12 @@ namespace BubbleWash.EditorTools
                 C(m, "_Color", "#D898F0"); F(m, "_Strength", 0.42f); F(m, "_Softness", 1f); F(m, "_Core", 1.5f); F(m, "_NearFade", 14f);
                 F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
             }, (int)RenderQueue.Transparent - 9);
+            // round 5: soft pink haze card on the upper-left drum wall of the hero view (SceneBuilder.BuildNeonStars)
+            Mat("M_PinkHaze", "BWK/LightBlob", m =>
+            {
+                C(m, "_Color", "#FF4FA0"); F(m, "_Strength", 0.30f); F(m, "_Softness", 1f); F(m, "_Core", 1.5f); F(m, "_NearFade", 3f);
+                F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
+            }, (int)RenderQueue.Transparent - 11);
             Mat("M_VanishCore", "BWK/LightBlob", m =>
             {
                 C(m, "_Color", "#FFE4D8"); F(m, "_Strength", 1.0f); F(m, "_Softness", 1f); F(m, "_Core", 2.2f); F(m, "_NearFade", 14f);

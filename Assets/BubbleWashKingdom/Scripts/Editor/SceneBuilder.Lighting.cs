@@ -47,7 +47,8 @@ namespace BubbleWash.EditorTools
             bounce.color = new Color(0.42f, 0.58f, 1f);
             // round 4: ceiling bays read light periwinkle (tunnel_ahead L50 .57 vs reference .49, reference bays deep blue
             // #554fac): a little less up-light
-            bounce.intensity = 0.38f;
+            // round 5: tunnel_ahead still L50 .57 vs .49 (light periwinkle ceiling bays) -> .30
+            bounce.intensity = 0.30f;
             bounce.shadows = LightShadows.None;
 
             // Ambient (HDR round m1): saturated BLUE-violet from above (reference ceiling bays #40509e..#515aad), violet around
@@ -59,7 +60,9 @@ namespace BubbleWash.EditorTools
             // round 4: 1.05 -> 0.94: the walls / ceiling bays read lighter and flatter than the reference (upper-right L50 .44
             // vs .40, tunnel ahead .57 vs .49) and the fur too light (L .61 vs .48); the pink spot / point lights carry the
             // upper-left glow instead
-            RenderSettings.ambientIntensity = 0.94f;
+            // round 5: .94 -> .86: tunnel ahead L50 .57 vs .49, upper-right .46 vs .40, fur V .83 vs .77, hat L .35 vs .30
+            // (all lighter / flatter than the reference); the pink spot + haze card keep the upper-left glow
+            RenderSettings.ambientIntensity = 0.86f;
             // Aerial perspective: saturated lavender-violet (never pale grey): the near tunnel stays clear and rich, the far
             // tunnel melts into a lighter violet glow while the warm bulbs still punch through (emissives use little fog).
             RenderSettings.fog = true;
@@ -95,7 +98,8 @@ namespace BubbleWash.EditorTools
             // (v2 aimed at (0.15, 0.20): that ray reaches the wall only at 118 m; v3 aims nearer the corner -> ~112 m)
             // round 5: upper-left still violet (hue 293, L50 .45) vs the reference's light pink-mauve (311, .51), and the new
             // hue-vs-hue grade pulls violets bluer -> pinker (less blue) and stronger
-            AddHeroSpot(lights, "Spot_PinkUpperLeft", 0.09f, 0.14f, 3.4f, new Color(1f, 0.42f, 0.62f), 22f, 90f, 12f);
+            // v2: v1 (1, .42, .62) x22 gave L50 .51 (ok) but hue 282 (the bluer vignette / grade) -> pinker, a bit stronger
+            AddHeroSpot(lights, "Spot_PinkUpperLeft", 0.09f, 0.14f, 3.4f, new Color(1f, 0.36f, 0.56f), 27f, 90f, 12f);
 
             // Reflection probes: hall probes + one per 30 m tunnel chunk, box = bounds of that bent tunnel segment.
             for (float d = 18f; d < tunnelStart; d += 30f)
@@ -435,6 +439,19 @@ namespace BubbleWash.EditorTools
                 Debug.Log($"[BWK] hero star c{s.color} screen ({s.x:F2},{s.y:F2}) track {wf.distance:F1} m depth {Vector3.Dot(pos - camPos, camFwd):F1} m scale {scale:F2}");
             }
 
+            // ---- round 5: soft pink-magenta haze on the upper-left drum wall (reference: the wall around the big yellow star
+            // glows pink-mauve, hue ~311 vs ours 284 even with the pink spot). One additive LightBlob card, a little inside the
+            // wall, facing the hero camera; _NearFade hides it as the runner gets close (no flat card seen up close).
+            {
+                var dir = (camRot * new Vector3((2f * 0.16f - 1f) * tanH, (1f - 2f * 0.20f) * tanV, 1f)).normalized;
+                if (TunnelWallHit(camPos, dir, HeroDistance - HeroCamBack, 0.8f, out var hp, out var hwf))
+                {
+                    var toCam = (camPos - hp).normalized;
+                    AddCard(Mat("M_PinkHaze"), hp, Quaternion.LookRotation(-toCam, camUp), 4.2f);
+                    Debug.Log($"[BWK] pink haze card at track {hwf.distance:F1} m, depth {Vector3.Dot(hp - camPos, camFwd):F1} m");
+                }
+            }
+
             // ---- luminous far tunnel (reference: rings receding into warm-white light at x ~.55, y ~.30 of the hero frame):
             // pick the tunnel-axis point 35-75 m ahead that projects closest to that spot, put a wide soft halo + a tight
             // warm-white core there facing the hero camera (LightBlob _NearFade: they vanish as the runner approaches)
@@ -529,7 +546,8 @@ namespace BubbleWash.EditorTools
             // warm bulb glow on the top of the hat / pom-pom (slightly ahead, so it grazes over the top toward the camera)
             // round 3: higher + a bit weaker -> no near-field hotspot on the pom-pom (ours p50 #c892e3 vs reference #8a41b9)
             // round 4: weaker + warmer (reference pom-pom / crown are deep saturated purple #7b2eaa, ours read pale lilac #ba83e0)
-            CharLight(group, "CharLight_WarmTop", new Vector3(0.35f, 2.75f, 0.55f), new Color(1f, 0.62f, 0.40f), 1.2f, 4.4f);
+            // round 5: hat zone L .36 / S .48 vs reference .30 / .58 (warm top light washes the purple knit out) -> weaker
+            CharLight(group, "CharLight_WarmTop", new Vector3(0.35f, 2.75f, 0.55f), new Color(1f, 0.62f, 0.40f), 0.85f, 4.4f);
             // soft pink fill on the fluffy back the rear camera sees
             // round 3: warmer coral-pink (reference back fur ~#e58c98 lit; ours read mauve under the violet ambient)
             // round 4 (lead gap 2): reference fur p50 #cc618c (L .48, S .53), ours #d887b3 (L .61, S .38) = too light, washed
