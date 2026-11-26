@@ -40,26 +40,26 @@ Material:
     - _HoleRadius: 0.19
     - _HoleSpacing: 0.6
     - _HoleStretch: 1.75
-    - _LipWidth: 0.04
+    - _LipWidth: 0.045
     - _Metallic: 0.7
     - _PanelLength: 3
     - _Pattern: 1
-    - _PlainBack: 0.42
-    - _PlainFront: 0.36
+    - _PlainBack: 0.4
+    - _PlainFront: 0.34
     - _Rows: 3
     - _SheenStrength: 0.28
-    - _SlotLength: 0.42
-    - _SlotPitch: 0.62
-    - _SlotVariation: 0.35
-    - _SlotWidth: 0.17
+    - _SlotLength: 0.46
+    - _SlotPitch: 0.64
+    - _SlotVariation: 0.3
+    - _SlotWidth: 0.21
     - _Smoothness: 0.8
     - _Sparkle: 0.8
     - _VTile: 4
     m_Colors:
-    - _BaseColor: {r: 0.35686275, g: 0.26666668, b: 0.6509804, a: 1}
+    - _BaseColor: {r: 0.45490196, g: 0.38039216, b: 0.74509805, a: 1}
     - _GlowColorA: {r: 1.7, g: 0.85, b: 1.6, a: 1}
     - _GlowColorB: {r: 0.75, g: 1.35, b: 1.9, a: 1}
-    - _HighlightColor: {r: 0.5529412, g: 0.45882353, b: 0.84705883, a: 1}
+    - _HighlightColor: {r: 0.6431373, g: 0.5764706, b: 0.8627451, a: 1}
     - _HoleColor: {r: 0.043137256, g: 0.023529412, b: 0.1254902, a: 1}
     - _HoleGlow: {r: 0.2901961, g: 0.18039216, b: 0.6039216, a: 1}
     - _SeamColor: {r: 0.16470589, g: 0.09411765, b: 0.34509805, a: 1}

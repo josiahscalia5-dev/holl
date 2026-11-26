@@ -23,6 +23,20 @@ namespace BubbleWash
             }
         }
 
+        /// <summary>
+        /// Renders through an HDR intermediate, then converts into the given LDR (sRGB) target. URP uses a render-request
+        /// target's own format as its colour buffer, so rendering straight into an ARGB32 texture clamped the scene to
+        /// [0,1] before bloom and tonemapping: no glow halos, hot emissives flat white, unlike the device screen.
+        /// </summary>
+        public static void RenderHdr(Camera cam, RenderTexture ldrTarget)
+        {
+            var hdr = RenderTexture.GetTemporary(ldrTarget.width, ldrTarget.height, 24, RenderTextureFormat.DefaultHDR,
+                RenderTextureReadWrite.Linear, Mathf.Max(1, ldrTarget.antiAliasing));
+            Render(cam, hdr);
+            Graphics.Blit(hdr, ldrTarget);   // linear -> sRGB on write
+            RenderTexture.ReleaseTemporary(hdr);
+        }
+
         public static Texture2D ReadBack(RenderTexture rt, Texture2D reuse = null, TextureFormat format = TextureFormat.RGBA32)
         {
             var tex = reuse != null && reuse.width == rt.width && reuse.height == rt.height ? reuse : new Texture2D(rt.width, rt.height, format, false);

@@ -73,16 +73,16 @@ HEAD_PITCH = 10.0          # head (and beanie) pitched forward: the rear camera 
 FOOT_FLOOR = 0.012        # lowest paw point in the seated pose (heel on the surface)
 FOOT_MIN_Z = 0.006        # floor clamp for animated paws
 ARM_RAISE_MAX = 26.0      # extra raise above the modelled 30 deg: soft cap + per-frame cuff collision solve
-TILT_RADIUS = 0.36        # effective bottom radius: lift that keeps the bottom on the surface when leaning
+TILT_RADIUS = 0.40        # effective bottom radius: lift that keeps the bottom on the surface when leaning
 
 # head pivot = ball centre (rotations slide the face over the near-spherical body); hat chain along the hat axis
-P_HAT = BODY_C + HAT_AXIS * 0.17
+P_HAT = BODY_C + HAT_AXIS * (HAT["cuff_top_u"] - 0.09)
 P_TIP = BODY_C + HAT_AXIS * (HAT["dome_u0"] + 0.03)
 P_POM = BODY_C + HAT_AXIS * HAT["top_u"]
 
 # ------------------------------------------------------------------ fur shells
 N_SHELLS = 16
-V_BODY, V_FACE, V_LIMB, V_PAW, V_TAIL, V_POMPOM = 1.0, 0.35, 0.8, 0.62, 1.3, 1.0
+V_BODY, V_FACE, V_LIMB, V_PAW, V_TAIL, V_POMPOM = 1.0, 0.35, 0.8, 0.62, 1.0, 1.0
 PART_NONE, PART_BODY, PART_TAIL, PART_ARM, PART_LEG, PART_POMPOM = 0, 1, 2, 3, 4, 5
 FUR_PARTS = (PART_BODY, PART_TAIL, PART_ARM, PART_LEG)
 TRI_BUDGET = 150000       # owner: quality first (PC numbers; mobile untested)

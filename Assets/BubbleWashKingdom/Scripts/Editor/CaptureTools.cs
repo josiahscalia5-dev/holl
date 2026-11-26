@@ -406,7 +406,7 @@ namespace BubbleWash.EditorTools
         {
             var rt = RenderTexture.GetTemporary(w, h, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB, 4);
             cam.aspect = w / (float)h;
-            CaptureUtil.Render(cam, rt);
+            CaptureUtil.RenderHdr(cam, rt);
             var tex = CaptureUtil.ReadBack(rt, null, TextureFormat.RGB24);
             File.WriteAllBytes(path, tex.EncodeToPNG());
             Object.DestroyImmediate(tex);

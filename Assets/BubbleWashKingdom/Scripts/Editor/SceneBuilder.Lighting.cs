@@ -37,6 +37,16 @@ namespace BubbleWash.EditorTools
             sun.shadowStrength = 0.7f;
             RenderSettings.sun = sun;
 
+            // Water bounce: a weak cool directional light shining UP from the bright slide water. It lifts the ceiling and the
+            // upper walls (which face away from the key) to the reference's mid-violet, with a cyan cast like light from the water.
+            var bounceGo = Child(lights, "Water Bounce");
+            bounceGo.transform.rotation = Quaternion.Euler(-78f, 0f, 0f);
+            var bounce = bounceGo.AddComponent<Light>();
+            bounce.type = LightType.Directional;
+            bounce.color = new Color(0.55f, 0.66f, 1f);
+            bounce.intensity = 0.4f;
+            bounce.shadows = LightShadows.None;
+
             // Ambient: deep violet from above, magenta-violet around the horizon, cool blue bounce from the water
             // (the "ground" colour is what the tunnel ceiling receives). Kept dim so the walls keep their depth.
             RenderSettings.ambientMode = AmbientMode.Trilight;

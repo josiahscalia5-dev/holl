@@ -57,7 +57,7 @@ namespace BubbleWash.Tests
             while (frames < 30 * 75)
             {
                 yield return null;
-                CaptureUtil.Render(cam, rt);
+                CaptureUtil.RenderHdr(cam, rt);
                 CaptureUtil.ReadBack(rt, tex);
 #if UNITY_EDITOR
                 encoder.AddFrame(tex);

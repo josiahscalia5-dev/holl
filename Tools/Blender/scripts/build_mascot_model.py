@@ -38,8 +38,9 @@ import bwk_common as C  # noqa: E402
 QUICK = os.environ.get("BWK_QUICK", "") == "1"
 
 # ------------------------------------------------------------------ body (meters)
-BODY_C = Vector((0.0, 0.0, 0.49))          # body centre
-BODY_W, BODY_D, BODY_H = 0.85, 0.80, 0.84  # width (1 BW), depth, height
+BODY_C = Vector((0.0, 0.0, 0.57))          # body centre
+BODY_W, BODY_D, BODY_H = 0.85, 0.82, 1.00  # width (1 BW), depth, height: an upright plush egg, so the fluffy back
+                                           # below the beanie is the dominant mass (reference: ~0.75 hat widths)
 BODY_EGG = 0.15                            # >0: fuller toward the bottom
 BODY_SEG = 16                              # quad sphere: 6*16*16 quads = 3072 tris
 FUR_U, FUR_V = 2.64, 1.32                  # metres per fur UV unit (around, along)
@@ -49,8 +50,9 @@ FUR_U, FUR_V = 2.64, 1.32                  # metres per fur UV unit (around, alo
 # are (u, r): u = height along the axis, r = radius toward his side (x); around the axis r is scaled by hat_ell(psi)
 # so the hat follows the body's slightly oval cross-section. psi = 0 -> +X, +90 deg -> back (+Y), -90 deg -> front.
 HAT_TILT = -5.0
+HAT_LIFT = 0.045                           # every hat profile u is lifted this much (taller body, cuff clears it)
 HAT_DEPTH = 0.94
-CUFF_BOTTOM_A = 76.0                       # deg from the hat axis: line where the cuff tucks into the fur
+CUFF_BOTTOM_A = 72.0                       # deg from the hat axis: line where the cuff tucks into the fur
 CUFF_RIBS, CROWN_RIBS = 96, 72             # geometric knit ribs around (BWK/Character _StitchU must match)
 CUFF_RIB_AMP, CROWN_RIB_AMP = 0.0075, 0.0045
 CUFF_PROFILE = [  # (u, r, rib weight): roll under -> tall ribbed outer face -> top roll -> tucks inside
@@ -58,25 +60,25 @@ CUFF_PROFILE = [  # (u, r, rib weight): roll under -> tall ribbed outer face -> 
     (0.193, 0.470, 1.0), (0.233, 0.468, 1.0), (0.262, 0.463, 0.9), (0.280, 0.454, 0.5), (0.289, 0.442, 0.2),
     (0.290, 0.431, 0.0), (0.282, 0.421, 0.0)]
 STRIPE_U = (0.287, 0.370)                  # pale ribbed band right above the cuff (~9 % of the hat width)
-DOME_U0, DOME_H, DOME_R, DOME_EXP = 0.370, 0.205, 0.436, 1.8    # round slouchy dome (superellipse exponent)
+DOME_U0, DOME_H, DOME_R, DOME_EXP = 0.370, 0.235, 0.436, 1.8    # round slouchy dome (superellipse exponent)
 TOP_STRIPE_PHI, TOP_STRIPE_HW = 47.0, 5.5  # extra pale stripe on the dome front (deg of the dome angle), fades out
 TOP_STRIPE_FULL, TOP_STRIPE_END = 45.0, 78.0    # ... over the front only (deg from the front): never seen from behind
 STAR_U, STAR_PHI, STAR_ROT = 0.192, 33.0, -12.0  # star badge on the cuff, 33 deg toward HIS LEFT (+X)
 STAR_RO, STAR_RI = 0.072, 0.032
-POMPOM_R, POMPOM_LIFT = 0.210, 0.42        # pom-pom radius; centre this many radii above the dome top
+POMPOM_R, POMPOM_LIFT = 0.232, 0.42        # pom-pom radius; centre this many radii above the dome top
 POMPOM_SEG = 12
 
 # ------------------------------------------------------------------ face (unchanged design)
-EYE_X, EYE_Z = 0.155, 0.505                # eye centres on the front surface
+EYE_X, EYE_Z = 0.155, 0.585                # eye centres on the front surface
 EYE_H, EYE_RS, EYE_VS = 0.025, 0.12, 1.06  # protrusion, cap sphere radius, vertical stretch
 EYE_SEG = 32
 IRIS_R, PUPIL_IN, PUPIL_DOWN = 0.072, 0.014, 0.007   # UV radius 0.5 = IRIS_R; pupil toward the nose
-MOUTH_Z, MOUTH_W, MOUTH_H, MOUTH_N = 0.375, 0.13, 0.105, 28
-NOSE_Z = 0.448
-BLUSH_X, BLUSH_Z, BLUSH_R = 0.235, 0.39, 0.058
+MOUTH_Z, MOUTH_W, MOUTH_H, MOUTH_N = 0.455, 0.13, 0.105, 28
+NOSE_Z = 0.528
+BLUSH_X, BLUSH_Z, BLUSH_R = 0.235, 0.47, 0.058
 
 # ------------------------------------------------------------------ arms: big stubby mitts, raised out to the sides
-ARM_Z = 0.400                              # root height on the body side (just under the cuff)
+ARM_Z = 0.520                              # root height on the body side (just under the cuff)
 ARM_UP, ARM_BACK = 42.0, 0.02              # rest direction: 30 deg above horizontal, slightly back
 ARM_SEG = 20
 ARM_PROFILE = [(-0.10, 0.068), (-0.05, 0.078), (0.0, 0.083), (0.06, 0.086), (0.12, 0.088), (0.18, 0.090),
@@ -97,7 +99,7 @@ PAW_SEG = 7
 SOLE_PADS = [(0.0, -0.042, 0.040, 0.044, 0.010),         # big pad (heel side): (lat, along, r_lat, r_along, h)
              (-0.056, 0.040, 0.018, 0.020, 0.008), (-0.020, 0.062, 0.018, 0.020, 0.008),
              (0.020, 0.062, 0.018, 0.020, 0.008), (0.056, 0.040, 0.018, 0.020, 0.008)]
-TAIL_R, TAIL_Z, TAIL_OUT = 0.068, 0.24, 0.30   # tail puff radius, height, centre offset (radii) behind the surface
+TAIL_R, TAIL_Z, TAIL_OUT = 0.060, 0.25, 0.05   # tail puff radius, height, centre offset (radii) behind the surface
 
 WHITE = (1.0, 1.0, 1.0, 1.0)
 PAD_PINK = (0.97, 0.56, 0.68, 1.0)         # Col (sRGB) for pads / beans on M_PawPad
@@ -362,7 +364,7 @@ def hat_ell(psi):
 def hat_pt(u, r, psi):
     """World point of hat-frame profile coordinates (u along the axis, r radial x-radius) at angle psi."""
     e = r * hat_ell(psi)
-    return BODY_C + HAT_R @ Vector((e * math.cos(psi), e * math.sin(psi), u))
+    return BODY_C + HAT_R @ Vector((e * math.cos(psi), e * math.sin(psi), u + HAT_LIFT))
 
 
 def hat_alpha_of(p):
@@ -509,7 +511,7 @@ def build_body():
         md.vert((v.x / sx * BODY_W / 2, v.y / sy * BODY_D / 2, BODY_C.z + v.z / sz * BODY_H / 2))
     for q in quads:
         md.face(q, 0)
-    md.set_uv(lambda i: sph_uv_frame(dirs[i], BODY_POLE, BODY_ZERO, 0.42), period=uv_period(0.42))
+    md.set_uv(lambda i: sph_uv_frame(dirs[i], BODY_POLE, BODY_ZERO, 0.46), period=uv_period(0.46))
     return md
 
 
@@ -843,7 +845,7 @@ def build_beanie():
     for phi in (10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 69.0, 77.0, 84.0):
         u, r = dome_ur(phi)
         prof.append((u, r, KNIT))
-    top_u = DOME_U0 + DOME_H
+    top_u = DOME_U0 + DOME_H + HAT_LIFT
     pts = [(p[0], p[1]) for p in prof]
     arcs = arc_v(pts + [(top_u, 0.0)])
     crown = MeshData()
@@ -1094,7 +1096,8 @@ def main():
     contract = dict(
         BODY_C=vlist(BODY_C), BODY_BOTTOM=[0.0, 0.0, round(bottom, 6)], BODY_HALF=[BODY_W / 2, BODY_D / 2, BODY_H / 2],
         HAT_TILT=HAT_TILT, HAT_AXIS=vlist(HAT_AXIS), CUFF_BOTTOM_A=CUFF_BOTTOM_A,
-        hat=dict(top_u=top_u, cuff_top_u=CUFF_PROFILE[9][0], stripe_u=list(STRIPE_U), dome_u0=DOME_U0,
+        hat=dict(top_u=top_u, cuff_top_u=CUFF_PROFILE[9][0] + HAT_LIFT, stripe_u=[u + HAT_LIFT for u in STRIPE_U],
+                 dome_u0=DOME_U0 + HAT_LIFT,
                  pompom_c=vlist(pp_c), pompom_r=POMPOM_R),
         arms=arm_info, legs=leg_info, tail=tail_info,
         eyes={t: dict(S=vlist(eyes[t][1]["S"]), f=vlist(eyes[t][1]["f"])) for t in ("L", "R")},

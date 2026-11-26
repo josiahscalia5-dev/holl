@@ -36,10 +36,10 @@ namespace BubbleWash.EditorTools
             // Saturated neon tubes (reference: thick YELLOW / CYAN / PINK tubes, white-hot only in a thin core line): pure
             // hues (no minor channel) at ~3x so they stay coloured after tonemapping and bloom into tinted halos; a sharp
             // _CorePower makes the white line only where the tube faces the camera.
-            EmissiveLook("M_Neon", "#00D4FF", 4.2f, core: 0.45f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
-            EmissiveLook("M_Neon_Cyan", "#00D4FF", 4.2f, core: 0.45f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
-            EmissiveLook("M_Neon_Pink", "#FF3AB4", 4.4f, core: 0.42f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
-            EmissiveLook("M_Neon_Yellow", "#FFC000", 4.0f, core: 0.42f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
+            EmissiveLook("M_Neon", "#00D4FF", 4.2f, core: 0.3f, corePower: 24f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
+            EmissiveLook("M_Neon_Cyan", "#00D4FF", 4.2f, core: 0.3f, corePower: 24f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
+            EmissiveLook("M_Neon_Pink", "#FF3AB4", 4.4f, core: 0.3f, corePower: 24f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
+            EmissiveLook("M_Neon_Yellow", "#FFC000", 4.0f, core: 0.3f, corePower: 24f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
 
             // soft coloured glow cards behind every neon star (additive BWK/LightBlob): the star's light spilling over the wall
             StarGlow("M_StarGlow_Yellow", "#FFA010", 1.25f);

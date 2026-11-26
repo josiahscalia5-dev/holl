@@ -498,8 +498,8 @@ def build_suds_meta(M, name, seed, spread, count, lod=0):
     for (x, y, z, r) in spheres:
         e = mb.elements.new(type='BALL')
         e.co = (x, y, z)
-        e.radius = r * 1.62
-        e.stiffness = 2.4
+        e.radius = r * 1.3                         # tight influence: distinct puffs, soft (not melted) crevices
+        e.stiffness = 8.8                          # visible radius ~ r
     bpy.context.view_layer.update()
     me = bpy.data.meshes.new_from_object(mbo.evaluated_get(bpy.context.evaluated_depsgraph_get()))
     bpy.data.objects.remove(mbo, do_unlink=True)
