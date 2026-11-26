@@ -50,6 +50,9 @@ Shader "BWK/Water"
         _ChevronThick ("Chevron Arm Thickness (m)", Float) = 0.3
         _ChevronOffset ("Chevron Runway Offset (m, +u)", Float) = 0
         _ChevronEndX ("Chevron Arm End (m beside the axis, 0 = legacy)", Float) = 0
+        _WeaveAmp ("Chevron Runway Weave (m)", Float) = 0
+        _WeaveLen ("Chevron Runway Weave Length (m)", Float) = 22
+        _WeaveZero ("Chevron Runway Weave Zero (m)", Float) = 0
     }
     SubShader
     {
@@ -67,6 +70,7 @@ Shader "BWK/Water"
             half4 _TurquoiseColor, _ReflectTint;
             half _PatchAmount, _DetailStrength;
             float _ChevronHalfLen, _ChevronHalfWidth, _ChevronThick, _ChevronOffset, _ChevronEndX;
+            float _WeaveAmp, _WeaveLen, _WeaveZero;
         CBUFFER_END
 
         // flowing height field: long swells stretched along the flow + a finer, faster chop
@@ -209,22 +213,31 @@ Shader "BWK/Water"
                     // the water), stronger on the camera side. Round 4 continuation: the halo of an arrow reaches past the
                     // half-way line to its neighbour, so the nearest THREE arrows are evaluated (one arrow per period cut the
                     // halo off along a straight horizontal line across the water = the "grid line" under the bottom arrow).
+                    // The runway weaves: lateral(d) = _ChevronOffset + _WeaveAmp sin(2 pi (d - _WeaveZero) / _WeaveLen), each
+                    // arrow yawed along that line (SceneBuilder.ChevronLateralAt / ChevronYawAt).
                     float k0 = round((m.y - _ChevronStart) / _ChevronSpacing);
-                    float lx = abs(m.x - _Width * 0.5 - _ChevronOffset);
                     float alen = sqrt(_ChevronHalfWidth * _ChevronHalfWidth + 4.0 * _ChevronHalfLen * _ChevronHalfLen);
                     float2 ad = float2(_ChevronHalfWidth, -2.0 * _ChevronHalfLen) / alen;
                     float tEnd = _ChevronEndX > 0.01 ? _ChevronEndX / ad.x : alen;
+                    float wk = 6.2831853 / max(_WeaveLen, 0.1);
                     half best = 0;
                     [unroll] for (int j = -1; j <= 1; j++)
                     {
-                        float ly = m.y - _ChevronStart - (k0 + j) * _ChevronSpacing;
+                        float dj = _ChevronStart + (k0 + j) * _ChevronSpacing;
+                        float th = (dj - _WeaveZero) * wk;
+                        float off = _ChevronOffset + _WeaveAmp * sin(th);
+                        float sl = _WeaveAmp * wk * cos(th);                                   // runway slope -> arrow yaw
+                        float yc = rsqrt(1.0 + sl * sl), ys = sl * yc;
+                        float qx = m.x - _Width * 0.5 - off, qy = m.y - dj;
+                        float lx = abs(qx * yc - qy * ys);
+                        float ly = qx * ys + qy * yc;
                         float2 pp = float2(lx, ly - _ChevronHalfLen);
                         float tt = clamp(dot(pp, ad), 0.0, tEnd);
                         float2 dd = pp - ad * tt;
                         float dist = max(length(dd) - _ChevronThick * 0.5, 0.0);              // 0 under the arrow
-                        half behind = dot(dd, float2(-ad.y, ad.x)) < 0.0 ? 1.3 : 0.8;         // behind = toward the camera
-                        half halo = exp(-dist * dist / (0.012 * behind));
-                        half wide = exp(-dist * dist / 0.09) * 0.2;
+                        half behind = dot(dd, float2(-ad.y, ad.x)) < 0.0 ? 1.1 : 0.8;         // behind = toward the camera
+                        half halo = exp(-dist * dist / (0.008 * behind));
+                        half wide = exp(-dist * dist / 0.06) * 0.12;
                         best = max(best, halo * 0.8 + wide);
                     }
                     chevLight = best * _ChevronGlow;

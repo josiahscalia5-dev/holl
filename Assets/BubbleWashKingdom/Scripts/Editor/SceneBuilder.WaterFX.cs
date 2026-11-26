@@ -35,6 +35,13 @@ namespace BubbleWash.EditorTools
         // every arm edge ends at |x| = ChevronEndX (the old constant-z cut drew a long thin left spike to screen x .14)
         public const float ChevronLateral = 0.30f, ChevronHalfLen = 0.25f, ChevronHalfWidth = 0.50f, ChevronThick = 0.36f;
         public const float ChevronEndX = 0.42f;
+        // the runway WEAVES gently across the slide (reference f_03.00s: near apex at runner x .34, the next arrow's apex 1.14 m
+        // closer at x .20 -> the arrow line runs diagonally toward the right bend, arrows turned ~7 deg to follow it):
+        // lateral(d) = WeaveAmp sin(2 pi (d - WeaveZero) / WeaveLen), each arrow yawed along that line (BWK_Water does the same)
+        public const float ChevronWeaveAmp = 0.5f, ChevronWeaveLen = 22f, ChevronWeaveZero = 102.87f;
+        public static float ChevronLateralAt(float d) => ChevronWeaveAmp * Mathf.Sin(2f * Mathf.PI * (d - ChevronWeaveZero) / ChevronWeaveLen);
+        public static float ChevronYawAt(float d) =>
+            Mathf.Atan(ChevronWeaveAmp * 2f * Mathf.PI / ChevronWeaveLen * Mathf.Cos(2f * Mathf.PI * (d - ChevronWeaveZero) / ChevronWeaveLen)) * Mathf.Rad2Deg;
         const float ChevronHeight = 0.015f;
         // milk crown splashes beside the feet (Art/Models/FX/SM_FX_Crown_xx, left-side asset mirrored for the right).
         // (round 2 anchored the root in screen space; reference f_003.00s: crowns rise at x 0-.40 / .62-1, y .55-.87).
@@ -263,7 +270,8 @@ namespace BubbleWash.EditorTools
                 var rot = f.FlatRotation * Quaternion.Euler(0, 90f + Rand(-20f, 20f) + (r.NextDouble() < 0.5 ? 180f : 0f), 0);
                 float yS = Rand(0.9f, 1.15f);
                 bool heroWin = heroD > HeroDistance - 1.5f && heroD < HeroDistance + 15f;
-                if (heroWin && lat > 0f) return;                        // right bank clear in the hero view
+                // right bank clear in the hero view (round 4: to +26 m - a right-bank cumulus still showed at screen (.8, .4))
+                if (lat > 0f && heroD > HeroDistance - 1.5f && heroD < HeroDistance + 26f) return;
                 if (heroWin) { sc *= 1.3f; h += 0.12f; }                  // fuller, taller left banks
                 var m = Matrix4x4.TRS(f.FlatPoint(lat, h), rot, new Vector3(sc, sc * yS, sc));
                 comb0.Add(lod0[vi], m);
@@ -520,11 +528,14 @@ namespace BubbleWash.EditorTools
                 framesR.Add(PersistCopy(parts[0].mesh, save));
             }
             if (framesR.Count != frames.Count) framesR.Clear();
+            // round 4 continuation (v2: the left crown's low skirt read as a flat white puff on the water at screen x 0-.14,
+            // y .80-.87; lead: "left flatter than the right"): BOTH crowns use the skirt-less family (left unmirrored)
+            if (framesR.Count > 0) frames = framesR;
             var holder = Child(fxRoot, "Crowns");
             var sc = holder.AddComponent<SplashCrowns>();
             sc.runner = runner;
             sc.frames = frames.ToArray();
-            sc.framesRight = framesR.Count > 0 ? framesR.ToArray() : null;
+            sc.framesRight = null;
             var milk = Mat("M_FX_Milk");
             int[] phase = { 0, frames.Count / 2 };
             var crowns = new List<MeshFilter>();
@@ -675,8 +686,8 @@ namespace BubbleWash.EditorTools
             {
                 if (boosts.Any(b => Mathf.Abs(b - d) < 1.4f)) continue;
                 var f = track.Evaluate(d);
-                // round 4: generated fat chevron, flat in the water, runway ChevronLateral m right of the centre lane
-                comb.Add(chevron, Matrix4x4.TRS(f.Point(ChevronLateral, 0.03f), f.Rotation, Vector3.one));
+                // round 4: generated fat chevron, flat in the water, on the weaving runway, turned along it
+                comb.Add(chevron, Matrix4x4.TRS(f.Point(ChevronLateralAt(d), 0.03f), f.Rotation * Quaternion.Euler(0f, ChevronYawAt(d), 0f), Vector3.one));
                 if (d - chunkStart > ChunkLength) { comb.Flush(holder, $"Chevrons_{chunk++:00}", !preview); chunkStart = d; }
             }
             comb.Flush(holder, $"Chevrons_{chunk:00}", !preview);

@@ -89,7 +89,7 @@ CUFF_PROF = [(h * 0.93, r * 0.935) for h, r in (
     (0.000, 0.500), (0.010, 0.518), (0.032, 0.528), (0.075, 0.532), (0.125, 0.533), (0.172, 0.530),
     (0.205, 0.523), (0.226, 0.511), (0.238, 0.494), (0.236, 0.478))]
 STRIPE_PROF = [(0.212, 0.432), (0.226, 0.450), (0.250, 0.458), (0.272, 0.457), (0.288, 0.451)]
-DOME_H0, DOME_R0, DOME_H, DOME_E = 0.288, 0.451, 0.250, 1.00
+DOME_H0, DOME_R0, DOME_H, DOME_E = 0.288, 0.451, 0.245, 2.00
 TOP_BAND = (9.0, 9.0)                  # (disabled: the reference has ONE pale stripe)              # extra pale band on the crown FRONT (h range), fades out toward the sides
 TOP_BAND_PSI = 70.0                    # +- deg from the front where the band is full width
 POM_H, POM_CORE, POM_R = 0.602, 0.150, 0.258   # pom-pom centre (h), dark core radius, yarn tip radius
@@ -681,7 +681,7 @@ def build_mouth(surf, z_top):
     S, n = surf.front_point(0.0, zc)
     f, ex, ey = face_frame(n, 0.3)
     outline = mouth_outline(36, MOUTH_W, MOUTH_H)
-    ring_sh = [(1.20, -0.004), (1.08, 0.001), (1.0, 0.002), (0.92, -0.005), (0.70, -0.015), (0.35, -0.022)]
+    ring_sh = [(1.20, -0.004), (1.08, 0.001), (1.0, -0.003), (0.92, -0.010), (0.70, -0.018), (0.35, -0.024)]
 
     def place(x, y, h):
         hit = surf.ray(S + ex * x + ey * y + f * 0.3, -f)
@@ -691,7 +691,7 @@ def build_mouth(surf, z_top):
     for s, h in ring_sh:
         rings.append([md.vert(place(x * s, y * s, h)) for (x, y) in outline])
     centre = md.vert(place(0.0, -0.01, -0.022))
-    for k, mat in enumerate((1, 1, 0, 0, 0)):
+    for k, mat in enumerate((1, 0, 0, 0, 0)):
         bridge(md, rings[k], rings[k + 1], mat)
     for j in range(len(outline)):
         md.face((rings[-1][j], rings[-1][(j + 1) % len(outline)], centre), 0)
@@ -742,7 +742,7 @@ def build_beanie(r_tuck):
         nr_r, nr_h = nrm.x, nrm.y
         L = math.hypot(nr_r, nr_h) or 1.0
         nr_r, nr_h = nr_r / L, nr_h / L
-        amp = (CUFF_AMP if mat == 1 else CROWN_AMP) * min(1.0, r / 0.2) * (0.0 if k == 0 else 1.0)
+        amp = ({1: CUFF_AMP, 2: CUFF_AMP * 0.45}.get(mat, CROWN_AMP)) * min(1.0, r / 0.2) * (0.0 if k == 0 else 1.0)
         ring = []
         for j in range(seg):
             psi = -math.pi / 2 + 2 * math.pi * j / seg
@@ -1129,7 +1129,7 @@ def main():
         keep &= ~(on_palm & (np.linalg.norm(rel, axis=1) < 0.13))
     # face zone: shorter fur on the front of the head
     face_w = np_smooth(-0.30, -0.42, P[:, 1]) * np_smooth(0.30, 0.42, P[:, 2]) * np_smooth(0.36, 0.28, np.abs(P[:, 0]))
-    Lmul *= 1.0 - 0.62 * face_w
+    Lmul *= 1.0 - 0.45 * face_w
     Lmul *= np.where(np.abs(P[:, 0]) > 0.50, 0.55, 1.0)            # shorter plush on the arms / paws
     P, N, Lmul, face_w = P[keep], N[keep], Lmul[keep], face_w[keep]
     n = len(P)
@@ -1147,7 +1147,7 @@ def main():
     away = away - N * np.sum(away * N, axis=1)[:, None]
     comb = normalize_rows(comb + normalize_rows(away) * face_w[:, None] * 1.5 + 1e-6)
     jitter = normalize_rows(rng.normal(0.0, 1.0, (n, 3)))
-    D = normalize_rows(N * 0.80 + comb * 0.85 + jitter * 0.16)
+    D = normalize_rows(N * (0.80 - 0.30 * face_w)[:, None] + comb * 0.85 + jitter * 0.16)
     tip = P + D * L[:, None]
     # clumps: tips converge toward their clump's tip (plush tufts)
     kd = KDTree(CLUMPS)
