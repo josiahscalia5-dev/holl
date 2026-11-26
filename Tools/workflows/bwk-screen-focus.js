@@ -11,6 +11,7 @@ export const meta = {
 
 // args (fix):   { screen: 'S2', mode: 'fix', pass: 1, base: '<newest tag>', before: 'Captures/stills_r8m', agents?: ['metal','water'], resume?: {all, metal, assets, water} }
 // args (judge): { screen: 'S2', mode: 'judge', tag: 's2p1' }  -> reads Captures/sections/<screen>_focus_<tag>.png (made by the lead)
+// args (gaps):  { screen: 'S2', mode: 'gaps', before: 'Captures/stills_r8m' } -> only the gap list (pass it to fix mode as args.gaps)
 const ROOT = 'C:/Users/josia/thanksgiving'
 const A = args || {}
 const SCREEN = A.screen || 'S2'
@@ -144,14 +145,16 @@ Read every image with the Read tool (PNG).`
   return { screen: SCREEN, tag: TAG, judge: j, final: fin }
 }
 
+// args.gaps = a gap list from an earlier { mode: 'gaps' } run of the same screen and stills (skips the gap judge)
 phase('Gaps')
-const gaps = await agent(`You are an independent visual judge for Bubble Wash Kingdom, a Unity game rebuilt from the owner's approved Google Flow video. Never read the specialists' notes or reports.
+const gaps = A.gaps || await agent(`You are an independent visual judge for Bubble Wash Kingdom, a Unity game rebuilt from the owner's approved Google Flow video. Never read the specialists' notes or reports.
 Screen: ${S.name}. Approved reference frames: ${REFS.join(', ')}. Our current Unity renders: ${OURS.join(', ')} (bg/ = mascot hidden).
 ${SCALE}
 Read every image with the Read tool. Score our render now, then list the 6-10 most visible differences, biggest first, each with its owner: assets = the shape / geometry / proportions of props (rails, rollers, console, windows / doors, socks, pipes' geometry, starburst geometry, arches), metal = gold, metal walls, bulb rings, neon stars' material, light colour / direction, reflections, colour grade, water = water surface, foam, milk crowns, splashes, bubbles, glass + liquid shading, character = the mascot, lead = camera / framing / track layout. Give each a concrete fix and a measurable check on the 1280x720 frames.`,
   { label: `gaps ${SCREEN} pass ${PASS}`, phase: 'Gaps', schema: GAPS, effort: 'high' })
 if (!gaps || !gaps.gaps || !gaps.gaps.length) return { screen: SCREEN, pass: PASS, error: 'no gap list' }
 log(`${SCREEN} now ${gaps.score_with_mascot} with mascot / ${gaps.score_scenery_only} scenery only; ${gaps.gaps.length} gaps`)
+if (MODE === 'gaps') return { screen: SCREEN, before: BEFORE, gaps }   // gap list only (cheap); pass it later as args.gaps
 
 // pick the two specialist domains that own the most (rank-weighted) gaps unless the lead named them
 const weight = { assets: 0, metal: 0, water: 0 }
