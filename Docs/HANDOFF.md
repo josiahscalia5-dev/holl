@@ -1,6 +1,22 @@
 # Bubble Wash Kingdom - lead handoff (2026-11-26 12:30, lead session cd43a82d on the third Pro account)
 
-## Round 7 continuation (2026-11-26 from 13:36, lead session a0655f8d on the fourth account) - read this first
+## STATUS 14:45 (lead a0655f8d) - exact resume point (private details: Captures/handoff/NEXT_ACCOUNT_START.md)
+- Done + tagged locally: checkpoint-18c-camera (owner corrections 1, 7, 8: rear opening crane, finish in front of the
+  portal, Play Mode test passed) and checkpoint-19-r7w (round-7 water pass integrated by build lead_r7w, stills
+  Captures/stills_r7w/, sheets Captures/sections/*_r7w.png; owner's projection decision in CLAUDE.md + .gitignore).
+- RUNNING since 14:16: owner's projection test (Tools/workflows/bwk-projection-test.js, run wf_3b08b58e-28a): one
+  specialist projects + bakes the approved artwork onto the S5 chamber ChamberV2_216_R (216 m) + wall, isolated test scene
+  Scenes/Private/Test_Projection_S5.unity, private assets Art/Projected/ (both gitignored), gameplay recording
+  Captures/playmode/projection_s5_9x16.mp4; then an independent judge. Notes: Captures/agents/projection/NOTES.md.
+- NEXT: (1) projection verdict -> send the owner reference | current | projected + recording; (2) round 8
+  (bwk-round8-cinematic.js, args {base: newest tag, before: "Captures/stills_r7w"}): metal + water first; the assets agent
+  gets the projection rollout for the asset types the judge approved (else conventional); (3) lead safe_build lead_r8 ->
+  cp stills -> stills_r8 -> section_triptych r8 (before stills_r7w) -> bwk-round7-verify.js {tag: "r8"} -> Play Mode
+  recording -> send -> commit + tag -> update this file and the checklist scores.
+- Open: portal starburst still white (round 8 metal/assets); the HUD banner panel (14:05) is not yet in a recording;
+  in-game mascot is the old SK_Mascot (character work later). Disk 3.6 GB free after the 14:40 cleanup.
+
+## Round 7 continuation (2026-11-26 from 13:36, lead session a0655f8d on the fourth account)
 - Takeover 13:36: newest work = local tag checkpoint-18b-handoff, git clean. Exactly ONE autosave loop (PID 1291, started
   12:26, no BWK_PUBLISH_CHAT; public tree has 0 ChatHistory / Reference / Captures files). The previous lead's "17:12
   restart timer" was still alive as an orphaned `sleep 14569` (parent shell gone) -> killed 13:37. No Unity / Blender, no

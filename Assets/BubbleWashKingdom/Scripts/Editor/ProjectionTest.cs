@@ -137,7 +137,7 @@ namespace BubbleWash.EditorTools
         }
 
         /// <summary>Rear gameplay views while the mascot passes the chamber (portrait, the approved rig) + front views.</summary>
-        static void RenderAll(Views v, float dc, string tag, string camJson)
+        static void RenderAll(Views v, float dc, string tag, List<(string name, Vector3 pos, Vector3 fwd, Vector3 up)> cams)
         {
             var rear = new (string name, float d, float lat)[]
             {
@@ -171,35 +171,43 @@ namespace BubbleWash.EditorTools
                 CaptureTools.Render(v.cam, 1280, 720, $"{Out}/{tag}_R5_front_16x9.png");
             }
 
-            // the solved reference cameras (chamber-relative, converted to world by the Blender script)
-            if (File.Exists(camJson))
+            // the solved reference cameras (chamber-relative markers exported by build_projection_test.py)
+            if (cams.Count > 0)
             {
                 v.runner.TeleportTo(dc + 30f, 0f);   // mascot behind the front camera: chamber views only
-                var txt = File.ReadAllText(camJson);
-                int k = 0;
-                foreach (var block in txt.Split('{').Skip(1))
+                foreach (var c in cams)
                 {
-                    float[] Arr(string key)
-                    {
-                        int i = block.IndexOf("\"" + key + "\"");
-                        if (i < 0) return null;
-                        int a = block.IndexOf('[', i), b = block.IndexOf(']', a);
-                        return block.Substring(a + 1, b - a - 1).Split(',').Select(s => float.Parse(s.Trim(), Inv)).ToArray();
-                    }
-                    var pos = Arr("unity_pos"); var fwd = Arr("unity_fwd"); var up = Arr("unity_up"); var fov = Arr("vfov");
-                    int ni = block.IndexOf("\"name\"");
-                    if (pos == null || fwd == null || up == null || ni < 0) continue;
-                    int q0 = block.IndexOf('"', block.IndexOf(':', ni)) + 1;
-                    string nm = block.Substring(q0, block.IndexOf('"', q0) - q0);
-                    v.cam.transform.SetPositionAndRotation(new Vector3(pos[0], pos[1], pos[2]),
-                        Quaternion.LookRotation(new Vector3(fwd[0], fwd[1], fwd[2]), new Vector3(up[0], up[1], up[2])));
-                    v.cam.fieldOfView = fov != null ? fov[0] : 52f;
-                    CaptureTools.Render(v.cam, 1280, 720, $"{Out}/{tag}_front_{nm}_16x9.png");
-                    k++;
+                    v.cam.transform.SetPositionAndRotation(c.pos, Quaternion.LookRotation(c.fwd, c.up));
+                    v.cam.fieldOfView = 52f;
+                    CaptureTools.Render(v.cam, 1280, 720, $"{Out}/{tag}_front_{c.name}_16x9.png");
                 }
-                Debug.Log($"[BWK] projection: {k} solved reference views rendered ({tag})");
+                Debug.Log($"[BWK] projection: {cams.Count} solved reference views rendered ({tag})");
             }
         }
+
+        /// <summary>Projector cameras from SM_ProjCams.fbx: tiny cubes PC/PF/PU_{A,B} in the chamber model's own frame,
+        /// imported with the chamber's import settings and mapped through the chamber mesh's localToWorld matrix.</summary>
+        static List<(string name, Vector3 pos, Vector3 fwd, Vector3 up)> SolvedCams(Transform chamberMesh)
+        {
+            var list = new List<(string name, Vector3 pos, Vector3 fwd, Vector3 up)>();
+            var model = ImportModel("SM_ProjCams.fbx");
+            if (model == null) return list;
+            var m = chamberMesh.localToWorldMatrix;
+            var pts = new Dictionary<string, Vector3>();
+            foreach (var mf in model.GetComponentsInChildren<MeshFilter>(true))
+                if (mf.sharedMesh != null) pts[mf.name] = m.MultiplyPoint3x4(mf.sharedMesh.bounds.center);
+            foreach (var t in new[] { "A", "B" })
+                if (pts.TryGetValue("PC_" + t, out var c) && pts.TryGetValue("PF_" + t, out var f) && pts.TryGetValue("PU_" + t, out var u))
+                {
+                    list.Add(("0825" + t, c, f - c, u - c));
+                    Debug.Log($"[BWK] projection camera 0825{t}: pos {V(c)} fwd {V((f - c).normalized)} up {V((u - c).normalized)}");
+                }
+            return list;
+        }
+
+        static MeshRenderer ChamberMesh(GameObject ch) =>
+            ch.GetComponentsInChildren<MeshRenderer>(true).First(r => r.GetComponent<MeshFilter>() && r.GetComponent<MeshFilter>().sharedMesh
+                && r.GetComponent<MeshFilter>().sharedMesh.name.StartsWith("SM_ChamberWindow_v2"));
 
         static Texture2D Tex(string file, bool srgb, bool normal = false)
         {
@@ -276,12 +284,12 @@ namespace BubbleWash.EditorTools
             try
             {
                 Directory.CreateDirectory(Out);
-                string camJson = Out + "/projector_cams_unity.json";
                 // 1) CURRENT level (opened read-only: never saved)
                 EditorSceneManager.OpenScene(SceneBuilder.ScenePath);
                 var ch0 = FindChamber(out _);
+                var cams = SolvedCams(ChamberMesh(ch0).transform);
                 var v0 = Setup();
-                RenderAll(v0, TargetD, "current", camJson);
+                RenderAll(v0, TargetD, "current", cams);
 
                 // 2) private COPY of the level with only the test chamber swapped
                 Directory.CreateDirectory(Path.GetDirectoryName(TestScene));
@@ -301,7 +309,7 @@ namespace BubbleWash.EditorTools
                 var mMetal = LitMat("M_Proj_ChamberFrame", baseTex, msTex, nrmTex, 0f, false);
                 var mInner = LitMat("M_Proj_ChamberInterior", baseTex, msTex, nrmTex, 0.55f, false);
 
-                var mr = ch.GetComponentsInChildren<MeshRenderer>(true).First(r => r.GetComponent<MeshFilter>() && r.GetComponent<MeshFilter>().sharedMesh && r.GetComponent<MeshFilter>().sharedMesh.name.StartsWith("SM_ChamberWindow_v2"));
+                var mr = ChamberMesh(ch);
                 var oldMats = mr.sharedMaterials;
                 var oldMesh = mr.GetComponent<MeshFilter>().sharedMesh;
                 Debug.Log($"[BWK] projection: original mesh {oldMesh.name} bounds {V(oldMesh.bounds.min)}..{V(oldMesh.bounds.max)} sub {oldMesh.subMeshCount}; projected {projMesh.name} bounds {V(projMesh.bounds.min)}..{V(projMesh.bounds.max)} sub {projMesh.subMeshCount}");
@@ -341,7 +349,7 @@ namespace BubbleWash.EditorTools
                 Debug.Log($"[BWK] projection: test scene saved {TestScene} (chamber {ch.name}, {hidden} 3D socks hidden, patch {(patch != null)})");
 
                 var v1 = Setup();
-                RenderAll(v1, TargetD, "projected", camJson);
+                RenderAll(v1, TargetD, "projected", cams);
                 AssetDatabase.SaveAssets();
                 Debug.Log("[BWK] projection BuildAndCapture done -> " + Path.GetFullPath(Out));
                 EditorApplication.Exit(0);

@@ -133,12 +133,16 @@ def solve_camera(mirror_sign):
     hpx = np.array(HINGE_PX, float)
 
     best = None
-    for D in (4.0, 5.5, 7.5):
-        for al in (-65, -50, -35, 35, 50, 65):
-            for be in (-12, 12):
-                a, b = math.radians(al), math.radians(be)
-                C0 = np.array([D * math.sin(a) * math.cos(b), -D * math.cos(a) * math.cos(b), D * math.sin(b)])
-                R0 = look_at(C0, np.zeros(3))
+    hs = 1.0 if hinge[0] > 0 else -1.0            # camera on the hinge side
+    for D in (8.0, 9.5, 11.0):
+        for al in (50, 60, 70):
+            for rot in (-28, 28):
+                a = math.radians(al)
+                C0 = np.array([hs * D * math.sin(a), -D * math.cos(a), 0.7])
+                dw = -C0 / np.linalg.norm(C0)
+                cr, sr = math.cos(math.radians(rot)), math.sin(math.radians(rot))
+                fw0 = np.array([cr * dw[0] - sr * dw[1], sr * dw[0] + cr * dw[1], dw[2]])
+                R0 = look_at(C0, C0 + fw0)
 
                 def cost(x):
                     R = rodrigues(x[3:]) @ R0
@@ -150,7 +154,8 @@ def solve_camera(mirror_sign):
                     hu, hz = project(hinge[None], R, C, F720, 640, 360)
                     if hz[0] < 0.5:
                         return 1e9
-                    return float((dd ** 2).mean() + 0.25 * ((hu[0] - hpx) ** 2).sum())
+                    pen = 1e3 * max(0.0, C[1] + 1.0) ** 2 + 1e3 * max(0.0, -hs * C[0]) ** 2
+                    return float((dd ** 2).mean() + 0.25 * ((hu[0] - hpx) ** 2).sum() + pen)
                 x, v = nelder_mead(cost, np.zeros(6), np.array([0.4, 0.4, 0.4, 0.08, 0.08, 0.08]), 1200)
                 x, v = nelder_mead(cost, x, np.array([0.1, 0.1, 0.1, 0.02, 0.02, 0.02]), 1200)
                 if best is None or v < best[0]:
@@ -292,6 +297,8 @@ def main():
     bpy.ops.uv.smart_project(angle_limit=math.radians(60), island_margin=0.004, area_weight=0.0, correct_aspect=True,
                              scale_to_bounds=False)
     bpy.ops.object.mode_set(mode='OBJECT')
+    me = obj.data
+    new = me.uv_layers["ProjUV"]                   # Python refs to mesh layers die with the edit-mode toggle
     uv_new = np.empty(n_loops * 2, np.float32); new.data.foreach_get("uv", uv_new)
     log("smart UV done (%.1f s)" % (time.time() - t0))
 
@@ -336,17 +343,17 @@ def main():
     # 4. z-buffer at half 4K + projection of every texel
     f4 = F720 * 3.0
     keep = np.array([("Glass" not in mats[m]) for m in tm])
-    tri_uv, tri_z = project(pos_t.reshape(-1, 3), R, C, f4 / 2, W4 / 4, H4 / 4)
-    Z = zbuffer(tri_uv.reshape(-1, 3, 2)[keep], tri_z.reshape(-1, 3)[keep], W4 // 2, H4 // 2)
+    tri_uv, tri_z = project(pos_t.reshape(-1, 3), R, C, F720, 640, 360)
+    Z = zbuffer(tri_uv.reshape(-1, 3, 2)[keep], tri_z.reshape(-1, 3)[keep], 1280, 720)
     log("z-buffer done (%.1f s)" % (time.time() - t0))
     idx = np.nonzero(cover)
     Pv, Nv = P[idx], Nn[idx]
     uvp, zp = project(Pv, R, C, f4, W4 / 2, H4 / 2)
     inside = (uvp[:, 0] > 2) & (uvp[:, 0] < W4 - 3) & (uvp[:, 1] > 2) & (uvp[:, 1] < H4 - 3) & (zp > 0.2)
     vis = inside.copy()
-    zi = np.clip((uvp[:, 1] / 2).astype(int), 0, H4 // 2 - 1), np.clip((uvp[:, 0] / 2).astype(int), 0, W4 // 2 - 1)
+    zi = np.clip((uvp[:, 1] / 3).astype(int), 0, 719), np.clip((uvp[:, 0] / 3).astype(int), 0, 1279)
     zref = Z[zi]
-    vis &= zp <= zref + 0.02 + 0.004 * zp
+    vis &= zp <= zref + 0.03 + 0.006 * zp
     view = C[None] - Pv
     view /= np.linalg.norm(view, axis=1, keepdims=True)
     facing = (Nv * view).sum(1)
