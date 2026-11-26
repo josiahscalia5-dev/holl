@@ -12,8 +12,34 @@ import zlib
 
 import numpy as np
 
+try:  # Blender 5.3's bundled Python ships OpenImageIO: native decode, ~100x faster than the pure-Python Paeth loop below
+    import OpenImageIO as _oiio
+except Exception:  # pragma: no cover - fallback keeps the tools working anywhere numpy exists
+    _oiio = None
+
+
+def _read_oiio(path):
+    cfg = _oiio.ImageSpec()
+    cfg.attribute("oiio:UnassociatedAlpha", 1)  # keep straight RGB like the pure decoder (no premultiply)
+    buf = _oiio.ImageBuf(path, 0, 0, cfg)
+    if buf.has_error:
+        return None
+    px = buf.get_pixels(_oiio.UINT8)
+    if px is None or px.ndim != 3:
+        return None
+    ch = px.shape[2]
+    if ch == 1:
+        return np.repeat(px, 3, axis=2)
+    if ch == 2:
+        return np.repeat(px[:, :, :1], 3, axis=2)
+    return np.ascontiguousarray(px[:, :, :3])
+
 
 def read_png(path):
+    if _oiio is not None:
+        img = _read_oiio(path)
+        if img is not None:
+            return img
     with open(path, "rb") as f:
         data = f.read()
     if data[:8] != b"\x89PNG\r\n\x1a\n":

@@ -3,11 +3,31 @@ guid: 32307c503399bdb4cb5e0efd17f59ac8
 ModelImporter:
   serializedVersion: 24300
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_BurstCore_r8
+    second: {fileID: 2100000, guid: 03f00a7a45d72b74287613db06857a16, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_BurstGlow_r8
+    second: {fileID: 2100000, guid: bca84401bceae1f429561765ffc0845e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_BurstRays_r8
+    second: {fileID: 2100000, guid: de75c1979f061804ea2a6b87dbe8e32f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_BurstSparkle_r8
+    second: {fileID: 2100000, guid: 76d42fd5ba0e42e4e95ac60222eae6c9, type: 2}
   materials:
     materialImportMode: 2
-    materialName: 0
-    materialSearch: 1
+    materialName: 1
+    materialSearch: 2
     materialLocation: 1
     searchTexturesGlobally: 0
   animations:

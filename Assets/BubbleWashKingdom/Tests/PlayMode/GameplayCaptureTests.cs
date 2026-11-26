@@ -58,6 +58,14 @@ namespace BubbleWash.Tests
             var portalGo = GameObject.Find("LightPortal");
             Transform portal = portalGo != null ? portalGo.transform : runner.transform;
             float maxCamPastPortal = float.NegativeInfinity;
+            // 2026-11-26 owner: verify the real controls in the recording - lane changes to both sides, jumps + landings,
+            // and that the mascot's animator really cycles through several states (slide / swim, jump, land, celebrate)
+            int laneChanges = 0, jumps = 0, landings = 0, bumps = 0, minLane = 0, maxLane = 0;
+            System.Action onLane = () => { laneChanges++; minLane = Mathf.Min(minLane, runner.Lane); maxLane = Mathf.Max(maxLane, runner.Lane); };
+            System.Action onJump = () => jumps++, onLand = () => landings++, onBump = () => bumps++;
+            runner.LaneChanged += onLane; runner.Jumped += onJump; runner.Landed += onLand; runner.Bumped += onBump;
+            var mascotAnim = runner.GetComponentInChildren<Animator>();
+            var animStates = new System.Collections.Generic.HashSet<int>();
             while (frames < 30 * 75)
             {
                 yield return null;
@@ -73,6 +81,7 @@ namespace BubbleWash.Tests
                     rearChecks++;
                     if (Vector3.Dot(cam.transform.forward, runner.transform.forward) < 0.35f) rearViolations++;
                 }
+                if (mascotAnim != null && frames % 3 == 0) animStates.Add(mascotAnim.GetCurrentAnimatorStateInfo(0).shortNameHash);
                 // 2026-11-26 finishing sequence: brake in front of the portal, turn, banner, slow push-in (~7 s recorded)
                 if (gm.Celebrating && ++celebrateFrames > 210) break;
                 maxCamPastPortal = Mathf.Max(maxCamPastPortal, Vector3.Dot(cam.transform.position - portal.position, portal.forward));
@@ -86,11 +95,20 @@ namespace BubbleWash.Tests
                 $"frames={frames}\nstart={startDistance:F1}\nend={runner.Distance:F1}\ntrack={runner.track.Length:F1}\n" +
                 $"coins={gm.items.Coins}\ngems={gm.items.Gems}\nrearChecks={rearChecks}\nrearViolations={rearViolations}\nfinished={gm.Celebrating}\n" +
                 $"celebrationPose={runner.InCelebrationPose}\nfinishRest={runner.FinishRestDistance:F1}\nmaxCameraPastPortal={maxCamPastPortal:F2}\n");
+            runner.LaneChanged -= onLane; runner.Jumped -= onJump; runner.Landed -= onLand; runner.Bumped -= onBump;
+            File.AppendAllText(Path.Combine(OutDir, "run_summary.txt"),
+                $"laneChanges={laneChanges}\nlanesVisited={minLane}..{maxLane}\njumps={jumps}\nlandings={landings}\nbumps={bumps}\n" +
+                $"animatorStates={animStates.Count}\n");
             Assert.Greater(runner.Distance - startDistance, runner.track.Length * 0.8f, "mascot did not travel the section");
             Assert.AreEqual(0, rearViolations, "camera was not behind the mascot during gameplay");
             Assert.IsTrue(gm.Celebrating, "run did not reach the finish");
             Assert.IsTrue(runner.InCelebrationPose, "finishing sequence did not reach the front-facing celebration pose");
             Assert.Less(maxCamPastPortal, -2f, "camera flew into / past the portal (empty space behind it)");
+            Assert.GreaterOrEqual(laneChanges, 2, "no lane changes in the run");
+            Assert.IsTrue(minLane < 0 && maxLane > 0, "the run did not use both the left and the right lane");
+            Assert.GreaterOrEqual(jumps, 1, "the mascot never jumped");
+            Assert.GreaterOrEqual(landings, 1, "the mascot never landed after a jump");
+            Assert.GreaterOrEqual(animStates.Count, 3, "the mascot animator did not cycle through slide / jump / celebration states");
         }
 
         [UnityTest, Timeout(600000)]
@@ -192,21 +210,4 @@ namespace BubbleWash.Tests
                 if (runner.State == RunnerState.Running)
                 {
                     rearChecks++;
-                    if (Vector3.Dot(cam.transform.forward, runner.transform.forward) < 0.35f) rearViolations++;
-                }
-                frames++;
-            }
-#if UNITY_EDITOR
-            encoder.Dispose();
-#endif
-            Time.captureFramerate = 0;
-            float realSeconds = Time.realtimeSinceStartup - realStart;
-            File.WriteAllText(Path.Combine(OutDir, name + "_summary.txt"),
-                $"scene={scenePath}\nframes={frames}\nvideoSeconds={frames / 30f:F2}\nstart={d0:F1}\nend={runner.Distance:F1}\n" +
-                $"coins={gm.items.Coins}\ngems={gm.items.Gems}\nrearChecks={rearChecks}\nrearViolations={rearViolations}\n" +
-                $"editorRenderFps={(realSeconds > 0f ? frames / realSeconds : 0f):F1} (editor batch, not a device measurement)\n");
-            Assert.Greater(runner.Distance, start + (end - start) * 0.8f, "mascot did not travel the segment");
-            Assert.AreEqual(0, rearViolations, "camera was not behind the mascot during gameplay");
-        }
-    }
-}
+                    if (Vecto
