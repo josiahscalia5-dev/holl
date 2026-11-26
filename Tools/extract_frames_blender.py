@@ -2,7 +2,7 @@
 
 Usage (headless, through the heavy lock):
   bash Tools/heavy_lock.sh blender:frames "C:/Users/josia/Blender/blender-5.3.0-windows-x64/blender.exe" --background \
-      --factory-startup --python Tools/extract_frames_blender.py -- VIDEO OUTDIR STEP_SECONDS [MAX_HEIGHT]
+      --factory-startup --python Tools/extract_frames_blender.py -- VIDEO OUTDIR STEP_SECONDS|@t1,t2,.. [MAX_HEIGHT]
 Writes OUTDIR/f_SS.SSs.png every STEP_SECONDS and prints the video's size, fps and duration.
 Output must go under Reference/ (private, gitignored): frames of the owner's video never go into tracked folders.
 """
@@ -12,7 +12,10 @@ import sys
 import bpy
 
 argv = sys.argv[sys.argv.index("--") + 1:]
-video, out_dir, step = argv[0], argv[1], float(argv[2])
+video, out_dir = argv[0], argv[1]
+# STEP_SECONDS may instead be "@t1,t2,..." = an exact-time list (projection test 2026-11-26: single 4K frames)
+times = [float(x) for x in argv[2][1:].split(",")] if argv[2].startswith("@") else None
+step = 0.0 if times else float(argv[2])
 max_h = int(argv[3]) if len(argv) > 3 else 0
 os.makedirs(out_dir, exist_ok=True)
 
@@ -38,13 +41,22 @@ scene.view_settings.view_transform = "Standard"
 scene.render.use_sequencer = True
 scene.frame_start, scene.frame_end = 1, n
 
-t = 0.0
-while True:
-    f = 1 + int(round(t * fps))
-    if f > n:
-        break
-    scene.frame_set(f)
-    scene.render.filepath = os.path.join(out_dir, f"f_{t:05.2f}s.png")
-    bpy.ops.render.render(write_still=True)
-    t = round(t + step, 4)
+if times:
+    for t in times:
+        f = 1 + int(round(t * fps))
+        if f > n:
+            continue
+        scene.frame_set(f)
+        scene.render.filepath = os.path.join(out_dir, f"f_{t:05.2f}s.png")
+        bpy.ops.render.render(write_still=True)
+else:
+    t = 0.0
+    while True:
+        f = 1 + int(round(t * fps))
+        if f > n:
+            break
+        scene.frame_set(f)
+        scene.render.filepath = os.path.join(out_dir, f"f_{t:05.2f}s.png")
+        bpy.ops.render.render(write_still=True)
+        t = round(t + step, 4)
 print(f"[frames] wrote frames to {out_dir}")
