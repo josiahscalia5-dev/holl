@@ -41,6 +41,12 @@ Shader "BWK/Soft"
         _HotNear ("Chevron white-hot nearer than (m, mode 7)", Float) = 3.0
         _HotFar ("Chevron turquoise farther than (m, mode 7)", Float) = 3.5
         _HotBoost ("Chevron white-hot extra glow (mode 7)", Range(0,3)) = 0.6
+        _MilkAlpha ("Milk opacity facing the camera (mode 6, blended materials)", Range(0,1)) = 1
+        _MilkEdgeAlpha ("Milk opacity at thin / grazing edges (mode 6)", Range(0,1)) = 1
+        // blend state (defaults = opaque; round 4: M_FX_Milk renders translucent with SrcAlpha / OneMinusSrcAlpha)
+        [HideInInspector] _SrcBlend ("Src Blend", Float) = 1
+        [HideInInspector] _DstBlend ("Dst Blend", Float) = 0
+        [HideInInspector] _ZWrite ("ZWrite", Float) = 1
     }
     SubShader
     {
@@ -53,12 +59,15 @@ Shader "BWK/Soft"
             half _StitchU, _StitchV, _Glow, _RimPower, _RimStrength;
             half _ReflectBoost, _StreakAmount, _StreakSpeed, _Wobble, _WobbleFreq, _SpecStrength, _GlintAmount;
             half _HotNear, _HotFar, _HotBoost;
+            half _MilkAlpha, _MilkEdgeAlpha, _SrcBlend, _DstBlend, _ZWrite;
         CBUFFER_END
         ENDHLSL
         Pass
         {
             Name "ForwardLit"
             Tags { "LightMode"="UniversalForward" }
+            Blend [_SrcBlend] [_DstBlend]
+            ZWrite [_ZWrite]
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -248,20 +257,21 @@ Shader "BWK/Soft"
                     // (abs around 0.5), so the look survives any UV flip.
                     half e = saturate(abs(i.uv.x - 0.5) * 2.0);          // 0 arm centre line .. 1 outer / inner edge
                     half along = saturate(abs(i.uv.y - 0.5) * 2.0);      // 0 apex .. 1 arm ends
-                    // round 3b (owner: clean glowing arrow IN the water, not a teal slab): turquoise core (_ColorB), lighter
-                    // cyan toward the edges (_ColorA), crisp bright rim line (_ColorC), flat-lit walls = part of the rim
-                    half core = 1.0 - smoothstep(0.15, 0.8, e);
-                    half3 col = lerp(_ColorA.rgb, _ColorB.rgb, core);
-                    half rim = smoothstep(0.78, 0.86, e) * (1.0 - smoothstep(0.93, 0.99, e));   // thin bright line inside the edge
-                    col = lerp(col, _ColorC.rgb, rim * 0.85);
+                    // round 4 (lead: "thin outlines / hard slabs"; reference f_003.00s: one SOLID glowing arrow, mint-white
+                    // top (#BEF6F5) over a turquoise body (#4EC6DD), clean edges): FILLED - a wide mint-white core (_ColorA)
+                    // fading to turquoise only in the outer quarter of the arm (_ColorB), a soft deeper-turquoise border,
+                    // walls turquoise (no bright outline ring)
+                    half core = 1.0 - smoothstep(0.42, 0.97, e);
+                    half3 col = lerp(_ColorB.rgb, _ColorA.rgb, core);
+                    col = lerp(col, _ColorB.rgb * 0.82, smoothstep(0.9, 1.0, e) * 0.5);       // soft clean border
                     float pulse = frac(along * 0.8 + _Time.y * _StreakSpeed * 0.5);            // light racing toward the apex
                     half beam = smoothstep(0.0, 0.15, pulse) * smoothstep(0.5, 0.15, pulse);
                     col += _ColorC.rgb * beam * _StreakAmount * (0.3 + 0.7 * core);
                     // lights up white-cyan as it passes under the mascot (the camera rides a fixed distance behind him)
                     half hot = smoothstep(_HotFar, _HotNear, distance(i.positionWS, _WorldSpaceCameraPos));
-                    col = lerp(col, _ColorC.rgb * 1.05 + _ColorA.rgb * 0.15, hot * (0.3 + 0.3 * core));
+                    col = lerp(col, _ColorC.rgb * 1.05 + _ColorA.rgb * 0.15, hot * (0.15 + 0.45 * core));
                     half top = smoothstep(0.5, 0.85, n.y);                                      // 1 on the top face
-                    col = lerp(lerp(_ColorA.rgb, _ColorC.rgb, 0.6), col, top);                 // walls read as the bright rim
+                    col = lerp(_ColorB.rgb * 0.9, col, top);                                   // turquoise walls
                     half fr = BWK_Fresnel(n, v, 4.0);
                     col += GlossyEnvironmentReflection(reflect(-v, n), i.positionWS, 0.05h, 1.0h, GetNormalizedScreenSpaceUV(i.positionCS)) * (0.05 + fr * 0.4) * _ReflectBoost;
                     col *= _Glow * 4.0 * (1.0 + hot * _HotBoost);
@@ -282,18 +292,21 @@ Shader "BWK/Soft"
                     half down = saturate(-dot(n, half3(0, 1, 0)) * 0.8 + 0.1);
                     col = lerp(col, _ColorB.rgb, down * 0.6);                            // cool water bounce from below
                     half fr = BWK_Fresnel(n, v, _RimPower);
-                    // grazing edges of the lace strands turn translucent blue-grey (reference: white cores, cool outlines)
-                    col = lerp(col, _ShadowColor.rgb * 0.92 + _ColorB.rgb * 0.12, fr * _RimStrength);
+                    // grazing edges of the lace strands turn translucent blue (reference: milky cores, light-blue thin parts)
+                    col = lerp(col, _ShadowColor.rgb * 0.55 + _ColorB.rgb * 0.45, fr * _RimStrength);
                     half3 hv = normalize(L.direction + v);
                     half nh = saturate(dot(n, hv));
                     half3 nv = mul((float3x3)UNITY_MATRIX_V, n);
                     half key = saturate(dot(nv, half3(-0.4, 0.6, 0.69)));
-                    half spec = pow(nh, 90.0) * L.shadowAttenuation * 1.2 + pow(key, 48.0) * 0.9 + pow(key, 8.0) * 0.12;
+                    // round 4: soft wet sheen (broad, low) instead of plastic hot spots
+                    half spec = pow(nh, 36.0) * L.shadowAttenuation * 0.45 + pow(key, 14.0) * 0.4 + pow(key, 5.0) * 0.08;
                     col += spec * _SpecStrength;
-                    col += GlossyEnvironmentReflection(reflect(-v, n), i.positionWS, 0.12h, 1.0h, GetNormalizedScreenSpaceUV(i.positionCS)) * (0.05 + fr * 0.45) * _ReflectBoost;
+                    col += GlossyEnvironmentReflection(reflect(-v, n), i.positionWS, 0.25h, 1.0h, GetNormalizedScreenSpaceUV(i.positionCS)) * (0.03 + fr * 0.35) * _ReflectBoost;
                     col = col * tint + _ColorA.rgb * _Glow;
+                    // translucency: opaque milky where the sheet faces the camera, see-through blue at thin / grazing parts
+                    half alpha = lerp(_MilkAlpha, _MilkEdgeAlpha, saturate(fr * 1.4));
                     col = MixFog(col, i.fog);
-                    return half4(col, 1);
+                    return half4(col, alpha);
                 }
                 half rim = BWK_Fresnel(n, v, _RimPower) * _RimStrength;
                 emission += albedo * rim;

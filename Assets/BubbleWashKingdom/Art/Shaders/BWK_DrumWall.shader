@@ -7,6 +7,8 @@
 //              the far tunnel (reference f_003.00s / key 5.0 s). m1: slots have real-looking depth (_HoleDepth: the view
 //              ray is followed into the slot, its far inner wall shows lit near the lip and fades to a black bottom) and
 //              the ceiling bays shift toward periwinkle blue (_CeilingColor / _CeilingTint) while the side walls stay violet.
+//              r4: circumference zones (short rounded dashes on the ceiling panels, big rounded ovals in columns on the
+//              side walls, zone edge on a panel seam, plain metal beside the seams) and a pale bay sheen band.
 // UV0.x wraps around the circumference (0..1, 0 = floor, 0.5 = ceiling), UV0.y = distance along the tunnel / _VTile.
 Shader "BWK/DrumWall"
 {
@@ -72,6 +74,18 @@ Shader "BWK/DrumWall"
         _DepthTintColor ("Depth tint color", Color) = (0.3, 0.4, 0.7, 1)
         _DepthTintStart ("Depth tint start (m from camera)", Float) = 9
         _DepthTintEnd ("Depth tint full (m from camera)", Float) = 16
+        [Header(Round 4 circumference zones and bay sheen)]
+        _SideZone ("Side-wall zone from (0 ceiling .. 1 floor; > 1 = off; put it on a panel seam: 0.25 / 0.5 / 0.75)", Float) = 2
+        _SideSlotPitch ("Side-wall slot pitch around (m)", Float) = 1.1
+        _SideSlotLength ("Side-wall slot length around (m)", Float) = 0.56
+        _SideSlotWidth ("Side-wall slot width along (m)", Float) = 0.42
+        _SideRowPitch ("Side-wall row pitch (m)", Float) = 1.6
+        _SeamMargin ("Plain metal beside each panel seam (m, 0 = off)", Float) = 0
+        _SlotDropout ("Missing ceiling slots (fraction)", Range(0, 0.6)) = 0
+        _BaySheen ("Bay sheen band on the upper drum", Range(0, 2)) = 0
+        _BaySheenColor ("Bay sheen color", Color) = (0.5, 0.66, 0.92, 1)
+        _BaySheenWidth ("Bay sheen width (fraction of the section)", Range(0.05, 0.6)) = 0.22
+        _BaySheenPos ("Bay sheen centre (fraction of the section)", Range(0, 1)) = 0.5
     }
     SubShader
     {
@@ -97,6 +111,9 @@ Shader "BWK/DrumWall"
             half _DepthTint;
             half4 _DepthTintColor;
             float _DepthTintStart, _DepthTintEnd;
+            float _SideZone, _SideSlotPitch, _SideSlotLength, _SideSlotWidth, _SideRowPitch, _SeamMargin;
+            half _SlotDropout, _BaySheen, _BaySheenWidth, _BaySheenPos;
+            half4 _BaySheenColor;
         CBUFFER_END
 
         // Round 3: sections between gold rings (_BandLength = gold spacing) split by one lavender rim at _RimPhase
@@ -122,26 +139,50 @@ Shader "BWK/DrumWall"
         }
 
         // Drum-section slot pattern (_Pattern 1) at m = (around, along) in metres: signed capsule distance (< 0 inside a
-        // slot) plus the cell ids. Shared by the surface and the parallax lookup at the slot bottom.
-        float BWK_SlotSdf(float2 m, out float rowIdx, out float slotIdx, out float bandIdx, out float local, out float2 q, out float L)
+        // slot) plus the cell ids and the slot half width. Shared by the surface and the parallax lookup at the slot bottom.
+        // r4 (reference f_003.00s at 4K): the ceiling panels carry short rounded dashes in rows (some missing), the side
+        // walls big rounded ovals stacked in columns. The zone edge sits on a panel seam (_SideZone 0.25 = 45 deg from the
+        // top; 8 panels around, one seam on the ceiling line) and the around pitch is fitted to whole panels, so no slot
+        // is ever cut by a seam or a zone edge (_SeamMargin keeps plain metal beside every seam).
+        float BWK_SlotSdf(float2 m, out float rowIdx, out float slotIdx, out float bandIdx, out float local, out float2 q, out float L, out float hw)
         {
             local = BWK_Section(m.y, bandIdx, L);                              // metres after the last rim
+            float aroundTop = abs(frac(m.x / _Circumference) - 0.5) * 2.0;    // 0 = ceiling, 1 = floor
+            float side = step(_SideZone, aroundTop);
+            float pitchA = lerp(_SlotPitch, _SideSlotPitch, side);
+            float lenA = lerp(_SlotLength, _SideSlotLength, side);
+            float widA = lerp(_SlotWidth, _SideSlotWidth, side);
+            float rowP = lerp(_RowPitch, _SideRowPitch, side);
             float z0 = _PlainBack;
             float zoneLen = max(L - _PlainFront - z0, 0.2);
-            float rows = _RowPitch > 0.05 ? max(1.0, floor(zoneLen / _RowPitch + 0.5)) : max(1.0, _Rows);
+            float rows = rowP > 0.05 ? max(1.0, floor(zoneLen / rowP + 0.5)) : max(1.0, _Rows);
             float rowPitch = zoneLen / rows;
             rowIdx = clamp(floor((local - z0) / rowPitch), 0.0, rows - 1.0);
             float rowLocal = local - z0 - (rowIdx + 0.5) * rowPitch;           // metres from the nearest row centre
             float rowHash = BWK_Hash21(float2(rowIdx + 0.5, bandIdx + 0.25));
-            float slotLen = _SlotLength * lerp(1.0 - _SlotVariation, 1.0 + _SlotVariation * 0.5, rowHash);
+            float slotLen = lenA * lerp(1.0 - _SlotVariation, 1.0 + _SlotVariation * 0.5, rowHash);
             float stagger = frac((rowIdx + bandIdx) * 0.5);                    // 0 / 0.5 alternating rows
-            float ac = m.x / _SlotPitch + stagger;
+            float pitch = pitchA;
+            float panelW = _Circumference / 8.0;
+            if (_SeamMargin > 0.0) pitch = panelW / max(1.0, floor(panelW / pitchA + 0.5));   // whole slots per panel
+            float ac = m.x / pitch + stagger;
             slotIdx = floor(ac);
-            float aLocal = (ac - slotIdx - 0.5) * _SlotPitch;
-            float hw = _SlotWidth * 0.5;
+            float aLocal = (ac - slotIdx - 0.5) * pitch;
+            hw = widA * 0.5;
             float hx = max(abs(aLocal) - max(slotLen * 0.5 - hw, 0.0), 0.0);
             q = float2(hx * sign(aLocal), rowLocal);
-            return length(q) - hw;
+            float sdf = length(q) - hw;
+            if (_SeamMargin > 0.0)
+            {
+                // drop the whole slot when it would reach into the plain strip beside a seam (staggered rows)
+                float cx = m.x - aLocal;
+                float sx = abs(frac(cx / panelW + 0.5) - 0.5) * panelW;
+                if (sx < slotLen * 0.5 + _SeamMargin) sdf = max(sdf, 0.5);
+            }
+            // irregular ceiling dashes: a few slots left out (reference ceiling rows are broken, not a perfect grid)
+            float dh = BWK_Hash21(float2(slotIdx * 1.37 + 0.31, rowIdx * 2.11 + bandIdx * 5.3));
+            if (dh < _SlotDropout * (1.0 - side)) sdf = max(sdf, 0.5);
+            return sdf;
         }
         ENDHLSL
 
@@ -223,9 +264,9 @@ Shader "BWK/DrumWall"
                     float L;
                     float rowIdx, slotIdx, bandIdx, local;
                     float2 q;
-                    float sdf = BWK_SlotSdf(m, rowIdx, slotIdx, bandIdx, local, q, L);   // capsule distance (m), < 0 inside
+                    float hw;                                                         // r4: per-zone slot half width
+                    float sdf = BWK_SlotSdf(m, rowIdx, slotIdx, bandIdx, local, q, L, hw);   // capsule distance (m), < 0 inside
                     float z0 = _PlainBack;
-                    float hw = _SlotWidth * 0.5;
                     float ql = length(q);
                     float aa = fwidth(sdf) * 1.2 + 1e-4;
                     // slot depth (m1): follow the view ray down _HoleDepth into the drum; where it leaves the slot outline
@@ -235,9 +276,9 @@ Shader "BWK/DrumWall"
                     {
                         float3 vts = float3(dot(viewDir, i.tangentWS.xyz), dot(viewDir, bitangent), dot(viewDir, i.normalWS));
                         float2 shift = -vts.xy / max(vts.z, 0.1) * _HoleDepth;
-                        float r2, s2, b2, l2, L2;
+                        float r2, s2, b2, l2, L2, hw2;
                         float2 q2;
-                        float sdfB = BWK_SlotSdf(m + shift, r2, s2, b2, l2, q2, L2);
+                        float sdfB = BWK_SlotSdf(m + shift, r2, s2, b2, l2, q2, L2, hw2);
                         float tExit = saturate(-sdf / max(-sdf + max(sdfB, 0.0), 1e-4));
                         wallHit = smoothstep(-0.01, 0.01, sdfB);
                         wallDepth = tExit;
@@ -329,6 +370,14 @@ Shader "BWK/DrumWall"
                     float w = max(_PinkSpillWidth, 0.05);
                     half spill = exp(-secLocal / w) + exp(-(secLen - secLocal) / w);
                     emission += _PinkSpill.rgb * _PinkSpillStrength * saturate(spill) * (1.0 - hole);   // r3 v3: no fresnel boost (grazing walls stayed too bright)
+                }
+                // r4: pale steel-blue sheen band across each bay of the upper drum (reference f_003.00s: a soft cyan-white
+                // reflection on the ceiling between the big rim and the next gold ring, the rest of the bay stays indigo)
+                if (secLocal >= 0.0 && _BaySheen > 0.0)
+                {
+                    float bx = (secLocal - secLen * _BaySheenPos) / max(secLen * _BaySheenWidth, 0.05);
+                    half topW = smoothstep(_CeilingWidth, 0.0, around);
+                    emission += _BaySheenColor.rgb * _BaySheen * exp(-bx * bx) * topW * (1.0 - hole);
                 }
                 // a few holes lit from behind (light leaking through the drum)
                 half flicker = 0.8 + 0.2 * sin(_Time.y * 2.3 + m.x * 1.7 + m.y * 0.9);

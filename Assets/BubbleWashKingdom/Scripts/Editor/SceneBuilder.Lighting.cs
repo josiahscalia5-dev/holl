@@ -86,6 +86,10 @@ namespace BubbleWash.EditorTools
             // round 4: this light was dropped by the 4-lights-per-object limit that the full build re-applied (upper-left wall
             // L50 .40 vs reference .51): limit back to 8 (EnsurePerObjectLightLimit) and a little stronger / pinker
             AddPoint(lights, HeroDistance + 6f, -2.5f, 4.1f, new Color(1f, 0.36f, 0.72f), 6f, 8f);
+            // round 4 v2: the point light above lands on the left wall at mid height; the reference's light mauve-pink wall is
+            // the UPPER-left (around the big yellow star, #a87ea0 vs ours violet #9d6bab). A wide spot aimed through the hero
+            // camera at screen (0.15, 0.20) lands exactly there (independent of track mirroring / bends).
+            AddHeroSpot(lights, "Spot_PinkUpperLeft", 0.15f, 0.20f, 3.2f, new Color(1f, 0.46f, 0.76f), 14f, 80f, 12f);
 
             // Reflection probes: hall probes + one per 30 m tunnel chunk, box = bounds of that bent tunnel segment.
             for (float d = 18f; d < tunnelStart; d += 30f)
@@ -121,7 +125,7 @@ namespace BubbleWash.EditorTools
             // emissives and the brightest rim glints (controlled: lit foam / walls stay below it)
             // round 4 (lead gap 1 "controlled bloom halos", sheet 04): slightly lower threshold + wider scatter -> soft halos on
             // the bulbs / stars / brightest rims (the reference's soft animated-film glow), still no veil on lit surfaces
-            bloom.threshold.Override(0.95f); bloom.intensity.Override(1.3f); bloom.scatter.Override(0.76f);
+            bloom.threshold.Override(0.9f); bloom.intensity.Override(1.4f); bloom.scatter.Override(0.78f);
             bloom.tint.Override(Color.white); bloom.highQualityFiltering.Override(true);
             bloom.maxIterations.Override(8);
             // Neutral keeps saturated hues far better than ACES (which pushes bright yellow / cyan to white).
@@ -148,7 +152,8 @@ namespace BubbleWash.EditorTools
             // soft far tunnel (premium film depth): mascot, coins and near rings stay crisp
             var dof = profile.Add<DepthOfField>(true);
             // round 3: a little softer far tunnel (reference is dreamier / softer behind the second ring)
-            dof.mode.Override(DepthOfFieldMode.Gaussian); dof.gaussianStart.Override(18f); dof.gaussianEnd.Override(55f);
+            // round 4: the reference far tunnel is soft from the second gold ring on (ours stayed crisp to ~40 m)
+            dof.mode.Override(DepthOfFieldMode.Gaussian); dof.gaussianStart.Override(15f); dof.gaussianEnd.Override(42f);
             dof.gaussianMaxRadius.Override(1.5f); dof.highQualitySampling.Override(true);
             foreach (var c in profile.components) AssetDatabase.AddObjectToAsset(c, profile);
             vol.sharedProfile = profile;
@@ -218,6 +223,28 @@ namespace BubbleWash.EditorTools
                 l.range = 6.5f;
                 l.shadows = LightShadows.None;
             }
+        }
+
+        /// <summary>Round 4: spot light aimed at the drum wall seen at screen point (sx, sy) of the portrait hero frame (y from
+        /// the top), placed `back` m before the wall along that camera ray, so the light lands exactly on the wall area the
+        /// reference shows lit. The cone points away from the runner (no light on the mascot).</summary>
+        static void AddHeroSpot(GameObject parent, string name, float sx, float sy, float back, Color c, float intensity, float angle, float range)
+        {
+            HeroCameraPose(out var camPos, out var camRot);
+            float tanV = Mathf.Tan(HeroCamFov * 0.5f * Mathf.Deg2Rad), tanH = tanV * (9f / 16f);
+            var dir = (camRot * new Vector3((2f * sx - 1f) * tanH, (1f - 2f * sy) * tanV, 1f)).normalized;
+            if (!TunnelWallHit(camPos, dir, HeroDistance - HeroCamBack, 0f, out var hit, out var wf))
+            {
+                Debug.LogWarning($"[BWK] {name}: no drum wall at screen ({sx}, {sy})");
+                return;
+            }
+            var go = Child(parent, name);
+            go.transform.position = hit - dir * back;
+            go.transform.rotation = Quaternion.LookRotation(dir);
+            var l = go.AddComponent<Light>();
+            l.type = LightType.Spot; l.color = c; l.intensity = intensity; l.range = range;
+            l.spotAngle = angle; l.innerSpotAngle = angle * 0.3f; l.shadows = LightShadows.None;
+            Debug.Log($"[BWK] {name}: wall hit at track {wf.distance:F1} m, light {Vector3.Distance(camPos, go.transform.position):F1} m from the hero camera");
         }
 
         static void AddPoint(GameObject parent, float d, float lat, float h, Color c, float intensity, float range)
@@ -483,17 +510,19 @@ namespace BubbleWash.EditorTools
             // warm bulb glow on the top of the hat / pom-pom (slightly ahead, so it grazes over the top toward the camera)
             // round 3: higher + a bit weaker -> no near-field hotspot on the pom-pom (ours p50 #c892e3 vs reference #8a41b9)
             // round 4: weaker + warmer (reference pom-pom / crown are deep saturated purple #7b2eaa, ours read pale lilac #ba83e0)
-            CharLight(group, "CharLight_WarmTop", new Vector3(0.35f, 2.75f, 0.55f), new Color(1f, 0.68f, 0.42f), 1.4f, 4.4f);
+            CharLight(group, "CharLight_WarmTop", new Vector3(0.35f, 2.75f, 0.55f), new Color(1f, 0.62f, 0.40f), 1.2f, 4.4f);
             // soft pink fill on the fluffy back the rear camera sees
             // round 3: warmer coral-pink (reference back fur ~#e58c98 lit; ours read mauve under the violet ambient)
             // round 4 (lead gap 2): reference fur p50 #cc618c (L .48, S .53), ours #d887b3 (L .61, S .38) = too light, washed
             // out, and the hat ribs / white stripe glared. The light moves DOWN to fur height (it was at hat height, 1.3 m
             // from the hat, 1.7 m from the fur) and becomes a saturated rose-coral (no green -> the coral fur stays saturated),
             // less energy overall: the fur gets the warm saturated key, the hat only grazing light (matte knit).
-            CharLight(group, "CharLight_PinkBack", new Vector3(-0.3f, 0.85f, -1.75f), new Color(1f, 0.5f, 0.55f), 2.0f, 3.4f);
+            // v2: v1 (1, .5, .55) x2.0 gave candy-magenta fur #e687b9 (the violet ambient already supplies the blue): now a
+            // near-pure warm coral-red key from the left-back (modelling across the back) -> hue toward the reference's rose
+            CharLight(group, "CharLight_PinkBack", new Vector3(-0.55f, 0.85f, -1.7f), new Color(1f, 0.38f, 0.36f), 1.8f, 3.4f);
             // cool lavender light from the bright tunnel ahead: wraps around the fur silhouette as a rim
-            // round 4: pinker rim (reference: pink rim light around the fur and arms)
-            CharLight(group, "CharLight_RimFront", new Vector3(0f, 1.15f, 2.2f), new Color(1f, 0.48f, 0.82f), 3.2f, 3.6f);
+            // round 4: pink rim (reference: pink rim light around the fur and arms), less blue than v1
+            CharLight(group, "CharLight_RimFront", new Vector3(0f, 1.15f, 2.2f), new Color(1f, 0.42f, 0.70f), 2.6f, 3.6f);
 
             // soft violet contact shadow card on the water right under him (stays on the surface during jumps)
             var card = GameObject.CreatePrimitive(PrimitiveType.Quad);

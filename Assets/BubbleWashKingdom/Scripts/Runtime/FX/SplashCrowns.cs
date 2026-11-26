@@ -12,6 +12,8 @@ namespace BubbleWash
     {
         public RunnerController runner;
         public Mesh[] frames;
+        [Tooltip("Optional frame family for crown 1 (the right crown: skirt-less asset, round 4). Same length as frames.")]
+        public Mesh[] framesRight;
         public MeshFilter[] crowns;
         [Tooltip("Frame offset per crown so the two sides never match.")]
         public int[] phase;
@@ -59,7 +61,8 @@ namespace BubbleWash
                     jitter[i] = Random.Range(0.88f, 1.12f);
                     yaw[i] = Random.Range(-7f, 7f);
                 }
-                if (mf.sharedMesh != frames[f]) mf.sharedMesh = frames[f];
+                var fam = i == 1 && framesRight != null && framesRight.Length == frames.Length ? framesRight : frames;
+                if (mf.sharedMesh != fam[f]) mf.sharedMesh = fam[f];
                 float s = presence[i] * jitter[i] * Mathf.Lerp(0.85f, 1.15f, Mathf.InverseLerp(0.5f, 1.7f, speedK));
                 var bs = baseScale != null && i < baseScale.Length ? baseScale[i] : Vector3.one;
                 mf.transform.localScale = new Vector3(bs.x * s, bs.y * s * Mathf.Lerp(0.9f, 1.1f, jitter[i] - 0.88f), bs.z * s);

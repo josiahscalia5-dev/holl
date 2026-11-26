@@ -44,6 +44,11 @@ Shader "BWK/Water"
         _PatchAmount ("Turquoise Patches", Range(0,1)) = 0
         _DetailStrength ("Detail Ripple Normals", Range(0,2)) = 0
         _ReflectTint ("Probe Reflection Tint", Color) = (1, 1, 1, 1)
+        // round 4 decor chevron geometry (SceneBuilder.WaterFX ChevronHalfLen / HalfWidth / Thick / Lateral); HalfLen 0 = legacy pools
+        _ChevronHalfLen ("Chevron Half Length (m)", Float) = 0
+        _ChevronHalfWidth ("Chevron Half Width (m)", Float) = 0.44
+        _ChevronThick ("Chevron Arm Thickness (m)", Float) = 0.3
+        _ChevronOffset ("Chevron Runway Offset (m, +u)", Float) = 0
     }
     SubShader
     {
@@ -60,6 +65,7 @@ Shader "BWK/Water"
             half _ChevronGlow;
             half4 _TurquoiseColor, _ReflectTint;
             half _PatchAmount, _DetailStrength;
+            float _ChevronHalfLen, _ChevronHalfWidth, _ChevronThick, _ChevronOffset;
         CBUFFER_END
 
         // flowing height field: long swells stretched along the flow + a finer, faster chop
@@ -195,7 +201,24 @@ Shader "BWK/Water"
                 // ---- light pools around the glowing decor chevrons (SM_Chevron: apex toward travel, 45-degree arms;
                 //      arm centre line from (0, +0.26) to (+-0.52, -0.26) chevron metres, x ChevronScale)
                 half chevLight = 0;
-                if (_ChevronSpacing > 0.01)
+                if (_ChevronSpacing > 0.01 && _ChevronHalfLen > 0.01)
+                {
+                    // round 4: fat generated chevrons (apex (0, HL), arm ends (+-HW, -HL), arms T across) on a runway offset
+                    // to the right: a turquoise halo hugging the arrow (glow INTO the water), stronger on the camera side
+                    float ly = m.y - _ChevronStart - round((m.y - _ChevronStart) / _ChevronSpacing) * _ChevronSpacing;
+                    float lx = abs(m.x - _Width * 0.5 - _ChevronOffset);
+                    float alen = sqrt(_ChevronHalfWidth * _ChevronHalfWidth + 4.0 * _ChevronHalfLen * _ChevronHalfLen);
+                    float2 ad = float2(_ChevronHalfWidth, -2.0 * _ChevronHalfLen) / alen;
+                    float2 pp = float2(lx, ly - _ChevronHalfLen);
+                    float tt = clamp(dot(pp, ad), 0.0, alen);
+                    float2 dd = pp - ad * tt;
+                    float dist = max(length(dd) - _ChevronThick * 0.5, 0.0);              // 0 under the arrow
+                    half behind = dot(dd, float2(-ad.y, ad.x)) < 0.0 ? 1.3 : 0.8;         // behind = toward the camera
+                    half halo = exp(-dist * dist / (0.018 * behind)) ;
+                    half wide = exp(-dist * dist / 0.12) * 0.22;
+                    chevLight = (halo * 0.8 + wide) * _ChevronGlow;
+                }
+                else if (_ChevronSpacing > 0.01)
                 {
                     float s = _ChevronScale;
                     float ly = m.y - _ChevronStart - round((m.y - _ChevronStart) / _ChevronSpacing) * _ChevronSpacing;

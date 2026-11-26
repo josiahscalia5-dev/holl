@@ -21,9 +21,16 @@ namespace BubbleWash.EditorTools
         // decor chevrons down the middle of the water (also drive the light pools in M_Water / BWK_Water). Reference
         // f_002.00-f_003.25: a runway of glowing chevrons about one chevron length apart (SM_Chevron is 1.31 x 0.65 m).
         // phase / spacing put the hero frame's chevron tips at the reference: under him (screen y .72) and at the bottom (y .87)
-        public const float ChevronStart = 6.1f, ChevronSpacing = 0.95f, ChevronScale = 1.35f;
+        // round 4 (reference f_003.00s measured: near apex screen (.64, .745), bottom apex (.64, .93) -> ~1.1 m apart; the
+        // mascot rides LEFT of the arrow runway in every reference frame 0.5-3.25 s): spacing 1.1 m, start keeps a chevron
+        // origin at 104.9 m (apex just under him), runway ChevronLateral m right of the centre lane.
+        public const float ChevronStart = 5.9f, ChevronSpacing = 1.1f, ChevronScale = 1.35f;
         // narrower than long: steeper arms like the reference (bottom chevron arm meets the frame bottom at x ~.2)
         public const float ChevronWidth = 0.5f;
+        // round 4 decor chevron (generated, not SM_Chevron): FAT filled arms like the reference (arm 0.30 m across, small
+        // notch), arm centre line from the apex (0, HalfLen) to (+-HalfWidth, -HalfLen) in metres (z = travel)
+        public const float ChevronLateral = 0.28f, ChevronHalfLen = 0.30f, ChevronHalfWidth = 0.44f, ChevronThick = 0.30f;
+        const float ChevronHeight = 0.015f;
         // milk crown splashes beside the feet (Art/Models/FX/SM_FX_Crown_xx, left-side asset mirrored for the right).
         // (round 2 anchored the root in screen space; reference f_003.00s: crowns rise at x 0-.40 / .62-1, y .55-.87).
         // Round 3b: the crown asset (build_fx_splash.py) is authored in runner-local space around the left foot (foot ~(-0.30, 0.17, -0.30))
@@ -498,10 +505,20 @@ namespace BubbleWash.EditorTools
                 frames.Add(PersistCopy(parts[0].mesh, save));
             }
             if (frames.Count == 0) { Debug.LogWarning("[BWK] SM_FX_Crown frames missing - no 3D splash crowns"); return; }
+            // round 4: the right crown uses the skirt-less SM_FX_CrownR_xx family (reference: open water lower right)
+            var framesR = new List<Mesh>();
+            for (int k = 0; k < frames.Count; k++)
+            {
+                var parts = ModelParts("FX", $"SM_FX_CrownR_{k:00}");
+                if (parts.Count == 0) break;
+                framesR.Add(PersistCopy(parts[0].mesh, save));
+            }
+            if (framesR.Count != frames.Count) framesR.Clear();
             var holder = Child(fxRoot, "Crowns");
             var sc = holder.AddComponent<SplashCrowns>();
             sc.runner = runner;
             sc.frames = frames.ToArray();
+            sc.framesRight = framesR.Count > 0 ? framesR.ToArray() : null;
             var milk = Mat("M_FX_Milk");
             int[] phase = { 0, frames.Count / 2 };
             var crowns = new List<MeshFilter>();
@@ -516,7 +533,8 @@ namespace BubbleWash.EditorTools
                 var s = new Vector3(-side * CrownScale, CrownScale, CrownScale);
                 go.transform.localScale = s;
                 var mf = go.AddComponent<MeshFilter>();
-                mf.sharedMesh = frames[phase[idx] % frames.Count];
+                var fam = side > 0 && framesR.Count > 0 ? framesR : frames;
+                mf.sharedMesh = fam[phase[idx] % fam.Count];
                 var mr = go.AddComponent<MeshRenderer>();
                 mr.sharedMaterial = milk;
                 mr.shadowCastingMode = ShadowCastingMode.Off;
@@ -571,10 +589,73 @@ namespace BubbleWash.EditorTools
         // ==================================================================== decor chevrons
         static void BuildDecorChevrons(GameObject env, float L) => BuildDecorChevrons(env, L, false);
 
+        /// <summary>
+        /// Round 4 decor chevron: a thick, FILLED glowing arrow lying in the water (x right, y up, z = travel, apex toward
+        /// travel). Same UV contract as SM_Chevron for BWK/Soft Mode 7: U across the arm (0 outer / front edge .. 1 inner
+        /// edge), V along the V (0 left arm end, 0.5 apex, 1 right arm end). Crisp edges (walls / caps use their own verts).
+        /// </summary>
+        static Mesh BuildDecorChevronMesh()
+        {
+            const int Rows = 8;
+            float[] cols = { 0f, 0.12f, 0.3f, 0.5f, 0.7f, 0.88f, 1f };
+            float HL = ChevronHalfLen, HW = ChevronHalfWidth, T = ChevronThick, H = ChevronHeight;
+            float len = Mathf.Sqrt(HW * HW + 4f * HL * HL);
+            float a = HW / len, b = 2f * HL / len;           // arm direction from the apex: (+-a, -b)
+            int nr = 2 * Rows + 1;
+            Vector3 P(int r, float c, float y)
+            {
+                float o = T * 0.5f - c * T;                  // offset toward the outer (front) edge
+                float my = HL + o / a;                       // where both arms' offset lines meet (mitre) on the axis
+                float side = r < Rows ? -1f : 1f;
+                float t = (2f * HL + o / a) / b * (Mathf.Abs(r - Rows) / (float)Rows);
+                return new Vector3(side * a * t, y, my - b * t);
+            }
+            var v = new List<Vector3>(); var uv = new List<Vector2>(); var nm = new List<Vector3>(); var tri = new List<int>();
+            int Vert(Vector3 p, Vector2 t, Vector3 n) { v.Add(p); uv.Add(t); nm.Add(n); return v.Count - 1; }
+            void Tri(int i0, int i1, int i2, Vector3 want)
+            {
+                // Unity front faces: Cross(v1 - v0, v2 - v0) points toward the viewer
+                if (Vector3.Dot(Vector3.Cross(v[i1] - v[i0], v[i2] - v[i0]), want) >= 0f) { tri.Add(i0); tri.Add(i1); tri.Add(i2); }
+                else { tri.Add(i0); tri.Add(i2); tri.Add(i1); }
+            }
+            void Quad(int i0, int i1, int i2, int i3, Vector3 want) { Tri(i0, i1, i2, want); Tri(i0, i2, i3, want); }
+            var top = new int[nr, cols.Length];
+            for (int r = 0; r < nr; r++)
+                for (int k = 0; k < cols.Length; k++)
+                    top[r, k] = Vert(P(r, cols[k], H), new Vector2(cols[k], r / (float)(nr - 1)), Vector3.up);
+            for (int r = 0; r < nr - 1; r++)
+                for (int k = 0; k < cols.Length - 1; k++)
+                    Quad(top[r, k], top[r, k + 1], top[r + 1, k + 1], top[r + 1, k], Vector3.up);
+            // outer + inner walls along the whole V
+            foreach (int k in new[] { 0, cols.Length - 1 })
+                for (int r = 0; r < nr - 1; r++)
+                {
+                    Vector3 pa = P(r, cols[k], 0f), pb = P(r + 1, cols[k], 0f);
+                    Vector3 out3 = (pa + pb) * 0.5f - (P(r, 0.5f, 0f) + P(r + 1, 0.5f, 0f)) * 0.5f;
+                    var wn = new Vector3(out3.x, 0f, out3.z).normalized;
+                    float v0 = r / (float)(nr - 1), v1 = (r + 1) / (float)(nr - 1);
+                    Quad(Vert(P(r, cols[k], H), new Vector2(cols[k], v0), wn), Vert(P(r + 1, cols[k], H), new Vector2(cols[k], v1), wn),
+                         Vert(P(r + 1, cols[k], -0.01f), new Vector2(cols[k], v1), wn), Vert(P(r, cols[k], -0.01f), new Vector2(cols[k], v0), wn), wn);
+                }
+            // flat arm-end caps (facing back toward the camera)
+            foreach (int r in new[] { 0, nr - 1 })
+                for (int k = 0; k < cols.Length - 1; k++)
+                {
+                    float vv = r / (float)(nr - 1);
+                    Quad(Vert(P(r, cols[k], H), new Vector2(cols[k], vv), Vector3.back), Vert(P(r, cols[k + 1], H), new Vector2(cols[k + 1], vv), Vector3.back),
+                         Vert(P(r, cols[k + 1], -0.01f), new Vector2(cols[k + 1], vv), Vector3.back), Vert(P(r, cols[k], -0.01f), new Vector2(cols[k], vv), Vector3.back), Vector3.back);
+                }
+            var mesh = new Mesh { name = "SM_ChevronDecor" };
+            mesh.SetVertices(v); mesh.SetUVs(0, uv); mesh.SetNormals(nm); mesh.SetTriangles(tri, 0);
+            mesh.RecalculateTangents(); mesh.RecalculateBounds();
+            return mesh;
+        }
+
         static void BuildDecorChevrons(GameObject env, float L, bool preview)
         {
-            var chevron = ModelParts("Props", "SM_Chevron");
-            if (chevron.Count == 0) return;
+            var arrow = Mat("M_Arrow");
+            if (arrow == null) return;
+            var chevron = new List<Part> { new Part(BuildDecorChevronMesh(), new[] { arrow }, Matrix4x4.identity) };
             var holder = Child(env, "DecorChevrons");
             // skip the decor line where a centre-lane boost pad already lies on the water
             var registry = Object.FindFirstObjectByType<TrackItemRegistry>();
@@ -587,8 +668,8 @@ namespace BubbleWash.EditorTools
             {
                 if (boosts.Any(b => Mathf.Abs(b - d) < 1.4f)) continue;
                 var f = track.Evaluate(d);
-                // flattened (y .3): a glowing arrow lying IN the water, not a thick teal slab (round 3b)
-                comb.Add(chevron, Matrix4x4.TRS(f.Point(0, 0.03f), f.Rotation, new Vector3(ChevronScale * ChevronWidth, 0.3f, ChevronScale)));
+                // round 4: generated fat chevron, flat in the water, runway ChevronLateral m right of the centre lane
+                comb.Add(chevron, Matrix4x4.TRS(f.Point(ChevronLateral, 0.03f), f.Rotation, Vector3.one));
                 if (d - chunkStart > ChunkLength) { comb.Flush(holder, $"Chevrons_{chunk++:00}", !preview); chunkStart = d; }
             }
             comb.Flush(holder, $"Chevrons_{chunk:00}", !preview);

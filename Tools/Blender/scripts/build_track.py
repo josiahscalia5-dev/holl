@@ -9,8 +9,8 @@ Builds, exports (FBX -> Assets/BubbleWashKingdom/Art/Models/Track/) and previews
   SM_Pipe_Elbow        90 degree glass elbow, bend radius 0.8          M_Glass, M_PipeWater
   SM_Ring              thick polished gold band r 3.50-4.26 x 0.33 (r3, was 3.65): inner + outer rolled beads,
                        wide gold trough with 28 warm marquee bulbs half sunk in gold cups         M_Gold, M_GoldDark, M_Bulb
-  SM_DrumRim           big rolled lavender drum lip r 3.66-4.26 (short front bevel, long back slope) with 32 soft
-                       pink LED studs, ONE per gold-ring gap at 0.40 of the gap (r3)               M_DrumRim, M_RimLight
+  SM_DrumRim           big rolled lavender drum lip r 3.66-4.26 (short front bevel, long back slope) with 24 soft
+                       pink LED lamps (r4: r 0.062), ONE per gold-ring gap at 0.40 of the gap (r3) M_DrumRim, M_RimLight
   SM_Bulb              warm marquee bulb, origin at its base, +Z       M_Bulb (legacy, not placed by BuildRings)
 
 Every surface is swept or revolved from an analytic 2D profile with exact per-vertex normals (stored as
@@ -81,11 +81,12 @@ PLATES = 0                                # m1: no clamp plates / rivets (clutte
 
 # ------------------------------------------------------------------ lavender drum rim (nested-drum lips between rings)
 # m1: a fat rolled lip (reference f_003.00s: broad glossy lavender bands ~0.45 m deep with soft pink-white glints)
-RIM_SEGS, RIM_LEDS = 84, 32
+RIM_SEGS, RIM_LEDS = 84, 24           # r4: 24 bigger pink LED lamps (reference: soft pink glows ~15 deg apart)
 RIM_C, RIM_R = (3.94, 0.0), 0.28          # rolled bead, apex rho 3.66, front y 0.28 (r3: one big lip per gap reads as
                                           # the reference's broad lavender band, was r 0.24 / apex 3.74)
 RIM_FRONT, RIM_BACK = (4.26, 0.14), (4.26, -0.62)   # short front bevel / long back slope meet the wall
 RIM_LED_DEG = 128.0                       # soft LED studs on the front-inner face of the bead
+RIM_LED_R, RIM_LED_H = 0.062, 0.032       # r4: LED lamp dome radius / height (~11 px at the hero rim, 12 m)
 
 # ------------------------------------------------------------------ legacy single bulb asset
 BULB_RX, BULB_HALF_H = 0.085, 0.10          # slightly elongated sphere (1.18 : 1)
@@ -576,11 +577,11 @@ def build_rim(mats):
     revolve(mb, with_u(line_pts(RIM_BACK, RIM_FRONT, (1.0, 0.0))), 0, RIM_SEGS)       # buried outer face
     a = math.radians(RIM_LED_DEG)
     n2 = (math.cos(a), math.sin(a))
-    led = dome_prof(0.032, 0.020, skirt=0.008, bands=2)
+    led = dome_prof(RIM_LED_R, RIM_LED_H, skirt=0.012, bands=3)   # r4: was 0.032 x 0.020 (tiny white dots at 12 m)
     for j in range(RIM_LEDS):
         er, t = ring_frame(2.0 * math.pi * (j + 0.5) / RIM_LEDS)
         p = er * (RIM_C[0] + RIM_R * n2[0]) + Y_AXIS * (RIM_C[1] + RIM_R * n2[1])
-        lathe_axis(mb, led, 1, 6, p, er * n2[0] + Y_AXIS * n2[1], t)
+        lathe_axis(mb, led, 1, 10, p, er * n2[0] + Y_AXIS * n2[1], t)
     print("CHECK rim bead %.1f..%.1f deg, apex rho %.3f, front y %.3f" % (a_f, a_b, RIM_C[0] - RIM_R,
                                                                         RIM_C[1] + RIM_R))
     return mb.build("SM_DrumRim", mats)
