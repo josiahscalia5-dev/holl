@@ -17,6 +17,12 @@ of one enormous magical washing machine. These instructions come only from the o
   settings, designs, names or memories. The global pointer about "Rainbow Unity" does not apply here.
 - Never use the video or its frames as backgrounds or textures pretending to be the game. Everything
   on screen is real 3D geometry, real materials, real particles, real animation.
+  OWNER DECISION 2026-11-26 14:15 (exception): reference-derived detail MAY be transferred onto correctly shaped 3D
+  geometry by Blender camera projection (UV Project modifier / multi-view projection) and baked into the model's own UV
+  textures - never flat cards, backgrounds or video. Occluders (mascot, water, coins, splashes) are removed from those
+  textures; an asset is rejected (conventional geometry + materials instead) if it looks blurry, stretched, seamed or
+  flat from the gameplay camera. Such textures / models / test scenes contain reference pixels and stay LOCAL:
+  `Assets/BubbleWashKingdom/Art/Projected/` and `Assets/BubbleWashKingdom/Scenes/Private/` (gitignored).
 
 ## Source of truth
 - 2026-11-26: the owner sent a 4K export of the SAME video (3840x2160, 15 s, 24 fps, identical timing):
