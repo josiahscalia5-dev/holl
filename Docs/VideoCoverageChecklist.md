@@ -22,6 +22,24 @@ Unity track: 14 m (start) -> ~351 m (portal), one continuous ride, no cuts. Stil
 | S7 | 12.75-15.00 s | Golden light portal finale | 310-351 m (09_portal L-34, rear) | 3.5/10 | env, light, water |
 | ALL | 0-15 s | The mascot (same character everywhere) | every frame | in game 4/10 (old model; its front face reads badly in C1/C4/C2/C5). v4 Blender master f14 ~6.5/10 (hero/rear 7, front 6.5, side 5.5, face 6), NOT approved. v4 mobile FBX in-game candidate ~4/10: pom-pom renders as a bare dark ball, arms as dark spikes, hat too large - not ready for approval | character |
 
+## Round 8 masters scores (2026-11-26 18:45, build lead_r8m 18:40 = checkpoint-21-r8m) - 3 judges + 1 skeptic (bwk-round7-verify {tag: "r8m"})
+Sheets `Captures/sections/S<n>_triptych_r8m.png` (video | r8 17:34 | r8m 18:40). Format: with mascot / scenery only.
+
+| # | r8 (17:34) | r8m (18:40) | Biggest remaining gaps (skeptic) |
+|---|------------|-------------|----------------------------------|
+| S1 | 5 / 5 | 5 / 5 | huge close gold bulb-ring tunnel mouth missing (small far arches); slide not a saturated rainbow, no right curve; no close coins / gem / cyan pipe / stars |
+| S2 | 5.5 / 5.5 | 5.5 / 5.5 | too few, too small neon stars; no upper-left roller, thin foam; sparse big wall holes; far end a pink blur |
+| S3 | 4.5 / 5 | 4.5 / 5 | no big near-camera cyan stars; no close bulb-lined ring; flat light-lavender wall |
+| S4 | 3.5 / 4 | 3.5 / 4 | porthole with rainbow socks not visible from the FRONT comparison camera (it sees the new doors' backs); oversized coins; no glass pipe |
+| S5 | 3.5 / 4 | 3.5 / 4 | same door-back problem; pink pipe only a pale block; oversized coins; few bubbles |
+| S6 | 4 / 4.5 | 4 / 4.5 | door backs read as flat lilac slabs; no cyan glass pipe; few stars |
+| S7 | 4 / 4.5 | 4.5 / 5 | golden burst is a real gain (+0.5); no rainbow chamber / cyan pipe at the left; no stars / bubbles in the burst |
+Whole game: 4.3 -> 4.4 with mascot, 4.6 -> 4.7 scenery only. Verdict: not substantially closer - only S7 moved. KEY FINDING: the
+new master doors face the REAR gameplay camera (they read well in the rear stills 07_chambers / 08_sweep) but the S4-S6
+comparison stills are FRONT views (R4 / R5 / R6, matched to the video's camera) that see the doors from behind, so the
+doors cannot count there. Open decision for the lead / owner: chambers readable from both directions, or rear gameplay
+stills added to the S4-S6 judged sheets.
+
 ## Round 7 scores (2026-11-26 13:20, build lead_r7_final 13:06) - independent: 3 judges + 1 skeptic (workflow bwk-round7-verify)
 Scored from `Captures/sections/S<n>_triptych_r7.png` (video | round 6 | round 7; row 2 = mascot hidden). The skeptic lowered
 most judge scores by 0.5. Format: with mascot / scenery only.

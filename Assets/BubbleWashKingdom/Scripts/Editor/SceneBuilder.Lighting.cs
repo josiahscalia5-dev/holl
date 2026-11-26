@@ -33,7 +33,7 @@ namespace BubbleWash.EditorTools
             sunGo.transform.rotation = Quaternion.Euler(70f, 165f, 0f);
             var sun = sunGo.AddComponent<Light>();
             sun.type = LightType.Directional;
-            sun.color = new Color(1f, 0.86f, 0.72f);
+            sun.color = new Color(1f, 0.82f, 0.64f);   // S2 pass 1 (gap #4): warmer key, same intensity (was 1, .86, .72)
             sun.intensity = 1.05f;
             sun.shadows = LightShadows.Soft;
             sun.shadowStrength = 0.7f;
@@ -166,7 +166,9 @@ namespace BubbleWash.EditorTools
             // round 5: shadow tone blue (hue ~235) instead of violet (R > G pushed dark cyan water toward violet; reference
             // shading is blue-violet with pink only where lit)
             // r8 v2: shadow tone (.41, .42, .64) -> a weaker grey-violet (hue ~252 like the reference darks)
-            st.shadows.Override(new Color(0.48f, 0.46f, 0.56f)); st.highlights.Override(new Color(0.56f, 0.52f, 0.48f)); st.balance.Override(-15f);
+            // S2 pass 1 (lead gap #4): warm-hue share full frame ours 27 % vs reference 36 % -> warmer highlight tone (gold,
+            // bulbs, rails, fur highlights), shadows unchanged, no exposure / saturation / bloom change
+            st.shadows.Override(new Color(0.48f, 0.46f, 0.56f)); st.highlights.Override(new Color(0.60f, 0.52f, 0.44f)); st.balance.Override(-15f);
             // Hue-selective saturation: only the blue-violet range (drum walls, ceiling bays, far tunnel ~225-268 deg) gets
             // richer (x1.28); the purple hat (~280), pink fur, cyan water and gold are untouched.
             var curves = profile.Add<ColorCurves>(true);
@@ -187,8 +189,11 @@ namespace BubbleWash.EditorTools
             var dof = profile.Add<DepthOfField>(true);
             // round 3: a little softer far tunnel (reference is dreamier / softer behind the second ring)
             // round 4: the reference far tunnel is soft from the second gold ring on (ours stayed crisp to ~40 m)
-            dof.mode.Override(DepthOfFieldMode.Gaussian); dof.gaussianStart.Override(15f); dof.gaussianEnd.Override(42f);
-            dof.gaussianMaxRadius.Override(1.5f); dof.highQualitySampling.Override(true);
+            // S2 pass 1 (lead gap #3): the far tunnel read as a soft pink bokeh blur (edge energy x 480-800 / y 140-360 ours
+            // 5.1 vs reference 7.9): the reference's receding gold bulb rings and stars are sharp -> blur only far beyond
+            // the third ring, and much less of it (no heavy DOF)
+            dof.mode.Override(DepthOfFieldMode.Gaussian); dof.gaussianStart.Override(34f); dof.gaussianEnd.Override(90f);
+            dof.gaussianMaxRadius.Override(0.7f); dof.highQualitySampling.Override(true);
             foreach (var c in profile.components) AssetDatabase.AddObjectToAsset(c, profile);
             vol.sharedProfile = profile;
         }
@@ -341,6 +346,14 @@ namespace BubbleWash.EditorTools
             (0.432f, 0.203f, 0.13f, -14f, 1),   // cyan star below-right of it (round 3: reference ~0.12-0.13 wide)
             (0.968f, 0.285f, 0.085f, 18f, 0),   // small yellow star on the right wall, half off-frame
             (0.988f, 0.360f, 0.080f, -10f, 2),  // pink star below it at the frame edge
+            // S2 pass 1 (lead gap #1, 16:9 hero vs f_03.00s): the reference's right wall carries three LARGE stars outside
+            // the portrait frame (u > 1 = right of it in the 16:9 capture, same vertical FOV; 16:9 x = 437.5 + u * 405).
+            // Measured 720p centres / widths: yellow (1010, 65) 95 px, cyan (898, 152) 52 px, pink (1050, 282) 60 px.
+            // Our near gold ring (109.75 m) covers x ~925-1060 there, so yellow / pink sit just right of it on the near
+            // drum section and cyan between the lavender rim and that ring (same size, colour and roll as the reference).
+            (1.611f, 0.095f, 0.235f, -12f, 0),  // big yellow star, upper-right wall (720p ~(1090, 68))
+            (1.155f, 0.212f, 0.130f, -18f, 1),  // cyan star, right wall between rim and gold ring (~(905, 152))
+            (1.665f, 0.402f, 0.150f, 12f, 2),   // pink star, right wall below the yellow one (~(1112, 290))
         };
 
         const float StarMeshWidth = 1.07f;   // SM_NeonStarTube tip-to-tip incl. tube at scale 1 (outer radius 0.5 + tube 0.085)
