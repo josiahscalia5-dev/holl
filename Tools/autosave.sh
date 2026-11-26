@@ -23,6 +23,13 @@ snapshot() {
   [ -f "$INDEX" ] || GIT_INDEX_FILE="$INDEX" git read-tree "$(git rev-parse -q --verify $PUBLIC_REF || echo $BASE)"
   GIT_INDEX_FILE="$INDEX" git add -A >> "$LOG" 2>&1
   for p in "${PRIVATE_PATHS[@]}"; do GIT_INDEX_FILE="$INDEX" git rm -q --cached --ignore-unmatch -- "$p"; done
+  # 2026-11-26 09:10: the owner's newest transfer brief says to keep conversation histories OFF the public repo (an earlier
+  # message asked to publish them). Until the owner decides, chat exports are still written locally (ChatHistory/) but the
+  # public copy stays frozen at its last pushed state: nothing new is published and nothing is deleted. BWK_PUBLISH_CHAT=1
+  # restores publishing.
+  if [ "${BWK_PUBLISH_CHAT:-0}" != 1 ] && git rev-parse -q --verify $PUBLIC_REF >/dev/null; then
+    GIT_INDEX_FILE="$INDEX" git reset -q "$PUBLIC_REF" -- ChatHistory >> "$LOG" 2>&1
+  fi
   # Second line of defence (2026-11-26): the repo is public, so any video file, and any image whose file name looks like a
   # reference frame, side-by-side, triptych or contact sheet, stays local even if someone saves it outside Captures/.
   local p b
