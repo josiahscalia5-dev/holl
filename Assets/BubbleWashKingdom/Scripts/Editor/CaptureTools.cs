@@ -59,6 +59,64 @@ namespace BubbleWash.EditorTools
         }
 
         /// <summary>
+        /// Lead tool (no scene save): like AgentPreviewBatch, but swaps the scene mascot for a CANDIDATE model shown in its
+        /// rest pose (= the seated hero pose), so the owner can judge a new mascot in the real game before it replaces
+        /// SK_Mascot.fbx. Run via: Tools/unity_run.sh BubbleWash.EditorTools.CaptureTools.MascotCandidateBatch lead_mascot
+        ///   -bwkOut Captures/agents/_lead_mascot -bwkMascot Assets/BubbleWashKingdom/Art/Models/Characters/SK_Mascot_v4.fbx
+        /// </summary>
+        public static void MascotCandidateBatch()
+        {
+            try
+            {
+                string outDir = ArgValue("-bwkOut") ?? "Captures/agents/_lead_mascot";
+                string fbx = ArgValue("-bwkMascot") ?? "Assets/BubbleWashKingdom/Art/Models/Characters/SK_Mascot_v4.fbx";
+                TextureGenerator.Run();
+                MaterialLibrary.Run();
+                if (AssetImporter.GetAtPath(fbx) is ModelImporter mi)
+                {
+                    // same M_* project materials as the in-game mascot (embedded FBX materials remapped by name)
+                    mi.materialLocation = ModelImporterMaterialLocation.InPrefab;
+                    mi.SearchAndRemapMaterials(ModelImporterMaterialName.BasedOnMaterialName, ModelImporterMaterialSearch.Everywhere);
+                    mi.SaveAndReimport();
+                }
+                EditorSceneManager.OpenScene(SceneBuilder.ScenePath);
+                SceneBuilder.PreviewRefreshDomains();
+                SwapMascot(fbx);
+                CaptureHero(outDir, outDir);
+                EditorApplication.Exit(0);
+            }
+            catch (System.Exception e) { Debug.LogError("[BWK] mascot candidate preview failed: " + e); EditorApplication.Exit(1); }
+        }
+
+        static void SwapMascot(string fbx)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(fbx);
+            if (prefab == null) throw new System.Exception("candidate mascot not found: " + fbx);
+            var runner = Object.FindFirstObjectByType<RunnerController>();
+            var old = runner != null && runner.visual != null ? runner.visual.Find("SK_Mascot") : null;
+            if (old == null) throw new System.Exception("scene mascot SK_Mascot not found under the runner's Visual");
+            var m = (GameObject)Object.Instantiate(prefab);
+            m.name = "SK_Mascot_Candidate";
+            m.transform.SetParent(old.parent, false);
+            m.transform.localPosition = old.localPosition;
+            m.transform.localRotation = old.localRotation;
+            m.transform.localScale = old.localScale;
+            // No Animator: the old controller's clips belong to the old skeleton proportions; the candidate's rest pose
+            // is its seated hero pose, and CaptureHero skips clip sampling when no Animator is found.
+            foreach (var a in m.GetComponentsInChildren<Animator>(true)) Object.DestroyImmediate(a);
+            foreach (var r in m.GetComponentsInChildren<Renderer>(true))
+            {
+                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+                r.receiveShadows = true;
+                if (r is SkinnedMeshRenderer smr) smr.updateWhenOffscreen = true;
+            }
+            Object.DestroyImmediate(old.gameObject);
+            var driver = runner.GetComponent<MascotAnimatorDriver>();
+            if (driver != null) { driver.squashRoot = m.transform; driver.animator = null; }
+            Debug.Log("[BWK] candidate mascot swapped in (rest pose): " + fbx);
+        }
+
+        /// <summary>
         /// Lead tool (no scene save): renders the hero position through several PORTRAIT rear-camera framings in one run,
         /// plus side / three-quarter views that show the seated pose, and reference side-by-sides.
         ///   -bwkCamVariants "back,height,pitch,fov;back,height,pitch,fov"   (default: the rig's current values)
