@@ -29,12 +29,12 @@ Material:
     - _ChaseMin: 0.45
     - _ChaseScale: 1.6
     - _ChaseSpeed: 1.5
-    - _CorePower: 3
-    - _CoreWhite: 0.7
-    - _EdgeSaturate: 0.35
+    - _CorePower: 5
+    - _CoreWhite: 0.25
+    - _EdgeSaturate: 0.3
     - _FogAmount: 0.06
-    - _HaloBoost: 0.55
-    - _Intensity: 4.4
+    - _HaloBoost: 0.4
+    - _Intensity: 9
     - _PulseAmount: 0.08
     - _PulseSpeed: 1.2
     m_Colors:

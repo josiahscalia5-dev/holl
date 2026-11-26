@@ -337,7 +337,130 @@ def build_chevron(M):
     return obj
 
 
-# ================================================================== 5. foam clusters
+# ================================================================== 5. foam clusters (soap suds)
+def _hemi_dirs(n=24, seed=5):
+    """Fixed, well spread unit directions over the sphere (fibonacci) for baked ambient occlusion."""
+    out = []
+    ga = math.pi * (3.0 - math.sqrt(5.0))
+    for i in range(n):
+        z = 1.0 - 2.0 * (i + 0.5) / n
+        rr = math.sqrt(max(0.0, 1.0 - z * z))
+        out.append((math.cos(ga * i) * rr, math.sin(ga * i) * rr, z))
+    return out
+
+
+def _bake_ao(points, normals, own, spheres, max_dist=0.45):
+    """Ray-traced AO against every other sphere + the ground (z = 0). numpy, returns 0 (buried) .. 1 (open)."""
+    import numpy as np
+    P = np.array(points, dtype=np.float64)                    # (V, 3)
+    N = np.array(normals, dtype=np.float64)                   # (V, 3)
+    D = np.array(_hemi_dirs(), dtype=np.float64)              # (K, 3)
+    S = np.array([s[:3] for s in spheres], dtype=np.float64)  # (S, 3)
+    R = np.array([s[3] for s in spheres], dtype=np.float64)   # (S,)
+    cosw = N @ D.T                                            # (V, K)
+    w = np.clip(cosw, 0.0, None)
+    O = P + N * 0.004
+    occ = np.zeros_like(w)
+    # ray-sphere: |O + tD - C|^2 = r^2  ->  t^2 + 2 t (D.(O-C)) + |O-C|^2 - r^2 = 0
+    for j in range(len(S)):
+        mask_v = own != j
+        oc = O - S[j]                                          # (V, 3)
+        b = oc @ D.T                                           # (V, K)
+        c = (oc * oc).sum(1) - R[j] ** 2                       # (V,)
+        disc = b * b - c[:, None]
+        hit = disc > 0
+        t = -b - np.sqrt(np.where(hit, disc, 0.0))
+        hitj = hit & (t > 0.0) & (t < max_dist) & mask_v[:, None]
+        occ = np.maximum(occ, hitj * (1.0 - np.clip(t / max_dist, 0, 1) * 0.5))
+    # ground (the bank top the suds sit on)
+    dz = D[:, 2][None, :]
+    tg = np.where(dz < -1e-3, -O[:, 2:3] / np.where(dz < -1e-3, dz, -1.0), 1e9)
+    occ = np.maximum(occ, ((tg > 0) & (tg < max_dist)) * 0.6)
+    ao = 1.0 - (occ * w).sum(1) / np.maximum(w.sum(1), 1e-6)
+    return np.clip(ao, 0.0, 1.0)
+
+
+def build_suds(M, name, seed, spread, count, lod=0):
+    """Soap-suds cluster: medium puffs piled into a mound, clusters of smaller bubbles on them and tiny bubbles
+    sprinkled over the surface (reference f_003.00s banks: layered soft suds, not rocks). Flat underside, origin at
+    the base centre, long along X. Vertex colour 'Col': R = baked crevice AO, G = per-puff random (BWK/Soft Mode 5)."""
+    rng = random.Random(seed)
+    spheres = []
+    for i in range(int(count * 1.5)):
+        a = rng.uniform(0, 2 * math.pi)
+        d = rng.uniform(0, 1) ** 0.75
+        x = math.cos(a) * d * spread[0]
+        y = math.sin(a) * d * spread[1]
+        r = rng.uniform(0.17, 0.31) * (1.2 - 0.45 * d)
+        z = r * rng.uniform(0.0, 0.35) + (1 - d) * 0.2
+        spheres.append((x, y, z, r))
+    prim = list(spheres)
+    for (x, y, z, r) in prim:                       # second layer: smaller puffs riding on the big ones
+        for _ in range(rng.randint(2, 4) if lod == 0 else 1):
+            th = rng.uniform(0, 2 * math.pi)
+            ph = rng.uniform(0.15, 1.2)              # mostly upper hemisphere
+            dirv = Vector((math.cos(th) * math.sin(ph), math.sin(th) * math.sin(ph), math.cos(ph)))
+            rs = r * rng.uniform(0.38, 0.62)
+            c = Vector((x, y, z)) + dirv * (r + rs * 0.15)
+            if c.z > 0.03:
+                spheres.append((c.x, c.y, c.z, rs))
+    if lod == 0:                                     # tiny bubbles sprinkled over the surface
+        base_list = list(spheres)
+        for _ in range(int(count * 4.5)):
+            x, y, z, r = base_list[rng.randrange(len(base_list))]
+            th = rng.uniform(0, 2 * math.pi)
+            ph = rng.uniform(0.0, 1.45)
+            dirv = Vector((math.cos(th) * math.sin(ph), math.sin(th) * math.sin(ph), math.cos(ph)))
+            rt = rng.uniform(0.022, 0.055)
+            c = Vector((x, y, z)) + dirv * (r + rt * 0.05)
+            if c.z > 0.02:
+                spheres.append((c.x, c.y, c.z, rt))
+    bm = bmesh.new()
+    pts, nrm, own, puff = [], [], [], []
+    for si, (x, y, z, r) in enumerate(spheres):
+        if lod == 0:
+            useg = max(7, min(18, int(round(r * 52))))
+        else:
+            useg = max(5, min(9, int(round(r * 26))))
+        sub = bmesh.new()
+        bmesh.ops.create_uvsphere(sub, u_segments=useg, v_segments=max(4, useg * 2 // 3), radius=r)
+        bmesh.ops.translate(sub, verts=sub.verts, vec=Vector((x, y, z)))
+        bmesh.ops.bisect_plane(sub, geom=sub.verts[:] + sub.edges[:] + sub.faces[:], plane_co=(0, 0, 0.0),
+                               plane_no=(0, 0, 1), clear_inner=True)
+        pr = rng.random()
+        for v in sub.verts:
+            pts.append(tuple(v.co))
+            n = (v.co - Vector((x, y, z)))
+            n = n.normalized() if n.length > 1e-6 else Vector((0, 0, 1))
+            nrm.append(tuple(n))
+            own.append(si)
+            puff.append(pr)
+        tmp = bpy.data.meshes.new("tmp")
+        sub.to_mesh(tmp)
+        sub.free()
+        bm.from_mesh(tmp)
+        bpy.data.meshes.remove(tmp)
+    import numpy as np
+    ao = _bake_ao(pts, nrm, np.array(own), spheres)
+    ao = np.clip(0.18 + 0.82 * ao ** 1.4, 0.0, 1.0)
+    out = new_obj(name, bm)
+    for p in out.data.polygons:
+        p.use_smooth = True
+    me = out.data
+    ca = me.color_attributes.new(name="Col", type='BYTE_COLOR', domain='CORNER')
+    for poly in me.polygons:
+        for li in poly.loop_indices:
+            vi = me.loops[li].vertex_index
+            col = (float(ao[vi]), float(puff[vi]), 0.0, 1.0)
+            try:
+                ca.data[li].color_srgb = col
+            except AttributeError:
+                ca.data[li].color = col
+    C.assign_materials(out, [M["M_Foam"]])
+    planar_uv(out, lambda co: (co.x * 0.5 + 0.5, (co.z + co.y * 0.5) * 0.5 + 0.5))
+    return out
+
+
 def build_foam(M, name, seed, spread, count, max_tris=2000, useg_override=None):
     """Cumulus foam: overlapping smooth spheres (distinct round puffs like the reference), underside cut flat."""
     rng = random.Random(seed)
@@ -522,8 +645,8 @@ def main():
     objs.append(build_chevron(M))
     for nm, seed, spread, cnt in (("SM_Foam_A", 11, (0.9, 0.55), 9), ("SM_Foam_B", 23, (1.3, 0.65), 12),
                                   ("SM_Foam_C", 37, (0.55, 0.45), 6)):
-        objs.append(build_foam(M, nm, seed, spread, cnt, useg_override=11))
-        objs.append(build_foam(M, nm + "_LOD1", seed, spread, cnt, useg_override=6))
+        objs.append(build_suds(M, nm, seed, spread, cnt, lod=0))
+        objs.append(build_suds(M, nm + "_LOD1", seed, spread, cnt, lod=1))
     for s in ("SM_Sock_A", "SM_Sock_B", "SM_Sock_C"):
         objs.append(build_sock(M, s))
     objs.append(build_towel(M))

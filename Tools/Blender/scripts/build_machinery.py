@@ -404,6 +404,8 @@ def make_materials():
         "M_GoldDark": mk("M_GoldDark", "#B5782A", metallic=1.0, roughness=0.38),
         "M_Glass": mk("M_Glass", "#D9F6FF", roughness=0.04, alpha=0.22),
         "M_DrumWall": mk("M_DrumWall", "#8E5CC4", metallic=0.55, roughness=0.32),
+        "M_ChamberDrum": mk("M_ChamberDrum", "#B6A6EA", metallic=0.5, roughness=0.3),
+        "M_DrumRim": mk("M_DrumRim", "#A98BEB", metallic=0.7, roughness=0.2),
         "M_ChamberSwirl": mk("M_ChamberSwirl", "#8FD8FF", roughness=0.2, emission="#8FD8FF", emission_strength=0.8),
         "M_BrushPink": mk("M_BrushPink", "#E463B1", roughness=0.9),
         "M_BrushBlue": mk("M_BrushBlue", "#79C2DF", roughness=0.9),
@@ -427,9 +429,14 @@ def slots(M, names):
 
 
 # ================================================================== 1. porthole + side chamber
+PORT_DEPTH = 0.34      # shallow chamber drum (glass -> swirl disc)
+PORT_PLANE_R = 3.62    # window plane distance from the tunnel axis = SceneBuilder.ChamberPlaneRadius
+PORT_WALL_R = 4.2      # tunnel drum wall radius (SM_Tunnel_Module)
+
+
 def build_porthole(M):
     mb = MB()
-    G, GD, GL, DW, SW = range(5)
+    G, GD, GL, DW, SW, SK = range(6)
     O = Vector((0.0, 0.0, 0.0))
     # frame ring around -Y (h = -y): flat back on the wall (h = -0.125), outer wall r 1.55, big front bead
     # (apex h = +0.125), V groove, small inner bead that holds the glass, bore r 1.25
@@ -457,9 +464,11 @@ def build_porthole(M):
     seal = [(1.262, -0.012), (1.225, -0.018), (1.192, -0.035), (1.175, -0.065), (1.185, -0.097), (1.212, -0.118),
             (1.228, -0.13)]
     lathe(mb, seal, GD, 48, O, FRONT, X_AXIS)
-    # drum: r 1.22, y 0 -> 0.9, normals inward; u around (tunnel perforation density), v = depth / 4
-    lathe(mb, [(1.22, 0.0), (1.22, -0.45), (1.22, -0.9)], DW, 48, O, FRONT, X_AXIS, u_span=DRUM_U_SPAN,
-          v_vals=[0.0, 0.45 / V_TILE, 0.9 / V_TILE])
+    # shallow drum: r 1.22, y 0 -> PORT_DEPTH, normals inward; u around, v = depth / 4. The whole chamber stays in front
+    # of the tunnel wall when the window plane is PORT_PLANE_R from the tunnel axis (SceneBuilder.ChamberPlaneRadius).
+    dd = PORT_DEPTH
+    lathe(mb, [(1.22, 0.0), (1.22, -dd * 0.5), (1.22, -dd)], DW, 48, O, FRONT, X_AXIS, u_span=DRUM_U_SPAN,
+          v_vals=[0.0, dd * 0.5 / V_TILE, dd / V_TILE])
 
     def drum_uv(p):
         a = math.atan2(p.z, p.x) % TAU
@@ -467,7 +476,7 @@ def build_porthole(M):
     # 3 lifter ribs inside the drum (washing-machine paddles), tapered ends
     rib = [(0.08, -0.012), (0.07, 0.035), (0.04, 0.075), (0.0, 0.088), (-0.04, 0.075), (-0.07, 0.035),
            (-0.08, -0.012)]
-    ys = [0.86, 0.8, 0.68, 0.5, 0.32, 0.2, 0.14]          # back -> front (N x B = -Y = travel)
+    ys = [y * dd / 0.9 for y in (0.86, 0.8, 0.68, 0.5, 0.32, 0.2, 0.14)]   # back -> front (N x B = -Y = travel)
     sc = [0.0, 0.75, 1.0, 1.0, 1.0, 0.75, 0.0]
     for phi_deg in (90.0, 210.0, 330.0):
         phi = math.radians(phi_deg)
@@ -476,11 +485,37 @@ def build_porthole(M):
         frames = [(R * 1.22 + Vector((0.0, y, 0.0)), Tg, -R) for y in ys]
         profs = [[(a * (0.6 + 0.4 * s), -0.012 + (b + 0.012) * s) for a, b in rib] for s in sc]
         sweep(mb, frames, None, DW, profs=profs, uv_fn=drum_uv)
+    # lavender skirt from the frame back to the curved tunnel wall (cylinder r PORT_WALL_R around an axis parallel to
+    # +Z, PORT_PLANE_R in front of the window): closes the gap all around, flaring slightly; gold trim where it meets
+    # the wall. Local x = around the drum, z = along the tunnel (SceneBuilder: up = track forward).
+    def wall_y(x):
+        return math.sqrt(max(PORT_WALL_R ** 2 - x * x, 0.0)) - PORT_PLANE_R
+    n_sk = 72
+    rows_sk = []
+    for k in range(n_sk):
+        ph = TAU * k / n_sk
+        c, s = math.cos(ph), math.sin(ph)
+        y0 = 0.105
+        y2 = wall_y(1.72 * c) + 0.05
+        pts = [(1.50, y0), (1.585, y0 + 0.30 * (y2 - y0)), (1.65, y0 + 0.68 * (y2 - y0)), (1.72, y2)]
+        rows_sk.append([mb.v((r * c, y, r * s)) for r, y in pts])
+    for k in range(n_sk):
+        k1 = (k + 1) % n_sk
+        ph = TAU * (k + 0.5) / n_sk
+        out = Vector((math.cos(ph), -0.6, math.sin(ph)))
+        for j in range(3):
+            idx = [rows_sk[k][j], rows_sk[k1][j], rows_sk[k1][j + 1], rows_sk[k][j + 1]]
+            mb.f(idx, SK, [(k / n_sk, j / 3.0), (k1 / n_sk, j / 3.0), (k1 / n_sk, (j + 1) / 3.0), (k / n_sk, (j + 1) / 3.0)],
+                 ref=out)
+    trim = [Vector((1.70 * math.cos(TAU * k / n_sk), wall_y(1.70 * math.cos(TAU * k / n_sk)) + 0.01,
+                    1.70 * math.sin(TAU * k / n_sk))) for k in range(n_sk)]
+    sweep(mb, path_frames(trim, lambda i: Vector((math.cos(TAU * i / n_sk), 0.0, math.sin(TAU * i / n_sk)))),
+          circle2(0.045, 8), G, closed_path=True, closed_prof=True, swap_uv=True)
     # back disc: shallow whirlpool, faces the viewer, planar UVs with (0.5, 0.5) at the centre
     rd = 1.225
 
     def disc_h(r):
-        return -0.90 - 0.12 * (1.0 - (r / rd) ** 2) ** 2
+        return -dd - 0.06 * (1.0 - (r / rd) ** 2) ** 2
     disc = [(r, disc_h(r)) for r in (1.225, 1.0, 0.75, 0.5, 0.25)] + [(0.0, disc_h(0.0))]
     lathe(mb, disc, SW, 48, O, FRONT, X_AXIS, uv_fn=lambda p: (0.5 + p.x / (2.0 * rd), 0.5 + p.z / (2.0 * rd)))
     # hinge (-X, the viewer's left): rounded block + barrel with two dark knuckle grooves and domed ends
@@ -512,7 +547,8 @@ def build_porthole(M):
         profs = [circle2(0.046 - 0.022 * i / (n - 1), 6) for i in range(n)]
         sweep(mb, path_frames(pts, lambda i: Y_AXIS), None, G, closed_prof=True, profs=profs, swap_uv=True)
         lathe(mb, ball, G, 8, pts[-1], (pts[-1] - pts[-2]).normalized())
-    obj = mb.build("SM_Porthole", slots(M, ["M_Gold", "M_GoldDark", "M_Glass", "M_DrumWall", "M_ChamberSwirl"]))
+    obj = mb.build("SM_Porthole", slots(M, ["M_Gold", "M_GoldDark", "M_Glass", "M_ChamberDrum", "M_ChamberSwirl",
+                                            "M_DrumRim"]))
     return obj
 
 

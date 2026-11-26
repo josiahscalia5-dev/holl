@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_DrumRim
+  m_Shader: {fileID: 4800000, guid: 59d2225d9571870479175f6d3b5daf11, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _BandSharpness: 18
+    - _Brightness: 1
+    - _Contrast: 1.4
+    - _Emission: 0.08
+    - _EnvReflect: 0.5
+    - _EnvRoughness: 0.25
+    - _EnvTint: 0.4
+    - _FogAmount: 0.75
+    - _GlintStrength: 1.2
+    - _HighlightSize: 8
+    - _LightInfluence: 0.35
+    - _Sparkle: 0.6
+    - _SparkleScale: 16
+    - _SpecPower: 90
+    - _SpecStrength: 1.6
+    - _ViewGradient: 1
+    m_Colors:
+    - _BandColor: {r: 0.94509804, g: 0.8784314, b: 1, a: 1}
+    - _HighColor: {r: 1, g: 0.9411765, b: 1, a: 1}
+    - _LowColor: {r: 0.23137255, g: 0.12941177, b: 0.53333336, a: 1}
+    - _MidColor: {r: 0.6627451, g: 0.54509807, b: 0.92156863, a: 1}
+    - _RimColor: {r: 1, g: 0.72156864, b: 0.9490196, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

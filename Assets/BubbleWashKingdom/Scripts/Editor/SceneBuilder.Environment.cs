@@ -116,63 +116,95 @@ namespace BubbleWash.EditorTools
             Debug.Log($"[BWK] rings: {rings} gold (bulbs built in: {ringHasBulbs}), {rims} lavender rims, drum bands {band:F3} m from {FirstRingDistance} m");
         }
 
+        const float ChamberAngle = 74f;        // window centre, degrees from the ceiling (above the foam banks)
+        const float ChamberPipeOffset = 2.45f;  // glass riser this far past the window centre (before the next gold ring)
+
+        /// <summary>
+        /// Side washing chambers (reference key 7.5 s / 10.5 s): big gold-framed porthole windows on the drum wall, one per
+        /// chamber gap, alternating left / right, with laundry floating in front of the swirling rainbow water. The whole
+        /// window (frame, shallow drum, swirl) sits in front of the tunnel wall; its lavender skirt is shaped in Blender to
+        /// meet the r 4.2 drum exactly when the window plane is ChamberPlaneRadius from the axis (no hole in the tunnel).
+        /// </summary>
         static void BuildPortholes(GameObject env)
         {
+            DrainLegacyPortholeRng();
             var prefab = ModelPrefab("Machinery", "SM_Porthole");
             if (prefab == null) { Debug.LogWarning("[BWK] SM_Porthole missing - portholes skipped"); return; }
-            string[] socks = { "SM_Sock_A", "SM_Sock_B", "SM_Sock_C", "SM_Towel", "SM_Shirt" };
+            string[] socks = { "SM_Sock_A", "SM_Sock_B", "SM_Sock_C", "SM_Towel", "SM_Sock_A", "SM_Shirt", "SM_Sock_B" };
+            var crng = new System.Random(7031);   // own sequence: the shared rng feeds the gameplay item layout
             var holder = Child(env, "SideChambers");
-            int side = -1;
-            for (float d = tunnelStart + 14f; d < portalD - 10f; d += 13f + (float)rng.NextDouble() * 6f)
+            int i = 0;
+            foreach (float g in ChamberGaps())
             {
+                float d = g + RingSpacing * 0.5f;
+                int side = i % 2 == 0 ? -1 : 1;   // left wall first
                 var f = track.Evaluate(d);
-                float ang = side * 68f * Mathf.Deg2Rad;
+                float ang = side * ChamberAngle * Mathf.Deg2Rad;
                 var radial = f.flatRight * Mathf.Sin(ang) + f.flatUp * Mathf.Cos(ang);
-                var pos = f.FlatPoint(0, TunnelCenter) + radial * (TunnelRadius - 0.12f);
+                var pos = f.FlatPoint(0, TunnelCenter) + radial * ChamberPlaneRadius;
                 var go = Spawn(prefab);
-                go.name = $"Porthole_{d:000}";
+                go.name = $"Chamber_{d:000}";
                 go.transform.SetParent(holder.transform, false);
                 go.transform.SetPositionAndRotation(pos, Quaternion.LookRotation(-radial, f.forward));
-                // floating laundry inside the drum, behind the glass
+                // floating laundry inside the shallow drum, between the glass and the swirling water
                 for (int s = 0; s < 4; s++)
                 {
-                    var sp = ModelPrefab("Props", socks[(s + (int)d) % socks.Length]);
+                    var sp = ModelPrefab("Props", socks[(s + i * 3) % socks.Length]);
                     if (sp == null) continue;
                     var sock = Spawn(sp);
                     sock.transform.SetParent(go.transform, false);
-                    float a = s / 4f * Mathf.PI * 2f;
-                    sock.transform.localPosition = new Vector3(Mathf.Cos(a) * 0.55f, Mathf.Sin(a) * 0.55f, -0.45f);
-                    sock.transform.localRotation = Quaternion.Euler((float)rng.NextDouble() * 360f, (float)rng.NextDouble() * 360f, 0);
-                    sock.transform.localScale = Vector3.one * 0.8f;
+                    float a = (s / 4f + i * 0.13f) * Mathf.PI * 2f;
+                    sock.transform.localPosition = new Vector3(Mathf.Cos(a) * 0.52f, Mathf.Sin(a) * 0.52f, -0.17f);
+                    sock.transform.localRotation = Quaternion.Euler((float)crng.NextDouble() * 360f, (float)crng.NextDouble() * 360f, 0);
+                    sock.transform.localScale = Vector3.one * 1.35f;
                     var bob = sock.AddComponent<FloatBob>();
                     bob.orbitAxis = Vector3.forward;
-                    bob.orbitRadius = 0.25f;
-                    bob.orbitSpeed = 55f + s * 7f;
-                    bob.amplitude = 0.08f;
+                    bob.orbitRadius = 0.22f;
+                    bob.orbitSpeed = 50f + s * 9f;
+                    bob.amplitude = 0.05f;
+                    foreach (var r in sock.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
                 }
-                side = -side;
+                i++;
             }
+            Debug.Log($"[BWK] side chambers: {i} windows between {ChamberStart} and {ChamberEnd} m");
         }
 
+        /// <summary>
+        /// Consumes exactly the shared-rng values the previous porthole layout used (checkpoint-6), so foam, bubbles and the
+        /// gameplay items built after this step keep their layout (and the hero shot keeps its track distance).
+        /// </summary>
+        static void DrainLegacyPortholeRng()
+        {
+            string[] legacy = { "SM_Sock_A", "SM_Sock_B", "SM_Sock_C", "SM_Towel", "SM_Shirt" };
+            for (float d = tunnelStart + 14f; d < portalD - 10f; d += 13f + (float)rng.NextDouble() * 6f)
+                for (int s = 0; s < 4; s++)
+                {
+                    if (ModelPrefab("Props", legacy[(s + (int)d) % legacy.Length]) == null) continue;
+                    rng.NextDouble(); rng.NextDouble();
+                }
+        }
+
+        /// <summary>
+        /// The reference hero frame has no pipes crossing the tunnel view. Glass risers with glowing pink liquid stand beside
+        /// the side chamber windows instead (reference key 7.5 s), in the drum plane between two gold rings
+        /// (SM_ChamberPipe is authored for the left wall; the right wall uses it turned 180 degrees about up).
+        /// </summary>
         static void BuildPipes(GameObject env, float L)
         {
-            var pipe = ModelParts("Track", "SM_GlassPipe_Module");
-            if (pipe.Count == 0) { Debug.LogWarning("[BWK] SM_GlassPipe_Module missing - pipes skipped"); return; }
-            float a = 76f * Mathf.Deg2Rad; // side walls above the foam banks (reference), clear of the ceiling view
-            float lat = Mathf.Sin(a) * (TunnelRadius - 0.45f), up = TunnelCenter + Mathf.Cos(a) * (TunnelRadius - 0.45f);
-            BendChunks(env, "GlassPipeLeft", pipe[0], tunnelStart + 1f, portalD - 3f, false, Vector3.one, -lat, up, 4f, false);
-            BendChunks(env, "GlassPipeRight", pipe[0], tunnelStart + 1f, portalD - 3f, false, Vector3.one, lat, up, 4f, false);
-            var coupler = ModelParts("Track", "SM_Pipe_Coupler");
-            if (coupler.Count == 0) return;
-            var holder = Child(env, "PipeCouplers");
+            var riser = ModelParts("Environment", "SM_ChamberPipe");
+            if (riser.Count == 0) { Debug.Log("[BWK] SM_ChamberPipe not built - no tunnel pipes"); return; }
+            var holder = Child(env, "ChamberPipes");
             var comb = new Combiner();
-            for (float d = tunnelStart + 3f; d < portalD - 3f; d += 12f)
+            int i = 0;
+            foreach (float g in ChamberGaps())
             {
-                var f = track.Evaluate(d);
-                foreach (float sx in new[] { -lat, lat })
-                    comb.Add(coupler, Matrix4x4.TRS(f.FlatPoint(sx, up), f.FlatRotation, Vector3.one));
+                int side = i % 2 == 0 ? -1 : 1;
+                var f = track.Evaluate(g + RingSpacing * 0.5f + ChamberPipeOffset);
+                var rot = f.FlatRotation * (side < 0 ? Quaternion.identity : Quaternion.Euler(0f, 180f, 0f));
+                comb.Add(riser, Matrix4x4.TRS(f.FlatPoint(0, TunnelCenter), rot, Vector3.one));
+                i++;
             }
-            comb.Flush(holder, "Couplers", false);
+            comb.Flush(holder, "ChamberPipes", false);
         }
 
         static void BuildHallMachinery(GameObject env)
