@@ -576,32 +576,30 @@ def build_arm(side):
     fan_top(md, rings[-1], tip, 0, vv[len(rings) - 1], vv[-1], ru)
     fur_faces = len(md.f)
     fur_verts = len(md.v)
-    palm_c = root + d * PALM_H + pd * (prof_r(ARM_PROFILE, PALM_H) - 0.004)
-    pex = d.cross(pd)
-    md.extend(ellipsoid(palm_c, pex, d, pd, PALM_SIZE[0], PALM_SIZE[1], PALM_SIZE[2], seg=12, rings=5, mat=1,
-                        col=PALM_COL))
-    beans = []
-    for ang, hb in ARM_BEANS:
-        n = Matrix.Rotation(math.radians(ang), 3, d) @ pd
-        c = root + d * hb + n * (prof_r(ARM_PROFILE, hb) - 0.001)
-        bey = (d - n * d.dot(n)).normalized()
-        md.extend(ellipsoid(c, bey.cross(n), bey, n, BEAN_SIZE[0], BEAN_SIZE[1], BEAN_SIZE[2], seg=8, rings=4,
-                            mat=1, col=PAD_PINK))
-        beans.append(c)
-    md.set_col(lambda i, k: (1.0, 1.0, 1.0, 1.0) if md.m[k] == 0 else md.col[k][0])
+    # no palm pads (they read as white cubes from behind); the paw tip fades toward the cream coat instead
+    palm_c = root + d * 0.25 + pd * prof_r(ARM_PROFILE, 0.25)
+
+    def tip_col(i, _k):
+        h = (md.v[i] - root).dot(d)
+        return (1.0, 1.0, 1.0, 1.0 - ARM_TIP_CREAM * smoothstep(ARM_TIP_FROM, ARM_TIP_TO, h))
+    md.set_col(tip_col)
     info = dict(root=vlist(root), dir=vlist(d), palm_dir=vlist(pd), palm_c=vlist(palm_c),
-                beans=[vlist(b) for b in beans], length=ARM_PROFILE[-1][0], fur_verts=fur_verts,
-                fur_faces=fur_faces)
+                beans=[], length=ARM_PROFILE[-1][0], fur_verts=fur_verts, fur_faces=fur_faces)
     return md, info
 
 
 # ------------------------------------------------------------------ legs + paws (seated V-sit)
 def paw_frame(side):
-    yaw, pitch = math.radians(TOE_YAW), math.radians(TOE_PITCH)
-    th = Vector((side * math.sin(yaw), -math.cos(yaw), 0.0))           # horizontal toe direction
-    lat = Vector((side * math.cos(yaw), math.sin(yaw), 0.0))           # outward lateral axis
-    t = (th * math.cos(pitch) + Vector((0.0, 0.0, 1.0)) * math.sin(pitch)).normalized()   # heel -> toe
-    s = (th * math.sin(pitch) - Vector((0.0, 0.0, 1.0)) * math.cos(pitch)).normalized()   # sole normal
+    """Sole normal s faces back toward the rear camera (tilted up SOLE_UP, turned out a little); heel -> toe t points
+    up and leans outward TOE_OUT so the toe beans sit above the big pad, as in the reference."""
+    a = math.radians(SOLE_UP)
+    s = Vector((side * SOLE_OUT, math.cos(a), math.sin(a))).normalized()
+    up = Vector((0.0, 0.0, 1.0))
+    t0 = (up - s * up.dot(s)).normalized()
+    t = (Matrix.Rotation(math.radians(side * TOE_OUT), 3, s) @ t0).normalized()
+    lat = t.cross(s).normalized()
+    if lat.x * side < 0:
+        lat = -lat
     return t, lat, s
 
 
@@ -619,8 +617,9 @@ def build_leg(side):
     """Leg.<tag>: pink fur leg capsule hip -> ankle (seam inside) + cream-white fur paw (Col.a = 0) with a sole
     big pad + 4 toe beans (M_PawPad, pink). Paw local frame: x = lateral (out), y = heel->toe, z = up from sole."""
     hip = Vector((side * HIP.x, HIP.y, HIP.z))
-    ank = Vector((side * ANKLE.x, ANKLE.y, ANKLE.z))
     t, lat, s = paw_frame(side)
+    pc = Vector((side * PAW_C.x, PAW_C.y, PAW_C.z))
+    ank = pc - t * 0.05 - s * 0.045             # ankle on the dorsal side near the heel (inside the paw)
     md = MeshData()
     axis = (ank - hip).normalized()
     L = (ank - hip).length
@@ -641,7 +640,7 @@ def build_leg(side):
     leg_faces = len(md.f)
     leg_verts = len(md.v)
     # paw: rounded bean in its own frame, toes up, sole facing forward-down
-    centre = ank + t * PAW_FWD - s * 0.006
+    centre = pc
     zf = -s                                     # paw local +z = away from the sole (dorsal)
     ax = t.cross(zf).normalized()               # right-handed (ax, t, zf) on both sides -> outward winding
     paw = MeshData()
@@ -850,8 +849,8 @@ def build_beanie():
     KNIT, CUFF, STRIPE = 0, 1, 2
     psi0 = math.pi / 2                          # seam at the back
     # ---- crown profile (u, r, material of the band above this point)
-    prof = [(0.240, 0.418, STRIPE), (0.272, 0.440, STRIPE), (STRIPE_U[0], 0.451, STRIPE), (0.313, 0.451, STRIPE),
-            (0.343, 0.446, STRIPE), (STRIPE_U[1], DOME_R, KNIT)]
+    prof = [(0.255, 0.430, STRIPE), (0.290, 0.457, STRIPE), (STRIPE_U[0], 0.467, STRIPE), (0.348, 0.466, STRIPE),
+            (0.378, 0.458, STRIPE), (0.397, 0.446, STRIPE), (STRIPE_U[1], 0.428, KNIT), (DOME_U0, DOME_R, KNIT)]
     for phi in (10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 69.0, 77.0, 84.0):
         u, r = dome_ur(phi)
         prof.append((u, r, KNIT))

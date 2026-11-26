@@ -64,12 +64,12 @@ HAT_AXIS = V(CONTRACT["HAT_AXIS"]).normalized()
 CUFF_BOTTOM_A = CONTRACT["CUFF_BOTTOM_A"]
 HAT = CONTRACT["hat"]
 POMPOM_C, POMPOM_R = V(HAT["pompom_c"]), HAT["pompom_r"]
-ARM_HAND = 0.14           # elbow-ish joint along the arm (hand bone = the mitt)
+ARM_HAND = 0.15           # elbow-ish joint along the arm (hand bone = the mitt)
 
 # ------------------------------------------------------------------ seated riding pose
 SEAT_DROP = 0.05          # body lowered so the fur-ball underside rests ~2 cm above the slide surface
 SEAT_LEAN = -4.0          # body pitch (negative = recline)
-HEAD_PITCH = 10.0          # head (and beanie) pitched forward: the rear camera sees the back of the hat
+HEAD_PITCH = 6.0          # head (and beanie) nod forward a little: at the approved hero camera the hat reads side-on
 FOOT_FLOOR = 0.012        # lowest paw point in the seated pose (heel on the surface)
 FOOT_MIN_Z = 0.006        # floor clamp for animated paws
 ARM_RAISE_MAX = 26.0      # extra raise above the modelled 30 deg: soft cap + per-frame cuff collision solve
@@ -298,14 +298,19 @@ def seat_legs(info):
             m = g_seat @ about(hip, rx(theta))
             return min((m @ v).z for v in pts)
 
-        lo, hi = -45.0, 45.0                   # lowest() decreases with theta (front points go down)
-        for _ in range(40):
-            mid = 0.5 * (lo + hi)
-            if lowest(mid) > FOOT_FLOOR:
-                lo = mid
-            else:
-                hi = mid
-        theta = 0.5 * (lo + hi)
+        lo, hi = -30.0, 30.0                   # bisection on whichever direction lowers the paw
+        flo, fhi = lowest(lo) - FOOT_FLOOR, lowest(hi) - FOOT_FLOOR
+        if flo * fhi > 0.0:
+            theta = 0.0
+        else:
+            for _ in range(40):
+                mid = 0.5 * (lo + hi)
+                fm = lowest(mid) - FOOT_FLOOR
+                if (fm > 0.0) == (flo > 0.0):
+                    lo, flo = mid, fm
+                else:
+                    hi = mid
+            theta = 0.5 * (lo + hi)
         T = g_seat @ about(hip, rx(theta))
         seat['T'][tag] = T
         seat['O'][tag] = T @ info['paw_c'][tag]
@@ -352,7 +357,7 @@ def build_armature(info, seat, coll):
     for _side, tag in SIDES:
         R0, d = info['arm_root'][tag], info['arm_dir'][tag]
         bone('arm.' + tag, R0 - d * 0.03, R0 + d * ARM_HAND, 'body', up)
-        bone('hand.' + tag, R0 + d * ARM_HAND, R0 + d * 0.315, 'arm.' + tag, up)
+        bone('hand.' + tag, R0 + d * ARM_HAND, R0 + d * CONTRACT['arms'][tag]['length'], 'arm.' + tag, up)
     for _side, tag in SIDES:
         bone('leg.' + tag, seat['hip_rest'][tag], seat['ankle_rest'][tag], 'root', seat['dorsal'][tag])
         bone('foot.' + tag, seat['ankle_rest'][tag], seat['toe_rest'][tag], 'leg.' + tag, seat['dorsal'][tag])
@@ -490,13 +495,11 @@ def tag_fur(objs, info):
             nlv = info['leg_verts'][tag] if not arm else 0
             for v in me.vertices:
                 if arm:
-                    w = V_LIMB * smoothstep(0.045, 0.068, (v.co - info['palm_c'][tag]).length)
-                    for bc in info['bean_c'][tag]:
-                        w *= smoothstep(0.015, 0.030, (v.co - bc).length)
+                    w = V_LIMB                             # no palm pads: full fur mitt
                 else:
                     w = V_LIMB if v.index < nlv else V_PAW
                     for k, pc in enumerate(info['pads'][tag]):
-                        r0, r1 = (0.046, 0.068) if k == 0 else (0.020, 0.034)
+                        r0, r1 = (0.058, 0.082) if k == 0 else (0.024, 0.040)
                         w *= 0.25 + 0.75 * smoothstep(r0, r1, (v.co - pc).length)
                 hide[v.index] = 1 if inside_depth(body_bvh, v.co) > 0.002 else 0
                 furv[v.index] = w
@@ -625,21 +628,22 @@ def clip_slide(t, D=1.0):
     bobbing forward, tail wiggle."""
     p = t / D
     P = Pose()
-    P.body_off.z += 0.010 * s1(2 * p)
-    P.body_rot[0] += 1.2 * s1(2 * p + 0.15)
-    P.body_rot[1] += 2.5 * s1(p)
+    # every term is zero (or at its rest value) at t = 0.25 s, the frame the Unity hero capture samples
+    P.body_off.z += 0.010 * s1(2 * p + 0.5)
+    P.body_rot[0] += 1.2 * s1(2 * p + 0.5)
+    P.body_rot[1] += 2.5 * s1(p + 0.75)
     P.body_rot[2] += 1.2 * s1(p + 0.25)
-    P.head_rot = [HEAD_PITCH - 1.2 * s1(2 * p + 0.05), -1.2 * s1(p - 0.06), -1.0 * s1(p + 0.25)]
-    P.arm['L'] = [5.0 - 5.0 * s1(p), -4.0 + 4.0 * s1(2 * p + 0.3), 0.0]
-    P.arm['R'] = [5.0 + 5.0 * s1(p), -4.0 + 4.0 * s1(2 * p + 0.3), 0.0]
-    P.hand['L'] = [10.0 + 9.0 * s1(2 * p + 0.2), 0.0, 0.0]
-    P.hand['R'] = [10.0 + 9.0 * s1(2 * p + 0.7), 0.0, 0.0]
-    P.leg['L'] = [2.0 + 3.0 * s1(2 * p + 0.1), 0.0, 0.0]
-    P.leg['R'] = [2.0 + 3.0 * s1(2 * p + 0.35), 0.0, 0.0]
-    P.foot['L'] = [-4.0 + 6.0 * s1(2 * p + 0.25), 0.0, 0.0]
-    P.foot['R'] = [-4.0 + 6.0 * s1(2 * p + 0.6), 0.0, 0.0]
-    P.tail_rot = [14.0, 8.0 * s1(2 * p), 0.0]
-    P.tip_rot, P.pom_rot = [-6.0, 0.0, 0.0], [-10.0 + 3.0 * s1(4 * p), 0.0, 0.0]
+    P.head_rot = [HEAD_PITCH - 1.2 * s1(2 * p + 0.5), -1.2 * s1(p + 0.75), -1.0 * s1(p + 0.25)]
+    P.arm['L'] = [4.0 * s1(p + 0.75), 3.0 * s1(2 * p + 0.5), 0.0]
+    P.arm['R'] = [-4.0 * s1(p + 0.75), 3.0 * s1(2 * p + 0.5), 0.0]
+    P.hand['L'] = [4.0 + 6.0 * s1(2 * p + 0.5), 0.0, 0.0]
+    P.hand['R'] = [4.0 - 6.0 * s1(2 * p + 0.5), 0.0, 0.0]
+    P.leg['L'] = [1.5 * s1(2 * p + 0.5), 0.0, 0.0]
+    P.leg['R'] = [-1.5 * s1(2 * p + 0.5), 0.0, 0.0]
+    P.foot['L'] = [3.0 * s1(2 * p + 0.5), 0.0, 0.0]
+    P.foot['R'] = [-3.0 * s1(2 * p + 0.5), 0.0, 0.0]
+    P.tail_rot = [14.0, 8.0 * s1(2 * p + 0.5), 0.0]
+    P.tip_rot, P.pom_rot = [-2.0, 0.0, 0.0], [-3.0 + 2.0 * s1(4 * p), 0.0, 0.0]
     return P
 
 
@@ -1434,13 +1438,16 @@ REAR_CAM = ((0.0, 2.8, 1.35), (0.0, -1.5, 0.45))
 FRONT_GAME_CAM = ((0.0, -2.3, 0.98), (0.0, 1.5, 0.30))
 # Unity portrait gameplay camera (RunnerCameraRig): 2.55 m behind, 1.5 m above the slide, 10 deg down, vFOV 58
 GAME_BACK, GAME_HEIGHT, GAME_PITCH, GAME_VFOV = 2.55, 1.5, 10.0, 58.0
+# effective hero camera in the mascot frame: approved rig 2.75 m back / 1.3 m up / pitch 10 / vFOV 58 on the 12.2 deg
+# downhill at 105.5 m (slope compensation, look-ahead) with the runner pitching the mascot 7.3 deg forward net
+HERO_CAM, HERO_PITCH = (0.0, 2.566, 1.039), 8.21
 SIDE_CAM = ((2.75, -0.30, 0.62), (0.0, -0.10, 0.42))
 FRONT_CAM = ((0.0, -2.7, 0.78), (0.0, 0.0, 0.52))
 
 
 def render_game_view(path, label="Slide f7 - Unity portrait gameplay camera", res=(540, 960)):
-    cam = Vector((0.0, GAME_BACK, GAME_HEIGHT))
-    look = cam + Vector((0.0, -math.cos(math.radians(GAME_PITCH)), -math.sin(math.radians(GAME_PITCH))))
+    cam = Vector(HERO_CAM)
+    look = cam + Vector((0.0, -math.cos(math.radians(HERO_PITCH)), -math.sin(math.radians(HERO_PITCH))))
     return render(path, cam, look, 0.0, res, label=label, vfov=GAME_VFOV, subject=(0.0, -0.05, 0.5), samples=40)
 
 
@@ -1453,6 +1460,11 @@ def make_previews(arm, actions):
 
     set_action(arm, actions, "Slide", 7)            # the Unity hero capture samples Slide at 0.25 s
     render_game_view(C.preview_path("SK_Mascot_game_9x16"))
+    if QUICK:
+        set_action(arm, actions, "Slide", 7)
+        render(C.preview_path("SK_Mascot_seated_side"), SIDE_CAM[0], SIDE_CAM[1], 50.0, (700, 700),
+               subject=(0.0, -0.1, 0.45), label="Slide - side (travel = left)", samples=24)
+        return
     set_action(arm, actions, "Slide", 0)
     p_rear = os.path.join(SCRATCH, "rear_gameplay.tga")
     render(p_rear, REAR_CAM[0], REAR_CAM[1], 25.0, (1280, 720), label="Slide - rear", fmt='TARGA_RAW')

@@ -102,14 +102,14 @@ namespace BubbleWash.EditorTools
             // surfaces never bloom, moderate scatter so dozens of ring bulbs give soft amber halos instead of one milky veil
             // over the tunnel. Untinted: every halo carries its source's own colour (amber bulbs, yellow / cyan / pink stars).
             var bloom = profile.Add<Bloom>(true);
-            bloom.threshold.Override(1.3f); bloom.intensity.Override(0.95f); bloom.scatter.Override(0.62f);
+            bloom.threshold.Override(1.1f); bloom.intensity.Override(1.3f); bloom.scatter.Override(0.64f);
             bloom.tint.Override(Color.white); bloom.highQualityFiltering.Override(true);
             bloom.maxIterations.Override(8);
             // Neutral keeps saturated hues far better than ACES (which pushes bright yellow / cyan to white).
             var tm = profile.Add<Tonemapping>(true); tm.mode.Override(TonemappingMode.Neutral);
             var ca = profile.Add<ColorAdjustments>(true);
             // richer, darker mids than the washed-out HDR baseline (frame L50 .63 -> reference .55)
-            ca.saturation.Override(16f); ca.contrast.Override(12f); ca.postExposure.Override(-0.35f);
+            ca.saturation.Override(4f); ca.contrast.Override(8f); ca.postExposure.Override(-0.1f);
             // blue-violet shadows / low mids (depth, dark holes); warm highlights keep gold and bulbs warm
             var smh = profile.Add<ShadowsMidtonesHighlights>(true);
             smh.shadows.Override(new Vector4(0.92f, 0.88f, 1.14f, -0.03f));
@@ -122,7 +122,7 @@ namespace BubbleWash.EditorTools
             // Hue-selective saturation: only the blue-violet range (drum walls, ceiling bays, far tunnel ~225-268 deg) gets
             // richer (x1.28); the purple hat (~280), pink fur, cyan water and gold are untouched.
             var curves = profile.Add<ColorCurves>(true);
-            curves.hueVsSat.Override(new TextureCurve(new[] { new Keyframe(0.57f, 0.5f), new Keyframe(0.63f, 0.64f), new Keyframe(0.72f, 0.64f),
+            curves.hueVsSat.Override(new TextureCurve(new[] { new Keyframe(0.57f, 0.5f), new Keyframe(0.63f, 0.57f), new Keyframe(0.72f, 0.57f),
                 new Keyframe(0.765f, 0.5f) }, 0.5f, true, new Vector2(0f, 1f)));
             var vg = profile.Add<Vignette>(true); vg.intensity.Override(0.28f); vg.smoothness.Override(0.48f); vg.color.Override(new Color(0.12f, 0.03f, 0.26f));
             var wb = profile.Add<WhiteBalance>(true); wb.temperature.Override(0f); wb.tint.Override(0f);
@@ -332,7 +332,7 @@ namespace BubbleWash.EditorTools
                 comb.Add(Recolor(mats[s.color]), Matrix4x4.TRS(pos, rot, Vector3.one * scale));
                 // glow card facing the camera, just behind the tubes, ~1.8x the star: soft enough that the part cut by the
                 // drum wall is invisible (its radius beyond the inset is < 4 % intensity)
-                AddGlow(s.color, pos - toCam * (0.06f * scale), Quaternion.LookRotation(-toCam, upHint), StarMeshWidth * 1.8f * scale);
+                AddGlow(s.color, pos - toCam * (0.06f * scale), Quaternion.LookRotation(-toCam, upHint), StarMeshWidth * 2.2f * scale);
                 heroCount++;
                 Debug.Log($"[BWK] hero star c{s.color} screen ({s.x:F2},{s.y:F2}) track {wf.distance:F1} m depth {Vector3.Dot(pos - camPos, camFwd):F1} m scale {scale:F2}");
             }

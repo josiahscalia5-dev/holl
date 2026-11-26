@@ -7,7 +7,7 @@ Builds, exports (FBX -> Assets/BubbleWashKingdom/Art/Models/Track/) and previews
   SM_GlassPipe_Module  glass tube r 0.28 around a glowing core r 0.20  M_Glass, M_PipeWater
   SM_Pipe_Coupler      gold band r 0.33 x 0.12 with 6 hex bolt heads   M_Gold
   SM_Pipe_Elbow        90 degree glass elbow, bend radius 0.8          M_Glass, M_PipeWater
-  SM_Ring              slim polished gold ring r 3.80-4.26 x 0.26: inner + outer rolled beads, shallow dark-gold
+  SM_Ring              polished gold band r 3.65-4.26 x 0.33: inner + outer rolled beads, shallow dark-gold
                        trough with 28 warm marquee bulbs half sunk in gold cups (m1)              M_Gold, M_GoldDark, M_Bulb
   SM_DrumRim           fat rolled lavender drum lip r 3.74-4.26 (short front bevel, long back slope) with 32 soft
                        LED studs, 3 between two gold rings (nested-drum depth, m1)                 M_DrumRim, M_RimLight
@@ -64,18 +64,18 @@ ELBOW_R, ELBOW_SEGS = 0.8, 12
 # marquee bulbs sit, half sunk in gold cups, so the bulbs read as part of the band (no chunky rope / plates / rivets).
 RING_SEGS = 84                  # 3 segments per bulb pitch (smooth silhouette at the hero distance)
 RING_BULBS = 28                 # reference f_003.00s: ~24-28 warm bulbs per ring (measured at the first two gold rings)
-RG_BACK_Y, RG_OUT = -0.10, 4.26           # back face; outer surface buried in the drum wall (r 4.2)
-RG_IN_FACE = 3.815                        # inner face (toward the axis) under the inner bead
-RG_IB_C, RG_IB_R = (3.865, 0.015), 0.065  # inner polished bead: apex rho 3.80, front y 0.08
-RG_CORNER_R = 0.04                        # rounded back-inner corner
-RG_FLOOR_Y = 0.035                        # bulb trough rim height
-RG_TROUGH = 0.015                         # trough depth below RG_FLOOR_Y at the channel centre
-RG_OB_C, RG_OB_R = (4.13, 0.01), 0.06     # outer bead against the wall: front y 0.07
-RG_BULB_RHO = 4.001                       # trough centre line (CHECK printed by ring_parts)
-BULB_R2, BULB_H2 = 0.068, 0.072           # glass bulb half-width / half-height
-BULB_Y = RG_FLOOR_Y + 0.05                # bulb centre: lower half sunk in the cup, crown ~0.08 above the beads
+RG_BACK_Y, RG_OUT = -0.12, 4.26           # back face; outer surface buried in the drum wall (r 4.2)
+RG_IN_FACE = 3.66                         # inner face (toward the axis) under the inner bead
+RG_IB_C, RG_IB_R = (3.73, 0.03), 0.085    # inner polished bead: apex rho 3.645, front y 0.115 (m1 v2: fatter band)
+RG_CORNER_R = 0.05                        # rounded back-inner corner
+RG_FLOOR_Y = 0.05                         # bulb trough rim height
+RG_TROUGH = 0.02                          # trough depth below RG_FLOOR_Y at the channel centre
+RG_OB_C, RG_OB_R = (4.12, 0.02), 0.075    # outer bead against the wall: front y 0.095
+RG_BULB_RHO = 3.932                       # trough centre line (CHECK printed by ring_parts)
+BULB_R2, BULB_H2 = 0.100, 0.100           # fat warm marquee bulbs (lead m1: reference bulbs read big)
+BULB_Y = RG_FLOOR_Y + 0.06                # bulb centre: lower half sunk in the cup
 BULB_TILT = math.radians(10.0)            # bulbs lean toward the tunnel axis (gameplay camera)
-CUP_RO, CUP_RI, CUP_TOP = 0.082, 0.069, 0.040
+CUP_RO, CUP_RI, CUP_TOP = 0.118, 0.101, 0.050
 PLATES = 0                                # m1: no clamp plates / rivets (clutter at the hero distance)
 
 # ------------------------------------------------------------------ lavender drum rim (nested-drum lips between rings)
