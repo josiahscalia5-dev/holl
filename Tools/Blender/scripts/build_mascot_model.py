@@ -38,10 +38,15 @@ import bwk_common as C  # noqa: E402
 QUICK = os.environ.get("BWK_QUICK", "") == "1"
 
 # ------------------------------------------------------------------ body (meters)
-BODY_C = Vector((0.0, 0.0, 0.57))          # body centre
-BODY_W, BODY_D, BODY_H = 0.85, 0.82, 1.00  # width (1 BW), depth, height: an upright plush egg, so the fluffy back
-                                           # below the beanie is the dominant mass (reference: ~0.75 hat widths)
+# Sizes measured on the approved rear frame f_003.00s back-projected through the owner-approved hero camera
+# (2.75 m back / 1.3 m up / pitch 10 / vFOV 58 on the 12 deg downhill): cuff ~0.98 m wide with its bottom ~0.62 m
+# above the slide, stripe top ~0.87 m, pom-pom ~0.47 m across with its top ~1.38 m, body ~0.90 m wide below the cuff,
+# paws at cuff height ~0.64 m out from the centre, feet centred ~0.30 m out and ~0.30 m behind, 0.17 m up.
+BODY_C = Vector((0.0, 0.0, 0.53))          # body centre (rest; the seated pose lowers it 5 cm)
+BODY_W, BODY_D, BODY_H = 0.90, 0.84, 0.92  # width, depth, height: an upright plush pear, so the fluffy back below the
+                                           # beanie is the dominant mass
 BODY_EGG = 0.15                            # >0: fuller toward the bottom
+FACE_DZ = BODY_C.z - 0.57                  # face landmarks were designed for a body centre at 0.57
 BODY_SEG = 16                              # quad sphere: 6*16*16 quads = 3072 tris
 FUR_U, FUR_V = 2.64, 1.32                  # metres per fur UV unit (around, along)
 
@@ -49,62 +54,67 @@ FUR_U, FUR_V = 2.64, 1.32                  # metres per fur UV unit (around, alo
 # Hat frame: origin BODY_C, axis tilted HAT_TILT about X (negative = front edge up, crown leans back). Profile points
 # are (u, r): u = height along the axis, r = radius toward his side (x); around the axis r is scaled by hat_ell(psi)
 # so the hat follows the body's slightly oval cross-section. psi = 0 -> +X, +90 deg -> back (+Y), -90 deg -> front.
-HAT_TILT = -5.0
-HAT_LIFT = 0.045                           # every hat profile u is lifted this much (taller body, cuff clears it)
+HAT_TILT = -3.0
+HAT_LIFT = 0.0                             # every hat profile u is lifted this much
 HAT_DEPTH = 0.94
 CUFF_BOTTOM_A = 72.0                       # deg from the hat axis: line where the cuff tucks into the fur
 CUFF_RIBS, CROWN_RIBS = 96, 72             # geometric knit ribs around (BWK/Character _StitchU must match)
 CUFF_RIB_AMP, CROWN_RIB_AMP = 0.0075, 0.0045
+# reference (rear view, W_h = cuff width): rolled ribbed cuff ~0.19-0.2 W_h tall, only slightly wider than the head;
+# pale stripe ~0.09 W_h tapering in toward its top roll; crown emerges narrower (~0.83 W_h) as a soft round dome;
+# pom-pom ~0.48 W_h sitting low on the dome.
 CUFF_PROFILE = [  # (u, r, rib weight): roll under -> tall ribbed outer face -> top roll -> tucks inside
-    (0.093, 0.428, 0.0), (0.089, 0.445, 0.1), (0.096, 0.459, 0.5), (0.113, 0.466, 0.9), (0.147, 0.469, 1.0),
-    (0.193, 0.470, 1.0), (0.233, 0.468, 1.0), (0.262, 0.463, 0.9), (0.280, 0.454, 0.5), (0.289, 0.442, 0.2),
-    (0.290, 0.431, 0.0), (0.282, 0.421, 0.0)]
-STRIPE_U = (0.287, 0.370)                  # pale ribbed band right above the cuff (~9 % of the hat width)
-DOME_U0, DOME_H, DOME_R, DOME_EXP = 0.370, 0.235, 0.436, 1.8    # round slouchy dome (superellipse exponent)
+    (0.135, 0.452, 0.0), (0.127, 0.470, 0.1), (0.132, 0.483, 0.5), (0.147, 0.490, 0.9), (0.180, 0.493, 1.0),
+    (0.225, 0.494, 1.0), (0.265, 0.492, 1.0), (0.293, 0.486, 0.9), (0.309, 0.476, 0.5), (0.317, 0.464, 0.2),
+    (0.317, 0.452, 0.0), (0.309, 0.442, 0.0)]
+STRIPE_U = (0.315, 0.405)                  # pale ribbed band right above the cuff (~9 % of the hat width)
+DOME_U0, DOME_H, DOME_R, DOME_EXP = 0.413, 0.22, 0.405, 2.0     # soft round dome (elliptical profile)
 TOP_STRIPE_PHI, TOP_STRIPE_HW = 47.0, 5.5  # extra pale stripe on the dome front (deg of the dome angle), fades out
 TOP_STRIPE_FULL, TOP_STRIPE_END = 45.0, 78.0    # ... over the front only (deg from the front): never seen from behind
 STAR_U, STAR_PHI, STAR_ROT = 0.192, 33.0, -12.0  # star badge on the cuff, 33 deg toward HIS LEFT (+X)
 STAR_RO, STAR_RI = 0.072, 0.032
-POMPOM_R, POMPOM_LIFT = 0.232, 0.42        # pom-pom radius; centre this many radii above the dome top
+POMPOM_R, POMPOM_LIFT = 0.232, 0.18        # pom-pom radius; centre this many radii above the dome top
 POMPOM_SEG = 12
 
-# ------------------------------------------------------------------ face (unchanged design)
-EYE_X, EYE_Z = 0.155, 0.585                # eye centres on the front surface
+# ------------------------------------------------------------------ face (unchanged design, follows the body centre)
+EYE_X, EYE_Z = 0.155, 0.585 + FACE_DZ      # eye centres on the front surface
 EYE_H, EYE_RS, EYE_VS = 0.025, 0.12, 1.06  # protrusion, cap sphere radius, vertical stretch
 EYE_SEG = 32
 IRIS_R, PUPIL_IN, PUPIL_DOWN = 0.072, 0.014, 0.007   # UV radius 0.5 = IRIS_R; pupil toward the nose
-MOUTH_Z, MOUTH_W, MOUTH_H, MOUTH_N = 0.455, 0.13, 0.105, 28
-NOSE_Z = 0.528
-BLUSH_X, BLUSH_Z, BLUSH_R = 0.235, 0.47, 0.058
+MOUTH_Z, MOUTH_W, MOUTH_H, MOUTH_N = 0.455 + FACE_DZ, 0.13, 0.105, 28
+NOSE_Z = 0.528 + FACE_DZ
+BLUSH_X, BLUSH_Z, BLUSH_R = 0.235, 0.47 + FACE_DZ, 0.058
 
-# ------------------------------------------------------------------ arms: big stubby mitts, raised out to the sides
-ARM_Z = 0.520                              # root height on the body side (just under the cuff)
-ARM_UP, ARM_BACK = 42.0, 0.02              # rest direction: 30 deg above horizontal, slightly back
+# ------------------------------------------------------------------ arms: big stubby mitts raised up and out ("wheee")
+# Reference rear view: the arms leave the body sides just under the cuff and rise ~45 deg, so the paws sit at cuff
+# height OUTSIDE the hat silhouette. Seen from behind = back of the mitt (no palm pads), tips a little lighter.
+ARM_Z = 0.480                              # root height on the body side (rest; just under the cuff when seated)
+ARM_UP, ARM_BACK = 44.0, 0.03              # rest direction: 44 deg above horizontal, very slightly back
 ARM_SEG = 20
-ARM_PROFILE = [(-0.10, 0.068), (-0.05, 0.078), (0.0, 0.083), (0.06, 0.086), (0.12, 0.088), (0.18, 0.090),
-               (0.225, 0.090), (0.258, 0.084), (0.283, 0.070), (0.300, 0.050), (0.311, 0.026), (0.315, 0.0)]
-PALM_H, PALM_SIZE = 0.215, (0.050, 0.056, 0.012)      # palm pad (along arm, size across / along / thickness)
-ARM_BEANS = [(-48.0, 0.275), (-16.0, 0.290), (16.0, 0.290), (48.0, 0.275)]   # (angle around from palm, h)
-BEAN_SIZE = (0.0155, 0.0145, 0.0075)
-PALM_FACING = Vector((0.0, 0.55, 0.85))    # palm/beans face up and a little back (seen by the rear camera)
+ARM_PROFILE = [(-0.10, 0.072), (-0.05, 0.082), (0.0, 0.088), (0.06, 0.091), (0.12, 0.094), (0.18, 0.099),
+               (0.235, 0.106), (0.275, 0.108), (0.307, 0.102), (0.332, 0.087), (0.350, 0.064), (0.362, 0.035),
+               (0.366, 0.0)]
+ARM_TIP_FROM, ARM_TIP_TO, ARM_TIP_CREAM = 0.20, 0.35, 0.42   # Col.a fades toward the cream coat at the paw tip
+PALM_FACING = Vector((0.0, -0.55, 0.85))   # palm side (front/up): only used as the seam-free side reference
 
-# ------------------------------------------------------------------ legs (modelled seated): wide V-sit, toes up
-HIP = Vector((0.21, -0.08, 0.200))         # hip joint inside the lower body (his left; mirrored for the right)
-ANKLE = Vector((0.50, -0.20, 0.120))       # wide V-sit: the paws sit beside the low body and peek out from behind
-LEG_SEG, LEG_R0, LEG_R1 = 18, 0.088, 0.072 # around, radius at hip / ankle
-TOE_YAW, TOE_PITCH = 26.0, 58.0            # toes splay outward / point up (sole faces forward-down)
-PAW_HALF = (0.112, 0.140, 0.070)           # half width (lateral), half length (heel->toe), half thickness
-PAW_FWD = 0.062                            # paw centre ahead of the ankle along the toe direction
-PAW_SEG = 7
-SOLE_PADS = [(0.0, -0.042, 0.040, 0.044, 0.010),         # big pad (heel side): (lat, along, r_lat, r_along, h)
-             (-0.056, 0.040, 0.018, 0.020, 0.008), (-0.020, 0.062, 0.018, 0.020, 0.008),
-             (0.020, 0.062, 0.018, 0.020, 0.008), (0.056, 0.040, 0.018, 0.020, 0.008)]
-TAIL_R, TAIL_Z, TAIL_OUT = 0.060, 0.25, 0.05   # tail puff radius, height, centre offset (radii) behind the surface
+# ------------------------------------------------------------------ legs + feet (seated): the reference rear view shows
+# big cream feet with pink beans at the bottom-left / bottom-right of the body, SOLES FACING THE CAMERA (toes up and
+# splayed out ~20 deg) while he sits on his bottom: the short legs fold back under him (plush W-sit).
+PAW_C = Vector((0.300, 0.285, 0.215))      # paw centre (his left; mirrored), behind the bottom on the camera side
+HIP = Vector((0.200, 0.020, 0.230))        # hip joint inside the lower body
+SOLE_UP, SOLE_OUT, TOE_OUT = 22.0, 0.18, 22.0   # sole normal tilt up toward the camera / outward turn; toes lean out
+LEG_SEG, LEG_R0, LEG_R1 = 18, 0.090, 0.080 # around, radius at hip / ankle
+PAW_HALF = (0.130, 0.165, 0.075)           # half width (lateral), half length (heel->toe), half thickness
+PAW_SEG = 8
+SOLE_PADS = [(0.0, -0.045, 0.058, 0.052, 0.012),         # big pad (heel side): (lat, along, r_lat, r_along, h)
+             (-0.074, 0.056, 0.022, 0.025, 0.010), (-0.027, 0.090, 0.023, 0.026, 0.010),
+             (0.027, 0.090, 0.023, 0.026, 0.010), (0.074, 0.056, 0.022, 0.025, 0.010)]
+TAIL_R, TAIL_Z, TAIL_OUT = 0.042, 0.17, 0.05   # small tail puff radius, height, centre offset (radii) behind the surface
 
 WHITE = (1.0, 1.0, 1.0, 1.0)
-PAD_PINK = (0.97, 0.56, 0.68, 1.0)         # Col (sRGB) for pads / beans on M_PawPad
-SOLE_WHITE = (1.0, 0.97, 0.98, 1.0)
-PALM_COL = (1.0, 0.80, 0.86, 1.0)         # light pink palm pad on the raised arms (seen from behind)
+# Unity passes vertex colours to shaders raw (no sRGB decode), so these are the linear multipliers BWK/Character
+# (M_PawPad, fabric mode) applies: (0.90, 0.30, 0.42) displays as a soft candy pink ~#F294AD under white light.
+PAD_PINK = (0.90, 0.30, 0.42, 1.0)
 BLUSH_COL = (1.0, 0.70, 0.72)              # Col tint (sRGB) at the blush centre
 
 HAT_R = Matrix.Rotation(math.radians(HAT_TILT), 3, 'X')

@@ -25,29 +25,30 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _BandSharpness: 18
+    - _BandSharpness: 14
     - _Brightness: 1
-    - _Contrast: 1.4
+    - _Contrast: 1.3
     - _Emission: 0.08
-    - _EnvReflect: 0.5
+    - _EnvReflect: 0.45
     - _EnvRoughness: 0.25
-    - _EnvTint: 0.4
+    - _EnvTint: 0.5
     - _FogAmount: 0.75
-    - _GlintStrength: 1.2
-    - _HighlightSize: 8
+    - _GlintStrength: 1
+    - _HighlightSize: 7
     - _LightInfluence: 0.35
-    - _Sparkle: 0.6
+    - _Sparkle: 0.4
     - _SparkleScale: 16
     - _SpecPower: 90
-    - _SpecStrength: 1.6
+    - _SpecStrength: 1.4
     - _StreakHeight: 0.6
-    - _StreakStrength: 0
+    - _StreakStrength: 0.6
     - _ViewGradient: 1
     m_Colors:
-    - _BandColor: {r: 0.84705883, g: 0.7764706, b: 1, a: 1}
-    - _HighColor: {r: 0.95686275, g: 0.9019608, b: 1, a: 1}
-    - _LowColor: {r: 0.18039216, g: 0.101960786, b: 0.4392157, a: 1}
-    - _MidColor: {r: 0.5568628, g: 0.44705883, b: 0.85490197, a: 1}
-    - _RimColor: {r: 0.9529412, g: 0.65882355, b: 0.9254902, a: 1}
+    - _BandColor: {r: 0.9019608, g: 0.78431374, b: 1, a: 1}
+    - _HighColor: {r: 1, g: 0.9411765, b: 1, a: 1}
+    - _LowColor: {r: 0.29411766, g: 0.17254902, b: 0.61960787, a: 1}
+    - _MidColor: {r: 0.6117647, g: 0.4862745, b: 0.9019608, a: 1}
+    - _ProbeBakeTint: {r: 1, g: 1, b: 1, a: 1}
+    - _RimColor: {r: 1, g: 0.60784316, b: 0.91764706, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -28,8 +28,8 @@ Material:
     - _CausticAmount: 0.75
     - _CenterGlow: 0.35
     - _ChevronGlow: 0.85
-    - _ChevronScale: 1.45
-    - _ChevronSpacing: 2.2
+    - _ChevronScale: 1.35
+    - _ChevronSpacing: 1.1
     - _ChevronStart: 6
     - _Depth: 0.22
     - _EdgeFoam: 0.75

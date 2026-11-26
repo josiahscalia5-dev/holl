@@ -26,18 +26,20 @@ Material:
     m_Ints: []
     m_Floats:
     - _Chase: 1
-    - _ChaseMin: 0.7
+    - _ChaseMin: 0.75
     - _ChaseScale: 1.6
     - _ChaseSpeed: 1.5
-    - _CorePower: 6
-    - _CoreWhite: 0.22
-    - _EdgeSaturate: 0.4
+    - _CorePower: 2
+    - _CoreWhite: 0.65
+    - _EdgeSaturate: 0.5
     - _FogAmount: 0.08
-    - _HaloBoost: 0.25
-    - _Intensity: 9
+    - _HaloBoost: 0.3
+    - _Intensity: 6
+    - _ProbeBakeDim: 0.3
     - _PulseAmount: 0.05
     - _PulseSpeed: 1.2
     m_Colors:
-    - _Color: {r: 1, g: 0.45490196, b: 0, a: 1}
+    - _Color: {r: 1, g: 0.39607844, b: 0.15294118, a: 1}
+    - _CoreColor: {r: 1, g: 0.6039216, b: 0.3137255, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

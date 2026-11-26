@@ -29,6 +29,9 @@ Material:
     - _BumpStrength: 0.5
     - _GlintAmount: 0.5
     - _Glow: 0.32
+    - _HotBoost: 0.6
+    - _HotFar: 3.5
+    - _HotNear: 3
     - _Metallic: 0
     - _Mode: 1
     - _ReflectBoost: 0.5

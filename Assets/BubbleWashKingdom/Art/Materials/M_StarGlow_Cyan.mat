@@ -25,13 +25,13 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Core: 2.6
+    - _Core: 2.4
     - _DstBlend: 1
     - _Mode: 1
     - _Softness: 1
     - _SrcBlend: 1
-    - _Strength: 1.2
+    - _Strength: 0.95
     m_Colors:
-    - _Color: {r: 0.0627451, g: 0.7529412, b: 1, a: 1}
+    - _Color: {r: 0.078431375, g: 0.72156864, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

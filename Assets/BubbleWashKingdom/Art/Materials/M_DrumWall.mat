@@ -25,44 +25,49 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _BandLength: 2.8333333
-    - _BandOffset: 65
+    - _BandLength: 3.1875
+    - _BandOffset: 71.5
     - _Bevel: 0.7
-    - _CeilingLight: 0.15
+    - _CeilingLight: 0.12
+    - _CeilingTint: 0.75
+    - _CeilingWidth: 0.42
     - _Circumference: 26.39
     - _EdgeAO: 0.45
     - _EdgeAOWidth: 0.5
-    - _Glow: 0.08
+    - _Glow: 0.1
     - _GlowChance: 0.05
-    - _HoleAO: 0.45
-    - _HoleAOWidth: 0.08
+    - _HoleAO: 0.55
+    - _HoleAOWidth: 0.1
     - _HoleBand: 1
+    - _HoleDepth: 0.1
     - _HoleRadius: 0.19
     - _HoleSpacing: 0.6
     - _HoleStretch: 1.75
-    - _LipWidth: 0.045
-    - _Metallic: 0.7
+    - _InnerWall: 0.55
+    - _LipWidth: 0.05
+    - _Metallic: 0.55
     - _PanelLength: 3
     - _Pattern: 1
-    - _PlainBack: 0.4
+    - _PlainBack: 0.62
     - _PlainFront: 0.34
     - _Rows: 3
-    - _SheenStrength: 0.28
-    - _SlotLength: 0.46
-    - _SlotPitch: 0.64
+    - _SheenStrength: 0.18
+    - _SlotLength: 0.5
+    - _SlotPitch: 0.72
     - _SlotVariation: 0.3
-    - _SlotWidth: 0.21
-    - _Smoothness: 0.8
-    - _Sparkle: 0.8
+    - _SlotWidth: 0.27
+    - _Smoothness: 0.72
+    - _Sparkle: 0.45
     - _VTile: 4
     m_Colors:
-    - _BaseColor: {r: 0.45490196, g: 0.38039216, b: 0.74509805, a: 1}
+    - _BaseColor: {r: 0.5568628, g: 0.39215687, b: 0.8235294, a: 1}
+    - _CeilingColor: {r: 0.42352942, g: 0.4862745, b: 0.8784314, a: 1}
     - _GlowColorA: {r: 1.7, g: 0.85, b: 1.6, a: 1}
     - _GlowColorB: {r: 0.75, g: 1.35, b: 1.9, a: 1}
-    - _HighlightColor: {r: 0.6431373, g: 0.5764706, b: 0.8627451, a: 1}
-    - _HoleColor: {r: 0.043137256, g: 0.023529412, b: 0.1254902, a: 1}
+    - _HighlightColor: {r: 0.70980394, g: 0.6039216, b: 0.9411765, a: 1}
+    - _HoleColor: {r: 0.03137255, g: 0.015686275, b: 0.09411765, a: 1}
     - _HoleGlow: {r: 0.2901961, g: 0.18039216, b: 0.6039216, a: 1}
     - _SeamColor: {r: 0.16470589, g: 0.09411765, b: 0.34509805, a: 1}
-    - _SheenColor: {r: 0.7254902, g: 0.63529414, b: 0.9490196, a: 1}
+    - _SheenColor: {r: 0.8235294, g: 0.6509804, b: 0.95686275, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

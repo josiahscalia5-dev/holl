@@ -84,23 +84,26 @@ Shader "BWK/Glass"
                 half3 c = tint * _Alpha + refl * _Reflectivity * fres * lerp(1.0, film, _Iridescence) + spec * l.color + tint * fres * _Glow;
                 if (_Bubble > 0.5)
                 {
+                    // reference f_003.00s foreground bubbles: clear glassy beads with a soft, wide, bright WHITE rim, a
+                    // faintly milky interior, a round highlight up top and a small crescent bottom-right; only a hint
+                    // of thin-film colour (pink / cyan) near the rim.
                     half ndv = saturate(dot(n, v));
-                    // thin film: thickness swirls over the surface (slowly), colour bands strongest toward the rim
                     float3 fp = i.positionOS * 2.2 + float3(0.0, _Time.y * 0.12, _Time.y * 0.05);
                     float thick = BWK_ValueNoise3(fp) * 0.9 + BWK_ValueNoise3(fp * 2.7 + 4.1) * 0.35;
                     half3 bubbleFilm = BWK_Rainbow(thick * 1.6 + (1.0 - ndv) * 0.9 + 0.1);
-                    half patches = smoothstep(0.35, 0.8, BWK_ValueNoise3(fp * 1.3 + 9.0));
                     half rim = pow(1.0 - ndv, _RimWidth);
-                    half filmVis = saturate(rim * 1.4 + patches * 0.32 + (1.0 - ndv) * 0.2) * _FilmStrength;
-                    // studio window highlights fixed relative to the camera
+                    half filmVis = saturate(rim * 1.2 + (1.0 - ndv) * 0.15) * _FilmStrength;
+                    // round soft highlights fixed relative to the camera (view-space normal)
                     half3 nv = mul((float3x3)UNITY_MATRIX_V, n);
-                    half win = WindowMask(nv.xy, half2(-0.38, 0.44), half2(0.13, 0.085), 0.07);
-                    win += WindowMask(nv.xy, half2(-0.18, 0.5), half2(0.035, 0.05), 0.05) * 0.8;
-                    win += WindowMask(nv.xy, half2(0.42, -0.36), half2(0.07, 0.04), 0.06) * 0.65;
+                    half win = smoothstep(0.2, 0.08, length((nv.xy - half2(-0.22, 0.5)) * half2(1.0, 1.35)));
+                    win += smoothstep(0.07, 0.02, length(nv.xy - half2(-0.42, 0.3))) * 0.8;
+                    win += smoothstep(0.16, 0.06, length((nv.xy - half2(0.45, -0.5)) * half2(1.6, 1.0))) * 0.45;
                     win *= step(0.0, nv.z);
-                    half3 bc = bubbleFilm * filmVis * 0.75 + refl * _Reflectivity * (0.08 + rim * 0.9);
-                    bc += half3(1, 1, 1) * (win * _WindowStrength + rim * 0.6 + spec * 0.4);   // crisp white rim (reference)
-                    half ba = saturate(_Alpha + filmVis * 0.45 + rim * 0.75 + win * _WindowStrength * 0.8);
+                    half haze = (1.0 - rim) * 0.1;                                        // faint milky body
+                    half3 bc = lerp(half3(1, 1, 1), bubbleFilm, filmVis * 0.35) * (rim * 0.95 + haze)
+                             + refl * _Reflectivity * (0.05 + rim * 0.5) + _Tint.rgb * _Glow * rim;
+                    bc += half3(1, 1, 1) * (win * _WindowStrength + spec * 0.4);
+                    half ba = saturate(_Alpha + haze + rim * 0.85 + win * _WindowStrength * 0.8);
                     c = lerp(c, bc, _Bubble);
                     alpha = lerp(alpha, ba, _Bubble);
                 }

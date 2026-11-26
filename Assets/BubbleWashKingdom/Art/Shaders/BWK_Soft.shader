@@ -38,6 +38,9 @@ Shader "BWK/Soft"
         _WobbleFreq ("Wobble Frequency", Float) = 3
         _SpecStrength ("Gloss Highlight (modes 5/6)", Range(0,3)) = 1
         _GlintAmount ("Bubble Glints (mode 5)", Range(0,2)) = 0.5
+        _HotNear ("Chevron white-hot nearer than (m, mode 7)", Float) = 3.0
+        _HotFar ("Chevron turquoise farther than (m, mode 7)", Float) = 3.5
+        _HotBoost ("Chevron white-hot extra glow (mode 7)", Range(0,3)) = 0.6
     }
     SubShader
     {
@@ -49,6 +52,7 @@ Shader "BWK/Soft"
             half _Mode, _Smoothness, _Metallic, _Wrap, _BumpScale, _BumpStrength, _Stripes, _StripeWidth;
             half _StitchU, _StitchV, _Glow, _RimPower, _RimStrength;
             half _ReflectBoost, _StreakAmount, _StreakSpeed, _Wobble, _WobbleFreq, _SpecStrength, _GlintAmount;
+            half _HotNear, _HotFar, _HotBoost;
         CBUFFER_END
         ENDHLSL
         Pass
@@ -237,22 +241,28 @@ Shader "BWK/Soft"
                     col = MixFog(col, i.fog);
                     return half4(col, 1);
                 }
-                else if (_Mode > 6.5) // glowing speed-boost chevron (SM_Chevron inner slab, planar UV)
+                else if (_Mode > 6.5) // glowing speed-boost chevron (SM_Chevron strip: U across the arm, V along the V)
                 {
-                    // reference f_003.00s: luminous teal glass arrow, mint-white light along the middle of each arm,
-                    // deeper teal toward the edges, a soft light pulse racing forward, glossy top reflections.
-                    float px = abs(i.uv.x - 0.5) * 1.25;
-                    float py = -(i.uv.y - 0.5) * 0.72;
-                    float p = dot(float2(px, py + 0.36), float2(0.7198, -0.6942));   // 0 outer edge, -0.31 inner edge
-                    half g = saturate(1.0 - abs(p + 0.169) / 0.134);                 // 1 on the arm centre line
-                    half core = smoothstep(0.0, 1.0, g);
-                    half3 col = lerp(_ColorB.rgb, _ColorA.rgb, core * core);
-                    float pulse = frac(py * 0.9 + _Time.y * _StreakSpeed * 0.5);
-                    half beam = smoothstep(0.0, 0.18, pulse) * smoothstep(0.55, 0.18, pulse);
-                    col += _ColorC.rgb * beam * _StreakAmount * (0.35 + 0.65 * core);
+                    // reference f_002.00-f_003.25: thick glowing turquoise arrows with crisp edges and a brighter arm
+                    // centre; the one right under / behind the mascot blazes white-cyan. U / V are used symmetrically
+                    // (abs around 0.5), so the look survives any UV flip.
+                    half e = saturate(abs(i.uv.x - 0.5) * 2.0);          // 0 arm centre line .. 1 outer / inner edge
+                    half along = saturate(abs(i.uv.y - 0.5) * 2.0);      // 0 apex .. 1 arm ends
+                    half core = 1.0 - smoothstep(0.1, 0.85, e);
+                    half3 col = lerp(_ColorB.rgb, _ColorA.rgb, core * 0.8);
+                    half rim = smoothstep(0.8, 0.88, e) * (1.0 - smoothstep(0.92, 0.98, e));   // thin bright line inside the edge
+                    col = lerp(col, _ColorC.rgb, rim * 0.55);
+                    float pulse = frac(along * 0.8 + _Time.y * _StreakSpeed * 0.5);            // light racing toward the apex
+                    half beam = smoothstep(0.0, 0.15, pulse) * smoothstep(0.5, 0.15, pulse);
+                    col += _ColorC.rgb * beam * _StreakAmount * (0.3 + 0.7 * core);
+                    // lights up white-cyan as it passes under the mascot (the camera rides a fixed distance behind him)
+                    half hot = smoothstep(_HotFar, _HotNear, distance(i.positionWS, _WorldSpaceCameraPos));
+                    col = lerp(col, _ColorC.rgb * 1.15 + _ColorA.rgb * 0.25, hot * (0.55 + 0.45 * core));
+                    half top = smoothstep(0.5, 0.85, n.y);                                      // 1 on the top face
+                    col = lerp(_ColorB.rgb * (0.55 + 0.5 * hot), col, top);                    // side walls: deeper teal
                     half fr = BWK_Fresnel(n, v, 4.0);
-                    col += GlossyEnvironmentReflection(reflect(-v, n), i.positionWS, 0.05h, 1.0h, GetNormalizedScreenSpaceUV(i.positionCS)) * (0.1 + fr * 0.5) * _ReflectBoost;
-                    col *= _Glow * 4.0;
+                    col += GlossyEnvironmentReflection(reflect(-v, n), i.positionWS, 0.05h, 1.0h, GetNormalizedScreenSpaceUV(i.positionCS)) * (0.05 + fr * 0.4) * _ReflectBoost;
+                    col *= _Glow * 4.0 * (1.0 + hot * _HotBoost);
                     col = MixFog(col, i.fog);
                     return half4(col, 1);
                 }

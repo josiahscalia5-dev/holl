@@ -35,9 +35,11 @@ Material:
     - _FogAmount: 0.35
     - _HaloBoost: 0.6
     - _Intensity: 2.2
+    - _ProbeBakeDim: 1
     - _PulseAmount: 0.12
     - _PulseSpeed: 1.2
     m_Colors:
     - _Color: {r: 0.24705882, g: 0.9411765, b: 1, a: 1}
+    - _CoreColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

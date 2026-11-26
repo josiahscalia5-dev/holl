@@ -214,12 +214,68 @@ namespace BubbleWash.EditorTools
             finally { RenderSettings.fog = fog; Shader.SetGlobalFloat("_BWK_ProbeBake", 0f); }
         }
 
+        /// <summary>Reference f_003.00s star layout in the PORTRAIT hero frame: screen centre (fractions of the 9:16 frame,
+        /// y from the top), screen width (fraction of the frame width), clockwise screen roll (deg) and colour (0 yellow,
+        /// 1 cyan, 2 pink, 3 purple). Every star is projected from the fixed hero camera onto the drum wall, so it lands
+        /// exactly there in the hero capture (lead directive m1: big + few, on the WALLS, none in front of the vanishing point).</summary>
+        static readonly (float x, float y, float w, float roll, int color)[] HeroStarLayout =
+        {
+            (0.195f, 0.088f, 0.18f, 30f, 0),    // big yellow star on the upper-left wall (orange inner glow)
+            (0.440f, 0.205f, 0.115f, -14f, 1),  // cyan star below-right of it
+            (0.968f, 0.285f, 0.085f, 18f, 0),   // small yellow star on the right wall, half off-frame
+            (0.988f, 0.360f, 0.080f, -10f, 2),  // pink star below it at the frame edge
+        };
+
+        const float StarMeshWidth = 1.05f;   // SM_NeonStarTube tip-to-tip incl. tube at scale 1 (outer radius 0.5 + tube 0.068)
+        const float StarMeshRadius = 0.57f;
+
+        /// <summary>Hero camera pose exactly as RunnerCameraRig.Step computes it on a snap (lane 0, no jump, portrait aspect)
+        /// with the owner-approved HeroCam* values, so lighting props can be placed in screen space even during the full
+        /// build (the camera rig does not exist yet when the stars are built). Includes the lens Dutch (CaptureHero).</summary>
+        static void HeroCameraPose(out Vector3 pos, out Quaternion rot)
+        {
+            float d = HeroDistance;
+            var fc = track.Evaluate(d - HeroCamBack);
+            var fr = track.Evaluate(d);
+            var fl = track.Evaluate(d + 10f);                                     // RunnerCameraRig.lookAhead
+            pos = fc.position + fc.flatUp * HeroCamHeight;
+            pos -= Vector3.up * ((fc.position.y - fr.position.y) * 0.85f);       // slopeCompensation
+            var ahead = fl.position + fl.flatUp * HeroCamHeight;
+            ahead += Vector3.up * ((fr.position.y - fl.position.y) * 0.5f);      // lookSlopeCompensation
+            var runnerPoint = fr.position + fr.flatUp * 0.45f;
+            var look = Vector3.Lerp(ahead, runnerPoint, 0.08f);                  // lookAtRunnerWeight
+            rot = Quaternion.LookRotation(look - pos, fc.flatUp) * Quaternion.Euler(HeroCamPitch, 0f, 0f);
+            rot *= Quaternion.Euler(0f, 0f, Mathf.Clamp(-fr.roll * 0.5f, -11f, 11f));   // bankFactor / maxDutch
+        }
+
+        /// <summary>Marches a ray to the point `inset` m inside the drum wall (radius TunnelRadius around the tunnel axis).</summary>
+        static bool TunnelWallHit(Vector3 origin, Vector3 dir, float sStart, float inset, out Vector3 hit, out TrackFrame frame)
+        {
+            float s = sStart;
+            hit = origin; frame = track.Evaluate(s);
+            for (float t = 0.3f; t < 90f; t += 0.04f)
+            {
+                var p = origin + dir * t;
+                for (int k = 0; k < 3; k++)
+                {
+                    var f = track.Evaluate(s);
+                    s = Mathf.Clamp(s + Vector3.Dot(p - f.FlatPoint(0, TunnelCenter), f.forward), 0f, track.Length);
+                }
+                frame = track.Evaluate(s);
+                var off = p - frame.FlatPoint(0, TunnelCenter);
+                off -= frame.forward * Vector3.Dot(off, frame.forward);
+                if (off.magnitude >= TunnelRadius - inset) { hit = p; return true; }
+            }
+            return false;
+        }
+
         /// <summary>
-        /// Neon outline stars (reference: saturated yellow / cyan / pink tubes with white-hot cores and soft glow halos,
-        /// scattered over the upper walls and ceiling at varied sizes and angles). Every star gets a soft additive glow
-        /// card just behind it (its colour spilling over the drum wall, like the reference's tinted wall inside the star).
-        /// Placement uses its own seeded RNG; the shared rng is advanced exactly as the previous version did, so the
-        /// portholes / items / hero position built after this stay where they were.
+        /// Neon outline stars (reference: thick yellow / cyan / pink tubes with pale hot cores and soft tinted halos on the
+        /// drum walls). The hero frame gets the reference layout (HeroStarLayout, placed through the hero camera); the rest
+        /// of the tunnel gets sparse big stars on the upper walls, skipping anything the hero camera would see. Every star
+        /// gets a soft additive glow card just behind it (its colour spilling over the wall: the reference's big yellow star
+        /// is filled with orange light). Placement uses its own seeded RNG; the shared rng is advanced exactly as the
+        /// original version did, so the portholes / items / hero position built after this stay where they were.
         /// </summary>
         static void BuildNeonStars(GameObject env, bool save = true)
         {
@@ -231,32 +287,83 @@ namespace BubbleWash.EditorTools
             var outline = ModelParts("Lighting", "SM_NeonStarTube");
             if (outline.Count == 0) outline = ModelParts("Props", "SM_NeonStar");
             if (outline.Count == 0) { Debug.LogWarning("[BWK] SM_NeonStar missing - stars skipped"); return; }
-            var mats = new[] { Mat("M_Neon_Yellow"), Mat("M_Neon_Cyan"), Mat("M_Neon_Pink") };
-            var glowMats = new[] { Mat("M_StarGlow_Yellow"), Mat("M_StarGlow_Cyan"), Mat("M_StarGlow_Pink") };
+            var mats = new[] { Mat("M_Neon_Yellow"), Mat("M_Neon_Cyan"), Mat("M_Neon_Pink"), Mat("M_Neon_Purple") ?? Mat("M_Neon_Pink") };
+            var glowMats = new[] { Mat("M_StarGlow_Yellow"), Mat("M_StarGlow_Cyan"), Mat("M_StarGlow_Pink"), Mat("M_StarGlow_Purple") ?? Mat("M_StarGlow_Pink") };
             var quadMesh = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
             var holder = Child(env, "NeonStars");
             var comb = new LightCombiner(save);
             var glowComb = new LightCombiner(save);
+            List<Part> Recolor(Material mat) =>
+                outline.Select(p => new Part(p.mesh, Enumerable.Repeat(mat, Mathf.Max(1, p.mesh.subMeshCount)).ToArray(), p.local)).ToList();
+            void AddGlow(int ci, Vector3 pos, Quaternion rot, float size)
+            {
+                if (quadMesh == null || glowMats[ci] == null) return;
+                glowComb.Add(new List<Part> { new Part(quadMesh, new[] { glowMats[ci] }, Matrix4x4.identity) },
+                             Matrix4x4.TRS(pos, rot, new Vector3(size, size, 1f)));
+            }
+
+            // ---- hero frame: the reference layout, projected from the fixed hero camera onto the drum wall
+            HeroCameraPose(out var camPos, out var camRot);
+            float tanV = Mathf.Tan(HeroCamFov * 0.5f * Mathf.Deg2Rad), tanH = tanV * (9f / 16f);
+            var camFwd = camRot * Vector3.forward; var camUp = camRot * Vector3.up; var camRight = camRot * Vector3.right;
+            int heroCount = 0;
+            foreach (var s in HeroStarLayout)
+            {
+                var dir = camRot * new Vector3((2f * s.x - 1f) * tanH, (1f - 2f * s.y) * tanV, 1f).normalized;
+                float inset = 0.7f, scale = 1f; Vector3 pos = camPos; TrackFrame wf = default; bool ok = false;
+                for (int it = 0; it < 3; it++)
+                {
+                    ok = TunnelWallHit(camPos, dir, HeroDistance - HeroCamBack, inset, out pos, out wf);
+                    if (!ok) break;
+                    float depth = Vector3.Dot(pos - camPos, camFwd);
+                    scale = s.w * 2f * depth * tanH / StarMeshWidth;
+                    inset = 0.12f + StarMeshRadius * scale;   // tube tips stay just inside the drum surface
+                }
+                if (!ok) { Debug.LogWarning($"[BWK] hero star at ({s.x}, {s.y}) found no wall"); continue; }
+                var toCam = (camPos - pos).normalized;
+                var axisP = wf.FlatPoint(0, TunnelCenter);
+                var inward = Vector3.ProjectOnPlane(axisP - pos, wf.forward).normalized;
+                // mostly facing the camera (bold full star shape like the reference), leaning a little toward the wall
+                var facing = (toCam + inward * 0.35f).normalized;
+                scale /= Mathf.Lerp(1f, Mathf.Max(0.5f, Vector3.Dot(facing, toCam)), 0.5f);
+                float rr = s.roll * Mathf.Deg2Rad;
+                var upHint = Vector3.ProjectOnPlane(camUp * Mathf.Cos(rr) + camRight * Mathf.Sin(rr), facing).normalized;
+                var rot = Quaternion.LookRotation(facing, upHint);
+                comb.Add(Recolor(mats[s.color]), Matrix4x4.TRS(pos, rot, Vector3.one * scale));
+                // glow card facing the camera, just behind the tubes, ~1.8x the star: soft enough that the part cut by the
+                // drum wall is invisible (its radius beyond the inset is < 4 % intensity)
+                AddGlow(s.color, pos - toCam * (0.06f * scale), Quaternion.LookRotation(-toCam, upHint), StarMeshWidth * 1.8f * scale);
+                heroCount++;
+                Debug.Log($"[BWK] hero star c{s.color} screen ({s.x:F2},{s.y:F2}) track {wf.distance:F1} m depth {Vector3.Dot(pos - camPos, camFwd):F1} m scale {scale:F2}");
+            }
+
+            // ---- rest of the tunnel: sparse big stars on the upper walls, never inside the hero view
+            bool InHeroView(Vector3 p, float margin)
+            {
+                var c = Quaternion.Inverse(camRot) * (p - camPos);
+                if (c.z < 0.3f) return false;
+                float u = 0.5f + 0.5f * c.x / (c.z * tanH), v = 0.5f - 0.5f * c.y / (c.z * tanV);
+                return u > -margin && u < 1f + margin && v > -margin && v < 1f + margin;
+            }
             var r = new System.Random(5150);
             float Rand() => (float)r.NextDouble();
             int chunk = 0; float chunkStart = tunnelStart;
             int lastColor = -1;
             int count = 0;
-            for (float d = tunnelStart + 2.5f; d < portalD - 4f; d += 2.0f + Rand() * 2.2f)
+            for (float d = tunnelStart + 3f; d < portalD - 4f; d += 4.5f + Rand() * 4f)
             {
                 // keep clear of the gold rings (BuildRings: tunnelStart + 3 + k * RingSpacing)
                 float ringPhase = Mathf.Repeat(d - (tunnelStart + 3f), RingSpacing);
-                if (ringPhase < 0.8f || ringPhase > RingSpacing - 0.8f) continue;
+                if (ringPhase < 0.9f || ringPhase > RingSpacing - 0.9f) continue;
                 var f = track.Evaluate(d);
-                // upper side walls (12-62 deg from the ceiling, both sides) with an occasional ceiling star
+                // upper side walls (26-66 deg from the ceiling, both sides) with an occasional ceiling star
                 float side = Rand() < 0.5f ? -1f : 1f;
                 float angDeg = Rand() < 0.06f ? Mathf.Lerp(-10f, 10f, Rand()) : side * Mathf.Lerp(26f, 66f, Rand());
                 float ang = angDeg * Mathf.Deg2Rad; // 0 = ceiling
                 var radial = f.flatRight * Mathf.Sin(ang) + f.flatUp * Mathf.Cos(ang);
                 var center = f.FlatPoint(0, TunnelCenter);
-                // size mix: a few big bold stars, many mid / small ones (reference)
-                float pick = Rand();
-                float scale = pick < 0.4f ? Mathf.Lerp(1.5f, 2.1f, Rand()) : Mathf.Lerp(0.95f, 1.4f, Rand());
+                // bigger and fewer (lead m1): mostly bold stars, some mid ones
+                float scale = Rand() < 0.55f ? Mathf.Lerp(1.6f, 2.2f, Rand()) : Mathf.Lerp(1.1f, 1.5f, Rand());
                 var pos = center + radial * (TunnelRadius - 0.38f - 0.18f * scale);
                 // Face the tunnel centre and tilt back toward the oncoming rear camera so they read as bold shapes;
                 // tip up on screen with a varied roll (reference stars sit at many angles).
@@ -265,25 +372,19 @@ namespace BubbleWash.EditorTools
                 Vector3 upHint = Vector3.ProjectOnPlane(f.flatUp + radial * 0.3f, facing);
                 if (upHint.sqrMagnitude < 1e-4f) upHint = Vector3.ProjectOnPlane(f.forward, facing);
                 var rot = Quaternion.LookRotation(facing, upHint.normalized) * Quaternion.Euler(0, 0, Rand() * 56f - 28f);
-                // colour: yellow / cyan / pink, never the same twice in a row
-                int ci = Rand() < 0.38f ? 0 : (Rand() < 0.55f ? 1 : 2);
-                if (ci == lastColor) ci = (ci + 1 + (Rand() < 0.5f ? 0 : 1)) % 3;
+                // colour: yellow / cyan / pink / purple, never the same twice in a row
+                float cr = Rand();
+                int ci = cr < 0.34f ? 0 : cr < 0.6f ? 1 : cr < 0.84f ? 2 : 3;
+                if (ci == lastColor) ci = (ci + 1) % 4;
+                if (InHeroView(pos, 0.12f)) continue;   // the hero frame shows only the designed layout
                 lastColor = ci;
-                var mat = mats[ci];
-                var recolored = outline.Select(p => new Part(p.mesh, Enumerable.Repeat(mat, Mathf.Max(1, p.mesh.subMeshCount)).ToArray(), p.local)).ToList();
-                comb.Add(recolored, Matrix4x4.TRS(pos, rot, Vector3.one * scale));
-                if (quadMesh != null && glowMats[ci] != null)
-                {
-                    // glow card ~2.3x the star size, just behind the tubes; tilted only half as much toward the camera as
-                    // the star so its soft far edge stays in front of the curved drum wall (no visible intersection)
-                    Vector3 gFacing = (-radial * 0.8f - f.forward * tilt * 0.45f).normalized;
-                    Vector3 gUp = Vector3.ProjectOnPlane(rot * Vector3.up, gFacing);
-                    if (gUp.sqrMagnitude < 1e-4f) gUp = Vector3.ProjectOnPlane(f.forward, gFacing);
-                    var gRot = Quaternion.LookRotation(gFacing, gUp.normalized);
-                    var glowPos = pos - gFacing * 0.12f;
-                    glowComb.Add(new List<Part> { new Part(quadMesh, new[] { glowMats[ci] }, Matrix4x4.identity) },
-                                 Matrix4x4.TRS(glowPos, gRot, new Vector3(2.0f, 2.0f, 1f) * scale));
-                }
+                comb.Add(Recolor(mats[ci]), Matrix4x4.TRS(pos, rot, Vector3.one * scale));
+                // glow card ~2x the star size, just behind the tubes; tilted only half as much toward the camera as
+                // the star so its soft far edge stays in front of the curved drum wall (no visible intersection)
+                Vector3 gFacing = (-radial * 0.8f - f.forward * tilt * 0.45f).normalized;
+                Vector3 gUp = Vector3.ProjectOnPlane(rot * Vector3.up, gFacing);
+                if (gUp.sqrMagnitude < 1e-4f) gUp = Vector3.ProjectOnPlane(f.forward, gFacing);
+                AddGlow(ci, pos - gFacing * 0.12f, Quaternion.LookRotation(gFacing, gUp.normalized), 2.0f * scale);
                 count++;
                 if (d - chunkStart > ChunkLength)
                 {
@@ -294,7 +395,7 @@ namespace BubbleWash.EditorTools
             }
             comb.Flush(holder, $"Stars_{chunk:00}", false);
             glowComb.Flush(holder, $"StarGlow_{chunk:00}", false);
-            Debug.Log($"[BWK] neon stars: {count} with glow cards");
+            Debug.Log($"[BWK] neon stars: {heroCount} hero-frame + {count} tunnel stars with glow cards");
         }
 
         /// <summary>Lights parented to the runner so the mascot always gets the reference's warm top glow and soft back rim.</summary>

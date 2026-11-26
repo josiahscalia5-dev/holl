@@ -171,18 +171,18 @@ Shader "BWK/Water"
                 half ndv = saturate(dot(n, viewDir));
                 body = lerp(body, body * 1.18 + _ShallowColor.rgb * 0.22, smoothstep(0.2, 0.8, ndv) * _NearBrighten);
 
-                // ---- light pools around the glowing decor chevrons (apex toward travel, V arms trailing)
+                // ---- light pools around the glowing decor chevrons (SM_Chevron: apex toward travel, 45-degree arms;
+                //      arm centre line from (0, +0.26) to (+-0.52, -0.26) chevron metres, x ChevronScale)
                 half chevLight = 0;
                 if (_ChevronSpacing > 0.01)
                 {
                     float s = _ChevronScale;
                     float ly = m.y - _ChevronStart - round((m.y - _ChevronStart) / _ChevronSpacing) * _ChevronSpacing;
                     float lx = abs(m.x - _Width * 0.5);
-                    float armY = 0.36 * s - 1.152 * min(lx, 0.62 * s);   // V centre line
-                    float dv = (ly - armY) * 0.66;
-                    half pool = exp(-dv * dv / (0.09 * s * s)) * smoothstep(0.95 * s, 0.45 * s, lx);
-                    half wide = exp(-(ly * ly) / (0.6 * s * s)) * smoothstep(1.4 * s, 0.2 * s, lx);
-                    chevLight = (pool * 0.8 + wide * 0.35) * _ChevronGlow;
+                    float dv = (ly - (0.26 * s - min(lx, 0.6 * s))) * 0.7071;   // distance from the arm centre line
+                    half pool = exp(-dv * dv / (0.035 * s * s)) * smoothstep(0.85 * s, 0.5 * s, lx);
+                    half wide = exp(-(ly * ly) / (0.35 * s * s)) * smoothstep(1.3 * s, 0.2 * s, lx);
+                    chevLight = (pool * 0.85 + wide * 0.25) * _ChevronGlow;
                 }
 
                 // ---- banks: pink / rainbow pickup, white foam lines along the walls
