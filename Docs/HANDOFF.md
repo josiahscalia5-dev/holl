@@ -21,6 +21,14 @@ stopped after a final snapshot (restart it, see step 3).
   `Tools/fx_splash_trace.py` (SM_FX_Crown_v2_L/R traced from the frame, overlap 0.924; SM_Foam_v2_*).
 - Real-time recording: `Captures/playmode/s5_shot0825_r6_9x16.mp4` (4.7 s, 192 -> 248 m, 17 coins, 1 gem, 0 rear-camera
   violations; Play Mode test `C_RecordSegmentFromEnv` with BWK_PLAY_SCENE / _START / _END / _NAME, ignored without them).
+- 11:40 OWNER CHANGED THE METHOD: evaluate free tools (TRELLIS.2 hosted demo, Unity MCP, ProBuilder, Blender Perspective
+  Match, Poly Haven) and prove them with Unity before/after renders of the 8.25 s scene, then roll out to S1-S7.
+  TRELLIS.2: code / Space / TRELLIS.2-4B / BiRefNet all MIT (commercial use OK); the Space forwards images WITHOUT
+  transparency to briaai/BRIA-RMBG-2.0 (non-commercial licence, 3rd party) -> only upload RGBA cutouts
+  (`Tools/mask_polygon.py` hand-traced outline -> `Captures/trellis/mascot/mascot_rgba.png` from 4K f_06.00s; client
+  `Tools/trellis_client.py`, library in gitignored `Tools/.pylibs_gradio`). First call 11:33 REFUSED: anonymous ZeroGPU
+  quota ("120s requested vs. 143s left", retry in 24 h). Needs the owner's own FREE Hugging Face login on this PC
+  (docs: 5 min/day free vs 2 min anonymous; the Space reserves 120 s per step, 2 steps per model -> ~1 model/day at best).
 - NEXT: wave 2 = `args: ["character", "lighting"]` after the window reset (15:40 local); then wave 3 env + water fixes
   (items 4-6 above + the owner's S5 decision). Owner asked (11:12) whether a free image-to-3D website may be tried for the
   mascot (upload of one crop) - no answer yet; do not upload without a yes.
