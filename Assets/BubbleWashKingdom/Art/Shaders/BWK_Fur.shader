@@ -107,16 +107,16 @@ Shader "BWK/Fur"
                 float h = i.shell.x;
                 // Procedural strands, resolution independent: guard hairs lean inside their cell with height (soft crossing
                 // tips), lengths vary in clumps, and a denser, shorter underfur layer fills the coat like a plush toy.
-                float2 suv = i.uv * _Density;
+                float2 suv = float2(i.uv.x * 2.0, i.uv.y) * _Density;   // UV.x unit = 2x UV.y unit in metres -> square cells
                 float2 cell = floor(suv);
                 float2 jit = float2(BWK_Hash21(cell), BWK_Hash21(cell + 17.3)) - 0.5;
                 float2 lean = (float2(BWK_Hash21(cell + 5.7), BWK_Hash21(cell + 9.1)) - 0.5) * 0.8 * h;
                 float d = length(frac(suv) - 0.5 - jit * 0.4 - lean);
                 half rnd = BWK_Hash21(cell + 3.1);
-                half clump = BWK_ValueNoise(i.uv * _ClumpScale);
+                half clump = BWK_ValueNoise(float2(i.uv.x * 2.0, i.uv.y) * _ClumpScale);
                 half lenVar = lerp(1.0, 0.55 + clump * 0.9, _ClumpAmount) * (0.72 + 0.28 * rnd);
                 half guard = saturate(1.0 - d * 1.75) * lenVar;
-                float2 suv2 = i.uv * _Density * 1.85 + 3.7;
+                float2 suv2 = float2(i.uv.x * 2.0, i.uv.y) * _Density * 1.85 + 3.7;
                 float2 cell2 = floor(suv2);
                 float2 jit2 = float2(BWK_Hash21(cell2 + 1.3), BWK_Hash21(cell2 + 7.7)) - 0.5;
                 float d2 = length(frac(suv2) - 0.5 - jit2 * 0.4 - lean * 0.6);

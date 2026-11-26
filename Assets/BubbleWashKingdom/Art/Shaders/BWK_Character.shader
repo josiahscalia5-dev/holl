@@ -124,11 +124,14 @@ Shader "BWK/Character"
                     float ribH = cos(colPhase * 3.14159);                    // 1 at the rib crest, 0 in the purl valley
                     float vPhase = frac(i.uv.y * _StitchV + abs(colPhase) * 0.9) - 0.5;   // stacked V stitches
                     float stitch = 1.0 - abs(vPhase) * 2.0;
-                    float bump = ribH * (0.7 + 0.3 * stitch);
-                    half3 nb = i.tangentWS.xyz * (sin(colPhase * 3.14159) * 0.9) + bitangent * (sign(vPhase) * 0.35 * ribH);
+                    // chunky ribs dominate (geometry + this normal); the V stitches inside each rib stay a soft yarn
+                    // texture so the knit never reads as a printed chevron pattern
+                    float bump = ribH * (0.85 + 0.15 * stitch);
+                    half3 nb = i.tangentWS.xyz * (sin(colPhase * 3.14159) * 0.9) + bitangent * (sign(vPhase) * 0.12 * ribH);
                     n = normalize(n + nb * _BumpStrength);
-                    occlusion = lerp(0.42, 1.0, ribH);
-                    albedo *= lerp(0.7, 1.08, bump);
+                    occlusion = lerp(0.5, 1.0, ribH);
+                    float yarn = BWK_ValueNoise(float2(i.uv.x * _StitchU * 4.0, i.uv.y * _StitchV * 2.0));
+                    albedo *= lerp(0.74, 1.06, bump) * lerp(0.94, 1.04, yarn);
                     half fuzz = BWK_Fresnel(n, v, 2.0) * 0.3;
                     emission = albedo * (_Glow + fuzz);
                 }

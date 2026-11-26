@@ -52,7 +52,7 @@ FRONT = Vector((0.0, -1.0, 0.0))  # asset front
 DRUM_U_SPAN = 16.0 / 56.0         # porthole drum u range: same perforation size as SM_Tunnel_Module (56 per u)
 REVIEW_DIR = os.environ.get("BWK_REVIEW_DIR")
 ASSET_NAMES = ["SM_Porthole", "SM_BrushRoller", "SM_ControlPanel", "SM_Agitator", "SM_GoldPipe_Straight",
-               "SM_GoldPipe_Elbow", "SM_ValveWheel", "SM_Pillar"]
+               "SM_GoldPipe_Elbow", "SM_ValveWheel", "SM_Pillar", "SM_ChamberPipe"]
 
 
 # ================================================================== mesh building
@@ -407,6 +407,7 @@ def make_materials():
         "M_ChamberDrum": mk("M_ChamberDrum", "#B6A6EA", metallic=0.5, roughness=0.3),
         "M_DrumRim": mk("M_DrumRim", "#A98BEB", metallic=0.7, roughness=0.2),
         "M_ChamberSwirl": mk("M_ChamberSwirl", "#8FD8FF", roughness=0.2, emission="#8FD8FF", emission_strength=0.8),
+        "M_PipeWaterPink": mk("M_PipeWaterPink", "#FF3FB8", roughness=0.1, emission="#FF3FB8", emission_strength=1.5),
         "M_BrushPink": mk("M_BrushPink", "#E463B1", roughness=0.9),
         "M_BrushBlue": mk("M_BrushBlue", "#79C2DF", roughness=0.9),
         "M_BrushWhite": mk("M_BrushWhite", "#F1EAF6", roughness=0.9),
@@ -960,6 +961,51 @@ def build_pillar(M):
     return mb.build("SM_Pillar", slots(M, ["M_MachineLavender", "M_Gold", "M_GoldDark"]))
 
 
+# ================================================================== 7. chamber glass riser (reference key 7.5 s / 10.5 s)
+# Placed by SceneBuilder.BuildPipes at the TUNNEL AXIS point (FlatPoint(0, TunnelCenter), FlatRotation), so the asset
+# is authored in tunnel coordinates: origin = drum axis, Z up, -Y = travel, +X = the runner's LEFT wall (Unity -X).
+# A clear glass tube r 0.17 stands against the left drum wall (r 4.2) beside a chamber window, rises along the wall
+# and bends into it at the top (gold flange), with a glowing pink liquid core (FlowGlow mode 0 flows along v) and two
+# gold clamp bands + wall brackets. The bottom foot sinks into the bank below the slide rails.
+CP_X = 3.34          # tube centre distance from the axis (lateral) on the straight part
+CP_R_GLASS, CP_R_LIQ = 0.17, 0.125
+
+
+def build_chamber_pipe(M):
+    mb = MB()
+    GL, LQ, G, GD = range(4)
+    # centre line in the cross-section plane (x lateral, z up relative to the drum axis), y = 0
+    pts = [Vector((CP_X, 0.0, -2.75)), Vector((CP_X, 0.0, -1.5)), Vector((CP_X, 0.0, -0.25)), Vector((CP_X, 0.0, 0.9))]
+    rb, zc = 0.55, 0.9
+    for k in range(1, 9):                       # bend outward into the wall, 90 deg about +Y
+        al = 0.5 * math.pi * k / 8
+        pts.append(Vector((CP_X + rb - rb * math.cos(al), 0.0, zc + rb * math.sin(al))))
+    pts.append(Vector((CP_X + rb + 0.45, 0.0, zc + rb)))
+    frames = path_frames(pts, lambda i: Y_AXIS)
+    sweep(mb, frames, circle2(CP_R_GLASS, 18), GL, closed_prof=True, swap_uv=True)
+    lens = [0.0]
+    for a, b in zip(pts, pts[1:]):
+        lens.append(lens[-1] + (b - a).length)
+    sweep(mb, frames, circle2(CP_R_LIQ, 12), LQ, closed_prof=True, swap_uv=True,
+          u_vals=[x / 2.0 for x in lens])
+    # gold flange where the tube enters the wall, and a foot collar at the bottom
+    fl = [(0.0, 0.0), (0.27, 0.0), (0.29, 0.02), (0.29, 0.07), (0.26, 0.09), (0.2, 0.095), (0.19, 0.12)]
+    wf = Vector((math.sqrt(4.2 ** 2 - (zc + rb) ** 2) + 0.03, 0.0, zc + rb))   # on the drum wall surface
+    lathe(mb, fl, G, 18, wf, -X_AXIS, Y_AXIS)
+    flange_bolts(mb, wf, -X_AXIS, Y_AXIS, G)
+    lathe(mb, fl, G, 18, Vector((CP_X, 0.0, -2.2)), Z_AXIS, X_AXIS)
+    # clamp bands (rounded) + a bracket arm into the wall behind each
+    band = [(0.175, -0.06), (0.205, -0.055), (0.215, -0.03), (0.215, 0.03), (0.205, 0.055), (0.175, 0.06)]
+    for z in (-1.15, 0.35):
+        lathe(mb, band, G, 18, Vector((CP_X, 0.0, z)), Z_AXIS, X_AXIS)
+        wall_x = math.sqrt(max(4.2 ** 2 - z * z, 0.0)) + 0.05
+        a0, a1 = Vector((CP_X + 0.2, 0.0, z)), Vector((wall_x, 0.0, z))
+        sweep(mb, path_frames([a0, a1], lambda i: Z_AXIS), circle2(0.045, 8), GD, closed_prof=True, swap_uv=True)
+        lathe(mb, [(0.0, 0.0), (0.11, 0.0), (0.11, 0.03), (0.0, 0.05)], G, 12, Vector((wall_x - 0.12, 0.0, z)),
+              -X_AXIS, Y_AXIS)
+    return mb.build("SM_ChamberPipe", slots(M, ["M_Glass", "M_PipeWaterPink", "M_Gold", "M_GoldDark"]))
+
+
 # ================================================================== checks + export
 def signed_volume(me):
     vol = 0.0
@@ -1341,7 +1387,7 @@ def main():
     M = make_materials()
     A = {}
     for build in (build_porthole, build_brush_roller, build_control_panel, build_agitator, build_pipe_straight,
-                  build_pipe_elbow, build_valve_wheel, build_pillar):
+                  build_pipe_elbow, build_valve_wheel, build_pillar, build_chamber_pipe):
         obj = build(M)
         A[obj.name] = obj
     bpy.context.view_layer.update()

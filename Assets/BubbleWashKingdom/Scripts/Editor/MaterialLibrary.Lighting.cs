@@ -28,16 +28,18 @@ namespace BubbleWash.EditorTools
                 brightness: 1.05f, glow: 0.3f, contrast: 1.6f, viewGradient: 1f, env: 0.45f, envTint: 0.85f, envRough: 0.08f,
                 specPower: 240f, specStrength: 3f, glints: 3f, sparkle: 3.2f, fog: 0.6f, highlightSize: 14f, sparkleScale: 9f);
 
-            // Warm golden marquee bulbs: a very hot, saturated orange-gold source. The tonemapper clips the centre to a
-            // white-yellow hot spot while bloom carries the orange-gold hue into a soft halo (reference look).
-            EmissiveLook("M_Bulb", "#FF9A26", 20f, core: 0.12f, corePower: 8f, halo: 0.2f, edgeSat: 0.15f, chase: 1f, chaseMin: 0.75f, pulse: 0.05f, fog: 0.03f);
+            // Warm amber marquee bulbs: a moderately hot, fully saturated amber source so the Neutral tonemapper keeps the hue
+            // (amber-yellow body, whiter centre from _CoreWhite) and the untinted bloom spreads an amber halo.
+            EmissiveLook("M_Bulb", "#FF9A1E", 5.5f, core: 0.5f, corePower: 5f, halo: 0.25f, edgeSat: 0.8f, chase: 1f, chaseMin: 0.7f, pulse: 0.05f, fog: 0.08f);
             // end-of-tunnel portal disc (BuildPortal core): radiant warm white-gold, bright but not a screen-filling flare
-            EmissiveLook("M_PortalCore", "#FFD27A", 3.2f, core: 0.5f, corePower: 2f, halo: 0.3f, edgeSat: 0f, pulse: 0.06f, fog: 0.05f);
-            // Saturated neon tubes: hot enough for wide coloured bloom, with a thin whiter centre line.
-            EmissiveLook("M_Neon", "#19E3FF", 9f, core: 0.25f, corePower: 5f, halo: 0.4f, edgeSat: 0.3f, fog: 0.06f, pulse: 0.08f);
-            EmissiveLook("M_Neon_Cyan", "#19E3FF", 9f, core: 0.25f, corePower: 5f, halo: 0.4f, edgeSat: 0.3f, fog: 0.06f, pulse: 0.08f);
-            EmissiveLook("M_Neon_Pink", "#FF3CC8", 9.5f, core: 0.22f, corePower: 5f, halo: 0.4f, edgeSat: 0.3f, fog: 0.06f, pulse: 0.08f);
-            EmissiveLook("M_Neon_Yellow", "#FFC81A", 8f, core: 0.2f, corePower: 5f, halo: 0.4f, edgeSat: 0.3f, fog: 0.06f, pulse: 0.08f);
+            EmissiveLook("M_PortalCore", "#FFC860", 3.4f, core: 0.55f, corePower: 2f, halo: 0.3f, edgeSat: 0.3f, pulse: 0.06f, fog: 0.05f);
+            // Saturated neon tubes (reference: thick YELLOW / CYAN / PINK tubes, white-hot only in a thin core line): pure
+            // hues (no minor channel) at ~3x so they stay coloured after tonemapping and bloom into tinted halos; a sharp
+            // _CorePower makes the white line only where the tube faces the camera.
+            EmissiveLook("M_Neon", "#00D4FF", 3.0f, core: 0.55f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
+            EmissiveLook("M_Neon_Cyan", "#00D4FF", 3.0f, core: 0.55f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
+            EmissiveLook("M_Neon_Pink", "#FF1EA8", 3.2f, core: 0.5f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
+            EmissiveLook("M_Neon_Yellow", "#FFC000", 2.9f, core: 0.5f, corePower: 14f, halo: 0.45f, edgeSat: 1f, fog: 0.12f, pulse: 0.06f);
 
             // soft coloured glow cards behind every neon star (additive BWK/LightBlob): the star's light spilling over the wall
             StarGlow("M_StarGlow_Yellow", "#FFAE1A", 0.6f);

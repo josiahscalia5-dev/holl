@@ -191,7 +191,7 @@ namespace BubbleWash.EditorTools
         /// </summary>
         static void BuildPipes(GameObject env, float L)
         {
-            var riser = ModelParts("Environment", "SM_ChamberPipe");
+            var riser = ModelParts("Machinery", "SM_ChamberPipe");
             if (riser.Count == 0) { Debug.Log("[BWK] SM_ChamberPipe not built - no tunnel pipes"); return; }
             var holder = Child(env, "ChamberPipes");
             var comb = new Combiner();

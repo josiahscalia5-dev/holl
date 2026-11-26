@@ -16,40 +16,43 @@ namespace BubbleWash.EditorTools
     // Only this domain's agent edits this file; the lead developer runs the scene build that calls it.
     public static partial class SceneBuilder
     {
-        // Look targets (reference f_003.00s): luminous candy palette, warm gold vs violet, soft lavender haze that grows with
-        // depth into a bright vanishing point, strong but controlled bloom on bulbs / neon, glossy reflections, soft shadows.
+        // Look targets (reference f_003.00s): deep saturated violet tunnel with dark holes, a bright warm vanishing point,
+        // neon stars that stay clearly yellow / cyan / pink with tinted halos, warm amber marquee bulbs, polished gold with
+        // bright specular streaks, cool cyan from the water. Exposure is kept LOW (dark rich mids) so only the emissives and
+        // speculars reach the bloom threshold: no global milky veil.
         static void BuildLighting(GameObject root, float L, string profilePath = null)
         {
             var lights = Child(root, "Lighting");
             // Key light: near-vertical warm top light. Works for every track heading (the slide winds through all
             // directions), lights hat / pom-pom / coin tops, and drops the mascot's soft shadow right beneath him.
             // It leans slightly toward the rear camera (most of the slide heads +Z) so the mascot reads top-lit / softly
-            // back-lit with a visible contact shadow, instead of the flat front light of the old 48 deg key.
+            // back-lit with a visible contact shadow.
             var sunGo = Child(lights, "Key Light");
-            sunGo.transform.rotation = Quaternion.Euler(72f, 165f, 0f);
+            sunGo.transform.rotation = Quaternion.Euler(70f, 165f, 0f);
             var sun = sunGo.AddComponent<Light>();
             sun.type = LightType.Directional;
-            sun.color = new Color(1f, 0.88f, 0.8f);
-            sun.intensity = 1.25f;
+            sun.color = new Color(1f, 0.86f, 0.72f);
+            sun.intensity = 1.05f;
             sun.shadows = LightShadows.Soft;
-            sun.shadowStrength = 0.62f;
+            sun.shadowStrength = 0.7f;
             RenderSettings.sun = sun;
 
-            // Ambient: lavender from above, pink-violet around the horizon, cool lavender-blue bounce from the bright water
-            // (the "ground" colour is what the tunnel ceiling receives).
+            // Ambient: deep violet from above, magenta-violet around the horizon, cool blue bounce from the water
+            // (the "ground" colour is what the tunnel ceiling receives). Kept dim so the walls keep their depth.
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.58f, 0.4f, 0.98f);
-            RenderSettings.ambientEquatorColor = new Color(0.9f, 0.44f, 0.82f);
-            RenderSettings.ambientGroundColor = new Color(0.4f, 0.4f, 0.98f);
-            RenderSettings.ambientIntensity = 0.85f;
-            // Aerial perspective: luminous lavender haze, clear near the mascot, ~23 % at 30 m, ~65 % at 60 m (exp2).
+            RenderSettings.ambientSkyColor = new Color(0.44f, 0.27f, 0.86f);
+            RenderSettings.ambientEquatorColor = new Color(0.66f, 0.28f, 0.72f);
+            RenderSettings.ambientGroundColor = new Color(0.24f, 0.34f, 0.92f);
+            RenderSettings.ambientIntensity = 0.62f;
+            // Aerial perspective: saturated mid-violet (never pale), light density: near tunnel clear, far tunnel melts
+            // into violet while the warm bulbs / portal still punch through (emissives use little fog).
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = new Color(0.76f, 0.6f, 1.0f);
-            RenderSettings.fogDensity = 0.016f;
+            RenderSettings.fogColor = new Color(0.40f, 0.25f, 0.78f);
+            RenderSettings.fogDensity = 0.0085f;
             RenderSettings.skybox = null;
             RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
-            RenderSettings.reflectionIntensity = 1f;
+            RenderSettings.reflectionIntensity = 0.9f;
 
             // colourful fill lights in the hall
             AddPoint(lights, 18f, -4f, 6f, new Color(1f, 0.45f, 0.85f), 3f, 18f);
@@ -85,20 +88,28 @@ namespace BubbleWash.EditorTools
             vol.isGlobal = true;
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
             AssetDatabase.CreateAsset(profile, profilePath ?? $"{GenDir}/PostFX_Level01.asset");
-            // Bloom: very hot HDR bulbs (~20) and neon tubes (~9) carry their saturated hue into wide halos while the
-            // tonemapper clips their centres white-hot; the white foam (~1) only glows a little.
+            // Bloom: CONTROLLED glow. Emissives are moderately hot (neon ~3, bulbs ~5) and fully saturated, so the
+            // tonemapper keeps their hue and the bloom (untinted, so it carries each source's own colour) makes yellow /
+            // cyan / pink / amber halos. Threshold above lit white foam so lit surfaces never veil the frame.
             var bloom = profile.Add<Bloom>(true);
-            bloom.threshold.Override(1.0f); bloom.intensity.Override(1.1f); bloom.scatter.Override(0.78f);
-            bloom.tint.Override(new Color(1f, 0.92f, 0.95f)); bloom.highQualityFiltering.Override(true);
+            bloom.threshold.Override(1.2f); bloom.intensity.Override(0.9f); bloom.scatter.Override(0.62f);
+            bloom.tint.Override(Color.white); bloom.highQualityFiltering.Override(true);
             bloom.maxIterations.Override(8);
+            // Neutral keeps saturated hues far better than ACES (which pushes bright yellow / cyan to white).
             var tm = profile.Add<Tonemapping>(true); tm.mode.Override(TonemappingMode.Neutral);
             var ca = profile.Add<ColorAdjustments>(true);
-            ca.saturation.Override(24f); ca.contrast.Override(18f); ca.postExposure.Override(0f);
-            // warm highlights (gold, bulbs, skin of the light) vs violet shadows
+            ca.saturation.Override(30f); ca.contrast.Override(28f); ca.postExposure.Override(-0.3f);
+            // violet, slightly darker shadows / low mids (depth, dark holes) - highlights untouched
+            var smh = profile.Add<ShadowsMidtonesHighlights>(true);
+            smh.shadows.Override(new Vector4(0.96f, 0.86f, 1.12f, -0.12f));
+            smh.midtones.Override(new Vector4(1f, 0.97f, 1.04f, -0.04f));
+            smh.highlights.Override(new Vector4(1.04f, 1f, 0.96f, 0f));
+            smh.shadowsStart.Override(0f); smh.shadowsEnd.Override(0.35f); smh.highlightsStart.Override(0.55f); smh.highlightsEnd.Override(1f);
+            // gentle warm-highlight / violet-shadow split (neutral grey = 0.5)
             var st = profile.Add<SplitToning>(true);
-            st.shadows.Override(new Color(0.44f, 0.38f, 0.66f)); st.highlights.Override(new Color(0.66f, 0.56f, 0.47f)); st.balance.Override(-10f);
-            var vg = profile.Add<Vignette>(true); vg.intensity.Override(0.24f); vg.smoothness.Override(0.5f); vg.color.Override(new Color(0.16f, 0.05f, 0.3f));
-            var wb = profile.Add<WhiteBalance>(true); wb.temperature.Override(3f); wb.tint.Override(5f);
+            st.shadows.Override(new Color(0.45f, 0.38f, 0.64f)); st.highlights.Override(new Color(0.56f, 0.52f, 0.48f)); st.balance.Override(-15f);
+            var vg = profile.Add<Vignette>(true); vg.intensity.Override(0.3f); vg.smoothness.Override(0.48f); vg.color.Override(new Color(0.12f, 0.03f, 0.26f));
+            var wb = profile.Add<WhiteBalance>(true); wb.temperature.Override(2f); wb.tint.Override(4f);
             // soft far tunnel (premium film depth): mascot, coins and near rings stay crisp
             var dof = profile.Add<DepthOfField>(true);
             dof.mode.Override(DepthOfFieldMode.Gaussian); dof.gaussianStart.Override(24f); dof.gaussianEnd.Override(75f);
@@ -136,9 +147,9 @@ namespace BubbleWash.EditorTools
                 go.transform.position = f.FlatPoint(0f, TunnelCenter + 1.1f) - f.forward * 0.35f;
                 var l = go.AddComponent<Light>();
                 l.type = LightType.Point;
-                l.color = new Color(1f, 0.66f, 0.3f);
-                l.intensity = 3.5f;
-                l.range = 8f;
+                l.color = new Color(1f, 0.6f, 0.24f);
+                l.intensity = 2.4f;
+                l.range = 6.5f;
                 l.shadows = LightShadows.None;
             }
         }
@@ -186,7 +197,7 @@ namespace BubbleWash.EditorTools
         /// Placement uses its own seeded RNG; the shared rng is advanced exactly as the previous version did, so the
         /// portholes / items / hero position built after this stay where they were.
         /// </summary>
-        static void BuildNeonStars(GameObject env)
+        static void BuildNeonStars(GameObject env, bool save = true)
         {
             // keep the shared rng sequence identical to the old placement loop (3 draws per star + 1 per step)
             for (float d = tunnelStart + 2f; d < portalD - 4f; d += 1.1f + (float)rng.NextDouble() * 1.3f)
@@ -198,8 +209,8 @@ namespace BubbleWash.EditorTools
             var glowMats = new[] { Mat("M_StarGlow_Yellow"), Mat("M_StarGlow_Cyan"), Mat("M_StarGlow_Pink") };
             var quadMesh = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
             var holder = Child(env, "NeonStars");
-            var comb = new Combiner();
-            var glowComb = new Combiner();
+            var comb = new LightCombiner(save);
+            var glowComb = new LightCombiner(save);
             var r = new System.Random(5150);
             float Rand() => (float)r.NextDouble();
             int chunk = 0; float chunkStart = tunnelStart;
@@ -289,6 +300,67 @@ namespace BubbleWash.EditorTools
             cs.runner = runnerGo.GetComponent<RunnerController>();
             cs.baseScale = card.transform.localScale;
             cs.surfaceOffset = 0.035f;
+        }
+
+        /// <summary>Agent preview hook: rebuilds the neon stars + glow cards in memory (meshes never saved as assets).</summary>
+        static partial void PreviewLightingProps(GameObject root, float L)
+        {
+            try
+            {
+                var env = root.transform.Find("Environment");
+                if (env == null) return;
+                for (int i = env.childCount - 1; i >= 0; i--)
+                    if (env.GetChild(i).name == "NeonStars") Object.DestroyImmediate(env.GetChild(i).gameObject);
+                var savedRng = rng;
+                rng = new System.Random(1); // BuildNeonStars advances the shared rng; keep the caller's sequence untouched
+                try { BuildNeonStars(env.gameObject, false); }
+                finally { rng = savedRng; }
+            }
+            catch (System.Exception e) { Debug.LogWarning($"[BWK] preview lighting props failed: {e.Message}"); }
+        }
+
+        /// <summary>Combiner for lighting-owned props; with save = false the meshes stay in memory (agent previews).</summary>
+        class LightCombiner
+        {
+            readonly bool save;
+            readonly Dictionary<Material, List<CombineInstance>> groups = new Dictionary<Material, List<CombineInstance>>();
+            readonly Dictionary<Material, int> verts = new Dictionary<Material, int>();
+            public LightCombiner(bool save) { this.save = save; }
+
+            public void Add(List<Part> parts, Matrix4x4 world)
+            {
+                foreach (var p in parts)
+                    for (int s = 0; s < p.mesh.subMeshCount; s++)
+                    {
+                        var mat = p.mats != null && p.mats.Length > 0 ? p.mats[Mathf.Min(s, p.mats.Length - 1)] : null;
+                        if (mat == null) continue;
+                        if (!groups.TryGetValue(mat, out var l)) { l = new List<CombineInstance>(); groups[mat] = l; verts[mat] = 0; }
+                        l.Add(new CombineInstance { mesh = p.mesh, subMeshIndex = s, transform = world * p.local });
+                        verts[mat] += p.mesh.vertexCount;
+                    }
+            }
+
+            public void Flush(GameObject parent, string name, bool castShadows)
+            {
+                foreach (var kv in groups)
+                {
+                    var mesh = new Mesh { name = $"{name}_{kv.Key.name}" };
+                    mesh.indexFormat = verts[kv.Key] > 60000 ? IndexFormat.UInt32 : IndexFormat.UInt16;
+                    mesh.CombineMeshes(kv.Value.ToArray(), true, true);
+                    mesh.RecalculateBounds();
+                    if (save) SaveMesh(mesh);
+                    var go = Child(parent, mesh.name);
+                    go.AddComponent<MeshFilter>().sharedMesh = mesh;
+                    var mr = go.AddComponent<MeshRenderer>();
+                    mr.sharedMaterial = kv.Key;
+                    mr.shadowCastingMode = castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
+                    mr.receiveShadows = false;
+                    if (save)
+                        GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic | StaticEditorFlags.OccludeeStatic | StaticEditorFlags.ReflectionProbeStatic);
+                }
+                groups.Clear();
+                verts.Clear();
+            }
         }
 
         static void CharLight(GameObject group, string name, Vector3 local, Color c, float intensity, float range)

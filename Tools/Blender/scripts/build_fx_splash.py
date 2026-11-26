@@ -28,8 +28,8 @@ import bwk_common as C  # noqa: E402
 
 GROUP = "FX"
 FRAMES = 12
-RES = 0.0105          # metaball polygonisation step (m)
-TARGET_TRIS = 7000    # per crown frame after decimation
+RES = 0.0055          # metaball polygonisation step (m): lace strands are only 1-3 cm thick
+TARGET_TRIS = 14000   # per crown frame after decimation (the lace needs the detail)
 SEED = 20261125
 
 
@@ -43,157 +43,280 @@ def lerp(a, b, t):
 
 
 # ================================================================== crown shape
+# Reference f_001.75-f_003.00 (zoomed): the splash beside each foot is a LACE NET of thick milky strands (cells with
+# large holes, fused rounded joints, beads on the rim, tendrils ending in drops) rising from a solid root, plus lace
+# loops lying on the water that spread outward / back toward the camera. Built from capsule metaballs along the
+# edges of a clipped Voronoi diagram on the crown wall (smaller cells near the root -> almost solid sheet there,
+# big holes near the rim) + a flat Voronoi lace skirt on the water. Twelve looping frames (periodic site jitter).
+SLEN = 1.2           # metres of wall along the root curve
+
+
 def base(s):
     """Root line on the water: from the foot outward and back toward the camera."""
-    return Vector((0.04 + 0.40 * s + 0.10 * s * s, -0.04 + 1.02 * s, 0.0))
+    return Vector((0.03 + 0.42 * s + 0.12 * s * s, -0.06 + 1.10 * s, 0.0))
 
 
 def height(s):
-    """Crown silhouette: quick rise beside the foot, peak at s ~ 0.28, long low tail toward the camera."""
-    return 0.07 + 0.43 * math.exp(-((s - 0.27) / 0.25) ** 2) + 0.09 * (1.0 - s)
+    """Crown silhouette: quick rise beside the foot, peak at s ~ 0.25, long low tail toward the camera."""
+    return 0.08 + 0.50 * math.exp(-((s - 0.25) / 0.24) ** 2) + 0.10 * (1.0 - s)
 
 
-LEAN = Vector((0.55, 0.28, 1.0)).normalized()     # the sheet rises outward and slightly back
+LEAN = Vector((0.5, 0.22, 1.0)).normalized()     # the sheet rises outward and slightly back
 
 
 def wall(s, v, sway=0.0):
     h = height(s)
     p = base(s) + LEAN * (v * h)
-    p.x += 0.2 * h * v * v + sway * v              # lip curls outward at the top
+    p.x += 0.22 * h * v * v + sway * v             # lip curls outward at the top
     return p
 
 
-class Balls:
-    """Metaball element list for one frame."""
+def outward(s):
+    """Horizontal unit vector on the water pointing away from the mascot, perpendicular to the root curve."""
+    d = base(min(1.0, s + 0.01)) - base(max(0.0, s - 0.01))
+    o = Vector((d.y, -d.x, 0.0))
+    if o.x < 0:
+        o = -o
+    return o.normalized()
+
+
+class Elems:
+    """Metaball element list for one frame: balls and capsules."""
 
     def __init__(self):
         self.items = []
 
     def ball(self, p, r):
         if r > 0.004:
-            self.items.append((Vector(p), r))
+            self.items.append(("B", Vector(p), None, r))
 
-    def chain(self, pts, radii, step=0.42):
-        """Balls along a polyline, spaced <= step * radius so the chain fuses into a smooth tube."""
+    def cap(self, a, b, r):
+        if r > 0.004 and (b - a).length > 1e-4:
+            self.items.append(("C", Vector(a), Vector(b), r))
+
+    def chain(self, pts, radii):
         for (a, ra), (b, rb) in zip(zip(pts, radii), zip(pts[1:], radii[1:])):
-            seg = (b - a).length
-            rmin = max(0.006, min(ra, rb))
-            n = max(1, int(math.ceil(seg / (step * rmin))))
-            for k in range(n):
-                t = k / n
-                self.ball(a.lerp(b, t), lerp(ra, rb, t))
-        self.ball(pts[-1], radii[-1])
+            self.cap(a, b, 0.5 * (ra + rb))
 
 
-def build_crown_balls(tau):
+def poisson(rng, n_try, inside, sample, mind):
+    pts = []
+    for _ in range(n_try):
+        q = sample()
+        if not inside(q):
+            continue
+        dq = mind(q)
+        ok = True
+        for p in pts:
+            if (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 < dq * dq:
+                ok = False
+                break
+        if ok:
+            pts.append(q)
+    return pts
+
+
+def voronoi_edges(sites, inside):
+    """Voronoi edges (2D) of `sites`, clipped to the region `inside` by bisection. Returns [(a, b)] as 2D tuples."""
+    from mathutils.geometry import delaunay_2d_cdt
+    co = [Vector((x, y)) for (x, y) in sites]
+    out = delaunay_2d_cdt(co, [], [], 0, 1e-6)
+    verts, faces = out[0], out[2]
+    cc = []
+    for f in faces:
+        if len(f) != 3:
+            cc.append(None)
+            continue
+        a, b, c = (verts[f[0]], verts[f[1]], verts[f[2]])
+        d = 2.0 * (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y))
+        if abs(d) < 1e-12:
+            cc.append(None)
+            continue
+        ux = (a.length_squared * (b.y - c.y) + b.length_squared * (c.y - a.y) + c.length_squared * (a.y - b.y)) / d
+        uy = (a.length_squared * (c.x - b.x) + b.length_squared * (a.x - c.x) + c.length_squared * (b.x - a.x)) / d
+        cc.append((ux, uy))
+    owners = {}
+    for fi, f in enumerate(faces):
+        n = len(f)
+        for k in range(n):
+            e = tuple(sorted((f[k], f[(k + 1) % n])))
+            owners.setdefault(e, []).append(fi)
+    edges = []
+    for e, fs in owners.items():
+        if len(fs) != 2 or cc[fs[0]] is None or cc[fs[1]] is None:
+            continue
+        p, q = cc[fs[0]], cc[fs[1]]
+        ip, iq = inside(p), inside(q)
+        if not ip and not iq:
+            continue
+        if ip != iq:
+            lo, hi = (p, q) if ip else (q, p)
+            for _ in range(18):
+                m = ((lo[0] + hi[0]) * 0.5, (lo[1] + hi[1]) * 0.5)
+                if inside(m):
+                    lo = m
+                else:
+                    hi = m
+            p, q = (p, lo) if ip else (lo, q)
+        edges.append((p, q))
+    return edges
+
+
+def build_crown_elements(tau):
     """All metaball elements for loop phase tau in [0, 1). Structure is fixed (seeded); motion is periodic in tau."""
     rng = random.Random(SEED)
-    B = Balls()
-    two_pi_t = 2.0 * math.pi * tau
+    E = Elems()
+    tw = 2.0 * math.pi * tau
     taper = lambda s: smoothstep(-0.02, 0.06, s) * smoothstep(1.03, 0.85, s)  # noqa: E731
-    SLEN = 1.1                                   # metres of wall per unit s
-
-    # --- lace holes (metric wall coordinates S along, V up): breathing radii, slowly drifting centres
-    holes = []
-    for _ in range(15):
-        S = rng.uniform(0.06, 1.0) * SLEN
-        vf = rng.uniform(0.25, 0.95)
-        rad = rng.uniform(0.022, 0.07)
-        ph = rng.uniform(0, 2 * math.pi)
-        holes.append((S, vf, rad, ph))
-
-    def in_hole(S, V, h):
-        for (hs, vf, rad, ph) in holes:
-            cs = hs + 0.03 * math.sin(two_pi_t + ph)
-            cv = vf * h + 0.02 * math.cos(two_pi_t + ph)
-            r = rad * (0.8 + 0.25 * math.sin(two_pi_t + ph * 1.7))
-            if (S - cs) ** 2 + (V - cv) ** 2 < r * r:
-                return True
-        return False
-
     rim_ph = rng.uniform(0, 6.28)
 
-    def top_v(s):
-        return 1.0 + 0.1 * math.sin(s * 17.0 + rim_ph + two_pi_t) + 0.05 * math.sin(s * 37.0 - two_pi_t)
+    def top(s):
+        return 1.0 + 0.10 * math.sin(s * 15.0 + rim_ph + tw) + 0.05 * math.sin(s * 33.0 - tw)
 
-    # --- continuous milky sheet (dense metaball grid on the wall surface) with round lace holes
-    step = 0.03
-    ncol = int(SLEN / step)
-    for c in range(ncol + 1):
-        s = c / ncol
+    def Hm(S):                                   # metric wall height at metric position S
+        s = max(0.0, min(1.0, S / SLEN))
+        return height(s) * top(s)
+
+    def to3d(S, V, sway):
+        s = max(0.0, min(1.0, S / SLEN))
         h = height(s)
-        tv = top_v(s)
-        nrow = max(2, int(h * tv / step))
-        sway = 0.025 * math.sin(two_pi_t + s * 6.0)
-        for k in range(nrow + 1):
-            v = k / nrow * tv
-            V = v * h
-            if k > 0 and in_hole(s * SLEN, V, h):
-                continue
-            r = (0.03 - 0.006 * v) * (0.35 + 0.65 * taper(s)) + 0.004
-            B.ball(wall(s, v, sway), r)
-        # rounded thicker rim along the top edge (classic crown lip)
-        rr = 0.034 * taper(s) * (0.8 + 0.2 * math.sin(s * 23.0 + two_pi_t))
-        if not in_hole(s * SLEN, tv * h, h):
-            B.ball(wall(s, tv, sway), rr)
+        return wall(s, V / h, sway)
 
-    # --- thick base where the sheet leaves the water
+    # --- wall lace: Poisson sites, denser near the root (almost solid there), big holes toward the rim
+    inside_w = lambda q: 0.0 <= q[0] <= SLEN and 0.0 <= q[1] <= Hm(q[0])  # noqa: E731
+    base_sites = poisson(rng, 5000, lambda q: 0.0 <= q[0] <= SLEN and 0.0 <= q[1] <= height(q[0] / SLEN) * 1.12,
+                         lambda: (rng.uniform(-0.02, SLEN + 0.02), rng.uniform(0.0, 0.7)),
+                         lambda q: 0.042 + 0.10 * min(1.0, q[1] / max(0.05, height(min(1.0, max(0.0, q[0] / SLEN))))))
+    sites = []
+    for (S, V) in base_sites:
+        a, b = rng.uniform(0, 6.28), rng.uniform(0, 6.28)
+        sites.append((S + 0.011 * math.sin(tw + a), V + 0.009 * math.sin(tw + b)))
+    # far ring of sites so the Voronoi cells close at the borders
     for k in range(40):
-        s = k / 39
-        B.ball(wall(s, 0.0, 0.0) + Vector((0.0, 0.0, 0.01)), 0.045 * taper(s) + 0.01)
+        S = -0.3 + (SLEN + 0.6) * k / 39
+        sites.append((S, -0.25))
+        sites.append((S, 0.95))
+    for k in range(10):
+        V = -0.25 + 1.2 * k / 9
+        sites.append((-0.3, V))
+        sites.append((SLEN + 0.3, V))
+    edge_rng = random.Random(SEED + 7)
+    for (p, q) in voronoi_edges(sites, inside_w):
+        S0, V0 = p
+        S1, V1 = q
+        L = math.hypot(S1 - S0, V1 - V0)
+        if L < 0.004:
+            continue
+        mid_s = max(0.0, min(1.0, 0.5 * (S0 + S1) / SLEN))
+        vf = min(1.0, 0.5 * (V0 + V1) / max(0.05, Hm(0.5 * (S0 + S1))))
+        r = (0.0175 - 0.006 * vf) * (0.55 + 0.45 * taper(mid_s)) * edge_rng.uniform(0.85, 1.2)
+        n = max(1, int(math.ceil(L / 0.035)))
+        sway = 0.02 * math.sin(tw + mid_s * 6.0)
+        pts = [to3d(S0 + (S1 - S0) * k / n, V0 + (V1 - V0) * k / n, sway) for k in range(n + 1)]
+        E.chain(pts, [r] * (n + 1))
 
-    # --- foam skirt where the sheet meets the water (flattened blobs along the root, both sides of the wall)
-    for k in range(22):
-        s = (k + 0.5) / 22
-        for side in (-1.0, 1.0):
-            p = base(s) + Vector((side * 0.06 + 0.02 * math.sin(k * 1.7 + two_pi_t), 0.0, 0.012))
-            B.ball(p, (0.05 + 0.015 * math.sin(k * 2.3 + two_pi_t)) * taper(s))
+    # --- thick solid root where the sheet leaves the water + rim with beads
+    nb = 36
+    root_pts = [wall(k / nb, 0.0) + Vector((0, 0, 0.012)) for k in range(nb + 1)]
+    E.chain(root_pts, [0.03 * taper(k / nb) + 0.012 for k in range(nb + 1)])
+    low_pts = [wall(k / nb, 0.12) for k in range(nb + 1)]
+    E.chain(low_pts, [0.022 * taper(k / nb) + 0.008 for k in range(nb + 1)])
+    nr = 44
+    rim_on = [edge_rng.random() > 0.18 for _ in range(nr)]
+    for k in range(nr):
+        if not rim_on[k]:
+            continue
+        s0, s1 = k / nr, (k + 1) / nr
+        a = wall(s0, top(s0), 0.02 * math.sin(tw + s0 * 6.0))
+        b = wall(s1, top(s1), 0.02 * math.sin(tw + s1 * 6.0))
+        E.cap(a, b, 0.016 * (0.5 + 0.5 * taper(0.5 * (s0 + s1))))
+    for k in range(13):                              # beads sitting on the rim
+        s = (k + edge_rng.uniform(0.2, 0.8)) / 13
+        E.ball(wall(s, top(s), 0.02 * math.sin(tw + s * 6.0)), edge_rng.uniform(0.02, 0.03) * (0.6 + 0.4 * taper(s)))
 
-    # --- tendrils from the top rim: grow, pinch off a droplet, retract (periodic life cycle per tendril)
-    nt = 9
+    # --- lace skirt lying on the water: spreads outward and back toward the camera from the root
+    def W(s):
+        return 0.10 + 0.42 * s
+
+    def skirt_xy(s, d):
+        b = base(s)
+        o = outward(s)
+        return Vector((b.x + o.x * d, b.y + o.y * d, 0.006))
+
+    def inside_k(q):
+        s, d = q[0] / SLEN, q[1]
+        return 0.03 <= s <= 1.0 and 0.0 <= d <= W(s) * (0.85 + 0.15 * math.sin(s * 9.0 + tw))
+
+    sk_sites = poisson(rng, 2500, lambda q: -0.02 <= q[0] <= 1.05 * SLEN and -0.02 <= q[1] <= W(q[0] / SLEN) + 0.05,
+                       lambda: (rng.uniform(0.0, 1.05 * SLEN), rng.uniform(-0.02, 0.6)),
+                       lambda q: 0.07 + 0.06 * q[0] / SLEN)    # ~7-13 cm cells
+    sk = []
+    for (S, d) in sk_sites:
+        a = rng.uniform(0, 6.28)
+        sk.append((S + 0.01 * math.sin(tw + a), d + 0.012 * math.cos(tw + a * 1.3)))
+    for k in range(30):
+        S = -0.25 + (SLEN + 0.5) * k / 29
+        sk.append((S, -0.3))
+        sk.append((S, 1.0))
+    for k in range(8):
+        d = -0.3 + 1.3 * k / 7
+        sk.append((-0.25, d))
+        sk.append((SLEN + 0.25, d))
+    for (p, q) in voronoi_edges(sk, inside_k):
+        s0, d0 = p[0] / SLEN, p[1]
+        s1, d1 = q[0] / SLEN, q[1]
+        L = math.hypot(q[0] - p[0], d1 - d0)
+        if L < 0.004:
+            continue
+        r = 0.012 * edge_rng.uniform(0.8, 1.25) * (1.0 - 0.35 * (0.5 * (d0 + d1)) / max(0.1, W(0.5 * (s0 + s1))))
+        n = max(1, int(math.ceil(L / 0.05)))
+        pts = [skirt_xy(s0 + (s1 - s0) * k / n, d0 + (d1 - d0) * k / n) for k in range(n + 1)]
+        E.chain(pts, [r] * (n + 1))
+
+    # --- tendrils from the rim: grow, pinch off a droplet, retract (periodic life cycle per tendril)
+    nt = 11
     for j in range(nt):
-        s0 = 0.05 + 0.85 * (j + rng.uniform(0.2, 0.8)) / nt
+        s0 = 0.04 + 0.86 * (j + rng.uniform(0.2, 0.8)) / nt
         phase = rng.uniform(0, 1)
-        lmax = rng.uniform(0.12, 0.26) * (0.6 + 0.8 * math.exp(-((s0 - 0.3) / 0.35) ** 2))
-        out = Vector((rng.uniform(0.2, 0.8), rng.uniform(-0.1, 0.5), 1.0)).normalized()
+        lmax = rng.uniform(0.1, 0.24) * (0.6 + 0.8 * math.exp(-((s0 - 0.28) / 0.35) ** 2))
+        out = Vector((rng.uniform(0.2, 0.9), rng.uniform(-0.1, 0.5), 1.0)).normalized()
         out = (out + LEAN * 0.6).normalized()
-        r_root = rng.uniform(0.026, 0.036)
-        r_tip = rng.uniform(0.034, 0.046)
+        r_root = rng.uniform(0.014, 0.02)
+        r_tip = rng.uniform(0.022, 0.032)
         age = (tau + phase) % 1.0
         grow = smoothstep(0.0, 0.5, age) * (1.0 - smoothstep(0.62, 1.0, age))
-        root = wall(s0, top_v(s0) * 0.97, 0.0)
+        root = wall(s0, top(s0) * 0.98, 0.0)
         L = lmax * grow
         if L > 0.015:
             pts, rad = [], []
-            n = 8
+            n = 6
             for k in range(n + 1):
                 t = k / n
-                bend = Vector((0.06 * t * t, 0.03 * t * t, -0.05 * t * t))   # tips droop outward under gravity
+                bend = Vector((0.06 * t * t, 0.03 * t * t, -0.05 * t * t))
                 pts.append(root + out * (L * t) + bend * (L / 0.2))
                 rad.append(lerp(r_root, r_root * 0.55, t) * min(1.0, grow * 1.6))
-            B.chain(pts, rad)
-            # bulbous droplet tip still attached
-            B.ball(pts[-1] + out * 0.012, r_tip * min(1.0, grow * 1.4))
-        # released drop flying away after the pinch (age 0.5 .. 1.0), shrinking to nothing at the loop end
+            E.chain(pts, rad)
+            E.ball(pts[-1] + out * 0.01, r_tip * min(1.0, grow * 1.4))
         if age > 0.5:
             a = (age - 0.5) / 0.5
             tip = root + out * lmax
             vel = out * 0.55 + Vector((0.15, 0.25, 0.25))
             p = tip + vel * a * 0.35 + Vector((0, 0, -0.9 * a * a * 0.35))
-            B.ball(p, r_tip * 0.95 * (1.0 - a) ** 0.5)
+            E.ball(p, r_tip * 0.95 * (1.0 - a) ** 0.5)
 
-    # --- loose droplets on ballistic arcs (periodic), small satellite drops
-    for j in range(16):
-        s0 = rng.uniform(0.05, 0.95)
+    # --- loose droplets on ballistic arcs (periodic)
+    for j in range(20):
+        s0 = rng.uniform(0.03, 0.9)
         phase = rng.uniform(0, 1)
-        r0 = rng.uniform(0.016, 0.03)
-        vel = Vector((rng.uniform(0.3, 1.0), rng.uniform(0.0, 0.8), rng.uniform(0.4, 1.0)))
+        r0 = rng.uniform(0.012, 0.026)
+        vel = Vector((rng.uniform(0.3, 1.0), rng.uniform(0.0, 0.8), rng.uniform(0.5, 1.1)))
         age = (tau + phase) % 1.0
-        start = wall(s0, rng.uniform(0.5, 0.95), 0.0)
-        tt = age * 0.38
+        start = wall(s0, rng.uniform(0.6, 1.0), 0.0)
+        tt = age * 0.4
         p = start + vel * tt + Vector((0, 0, -4.9 * tt * tt))
-        B.ball(p, r0 * math.sin(math.pi * age) ** 0.5)
-    return B.items
+        if p.z > 0.01:
+            E.ball(p, r0 * math.sin(math.pi * age) ** 0.5)
+    return E.items
 
 
 def crown_mesh(frame, mat):
@@ -205,10 +328,19 @@ def crown_mesh(frame, mat):
     mb.threshold = 0.6
     ob = bpy.data.objects.new(fam, mb)
     bpy.context.scene.collection.objects.link(ob)
-    for p, r in build_crown_balls(tau):
-        e = mb.elements.new(type='BALL')
-        e.co = p
-        e.radius = r * 1.75                       # visible radius ~0.57 R for an isolated ball
+    X = Vector((1.0, 0.0, 0.0))
+    items = build_crown_elements(tau)
+    for kind, a, b, r in items:
+        if kind == "B":
+            e = mb.elements.new(type='BALL')
+            e.co = a
+        else:
+            e = mb.elements.new(type='CAPSULE')
+            d = b - a
+            e.co = (a + b) * 0.5
+            e.size_x = d.length * 0.5
+            e.rotation = X.rotation_difference(d.normalized())
+        e.radius = r * 1.75                       # visible radius ~ r for an isolated element
         e.stiffness = 2.0
     bpy.context.view_layer.update()
     deps = bpy.context.evaluated_depsgraph_get()
@@ -220,6 +352,7 @@ def crown_mesh(frame, mat):
     bpy.data.objects.remove(ob, do_unlink=True)
     bpy.data.metaballs.remove(mb)
     tris = sum(len(p.vertices) - 2 for p in me.polygons)
+    print("frame %d: %d elements, %d raw tris" % (frame, len(items), tris))
     if tris > TARGET_TRIS:
         C.select_only([obj])
         mod = obj.modifiers.new("dec", 'DECIMATE')
