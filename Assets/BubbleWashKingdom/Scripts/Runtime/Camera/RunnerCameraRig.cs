@@ -22,15 +22,15 @@ namespace BubbleWash
 
         [Header("Portrait 9:16 framing")]
         [Tooltip("Owner requirement: rear follow camera slightly above and behind; back of hat, pom-pom, arms and paws visible, route and tunnel visible ahead above the pom-pom.")]
-        public float distanceBackPortrait = 2.7f;
-        public float heightPortrait = 1.75f;
-        public float fovPortrait = 60f;
+        public float distanceBackPortrait = 2.55f;
+        public float heightPortrait = 1.5f;
+        public float fovPortrait = 58f;
 
         [Header("Aim")]
         public float lookAhead = 10f;
         [Tooltip("Downward pitch from the track direction (reference: about 8.5 degrees at 16:9).")]
         public float pitchDown = 9f;
-        public float pitchDownPortrait = 9.5f;
+        public float pitchDownPortrait = 10f;
         public float lookHeight = 0.6f;
         [Range(0f, 1f)] public float lookAtRunnerWeight = 0.08f;
         [Range(0f, 1f)] public float lateralFollow = 0.55f;

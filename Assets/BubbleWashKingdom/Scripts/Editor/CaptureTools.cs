@@ -58,6 +58,120 @@ namespace BubbleWash.EditorTools
             catch (System.Exception e) { Debug.LogError("[BWK] agent preview failed: " + e); EditorApplication.Exit(1); }
         }
 
+        /// <summary>
+        /// Lead tool (no scene save): renders the hero position through several PORTRAIT rear-camera framings in one run,
+        /// plus side / three-quarter views that show the seated pose, and reference side-by-sides.
+        ///   -bwkCamVariants "back,height,pitch,fov;back,height,pitch,fov"   (default: the rig's current values)
+        ///   -bwkOut DIR (default Captures/agents/_lead_cam)
+        /// Writes DIR/cam_v{i}_9x16.png, DIR/cam_v{i}_vs_reference_9x16.png, DIR/pose_side.png, DIR/pose_rear34.png.
+        /// </summary>
+        public static void LeadViewsBatch()
+        {
+            try
+            {
+                string outDir = ArgValue("-bwkOut") ?? "Captures/agents/_lead_cam";
+                Directory.CreateDirectory(outDir);
+                EditorSceneManager.OpenScene(SceneBuilder.ScenePath);
+                var runner = Object.FindFirstObjectByType<RunnerController>();
+                var rig = Object.FindFirstObjectByType<RunnerCameraRig>(FindObjectsInactive.Include);
+                var registry = Object.FindFirstObjectByType<TrackItemRegistry>();
+                var cam = Camera.main;
+                if (runner == null || rig == null || cam == null || registry == null) throw new System.Exception("scene objects missing");
+                var brain = cam.GetComponent<CinemachineBrain>();
+                if (brain) brain.enabled = false;
+                runner.track.Rebuild();
+                float best = FindHeroDistance(runner, registry);
+                PoseHero(runner, best);
+
+                string spec = ArgValue("-bwkCamVariants");
+                var variants = new List<float[]>();
+                if (!string.IsNullOrEmpty(spec))
+                    foreach (var part in spec.Split(';'))
+                    {
+                        var v = part.Split(',').Select(s => float.Parse(s.Trim(), System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+                        if (v.Length == 4) variants.Add(v);
+                    }
+                if (variants.Count == 0) variants.Add(new[] { rig.distanceBackPortrait, rig.heightPortrait, rig.pitchDownPortrait, rig.fovPortrait });
+
+                var saved = new[] { rig.distanceBackPortrait, rig.heightPortrait, rig.pitchDownPortrait, rig.fovPortrait };
+                Texture2D refCrop = null;
+                if (File.Exists(RefRear))
+                {
+                    var refTex = LoadPng(RefRear);
+                    int cw = Mathf.RoundToInt(refTex.height * 9f / 16f);
+                    refCrop = Resize(Crop(refTex, Mathf.RoundToInt(refTex.width * 0.49f - cw * 0.5f), 0, cw, refTex.height), 720, 1280);
+                }
+                for (int i = 0; i < variants.Count; i++)
+                {
+                    var v = variants[i];
+                    rig.distanceBackPortrait = v[0]; rig.heightPortrait = v[1]; rig.pitchDownPortrait = v[2]; rig.fovPortrait = v[3];
+                    rig.aspectOverride = 720f / 1280f;
+                    rig.Snap();
+                    var lens = rig.vcam.Lens;
+                    cam.transform.SetPositionAndRotation(rig.transform.position, rig.transform.rotation * Quaternion.Euler(0f, 0f, lens.Dutch));
+                    cam.fieldOfView = lens.FieldOfView;
+                    string path = $"{outDir}/cam_v{i}_9x16.png";
+                    Render(cam, 720, 1280, path);
+                    if (refCrop != null) SaveSideBySide(new[] { refCrop, LoadPng(path) }, $"{outDir}/cam_v{i}_vs_reference_9x16.png");
+                    Debug.Log($"[BWK] camera variant v{i}: back {v[0]} height {v[1]} pitch {v[2]} fov {v[3]}");
+                }
+                rig.distanceBackPortrait = saved[0]; rig.heightPortrait = saved[1]; rig.pitchDownPortrait = saved[2]; rig.fovPortrait = saved[3];
+                rig.aspectOverride = 0f;
+
+                // Seated-pose views (verification only, never gameplay cameras): right side and rear three-quarter.
+                var f = runner.Frame;
+                Vector3 target = runner.transform.position + f.flatUp * 0.45f;
+                foreach (var (name, offset) in new[] {
+                    ("pose_side", f.flatRight * 1.55f + f.flatUp * 0.75f + f.forward * 0.35f),
+                    ("pose_rear34", -f.forward * 2.2f + f.flatRight * 1.5f + f.flatUp * 1.2f) })
+                {
+                    Vector3 p = target + offset;
+                    cam.transform.SetPositionAndRotation(p, Quaternion.LookRotation(target - p, f.flatUp));
+                    cam.fieldOfView = 42f;
+                    Render(cam, 1280, 720, $"{outDir}/{name}.png");
+                }
+                if (brain) brain.enabled = true;
+                Debug.Log("[BWK] Lead views written to " + Path.GetFullPath(outDir));
+                EditorApplication.Exit(0);
+            }
+            catch (System.Exception e) { Debug.LogError("[BWK] lead views failed: " + e); EditorApplication.Exit(1); }
+        }
+
+        /// <summary>Track distance with the most collectibles 2.5-14 m ahead (side-lane coins count double, gems x3).</summary>
+        static float FindHeroDistance(RunnerController runner, TrackItemRegistry registry)
+        {
+            float L = runner.track.Length;
+            float best = 90f; float bestScore = -1f;
+            for (float d = 75f; d < L - 45f; d += 0.5f)
+            {
+                float score = 0f;
+                foreach (var it in registry.items)
+                {
+                    float a = it.distance - d;
+                    if (a < 2.5f || a > 14f) continue;
+                    if (it.kind == TrackItemKind.Coin) score += Mathf.Abs(it.lateral) > 0.5f ? (a < 9f ? 3f : 1.5f) : 0.5f;
+                    else if (it.kind == TrackItemKind.Gem) score += 3f;
+                    else if (it.kind == TrackItemKind.Boost) score += 1f;
+                }
+                if (score > bestScore) { bestScore = score; best = d; }
+            }
+            return best;
+        }
+
+        /// <summary>Puts the mascot at the hero distance in the Slide pose with the slide FX and ambient bubbles running.</summary>
+        static void PoseHero(RunnerController runner, float distance)
+        {
+            var animator = runner.GetComponentInChildren<Animator>();
+            AnimationClip slide = null;
+            if (animator != null && animator.runtimeAnimatorController != null)
+                slide = animator.runtimeAnimatorController.animationClips.FirstOrDefault(c => c.name == "Slide");
+            foreach (var ps in Object.FindObjectsByType<ParticleSystem>(FindObjectsSortMode.None))
+                if (ps.name == "AmbientBubbles") ps.Simulate(4f, true, true);
+            runner.TeleportTo(distance, 0f);
+            if (slide != null) slide.SampleAnimation(animator.gameObject, 0.25f);
+            SimulateSlideFX(runner);
+        }
+
         static string ArgValue(string key)
         {
             var args = System.Environment.GetCommandLineArgs();
