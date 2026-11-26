@@ -486,6 +486,31 @@ namespace BubbleWash.EditorTools
                 RenderWithBackground(cam, 1280, 720, outDir, $"{name}_16x9.png", mascot);
                 foreach (var r in hiddenItems) r.enabled = true;
             }
+
+            // R stills (2026-11-26, owner: "correct the S3 comparison camera so the new scenery can be evaluated accurately"):
+            // REFERENCE-MATCHED front comparison cameras from the solved 8.25 s video camera
+            // (Captures/agents/environment/shot0825/camera.json): 2.6 m ahead of the mascot, 1.3 m above the slide, 0.3 m to
+            // travel-right, vertical FOV 52, aimed so the mascot centre lands at (522,397) of 1280x720 (camera turned 9.1 deg
+            // right and 2.9 deg up from the mascot) - the video's lens sees the upper tunnel the C stills miss. R3 at 158 m
+            // looks back over the S3 star tunnel (C1 at 100 m looked back at 60-100 m). Comparison only, never gameplay.
+            foreach (var (name, d) in new[] { ("R3_front_S3_like_5s", 158f), ("R4_front_S4_like_7s", 190f),
+                                              ("R5_front_S5_like_8s", 220f), ("R6_front_S6_like_11s", 280f) })
+            {
+                runner.TeleportTo(d, 0f);
+                if (slide != null) slide.SampleAnimation(animator.gameObject, 0.25f);
+                var f = runner.Frame;
+                Vector3 camPos = runner.transform.position + f.forward * 2.6f + f.flatUp * 1.3f + f.flatRight * 0.3f;
+                Vector3 centre = runner.transform.position + f.flatUp * 0.6f;
+                cam.transform.SetPositionAndRotation(camPos, Quaternion.LookRotation(centre - camPos, f.flatUp) * Quaternion.Euler(-2.9f, 9.1f, 0f));
+                cam.fieldOfView = 52f;
+                var hiddenR = new List<Renderer>();
+                foreach (var it in Object.FindObjectsByType<BubbleWash.TrackItem>(FindObjectsSortMode.None))
+                    if ((it.transform.position - camPos).sqrMagnitude < 16f)
+                        foreach (var r in it.GetComponentsInChildren<Renderer>())
+                            if (r.enabled) { r.enabled = false; hiddenR.Add(r); }
+                RenderWithBackground(cam, 1280, 720, outDir, $"{name}_16x9.png", mascot);
+                foreach (var r in hiddenR) r.enabled = true;
+            }
             rig.aspectOverride = 0f;
             if (brain) brain.enabled = true;
             Debug.Log("[BWK] Stills written to " + Path.GetFullPath(outDir) + " (+ bg/ with the mascot hidden)");

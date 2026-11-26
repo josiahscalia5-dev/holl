@@ -12,21 +12,23 @@ ROOT=/c/Users/josia/thanksgiving
 PY="/c/Users/josia/Blender/blender-5.3.0-windows-x64/5.3/python/bin/python.exe"
 cd "$ROOT" || exit 1
 mkdir -p Captures/sections
-pick() { local d="$1"; shift; for f in "$@"; do [ -f "$d/$f" ] && { echo "$f"; return; }; done; }
+# first candidate present in BOTH builds (R = reference-matched front cameras, added 2026-11-26 13:25; older builds fall
+# back to the C stills so before/after always uses the same camera)
+pick() { for f in "$@"; do [ -f "$NEW/$f" ] && [ -f "$PREV/$f" ] && { echo "$f"; return; }; done; }
 ROWS=(
   "S1|f_00.50s|01_hall_start_16x9.png"
   "S2|f_03.00s|hero_16x9.png"
-  "S3|f_05.00s|C1_front_tunnel_like_5s_16x9.png"
-  "S4|f_06.75s|C4_front_window_like_7s_16x9.png 06_tunnel_lane_right_16x9.png"
-  "S5|f_08.25s|C2_front_chambers_like_10s_16x9.png"
-  "S6|f_11.00s|C5_front_chambers2_like_11s_16x9.png 08_sweep_16x9.png"
+  "S3|f_05.00s|R3_front_S3_like_5s_16x9.png C1_front_tunnel_like_5s_16x9.png"
+  "S4|f_06.75s|R4_front_S4_like_7s_16x9.png C4_front_window_like_7s_16x9.png 06_tunnel_lane_right_16x9.png"
+  "S5|f_08.25s|R5_front_S5_like_8s_16x9.png C2_front_chambers_like_10s_16x9.png"
+  "S6|f_11.00s|R6_front_S6_like_11s_16x9.png C5_front_chambers2_like_11s_16x9.png 08_sweep_16x9.png"
   "S7|f_14.50s|09_portal_16x9.png C3_front_portal_like_14s_16x9.png"
 )
 ALL=(); ALLBG=()
 for row in "${ROWS[@]}"; do
   IFS='|' read -r S REF CANDS <<< "$row"
   R="Reference/frames4k_720/${REF}.png"
-  U=$(pick "$NEW" $CANDS)
+  U=$(pick $CANDS)
   if [ -z "$U" ] || [ ! -f "$PREV/$U" ]; then echo "$S: still missing in $NEW or $PREV ($CANDS)"; continue; fi
   BGP="$PREV/bg/$U"; BGN="$NEW/bg/$U"
   [ -f "$BGP" ] || BGP="$PREV/$U"; [ -f "$BGN" ] || BGN="$NEW/$U"

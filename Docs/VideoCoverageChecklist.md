@@ -22,6 +22,25 @@ Unity track: 14 m (start) -> ~351 m (portal), one continuous ride, no cuts. Stil
 | S7 | 12.75-15.00 s | Golden light portal finale | 310-351 m (09_portal L-34, rear) | 3.5/10 | env, light, water |
 | ALL | 0-15 s | The mascot (same character everywhere) | every frame | in game 4/10 (old model; its front face reads badly in C1/C4/C2/C5). v4 Blender master f14 ~6.5/10 (hero/rear 7, front 6.5, side 5.5, face 6), NOT approved. v4 mobile FBX in-game candidate ~4/10: pom-pom renders as a bare dark ball, arms as dark spikes, hat too large - not ready for approval | character |
 
+## Round 7 scores (2026-11-26 13:20, build lead_r7_final 13:06) - independent: 3 judges + 1 skeptic (workflow bwk-round7-verify)
+Scored from `Captures/sections/S<n>_triptych_r7.png` (video | round 6 | round 7; row 2 = mascot hidden). The skeptic lowered
+most judge scores by 0.5. Format: with mascot / scenery only.
+
+| # | Round 6 | Round 7 | Biggest remaining gaps (skeptic) |
+|---|---------|---------|----------------------------------|
+| S1 | 3.5 / 3.5 | 4 / 4 | no rainbow slide lanes; dim indigo hall instead of bright pink-lilac + warm glow; tunnel mouth small and far |
+| S2 | 5 / 5.5 | 5 / 5 | few small stars; far end a soft pink blur (slight regression); sparse big wall holes; no rainbow lanes |
+| S3 | 3.5 / 4 | 3.5 / 4 | unchanged in its still (the C1 camera at 100 m looks back at 60-100 m, so the new S3 stars are not in view) |
+| S4 | 3.5 / 3.5 | 4 / 4.5 | porthole only a cut-off sliver at the frame top; no glass pipe beside it; near wall stars missing |
+| S5 | 3.5 / 3.5 | 4 / 4.5 | no glowing pink glass pipe in view; no big close porthole with socks; no pink gem, few bubbles |
+| S6 | 3.5 / 3.5 | 4.5 / 5 | no cyan glass pipe curving down the left wall in view; fewer stars; chamber small with no socks visible |
+| S7 | 4 / 4 | 4.5 / 5 | portal small and far (reference: ring + golden burst fill the frame); burst too white; no sparkles |
+Whole game: ~3.8 -> ~4.2 with mascot, ~3.9 -> ~4.6 scenery only. Verdict: real but moderate progress; every section still
+lacks the rainbow lanes, the bright pink-lilac warm lighting, milky splash crowns, bubbly foam and the right mascot.
+Note: several gaps come from the front comparison cameras (C stills: 0.95 m up, FOV 46) framing much less of the upper
+tunnel than the video's camera - windows read as slivers at the frame top. Next: reference-matched TEMPORARY comparison
+cameras (solved like ShotMatchTool), never the gameplay camera.
+
 Whole-game estimate (10:03 build): ~3.5/10; hero screen ~6/10 (r4 base 07:05 was ~5.5).
 Private sheets: `Captures/sections/S1..S7_ref_vs_unity_r5_1003.png`, overview `ALL_ref_vs_unity_r5_1003.png`;
 hero triptych reference | 07:05 | 10:03 `Captures/milestones/m5_r5_triptych_ref_0705_1003.png`.

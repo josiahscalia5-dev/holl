@@ -31,6 +31,10 @@
   rebuilt in Blender with AO vertex colours + LOD1, nothing of it in Unity yet). 13:06 lead build `lead_r7_final` OK ->
   `Captures/stills_r7/` (+bg), sheets `Captures/sections/S1..S7_triptych_r7.png`, recording `lead_play_r7` ->
   `Captures/playmode/gameplay_autopilot_9x16.mp4`, scoring `Tools/workflows/bwk-round7-verify.js` (args {tag: "r7"}).
+- 13:20 independent round-7 scores (with mascot / scenery only, details + gaps in Docs/VideoCoverageChecklist.md):
+  S1 4/4, S2 5/5, S3 3.5/4 (C1 still does not show S3), S4 4/4.5, S5 4/4.5, S6 4.5/5, S7 4.5/5; whole ~4.2 / ~4.6
+  (round 6: ~3.8 / ~3.9). Sheets were sent to the owner. Comparison cameras (front C stills) frame too little of the upper
+  tunnel - add reference-matched TEMPORARY comparison cameras next round (keep the old ones for continuity).
 - AFTER THE 17:10 RESET (owner 13:20, order fixed): (1) finish round-7 water/foam/splash:
   `Workflow({scriptPath: "C:/Users/josia/thanksgiving/Tools/workflows/bwk-round7-wholelevel.js", args: ["water"]})`
   (its prompt has a RESUME note) -> lead `bash Tools/safe_build.sh lead_r7w` -> copy stills to `Captures/stills_r7w/` ->
