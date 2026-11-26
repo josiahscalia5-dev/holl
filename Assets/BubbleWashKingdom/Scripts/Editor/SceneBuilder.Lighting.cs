@@ -153,7 +153,10 @@ namespace BubbleWash.EditorTools
             ca.saturation.Override(4f); ca.contrast.Override(12f); ca.postExposure.Override(-0.25f);
             // blue-violet shadows / low mids (depth, dark holes); warm highlights keep gold and bulbs warm
             var smh = profile.Add<ShadowsMidtonesHighlights>(true);
-            smh.shadows.Override(new Vector4(0.92f, 0.88f, 1.14f, -0.03f));
+            // r8 v2 (lighting): the reference darks are grey-violet (hero upper half darkest 5 % #433d5f, S .36), ours navy
+            // (#1f164b, S .71) because this + the split-toning shadows re-tinted every dark / mid wall pixel blue: much
+            // weaker blue push (the drum wall holes get their depth from BWK_DrumWall _HoleDarken instead)
+            smh.shadows.Override(new Vector4(0.97f, 0.95f, 1.05f, -0.03f));
             smh.midtones.Override(new Vector4(0.98f, 0.97f, 1.05f, 0f));
             smh.highlights.Override(new Vector4(1.04f, 1f, 0.96f, 0f));
             smh.shadowsStart.Override(0f); smh.shadowsEnd.Override(0.35f); smh.highlightsStart.Override(0.55f); smh.highlightsEnd.Override(1f);
@@ -161,7 +164,8 @@ namespace BubbleWash.EditorTools
             var st = profile.Add<SplitToning>(true);
             // round 5: shadow tone blue (hue ~235) instead of violet (R > G pushed dark cyan water toward violet; reference
             // shading is blue-violet with pink only where lit)
-            st.shadows.Override(new Color(0.41f, 0.42f, 0.64f)); st.highlights.Override(new Color(0.56f, 0.52f, 0.48f)); st.balance.Override(-15f);
+            // r8 v2: shadow tone (.41, .42, .64) -> a weaker grey-violet (hue ~252 like the reference darks)
+            st.shadows.Override(new Color(0.48f, 0.46f, 0.56f)); st.highlights.Override(new Color(0.56f, 0.52f, 0.48f)); st.balance.Override(-15f);
             // Hue-selective saturation: only the blue-violet range (drum walls, ceiling bays, far tunnel ~225-268 deg) gets
             // richer (x1.28); the purple hat (~280), pink fur, cyan water and gold are untouched.
             var curves = profile.Add<ColorCurves>(true);

@@ -53,7 +53,7 @@ Material:
     - _HoleStretch: 1.75
     - _InnerWall: 0.2
     - _LipWidth: 0.035
-    - _LitDesat: 0.35
+    - _LitDesat: 0.5
     - _Metallic: 0.58
     - _PanelLength: 3
     - _Pattern: 1
