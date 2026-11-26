@@ -603,6 +603,49 @@ namespace BubbleWash.EditorTools
             cs.surfaceOffset = 0.035f;
         }
 
+        /// <summary>
+        /// Master 24 golden destination (masters wave 2026-11-26 17:56, owner: the portal starburst is "STILL too white").
+        /// Runs at the start of BuildLighting, i.e. after BuildPortal / BuildPortalExtras in the full build AND in every
+        /// agent preview (in memory), on the placed LightPortal:
+        ///  - the Core disc (an opaque M_Bulb x5 annulus, r 1.18 m) WAS the hard cream-white "sun" of the r8 finale
+        ///    (measured ~60 px radius, matches the disc): its renderer goes off; the starburst's own soft cream core takes over
+        ///    (PortalGlow still swells the transform, harmless);
+        ///  - SM_Starburst_r8 scale .55 -> .8 (owner sheet 03 / lead S7 proportion fix: the rays reach the bulb ring, R 3.56 m);
+        ///  - its four additive layers use the lighting masters M_DestHaze / M_DestRays / M_DestCream / M_DestSparkle.
+        /// Idempotent; does nothing when the portal or the r8 starburst is missing (r7 fallback keeps M_PortalBurst).
+        /// </summary>
+        static void TunePortalDestination(GameObject root)
+        {
+            try
+            {
+                var portal = root.transform.Find("Environment/LightPortal");
+                if (portal == null) { Debug.LogWarning("[BWK] destination: LightPortal missing"); return; }
+                var core = portal.Find("Core");
+                if (core != null && core.TryGetComponent<MeshRenderer>(out var cr)) cr.enabled = false;
+                var map = new Dictionary<string, Material>
+                {
+                    ["M_BurstRays_r8"] = Mat("M_DestRays"), ["M_BurstSparkle_r8"] = Mat("M_DestSparkle"),
+                    ["M_BurstGlow_r8"] = Mat("M_DestHaze"), ["M_BurstCore_r8"] = Mat("M_DestCream"),
+                };
+                int n = 0;
+                for (int i = 0; i < portal.childCount; i++)
+                {
+                    var c = portal.GetChild(i);
+                    if (!c.name.StartsWith("SM_Starburst_r8")) continue;
+                    c.localScale = Vector3.one * 0.8f;
+                    foreach (var r in c.GetComponentsInChildren<Renderer>(true))
+                    {
+                        var mats = r.sharedMaterials;
+                        for (int k = 0; k < mats.Length; k++)
+                            if (mats[k] != null && map.TryGetValue(mats[k].name, out var rep) && rep != null) { mats[k] = rep; n++; }
+                        r.sharedMaterials = mats;
+                    }
+                }
+                Debug.Log($"[BWK] destination: core disc off, starburst x0.8, {n} glow slots on the M_Dest* masters");
+            }
+            catch (System.Exception e) { Debug.LogWarning($"[BWK] destination tune failed: {e.Message}"); }
+        }
+
         /// <summary>Agent preview hook: rebuilds the neon stars + glow cards in memory (meshes never saved as assets).</summary>
         static partial void PreviewLightingProps(GameObject root, float L)
         {

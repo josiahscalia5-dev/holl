@@ -94,9 +94,17 @@ namespace BubbleWash.EditorTools
                 F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
                 F(m, "_NearFade", 0f);
             }, (int)RenderQueue.Transparent + queueOffset);
-            DestGlow("M_DestHaze", "#FFB54A", 0.5f, 1.1f, -10);    // golden halo, broad (behind the rays)
-            DestGlow("M_DestRays", "#FFBE45", 2.2f, 1.15f, -9);    // golden-yellow rays fading toward the ring
-            DestGlow("M_DestCream", "#FFD487", 0.75f, 1.8f, -8);   // small cream centre (not white: B/R .25)
+            // The halo layer MULTIPLIES first (like M_StarFill_Yellow): additive gold over the violet tunnel kept the violet's
+            // blue (rays read beige-pink, the ring interior "bare violet" #674799); pulling the field behind the burst toward
+            // amber first lets the additive rays read golden-yellow, the outer field stays dark violet (reference).
+            Mat("M_DestHaze", "BWK/LightBlob", m =>
+            {
+                C(m, "_Color", "#FFC070"); F(m, "_Strength", 0.8f); F(m, "_Softness", 1f); F(m, "_Core", 0.6f);
+                F(m, "_Mode", 0f); F(m, "_SrcBlend", (float)BlendMode.DstColor); F(m, "_DstBlend", (float)BlendMode.Zero);
+                F(m, "_NearFade", 0f);
+            }, (int)RenderQueue.Transparent - 10);
+            DestGlow("M_DestRays", "#FFBE45", 2.6f, 1.1f, -9);     // golden-yellow rays fading toward the ring
+            DestGlow("M_DestCream", "#FFD487", 1.8f, 1.6f, -8);    // cream centre (not white: B/R .25) inside the ray roots
             DestGlow("M_DestSparkle", "#FFBA3E", 2.0f, 1.3f, -7);  // small golden 4-point sparkles
             // Neon tubes (reference: thick tubes with PALE hot cores - yellow #fbe496, cyan #78eaf5 - inside saturated colour
             // edges and soft tinted halos): saturated edge hue, tinted core across most of the tube face (broad _CorePower),
