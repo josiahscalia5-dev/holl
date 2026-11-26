@@ -304,8 +304,9 @@ namespace BubbleWash.EditorTools
                 var baseTex = Tex("T_Proj_Chamber_BaseColor.png", true);
                 var msTex = Tex("T_Proj_Chamber_MetalSmooth.png", false);
                 var nrmTex = Tex("T_Proj_Chamber_Normal.png", false, true);
-                foreach (var old in AssetDatabase.FindAssets("t:Material", new[] { ProjDir }))
-                    AssetDatabase.DeleteAsset(AssetDatabase.GUIDToAssetPath(old));
+                // only stand-alone .mat files (FindAssets("t:Material") also returns the FBX that embeds materials)
+                foreach (var old in Directory.GetFiles(ProjDir, "M_Proj_*.mat"))
+                    AssetDatabase.DeleteAsset(old.Replace(System.IO.Path.DirectorySeparatorChar, '/'));
                 var mMetal = LitMat("M_Proj_ChamberFrame", baseTex, msTex, nrmTex, 0f, false);
                 var mInner = LitMat("M_Proj_ChamberInterior", baseTex, msTex, nrmTex, 0.55f, false);
 
