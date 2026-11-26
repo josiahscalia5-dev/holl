@@ -482,10 +482,12 @@ def ramp_face(r, r0, r1, r2, r3):
 def body_fur_v(p, info):
     v = smoothstep(CUFF_BOTTOM_A - 6.0, CUFF_BOTTOM_A + 1.0, hat_alpha(p))   # none under the beanie
     f = 1.0
+    es, ms = CONTRACT.get('eye_scale', 1.0), CONTRACT.get('mouth_scale', 1.0)   # optional (v4 candidate: bigger face)
     for S in info['eye_S'].values():
-        f = min(f, ramp_face((p - S).length, 0.068, 0.094, 0.115, 0.175))
+        f = min(f, ramp_face((p - S).length, 0.068 * es, 0.094 * es, 0.115 * es, 0.175 * es))
     m = info['mouth_c']
-    q = math.sqrt(((p.x - m.x) / 0.066) ** 2 + ((p.z - m.z - 0.002) / 0.054) ** 2 + ((p.y - m.y) / 0.07) ** 2)
+    q = math.sqrt(((p.x - m.x) / (0.066 * ms)) ** 2 + ((p.z - m.z - 0.002) / (0.054 * ms)) ** 2
+                  + ((p.y - m.y) / (0.07 * ms)) ** 2)
     f = min(f, ramp_face(q, 1.05, 1.32, 1.6, 2.5))
     f = min(f, ramp_face((p - info['nose_c']).length, 0.016, 0.03, 0.04, 0.08))
     return V_BODY * v * f

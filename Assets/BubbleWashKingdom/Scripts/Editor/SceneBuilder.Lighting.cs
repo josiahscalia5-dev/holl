@@ -63,6 +63,10 @@ namespace BubbleWash.EditorTools
             // round 5: .94 -> .86: tunnel ahead L50 .57 vs .49, upper-right .46 vs .40, fur V .83 vs .77, hat L .35 vs .30
             // (all lighter / flatter than the reference); the pink spot + haze card keep the upper-left glow
             RenderSettings.ambientIntensity = 0.86f;
+            // round 5: agent previews showed NO change for .94 -> .86 (the in-memory ambient SH probe seems to be recomputed only
+            // on scene load). UpdateEnvironment only SCHEDULES a refresh: it did not show in the batch preview either, so
+            // the .86 is verified only by the lead's full build + reload (stills / hero capture of the saved scene).
+            DynamicGI.UpdateEnvironment();
             // Aerial perspective: saturated lavender-violet (never pale grey): the near tunnel stays clear and rich, the far
             // tunnel melts into a lighter violet glow while the warm bulbs still punch through (emissives use little fog).
             RenderSettings.fog = true;

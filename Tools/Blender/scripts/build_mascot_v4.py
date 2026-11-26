@@ -1719,7 +1719,219 @@ def export_ref_crops():
         print("PREVIEW private ref crop", out.filepath_raw)
 
 
-if os.environ.get("BWK_V4_MODE", "") == "refs":
+# ------------------------------------------------------------------ GAME model (v3 rig contract) from mascot_v4.blend
+GAME_BLEND = os.path.join(OUT, "mascot_v4_game.blend")
+GAME_JSON = os.path.join(OUT, "mascot_v4_game.json")
+GAME_BODY_RATIO, GAME_LEG_RATIO = 0.085, 0.16     # metaball surfaces -> mobile budget before the 16 fur shells
+
+
+def _grab(ob):
+    """World-space copy of a mesh object as plain lists (verts, faces, material names, loop UVs, loop colours)."""
+    me = ob.data
+    mw = ob.matrix_world
+    V = [mw @ v.co for v in me.vertices]
+    F = [tuple(p.vertices) for p in me.polygons]
+    mats = [me.materials[p.material_index].name if me.materials else "" for p in me.polygons]
+    uvl = me.uv_layers.get("UVMap") or (me.uv_layers[0] if me.uv_layers else None)
+    col = me.color_attributes.get("Col")
+    UV, CO = [], []
+    for p in me.polygons:
+        UV.append([tuple(uvl.data[li].uv) if uvl else (0.0, 0.0) for li in p.loop_indices])
+        if col is not None and col.domain == 'CORNER':
+            CO.append([tuple(col.data[li].color) for li in p.loop_indices])
+        elif col is not None:
+            CO.append([tuple(col.data[me.loops[li].vertex_index].color) for li in p.loop_indices])
+        else:
+            CO.append([(1.0, 1.0, 1.0, 1.0)] * len(p.loop_indices))
+    return dict(V=V, F=F, M=mats, UV=UV, CO=CO)
+
+
+def _subset(g, keep_faces, order_key=None):
+    """Faces subset with compacted vertices; order_key(v) sorts the vertices (stable)."""
+    used = sorted({i for fi in keep_faces for i in g["F"][fi]})
+    if order_key is not None:
+        used.sort(key=lambda i: order_key(g["V"][i]))
+    remap = {old: new for new, old in enumerate(used)}
+    return dict(V=[g["V"][i] for i in used], F=[tuple(remap[i] for i in g["F"][fi]) for fi in keep_faces],
+                M=[g["M"][fi] for fi in keep_faces], UV=[g["UV"][fi] for fi in keep_faces],
+                CO=[g["CO"][fi] for fi in keep_faces])
+
+
+def _merge(*gs):
+    out = dict(V=[], F=[], M=[], UV=[], CO=[])
+    for g in gs:
+        off = len(out["V"])
+        out["V"] += g["V"]
+        out["F"] += [tuple(i + off for i in f) for f in g["F"]]
+        for k in ("M", "UV", "CO"):
+            out[k] += g[k]
+    return out
+
+
+def _emit(name, g, coll, rename=None):
+    """Mesh object at identity from a grabbed dict; materials looked up by name (linear colour data kept as is)."""
+    names = []
+    for m in g["M"]:
+        m = (rename or {}).get(m, m)
+        if m not in names:
+            names.append(m)
+    me = bpy.data.meshes.new(name)
+    me.from_pydata([tuple(v) for v in g["V"]], [], g["F"])
+    for m in names:
+        me.materials.append(bpy.data.materials[m])
+    idx = [names.index((rename or {}).get(m, m)) for m in g["M"]]
+    me.polygons.foreach_set("material_index", idx)
+    uvl = me.uv_layers.new(name="UVMap")
+    uvl.data.foreach_set("uv", [c for f in g["UV"] for p in f for c in p])
+    cl = me.color_attributes.new(name="Col", type='BYTE_COLOR', domain='CORNER')
+    cl.data.foreach_set("color", [c for f in g["CO"] for p in f for c in p])
+    me.update()
+    for p in me.polygons:
+        p.use_smooth = True
+    ob = bpy.data.objects.new(name, me)
+    coll.objects.link(ob)
+    return ob
+
+
+def _decimated(ob, ratio):
+    """Collapse-decimated world-space copy (UVs + colours interpolated) as a grabbed dict."""
+    tmp = bpy.data.objects.new(ob.name + "_dec", ob.data.copy())
+    bpy.context.scene.collection.objects.link(tmp)
+    tmp.matrix_world = ob.matrix_world.copy()
+    for md in list(tmp.modifiers):
+        tmp.modifiers.remove(md)
+    tmp.vertex_groups.clear()
+    dm = tmp.modifiers.new("Dec", 'DECIMATE')
+    dm.decimate_type = 'COLLAPSE'
+    dm.ratio = ratio
+    bpy.context.view_layer.update()
+    deps = bpy.context.evaluated_depsgraph_get()
+    me = bpy.data.meshes.new_from_object(tmp.evaluated_get(deps))
+    tmp2 = bpy.data.objects.new(ob.name + "_dec2", me)
+    bpy.context.scene.collection.objects.link(tmp2)
+    tmp2.matrix_world = ob.matrix_world.copy()
+    g = _grab(tmp2)
+    for o in (tmp, tmp2):
+        bpy.data.objects.remove(o, do_unlink=True)
+    return g
+
+
+def export_game_model():
+    """mascot_v4.blend -> mascot_v4_game.blend + .json in the v3 rig contract (build_mascot_rig.py analyze()):
+    Body (decimated, arms cut off) + Arm.L/R (+ palm pads) + Leg.L/R (leg verts, then paw verts, then pads) + face +
+    Beanie + PomPom core (Unity shells make the yarn fuzz) + StarBadge + Tail. Hair curves / LegFront are not exported."""
+    bpy.ops.wm.open_mainfile(filepath=os.path.join(OUT, "mascot_v4.blend"))
+    with open(os.path.join(OUT, "mascot_v4_landmarks.json")) as fh:
+        land = json.load(fh)
+    src = {o.name: o for o in bpy.data.objects if o.type == 'MESH'}
+    for o in src.values():
+        o.name = o.name + "_v4src"
+    coll = bpy.data.collections.new("SK_Mascot_model")
+    bpy.context.scene.collection.children.link(coll)
+    out, contract = {}, {}
+    # ---- body + arms
+    gb = _decimated(src["Body"], GAME_BODY_RATIO)
+    arm_faces = {'L': [], 'R': []}
+    body_faces = []
+    arms = {}
+    for side, tag in ((1, 'L'), (-1, 'R')):
+        A = mirror(ARM_A, side)
+        mc = mirror(MITT_C, side)
+        d = (mc - A).normalized()
+        arms[tag] = (A, d, mc)
+    for fi, f in enumerate(gb["F"]):
+        c = sum((gb["V"][i] for i in f), Vector()) / len(f)
+        for tag, (A, d, mc) in arms.items():
+            if (c - A).dot(d) > 0.17 and c.x * (1 if tag == 'L' else -1) > 0.36:
+                arm_faces[tag].append(fi)
+                break
+        else:
+            body_faces.append(fi)
+    out["Body"] = _emit("Body", _subset(gb, body_faces), coll)
+    contract["arms"] = {}
+    for side, tag in ((1, 'L'), (-1, 'R')):
+        A, d, mc = arms[tag]
+        ga = _subset(gb, arm_faces[tag])
+        nfur = len(ga["V"])
+        pads = _grab(src["PalmPads." + tag])
+        out["Arm." + tag] = _emit("Arm." + tag, _merge(ga, pads), coll)
+        root = A + d * 0.17
+        contract["arms"][tag] = dict(root=list(root), dir=list(d), palm_dir=list(mirror(PALM_N, side)),
+                                     palm_c=list(mc), beans=[], length=(mc - root).length + MITT_AX[0],
+                                     fur_verts=nfur, fur_faces=len(ga["F"]))
+    # ---- legs (gameplay W-sit set): fur part decimated, verts ordered leg capsule -> paw, then pads
+    contract["legs"] = {}
+    for side, tag in ((1, 'L'), (-1, 'R')):
+        key = "Leg." + tag
+        g = _grab(src[key])
+        fur_idx = [i for i, m in enumerate(g["M"]) if m == "M_Fur"]
+        pad_idx = [i for i, m in enumerate(g["M"]) if m != "M_Fur"]
+        tmp = _emit("tmp_leg", _subset(g, fur_idx), bpy.context.scene.collection)
+        gf = _decimated(tmp, GAME_LEG_RATIO)
+        bpy.data.objects.remove(tmp, do_unlink=True)
+        lat, toe, sole = paw_frame(side, False)
+        pc = mirror(PAW_C, side)
+
+        def in_paw(v, lat=lat, toe=toe, sole=sole, pc=pc):
+            q = Vector(v) - pc
+            return ((q.dot(lat) / PAW_AX[0]) ** 2 + (q.dot(toe) / PAW_AX[1]) ** 2
+                    + (q.dot(sole) / PAW_AX[2]) ** 2) < 1.25 ** 2
+        gf = _subset(gf, list(range(len(gf["F"]))), order_key=lambda v: 1 if in_paw(v) else 0)
+        nleg = sum(1 for v in gf["V"] if not in_paw(v))
+        nfur = len(gf["V"])
+        out[key] = _emit(key, _merge(gf, _subset(g, pad_idx)), coll)
+        li = land["legs"][key]
+        hip, ank = mirror(HIP, side), mirror(ANKLE, side)
+        contract["legs"][tag] = dict(hip=list(hip), ankle=list(ank), toe=list(pc + toe * PAW_AX[1]),
+                                     heel=list(pc - toe * PAW_AX[1]), paw_c=list(pc), toe_dir=list(toe),
+                                     lat=list(lat), sole_n=list(sole), pads=li["pads"], leg_verts=nleg,
+                                     fur_verts=nfur)
+    # ---- face, hat, misc (lashes ride in the Mouth object with the dark mouth material)
+    out["Mouth"] = _emit("Mouth", _merge(_grab(src["Mouth"]), _grab(src["Lashes"])), coll,
+                         rename={"M_EyeLash": "M_Mouth"})
+    for nm in ("Eye.L", "Eye.R", "Catchlight.L1", "Catchlight.L2", "Catchlight.R1", "Catchlight.R2", "Tongue",
+               "Tail", "Beanie", "PomPom", "StarBadge"):
+        out[nm] = _emit(nm, _grab(src[nm]), coll)
+    # ---- remove the v4 source scene (armature, hair curves, LegFront, ...)
+    for o in list(bpy.data.objects):
+        if o.name.endswith("_v4src") or o.type in ('ARMATURE', 'CURVES', 'CURVE') or o.name.startswith("Fur_"):
+            bpy.data.objects.remove(o, do_unlink=True)
+    for c in list(bpy.data.collections):
+        if c.name != "SK_Mascot_model" and not c.objects and not c.children:
+            bpy.data.collections.remove(c)
+    # ---- contract
+    body_c = Vector((0.0, 0.0, 0.53))
+    ax = Vector(land["hat"]["axis"]).normalized()
+    u0 = (Vector(land["hat"]["origin"]) - body_c).dot(ax)
+    cuff_pts = [hat_pt(0.0, CUFF_PROF[0][1], 2 * math.pi * k / 24) for k in range(24)]
+    alpha = min(math.degrees(math.acos(max(-1.0, min(1.0, (p - body_c).normalized().dot(ax))))) for p in cuff_pts)
+    star_v = out["StarBadge"].data.vertices
+    contract.update(
+        BODY_C=list(body_c), BODY_BOTTOM=[0.0, 0.0, 0.07], BODY_HALF=[0.46, 0.45, 0.55], HAT_TILT=HAT_TILT,
+        HAT_AXIS=list(ax), CUFF_BOTTOM_A=round(alpha, 2),
+        hat=dict(top_u=u0 + land["hat"]["top_h"], cuff_top_u=u0 + CUFF_PROF[-3][0], stripe_u=[u0 + STRIPE_PROF[0][0],
+                 u0 + STRIPE_PROF[-1][0]], dome_u0=u0 + CROWN_H0, pompom_c=land["hat"]["pom_c"], pompom_r=POM_CORE),
+        tail=dict(base=list(TAIL_C - Vector((0.0, 0.03, 0.0))), c=list(TAIL_C), r=TAIL_R),
+        eyes={t: dict(S=land["eyes"][t]["S"], f=land["eyes"][t]["f"]) for t in ("L", "R")},
+        mouth_c=land["mouth_c"], nose_c=land["nose_c"],
+        star_c=list(sum((v.co for v in star_v), Vector()) / len(star_v)),
+        eye_scale=EYE_R / 0.068 * 0.95, mouth_scale=MOUTH_W / 0.132,
+        counts={n: len(o.data.vertices) for n, o in out.items()},
+        source="build_mascot_v4.py BWK_V4_MODE=gamemodel (v4 candidate, not approved)")
+    with open(GAME_JSON, "w") as fh:
+        json.dump(contract, fh, indent=1, default=float)
+    tris = sum(sum(len(p.vertices) - 2 for p in o.data.polygons) for o in out.values())
+    print("CHECK game model objects %d  tris %d  counts %s" % (len(out), tris, contract["counts"]))
+    print("CHECK cuff alpha %.1f  hat u0 %.3f  arm length %.3f" % (alpha, u0, contract["arms"]["L"]["length"]))
+    bpy.ops.wm.save_as_mainfile(filepath=GAME_BLEND, compress=True)
+    print("SAVED", GAME_BLEND, GAME_JSON)
+    print("GAMEMODEL_DONE")
+
+
+MODE = os.environ.get("BWK_V4_MODE", "")
+if MODE == "refs":
     export_ref_crops()
+elif MODE == "gamemodel":
+    export_game_model()
 else:
     main()
