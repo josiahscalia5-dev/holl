@@ -22,7 +22,9 @@ from img_crop import read_png, write_png  # noqa: E402
 # regions per wing (1280x720 frame coords): box, plus exclusion circles (feet) and the chevron rule
 WINGS = {
     "L": {"box": (262, 515, 548, 720), "excl_circles": [(562, 540, 50)], "excl_boxes": [(262, 515, 336, 600)]},
-    "R": {"box": (640, 492, 1005, 720), "excl_circles": [(683, 498, 47)], "excl_boxes": []},
+    # R: the straight light streak of the pink rail below / right of the lower-right finger and the rail highlight
+    # above the right arm's bulb are not milk
+    "R": {"box": (640, 492, 1005, 720), "excl_circles": [(683, 498, 47)], "excl_boxes": [(945, 598, 1005, 720), (985, 492, 1005, 548)]},
 }
 # glowing chevron under the mascot (its white-cyan core has the milk's colour): triangle apex / base corners
 CHEVRON = ((612, 592), (440, 720), (812, 720))

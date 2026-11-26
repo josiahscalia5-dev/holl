@@ -152,17 +152,61 @@ def metaballs_to_mesh(name, elems, res, threshold, mat, max_tris):
     return obj, raw
 
 
-def crown_v2(cam, M, F, balls, name, mat):
-    elems, nwall, zs, rs = [], 0, [], []
+def crown_v2(cam, M, F, balls, name, mat, sigma_px=32.0):
+    """Measured balls -> 3D. First-hit depths (wall / water) are smoothed across the screen (Gaussian, sigma_px) so
+    neighbouring balls never jump in depth (each ball stays on its own camera ray: the silhouette is unchanged), then
+    connected neighbours get in-between balls wherever the 3D spacing exceeds .45 x radius (no beaded tubes)."""
+    n = len(balls)
+    t0, walls = [], 0
     for (u, v, r_px) in balls:
         q, r_m, wall = embed_ball(cam, M, F, u, v, r_px)
-        nwall += wall
-        zs.append(q.z)
-        rs.append(r_m)
-        elems.append((q, r_m * 1.75 * MB_K, 2.0))
-    print("crown %s: %d balls (%d on the wall), z %.2f..%.2f m, r %.3f..%.3f m" % (
-        name, len(balls), nwall, min(zs), max(zs), min(rs), max(rs)))
-    return metaballs_to_mesh(name, elems, RES_V2, 0.6, mat, 12000)
+        d = cam.ray(u, v)
+        t0.append((q + M - cam.C).dot(cam.fwd) / d.dot(cam.fwd))
+        walls += wall
+    uv = [(b[0], b[1]) for b in balls]
+    t = list(t0)
+    for _ in range(2):
+        tn = []
+        for i in range(n):
+            sw = st = 0.0
+            for j in range(n):
+                dd = (uv[i][0] - uv[j][0]) ** 2 + (uv[i][1] - uv[j][1]) ** 2
+                if dd < 9 * sigma_px * sigma_px:
+                    w = math.exp(-dd / (2 * sigma_px * sigma_px)) * (0.5 + balls[j][2] / 20.0)
+                    sw += w
+                    st += w * t[j]
+            tn.append(st / sw)
+        t = tn
+    pts, rads = [], []
+    for i, (u, v, r_px) in enumerate(balls):
+        d = cam.ray(u, v)
+        ti = t[i]
+        for _ in range(2):                       # never below the water: clamp to the ray's water hit
+            r_m = r_px * ti / SHOT_F
+            tw = (cam.C.z - 0.55 * r_m) / -d.z
+            ti = min(ti, tw)
+        r_m = r_px * ti / SHOT_F
+        pts.append(cam.C + d * ti - M)
+        rads.append(r_m)
+    elems = [(p, r) for p, r in zip(pts, rads)]
+    added = 0
+    for i in range(n):
+        for j in range(i + 1, n):
+            ds = math.hypot(uv[i][0] - uv[j][0], uv[i][1] - uv[j][1])
+            if ds > 0.75 * (balls[i][2] + balls[j][2]):
+                continue                         # not touching on screen
+            d3 = (pts[j] - pts[i]).length
+            step = 0.45 * min(rads[i], rads[j])
+            k = int(d3 / max(step, 1e-4))
+            for m in range(1, k):
+                f = m / k
+                elems.append((pts[i].lerp(pts[j], f), rads[i] + (rads[j] - rads[i]) * f))
+                added += 1
+    zs = [p.z for p in pts]
+    print("crown %s: %d balls (%d first-hit on the wall), +%d in-between, depth smoothing sigma %.0f px, z %.2f..%.2f m, r %.3f..%.3f m" % (
+        name, n, walls, added, sigma_px, min(zs), max(zs), min(rads), max(rads)))
+    # in-between balls overlap more than the .45 r screen spacing -> slightly smaller field radius keeps tube widths
+    return metaballs_to_mesh(name, [(p, r * 1.75 * MB_K, 2.0) for p, r in elems], RES_V2, 0.6, mat, 12000)
 
 
 # ------------------------------------------------------------------ foam v2: banks of many small bubbles
@@ -171,71 +215,63 @@ def crown_v2(cam, M, F, balls, name, mat):
 #  faint blue-lavender shading, irregular bumpy silhouette, 0.3-0.45 m tall; near-water foam on the left = separate
 #  flattened domes / pillows (height ~0.6 x width) in small groups. Metaballs with low stiffness keep every bubble
 #  readable as its own rounded bump while the contacts fuse smoothly.
-def foam_bank_elems(rng, length, depth, height, n, rmin, rmax):
-    """Mound of n bubbles: bigger ones low in the core, small ones on the crest and edges, irregular crest line."""
-    el = []
-    crest = [rng.uniform(0.55, 1.0) for _ in range(7)]
-    for i in range(n):
-        x = rng.uniform(-0.5, 0.5) * length
-        k = (x / length + 0.5) * 6
-        j = min(5, int(k))
-        hmax = height * (crest[j] + (crest[j + 1] - crest[j]) * (k - j))
-        hmax *= math.sqrt(max(0.0, 1 - (2 * x / length) ** 2)) ** 0.6       # mound tapers at both ends
-        y = rng.gauss(0, 0.28) * depth
-        prof = max(0.0, 1 - (2 * y / depth) ** 2)
-        zt = hmax * prof
-        z = rng.uniform(0.0, 1.0) ** 0.7 * zt
-        # radius: large near the core / water line, small on the crest and the edges
-        edge = min(1.0, z / max(zt, 1e-3))
-        r = rmax - (rmax - rmin) * (0.35 + 0.65 * edge) * rng.uniform(0.6, 1.0)
-        el.append((Vector((x, y, max(z, r * 0.3))), r))
-    # crest bubbles: small round bumps sitting on the top surface (the bubbly silhouette)
-    for i in range(int(n * 0.35)):
-        x = rng.uniform(-0.48, 0.48) * length
-        k = (x / length + 0.5) * 6
-        j = min(5, int(k))
-        hmax = height * (crest[j] + (crest[j + 1] - crest[j]) * (k - j)) * math.sqrt(max(0.0, 1 - (2 * x / length) ** 2)) ** 0.6
-        y = rng.gauss(0, 0.2) * depth
-        r = rng.uniform(rmin, rmin + 0.45 * (rmax - rmin))
-        el.append((Vector((x, y, hmax * max(0.0, 1 - (2 * y / depth) ** 2) + r * 0.2)), r))
+def foam_bank_elems(rng, length, depth, height, n_bub, rmin, rmax):
+    """Dense mound: a solid core of big overlapping balls + many small bubbles half-sunk into its surface (cauliflower
+    crest of distinct rounded bumps, bigger bubbles low, smaller on the crest), irregular crest line."""
+    core = []
+    nc = max(3, int(length / 0.22))
+    for i in range(nc):
+        x = (i + 0.5) / nc * length - length * 0.5 + rng.uniform(-0.04, 0.04)
+        taper = math.sqrt(max(0.05, 1 - (2 * x / length) ** 2))
+        R = height * rng.uniform(0.62, 0.95) * (0.55 + 0.45 * taper)
+        core.append((Vector((x, rng.uniform(-0.08, 0.08) * depth, R * 0.35)), R, 1.0))
+    el = [(c, r) for c, r, _ in core]
+    for i in range(n_bub):
+        c, R, _ = core[rng.randrange(len(core))]
+        th = rng.uniform(0, 2 * math.pi)
+        ph = math.acos(rng.uniform(-0.15, 1.0))          # upper hemisphere + a little below the equator
+        dirv = Vector((math.sin(ph) * math.cos(th), math.sin(ph) * math.sin(th) * (depth / length + 0.55), math.cos(ph)))
+        dirv.normalize()
+        up = max(0.0, dirv.z)
+        r = rng.uniform(rmin, rmax) * (1.0 - 0.45 * up)    # smaller bubbles on the crest
+        pos = c + dirv * (R - 0.15 * r)
+        if pos.z < r * 0.25:
+            pos.z = r * 0.25
+        el.append((pos, r))
     return el
 
 
-def foam_puffs_elems(rng, n):
-    """Near-water pillows: flattened domes in a small group (each dome = a squashed cluster of 3-5 balls)."""
+def foam_pillows_elems(rng, n):
+    """Near-water foam pillows: flattened domes (height ~0.6 x width), single or 2-3 merged in a row."""
     el = []
+    x = -0.45
     for i in range(n):
-        cx, cy = rng.uniform(-0.45, 0.45), rng.uniform(-0.25, 0.25)
-        w = rng.uniform(0.07, 0.13)
-        for k in range(rng.randint(3, 5)):
-            a = rng.uniform(0, 2 * math.pi)
-            d = rng.uniform(0.0, 0.5) * w
-            el.append((Vector((cx + d * math.cos(a), cy + d * math.sin(a) * 0.8, w * 0.12)), w * rng.uniform(0.55, 0.8)))
+        w = rng.uniform(0.07, 0.11)                       # dome half-width
+        x += w * rng.uniform(1.1, 1.9)
+        y = rng.uniform(-0.18, 0.18)
+        el.append((Vector((x, y, 0.08 * w)), w))
+        if rng.random() < 0.5:                            # a smaller dome fused to it
+            el.append((Vector((x + w * 0.9, y + rng.uniform(-0.05, 0.05), 0.05 * w)), w * 0.7))
+        x += w
     return el
 
 
-def foam_mesh(name, elems, mat, max_tris, squash=1.0):
-    scaled = []
-    for co, r in elems:
-        scaled.append((Vector((co.x, co.y, co.z * squash)), r * 1.75 * 0.92, 1.2))
-    obj, raw = metaballs_to_mesh(name, scaled, 0.008, 0.55, mat, max_tris)
-    # sit on the water: nothing below z = 0
-    for v in obj.data.vertices:
-        if v.co.z < 0:
-            v.co.z = 0.0
+def foam_mesh(name, elems, mat, max_tris, zscale=1.0, stiff=2.0, k=0.86):
+    scaled = [(Vector((co.x, co.y, co.z)), r * 1.75 * k, stiff) for co, r in elems]
+    obj, raw = metaballs_to_mesh(name, scaled, 0.007, 0.6, mat, max_tris)
+    for v in obj.data.vertices:          # sit on the water: nothing below z = 0; optional flattening (pillows)
+        v.co.z = max(0.0, v.co.z) * zscale
     return obj, raw
 
 
 def build_foam_v2(mat):
     rng = random.Random(20261126)
     objs = []
-    o, raw = foam_mesh("SM_Foam_v2_Bank", foam_bank_elems(rng, 1.6, 0.55, 0.36, 150, 0.035, 0.1), mat, 9000)
+    o, raw = foam_mesh("SM_Foam_v2_Bank", foam_bank_elems(rng, 1.6, 0.55, 0.30, 190, 0.035, 0.075), mat, 9000)
     objs.append((o, raw))
-    o, raw = foam_mesh("SM_Foam_v2_Mound", foam_bank_elems(rng, 0.8, 0.45, 0.30, 70, 0.03, 0.085), mat, 5000)
+    o, raw = foam_mesh("SM_Foam_v2_Mound", foam_bank_elems(rng, 0.8, 0.45, 0.24, 90, 0.03, 0.065), mat, 5000)
     objs.append((o, raw))
-    o, raw = foam_mesh("SM_Foam_v2_Puffs", foam_puffs_elems(rng, 6), mat, 4000, squash=1.0)
-    for v in o.data.vertices:            # flatten the pillows: height ~0.6 x width
-        v.co.z *= 0.62
+    o, raw = foam_mesh("SM_Foam_v2_Puffs", foam_pillows_elems(rng, 4), mat, 3000, zscale=0.62, k=0.95)
     objs.append((o, raw))
     return objs
 
@@ -319,14 +355,25 @@ def mask_pass(objs, path, w, h):
             o.data.materials.append(m)
 
 
-def setup_lights():
-    scene = bpy.context.scene
-    C.add_studio_lights(target=(0, -0.4, 0.3), scale=1.3)
-    sun = bpy.data.lights.new("Sun", 'SUN')
-    sun.energy = 2.5
-    so = bpy.data.objects.new("Sun", sun)
-    scene.collection.objects.link(so)
-    so.rotation_euler = (math.radians(35), 0, math.radians(200))
+def setup_lights(target=(0.0, -0.4, 0.2)):
+    """Reference-like soft light: warm key from above the camera (upper left), blue bounce from the water side, cool
+    top; dark blue-violet ambient so the milk / foam keep their blue-grey shading (no clipped flat white)."""
+    t = Vector(target)
+    C._light("Key", 'AREA', 260, "#FFF6EE", t + Vector((-1.6, -2.6, 2.6)), t, 2.2)
+    C._light("Fill", 'AREA', 70, "#8FB0FF", t + Vector((1.8, -2.2, 0.35)), t, 2.5)
+    C._light("Top", 'AREA', 90, "#E8F0FF", t + Vector((0.4, 0.6, 3.0)), t, 2.0)
+    bg = bpy.context.scene.world.node_tree.nodes.get("Background")
+    bg.inputs[0].default_value = C.hex_rgba("#3A3488")
+    bg.inputs[1].default_value = 0.55
+
+
+def sss(mat, weight, color):
+    """Milky subsurface scattering for the preview material (Unity uses BWK_Soft wrap lighting instead)."""
+    bsdf = mat.node_tree.nodes.get("Principled BSDF")
+    if "Subsurface Weight" in bsdf.inputs:
+        bsdf.inputs["Subsurface Weight"].default_value = weight
+        bsdf.inputs["Subsurface Radius"].default_value = C.hex_rgba(color)[:3]
+        bsdf.inputs["Subsurface Scale"].default_value = 0.02
 
 
 def main_v2():
@@ -336,7 +383,8 @@ def main_v2():
     cam, M, body, feet = shot_frame()
     crowns = []
     if ONLY in ("", "crown"):
-        milk = C.material("M_FX_Milk_v2", "#EAF7F9", roughness=0.24, coat=0.3)
+        milk = C.material("M_FX_Milk_v2", "#E6F5F8", roughness=0.22, coat=0.5)
+        sss(milk, 0.25, "#9CC8F0")
         data = json.load(open(V2_DATA))
         print("SHOT model: runner origin M world (%.2f, %.2f), body z %.2f, feet rel M (%.2f, %.2f), camera rel M (%.2f, %.2f, %.2f)" % (
             M.x, M.y, body.z, feet.x - M.x, feet.y - M.y, -M.x, -M.y, SHOT_CAM_H))
@@ -353,7 +401,8 @@ def main_v2():
                 C.export_fbx([obj], C.model_path(GROUP, name))
     foams = []
     if ONLY in ("", "foam"):
-        foam = C.material("M_Foam_v2", "#F6F8FC", roughness=0.35, coat=0.2)
+        foam = C.material("M_Foam_v2", "#F3F5FB", roughness=0.42, coat=0.15)
+        sss(foam, 0.2, "#B8C4F0")
         for o, raw in build_foam_v2(foam):
             foams.append(o)
             report.append("%-18s %6d tris (raw %6d) dims %s" % (o.name, C.tri_count(o), raw, tuple(round(d, 3) for d in o.dimensions)))
@@ -378,7 +427,7 @@ def main_v2():
             o.hide_render = True
     if foams:
         # foam sheet: the three assets in a row on the water, seen from a front three-quarter camera at the reference's angle
-        xs = (-1.25, 0.25, 1.15)
+        xs = (-1.2, 0.35, 1.15)
         for o, x in zip(foams, xs):
             o.hide_render = False
             o.location = (x, 0.0, 0.0)
