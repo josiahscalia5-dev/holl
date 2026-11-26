@@ -50,6 +50,12 @@ namespace BubbleWash.EditorTools
                 C(m, "_PinkSpill", "#FF6ED2"); F(m, "_PinkSpillStrength", 0.36f); F(m, "_PinkSpillWidth", 0.75f);
                 F(m, "_SeamHighlight", 0.5f); F(m, "_FlangeWidth", 0.2f); C(m, "_FlangeColor", "#8C74C8");
                 C(m, "_BaySheenColor", "#86A8E6"); F(m, "_BaySheen", 0.12f); F(m, "_BaySheenWidth", 0.25f); F(m, "_BaySheenPos", 0.6f);
+                // r8 v2 (lighting, owner library 07 "muted grey-lavender / blue-violet brushed metal, black recessed holes"):
+                // the v1 albedo change was invisible in gameplay because the violet LIGHT makes the saturation (hero wall
+                // S .65 vs ref .48). Grade the lit metal in the shader: 35 % toward a value-preserving grey-lavender (linear
+                // tint .88/.50/1 solved so a typical wall pixel #54399f lands on the reference's H 263 / S .48 / V .64) and
+                // darken the lit recesses to 30 % (navy holes -> near black before the fog)
+                F(m, "_LitDesat", 0.35f); m.SetColor("_LitTint", new Color(0.945f, 0.727f, 1.0f)); F(m, "_HoleDarken", 0.3f);
             });
             // polished lavender drum lips between the gold rings (SM_DrumRim, m1: fat rolled lip): the stylised BWK/Gold
             // environment shading with a lavender palette - violet body, magenta-pink fresnel edge, soft pink-lavender

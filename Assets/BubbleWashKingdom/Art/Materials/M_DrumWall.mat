@@ -46,12 +46,14 @@ Material:
     - _HoleAO: 0.62
     - _HoleAOWidth: 0.08
     - _HoleBand: 1
+    - _HoleDarken: 0.3
     - _HoleDepth: 0.1
     - _HoleRadius: 0.19
     - _HoleSpacing: 0.6
     - _HoleStretch: 1.75
     - _InnerWall: 0.2
     - _LipWidth: 0.035
+    - _LitDesat: 0.35
     - _Metallic: 0.58
     - _PanelLength: 3
     - _Pattern: 1
@@ -90,6 +92,7 @@ Material:
     - _HighlightColor: {r: 0.6666667, g: 0.59607846, b: 0.7764706, a: 1}
     - _HoleColor: {r: 0.023529412, g: 0.011764706, b: 0.05490196, a: 1}
     - _HoleGlow: {r: 0.14117648, g: 0.08627451, b: 0.24313726, a: 1}
+    - _LitTint: {r: 0.945, g: 0.727, b: 1, a: 1}
     - _PinkSpill: {r: 1, g: 0.43137255, b: 0.8235294, a: 1}
     - _SeamColor: {r: 0.1254902, g: 0.078431375, b: 0.2901961, a: 1}
     - _ShadowColor: {r: 0.22745098, g: 0.22745098, b: 0.49411765, a: 1}

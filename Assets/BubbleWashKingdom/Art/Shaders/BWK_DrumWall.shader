@@ -86,6 +86,10 @@ Shader "BWK/DrumWall"
         _BaySheenColor ("Bay sheen color", Color) = (0.5, 0.66, 0.92, 1)
         _BaySheenWidth ("Bay sheen width (fraction of the section)", Range(0.05, 0.6)) = 0.22
         _BaySheenPos ("Bay sheen centre (fraction of the section)", Range(0, 1)) = 0.5
+        [Header(Round 8 lit metal grade)]
+        _LitDesat ("Desaturate the lit metal toward its luminance (before fog)", Range(0, 1)) = 0
+        _LitTint ("Tint of the desaturated part (grey-lavender)", Color) = (1, 1, 1, 1)
+        _HoleDarken ("Lit hole brightness (1 = unchanged, lower = blacker recesses)", Range(0, 1)) = 1
     }
     SubShader
     {
@@ -114,6 +118,8 @@ Shader "BWK/DrumWall"
             float _SideZone, _SideSlotPitch, _SideSlotLength, _SideSlotWidth, _SideRowPitch, _SeamMargin;
             half _SlotDropout, _BaySheen, _BaySheenWidth, _BaySheenPos;
             half4 _BaySheenColor;
+            half _LitDesat, _HoleDarken;
+            half4 _LitTint;
         CBUFFER_END
 
         // Round 3: sections between gold rings (_BandLength = gold spacing) split by one lavender rim at _RimPhase
@@ -392,7 +398,17 @@ Shader "BWK/DrumWall"
                 half spark = step(0.94, sh) * smoothstep(0.16, 0.0, sd) * twinkle * saturate(1.0 - fwidth(sc.x) * 3.0);
                 emission += _SheenColor.rgb * spark * _Sparkle * (1.0 - hole);
 
-                return BWK_PBR(i.positionWS, i.positionCS, n, viewDir, albedo, metallic, smooth, lerp(ao, lerp(0.4, 0.25, useDepth), hole), emission, 1.0, i.fog);
+                half4 lit = BWK_PBR_Lit(i.positionWS, i.positionCS, n, viewDir, albedo, metallic, smooth, lerp(ao, lerp(0.4, 0.25, useDepth), hole), half3(0, 0, 0), 1.0, i.fog);
+                // r8 v2 (lighting): the violet key / fill / probe light made the metal read saturated purple-magenta (hero
+                // upper-half wall H 255 S .65 V .64 vs reference f_03.00s H 263 S .48 V .66; darkest pixels navy #1f164b vs
+                // grey-violet #433d5f): grade the LIT metal (not the emission: pink rim spill, sheen, sparkles and the
+                // back-lit holes keep their colour) toward a value-preserving grey-lavender (max channel x _LitTint), push
+                // the recesses toward black, then add the emission and mix the fog as before
+                half vmax = max(lit.r, max(lit.g, lit.b));
+                lit.rgb = lerp(lit.rgb, vmax * _LitTint.rgb, _LitDesat);
+                lit.rgb *= lerp(1.0, _HoleDarken, hole);
+                lit.rgb = MixFog(lit.rgb + emission, i.fog);
+                return lit;
             }
             ENDHLSL
         }

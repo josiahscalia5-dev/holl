@@ -75,8 +75,10 @@ half BWK_Fresnel(half3 n, half3 v, half power)
 // ------------------------------------------------------------------ lighting
 // Wraps URP's UniversalFragmentPBR so custom shaders get the main light with shadows, additional lights,
 // SH ambient, reflection probes and fog exactly like URP/Lit.
-half4 BWK_PBR(float3 positionWS, float4 positionCS, half3 normalWS, half3 viewDirWS,
-              half3 albedo, half metallic, half smoothness, half occlusion, half3 emission, half alpha, half fogFactor)
+// r8 (lighting): BWK_PBR_Lit = the same lit result WITHOUT fog, so a material can grade its own lit colour (BWK_DrumWall:
+// desaturate the violet light response toward grey-lavender metal) before the fog is mixed in.
+half4 BWK_PBR_Lit(float3 positionWS, float4 positionCS, half3 normalWS, half3 viewDirWS,
+                  half3 albedo, half metallic, half smoothness, half occlusion, half3 emission, half alpha, half fogFactor)
 {
     InputData inputData = (InputData)0;
     inputData.positionWS = positionWS;
@@ -103,7 +105,12 @@ half4 BWK_PBR(float3 positionWS, float4 positionCS, half3 normalWS, half3 viewDi
     s.emission = emission;
     s.occlusion = occlusion;
     s.alpha = alpha;
-    half4 c = UniversalFragmentPBR(inputData, s);
+    return UniversalFragmentPBR(inputData, s);
+}
+half4 BWK_PBR(float3 positionWS, float4 positionCS, half3 normalWS, half3 viewDirWS,
+              half3 albedo, half metallic, half smoothness, half occlusion, half3 emission, half alpha, half fogFactor)
+{
+    half4 c = BWK_PBR_Lit(positionWS, positionCS, normalWS, viewDirWS, albedo, metallic, smoothness, occlusion, emission, alpha, fogFactor);
     c.rgb = MixFog(c.rgb, fogFactor);
     return c;
 }
