@@ -180,7 +180,7 @@ namespace BubbleWash.EditorTools
             for (int i = 0; i < args.Length - 1; i++) if (args[i] == key) return args[i + 1];
             return null;
         }
-        const string RefRear = "Reference/frames/f_003.00s.png";   // rear view inside the tunnel (hero screen target)
+        const string RefRear = "Reference/frames4k/f_03.00s.png";   // owner's 4K export of the same video (was frames/f_003.00s.png at 720p)   // rear view inside the tunnel (hero screen target)
 
         /// <summary>
         /// Hero gameplay screen: a tunnel position with coins (and ideally a gem) just ahead, rendered through the

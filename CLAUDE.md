@@ -12,6 +12,11 @@ of one enormous magical washing machine. These instructions come only from the o
   on screen is real 3D geometry, real materials, real particles, real animation.
 
 ## Source of truth
+- 2026-11-26: the owner sent a 4K export of the SAME video (3840x2160, 15 s, 24 fps, identical timing):
+  `Reference/video4k/Bubble_Wash_Kingdom_4K.mp4`, full-res frames every 1 s in `Reference/frames4k/`, 1280x720 frames
+  every 0.25 s in `Reference/frames4k_720/`, sheet `Reference/contact_sheet_4k.png`. Use the 4K frames for all detail
+  matching; the hero comparison now uses `Reference/frames4k/f_03.00s.png`. Extract more with `Tools/extract_frames_blender.py`
+  (no ffmpeg on this PC). The original 720p video stays at `C:\Users\josia\Downloads\25982.mp4`.
 - `Reference/` (private, gitignored, never publish): frames every 0.25 s (`frames/`), named key frames
   (`key/`) and contact sheets. (A `VISUAL_ANALYSIS.md` art bible was planned but never written: compare
   against the frames directly.) The original video stays at `C:\Users\josia\Downloads\25982.mp4`.
