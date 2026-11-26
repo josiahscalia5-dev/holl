@@ -39,9 +39,9 @@ Material:
     - _Glow: 0.1
     - _NearBrighten: 0.15
     - _RainbowAmount: 0.32
-    - _ReflectBoost: 0.35
+    - _ReflectBoost: 0.55
     - _RippleStrength: 0.9
-    - _Smoothness: 0.95
+    - _Smoothness: 0.6
     - _SparkleAmount: 1.1
     - _StreakAmount: 0.35
     - _StreakDensity: 1.25

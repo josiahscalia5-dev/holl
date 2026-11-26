@@ -85,7 +85,7 @@ N_SHELLS = 16
 V_BODY, V_FACE, V_LIMB, V_PAW, V_TAIL, V_POMPOM = 1.0, 0.35, 0.8, 0.62, 1.0, 1.0
 PART_NONE, PART_BODY, PART_TAIL, PART_ARM, PART_LEG, PART_POMPOM = 0, 1, 2, 3, 4, 5
 FUR_PARTS = (PART_BODY, PART_TAIL, PART_ARM, PART_LEG)
-MASCOT_SCALE = 0.86       # owner round 2: whole mascot ~15 % smaller in the hero frame (armature object scale)
+MASCOT_SCALE = 0.93       # owner round 2: whole mascot ~15 % smaller in the hero frame (armature object scale)
 TRI_BUDGET = 150000       # owner: quality first (PC numbers; mobile untested)
 PREVIEW_FUR_LEN = 0.030   # preview-only shell push (Unity's shader does this at runtime)
 

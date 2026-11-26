@@ -32,18 +32,19 @@ Material:
     - _AO: 0.4
     - _ClumpAmount: 0.3
     - _ClumpScale: 7
-    - _Curl: 0.25
-    - _Density: 210
-    - _EdgeSoft: 0.2
+    - _Curl: 0.12
+    - _Density: 190
+    - _EdgeSoft: 0.16
     - _FurLength: 0
     - _Glow: 0.03
     - _Gravity: 0
+    - _PawGlow: 0
     - _RimPower: 2.6
     - _RimStrength: 0.4
-    - _SilhouetteFade: 0.55
+    - _SilhouetteFade: 0.3
     - _StaticMode: 1
     - _Thinning: 0
-    - _Underfur: 0.85
+    - _Underfur: 0.8
     - _UseVertexTint: 1
     - _Wrap: 0.6
     m_Colors:
