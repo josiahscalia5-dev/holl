@@ -261,17 +261,18 @@ Shader "BWK/Soft"
                     // top (#BEF6F5) over a turquoise body (#4EC6DD), clean edges): FILLED - a wide mint-white core (_ColorA)
                     // fading to turquoise only in the outer quarter of the arm (_ColorB), a soft deeper-turquoise border,
                     // walls turquoise (no bright outline ring)
-                    half core = 1.0 - smoothstep(0.42, 0.97, e);
-                    half3 col = lerp(_ColorB.rgb, _ColorA.rgb, core);
-                    col = lerp(col, _ColorB.rgb * 0.82, smoothstep(0.9, 1.0, e) * 0.5);       // soft clean border
+                    // round 4 continuation (reference 4K f_03.00s measured: near arm #A6FBF3 .. #CEFAF6 = bright aqua at full
+                    // value, edges #7AE3E8 turquoise, bottom arrow #DEFFF7 mint-white; NO dark walls / outlines): HDR aqua fill
+                    // (_ColorA, x _Glow*4 -> ~#A6FBF3 after Neutral tonemapping), a gentle turquoise toward the edges
+                    // (_ColorB), mint-white near the camera (_ColorC); walls carry the top colour so no edge line shows
+                    half core = 1.0 - smoothstep(0.55, 1.0, e);
+                    half3 col = lerp(_ColorB.rgb, _ColorA.rgb, 0.45 + 0.55 * core);
                     float pulse = frac(along * 0.8 + _Time.y * _StreakSpeed * 0.5);            // light racing toward the apex
                     half beam = smoothstep(0.0, 0.15, pulse) * smoothstep(0.5, 0.15, pulse);
                     col += _ColorC.rgb * beam * _StreakAmount * (0.3 + 0.7 * core);
-                    // lights up white-cyan as it passes under the mascot (the camera rides a fixed distance behind him)
+                    // lights up mint-white as it passes under the mascot (the camera rides a fixed distance behind him)
                     half hot = smoothstep(_HotFar, _HotNear, distance(i.positionWS, _WorldSpaceCameraPos));
-                    col = lerp(col, _ColorC.rgb * 1.05 + _ColorA.rgb * 0.15, hot * (0.15 + 0.45 * core));
-                    half top = smoothstep(0.5, 0.85, n.y);                                      // 1 on the top face
-                    col = lerp(_ColorB.rgb * 0.9, col, top);                                   // turquoise walls
+                    col = lerp(col, _ColorC.rgb, hot * (0.6 + 0.3 * core));
                     half fr = BWK_Fresnel(n, v, 4.0);
                     col += GlossyEnvironmentReflection(reflect(-v, n), i.positionWS, 0.05h, 1.0h, GetNormalizedScreenSpaceUV(i.positionCS)) * (0.05 + fr * 0.4) * _ReflectBoost;
                     col *= _Glow * 4.0 * (1.0 + hot * _HotBoost);

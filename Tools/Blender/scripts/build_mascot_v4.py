@@ -57,14 +57,14 @@ def mb_k(s):
 
 
 BODY_ELEMS = [  # (centre, semi-axes x/y/z, stiffness): lower belly + upper head -> one soft pear, no neck
-    ((0.0, 0.015, 0.415), (0.470, 0.450, 0.415), 5.0),
-    ((0.0, -0.005, 0.750), (0.448, 0.425, 0.345), 5.0),
+    ((0.0, 0.015, 0.415), (0.458, 0.448, 0.415), 5.0),
+    ((0.0, -0.005, 0.750), (0.442, 0.425, 0.345), 5.0),
 ]
 # arm = upper arm leaving the body side just under the cuff almost level (clears the cuff bottom roll), then a forearm
 # rising ~60 deg outside the cuff radius, ending in a mitt at cuff height (rear hero: paws outside the hat silhouette)
-ARM_A, ARM_E, ARM_B, ARM_RAD, ARM_S = (Vector((0.28, -0.005, 0.505)), Vector((0.560, -0.020, 0.590)),
-                                       Vector((0.648, -0.030, 0.705)), 0.102, 5.0)
-MITT_C, MITT_AX, MITT_S = Vector((0.690, -0.040, 0.760)), (0.112, 0.090, 0.118), 5.0   # along, palm-normal, across
+ARM_A, ARM_E, ARM_B, ARM_RAD, ARM_S = (Vector((0.30, -0.005, 0.460)), Vector((0.520, -0.020, 0.585)),
+                                       Vector((0.628, -0.030, 0.690)), 0.094, 5.0)
+MITT_C, MITT_AX, MITT_S = Vector((0.676, -0.040, 0.756)), (0.110, 0.088, 0.116), 5.0   # along, palm-normal, across
 PALM_N = Vector((-0.10, -0.80, 0.45)).normalized()     # palm faces front / up (pads visible from the front)
 HIP, ANKLE, LEG_RAD = Vector((0.205, 0.080, 0.200)), Vector((0.285, 0.245, 0.165)), 0.078
 PAW_C = Vector((0.318, 0.312, 0.178))
@@ -81,30 +81,30 @@ TAIL_C, TAIL_R = Vector((0.0, 0.37, 0.22)), 0.030       # tiny tuft hidden in th
 # ------------------------------------------------------------------ beanie (lathe about the tilted hat axis)
 HAT_O = Vector((0.0, 0.0, 0.700))      # cuff-bottom centre on the axis
 HAT_TILT = -8.0                        # deg about X (negative: front edge up, crown leans back)
-RIB_N = 66                             # knit ribs around (UV u * 44 = rib index, see knit_uv)
-CUFF_AMP, CROWN_AMP = 0.0066, 0.0062   # shallow geometric ribs (the knit tile does the stitches)
+RIB_N = 58                             # knit ribs around (UV u * 44 = rib index, see knit_uv)
+CUFF_AMP, CROWN_AMP = 0.0080, 0.0085   # shallow geometric ribs (the knit tile does the stitches)
 ROW_H = 0.024                          # knit row height (m) along the profile
 # (h above the cuff bottom, radius, material) material 0 knit crown, 1 cuff, 2 stripe; first point = tuck (set later)
 CUFF_PROF = [(h * 0.93, r * 0.935) for h, r in (
     (0.000, 0.500), (0.010, 0.518), (0.032, 0.528), (0.075, 0.532), (0.125, 0.533), (0.172, 0.530),
     (0.205, 0.523), (0.226, 0.511), (0.238, 0.494), (0.236, 0.478))]
-STRIPE_PROF = [(0.212, 0.418), (0.226, 0.432), (0.250, 0.438), (0.272, 0.437), (0.288, 0.432)]
-DOME_H0, DOME_R0, DOME_H, DOME_E = 0.288, 0.432, 0.235, 1.40
+STRIPE_PROF = [(0.212, 0.432), (0.226, 0.450), (0.250, 0.458), (0.272, 0.457), (0.288, 0.451)]
+DOME_H0, DOME_R0, DOME_H, DOME_E = 0.288, 0.451, 0.250, 1.00
 TOP_BAND = (9.0, 9.0)                  # (disabled: the reference has ONE pale stripe)              # extra pale band on the crown FRONT (h range), fades out toward the sides
 TOP_BAND_PSI = 70.0                    # +- deg from the front where the band is full width
-POM_H, POM_CORE, POM_R = 0.590, 0.150, 0.258   # pom-pom centre (h), dark core radius, yarn tip radius
+POM_H, POM_CORE, POM_R = 0.602, 0.150, 0.258   # pom-pom centre (h), dark core radius, yarn tip radius
 STAR_H, STAR_PSI, STAR_ROT, STAR_RO, STAR_RI = 0.262, 30.0, -12.0, 0.100, 0.045
 
 # ------------------------------------------------------------------ face (placed on the body surface)
 EYE_DX, EYE_R, EYE_PROT = 0.214, 0.116, 0.036           # eye centre x, footprint radius, protrusion
 EYE_UNDER = 0.088                      # eye centre this far below the cuff bottom (top tucks under the cuff edge)
-IRIS_R, PUPIL_IN, PUPIL_DOWN = 0.101, 0.012, 0.008
+IRIS_R, PUPIL_IN, PUPIL_DOWN = 0.107, 0.010, -0.006
 NOSE_DZ, MOUTH_TOP_DZ, MOUTH_W, MOUTH_H = 0.068, 0.118, 0.186, 0.124
 BLUSH_DX, BLUSH_DZ, BLUSH_R = 0.300, 0.125, 0.085
 
 # ------------------------------------------------------------------ fur (hair curves)
 FUR_N = 50000 if QUICK else 150000
-FUR_LEN = 0.054
+FUR_LEN = 0.048
 FUR_PTS = 5
 FUR_RAD = (0.0024, 0.0005)
 CLUMPS = 900 if QUICK else 2000
@@ -115,11 +115,11 @@ COL_FUR_UNDER = "#EEC2DA"     # paler pink-white underside
 COL_BLUSH = "#F04C6E"
 COL_PAW = "#FFF6F4"
 COL_PAD = "#F48FAA"
-COL_HAT = "#5C2298"
+COL_HAT = "#5D2094"
 COL_HAT_DARK = "#2C0B58"
-COL_STRIPE = "#DFB0D4"
-COL_STRIPE_DARK = "#9C6E9E"
-COL_POM = "#8234BA"
+COL_STRIPE = "#D6A2CA"
+COL_STRIPE_DARK = "#9A6A9A"
+COL_POM = "#7B2FB2"
 
 
 def hat_rot():
@@ -640,10 +640,10 @@ def build_lashes(eye):
     S, f, ex, ey, side = eye["S"], eye["f"], eye["ex"], eye["ey"], eye["side"]
     md = MD()
     out = ex * side
-    for k, ang in enumerate((28.0, 44.0, 60.0)):
+    for k, ang in enumerate((34.0, 52.0, 70.0)):
         a = math.radians(ang)
         base = S + out * (EYE_R * 0.98 * math.cos(a)) + ey * (EYE_R * 1.03 * math.sin(a)) + f * 0.006
-        dirv = (out * math.cos(a) + ey * math.sin(a) * 0.8 + f * 0.25).normalized()
+        dirv = (out * math.cos(a) * 0.75 + ey * (math.sin(a) * 1.1 + 0.35) + f * 0.22).normalized()
         L = 0.042 - 0.005 * k
         pts = [base, base + dirv * L * 0.5 + ey * 0.004, base + dirv * L + ey * 0.010 + out * 0.004]
         wid = [0.0068, 0.0042, 0.0007]
@@ -681,7 +681,7 @@ def build_mouth(surf, z_top):
     S, n = surf.front_point(0.0, zc)
     f, ex, ey = face_frame(n, 0.3)
     outline = mouth_outline(36, MOUTH_W, MOUTH_H)
-    ring_sh = [(1.20, -0.004), (1.08, 0.006), (1.0, 0.009), (0.92, 0.002), (0.70, -0.012), (0.35, -0.020)]
+    ring_sh = [(1.20, -0.004), (1.08, 0.001), (1.0, 0.002), (0.92, -0.005), (0.70, -0.015), (0.35, -0.022)]
 
     def place(x, y, h):
         hit = surf.ray(S + ex * x + ey * y + f * 0.3, -f)
@@ -999,8 +999,8 @@ def main():
     for side, tag in ((1, "L"), (-1, "R")):
         md, info = build_eye(surf, side, z_e)
         eyes[tag] = (md, info)
-        lights[tag + "1"] = build_catchlight(info, -0.36 * EYE_R, 0.34 * EYE_R, 0.030)
-        lights[tag + "2"] = build_catchlight(info, 0.30 * EYE_R, -0.36 * EYE_R, 0.012, 12)
+        lights[tag + "1"] = build_catchlight(info, -0.28 * EYE_R, 0.30 * EYE_R, 0.027)
+        lights[tag + "2"] = build_catchlight(info, 0.26 * EYE_R, -0.30 * EYE_R, 0.011, 12)
         lashes.extend(build_lashes(info))
     mouth, tongue, mouth_pt, minfo = build_mouth(surf, z_e - MOUTH_TOP_DZ)
     nose, nose_pt = build_nose(surf, z_e - NOSE_DZ)
@@ -1034,7 +1034,7 @@ def main():
         c = Vector((side * MITT_C.x, MITT_C.y, MITT_C.z))
         pk = MD()
         pink = tuple(C.hex_rgba(COL_PAD)[:3]) + (1.0,)
-        pink = (0.96, 0.56, 0.66, 1.0)
+        pink = (0.95, 0.46, 0.60, 1.0)
         pk.extend(pad_disc(surf, c - along * 0.012, pn, across, along, 0.040, 0.036, 0.010, pink))
         for k, (u, w) in enumerate(((-0.040, 0.052), (0.0, 0.066), (0.040, 0.052))):
             pk.extend(pad_disc(surf, c + across * u + along * w, pn, across, along, 0.016, 0.018, 0.008, pink, 10))
@@ -1047,7 +1047,7 @@ def main():
             lat, toe, sole = paw_frame(side, front)
             pc = mirror(leg_set(front)["paw_c"], side)
             pk = MD()
-            pink = (0.96, 0.56, 0.66, 1.0)
+            pink = (0.95, 0.46, 0.60, 1.0)
             centres = [pc - toe * 0.045]
             pk.extend(pad_disc(leg_surf[key], pc - toe * 0.045, sole, lat, toe, 0.060, 0.052, 0.013, pink))
             for u, w in ((-0.072, 0.040), (-0.026, 0.078), (0.026, 0.078), (0.072, 0.040)):
@@ -1130,14 +1130,14 @@ def main():
     # face zone: shorter fur on the front of the head
     face_w = np_smooth(-0.30, -0.42, P[:, 1]) * np_smooth(0.30, 0.42, P[:, 2]) * np_smooth(0.36, 0.28, np.abs(P[:, 0]))
     Lmul *= 1.0 - 0.62 * face_w
-    Lmul *= np.where(np.abs(P[:, 0]) > 0.50, 0.72, 1.0)            # shorter plush on the arms / paws
+    Lmul *= np.where(np.abs(P[:, 0]) > 0.50, 0.55, 1.0)            # shorter plush on the arms / paws
     P, N, Lmul, face_w = P[keep], N[keep], Lmul[keep], face_w[keep]
     n = len(P)
     nz1 = noise3(P, 9.0, (3.1, 7.7, 1.3))
     nz2 = noise3(P, 23.0, (8.2, 1.4, 5.9))
     rng = np.random.default_rng(5)
     L = FUR_LEN * Lmul * (0.80 + 0.26 * nz1 + 0.12 * nz2 + 0.12 * rng.random(n))
-    L *= np.where(rng.random(n) < 0.10, 1.30, 1.0)
+    L *= np.where(rng.random(n) < 0.10, 1.22, 1.0)
     L = np.clip(L, 0.006, None)
     # combing: down along the surface + outward from the face centre on the front
     down = np.array([0.0, 0.0, -1.0])
@@ -1315,7 +1315,7 @@ def render_view(path, cam, look, lens=None, vfov=None, res=(900, 900), samples=4
     fwd.normalize()
     right = fwd.cross(Vector((0.0, 0.0, 1.0))).normalized()
     up = Vector((0.0, 0.0, 1.0))
-    temp = [C._light("V4Key", 'AREA', 430.0, "#FFF0E4", t - fwd * 3.0 - right * 2.2 + up * 3.0, t, 3.0),
+    temp = [C._light("V4Key", 'AREA', 430.0, "#FFF0E4", t - fwd * 3.0 - right * 2.2 + up * 2.0, t, 3.0),
             C._light("V4Fill", 'AREA', 230.0, "#D2C8FF", t - fwd * 2.5 + right * 3.0 + up * 1.0, t, 3.5),
             C._light("V4RimP", 'AREA', 700.0, "#FF7FD0", t + fwd * 3.0 + right * 2.0 + up * 2.0, t, 2.0),
             C._light("V4RimV", 'AREA', 600.0, "#9B7BFF", t + fwd * 3.0 - right * 2.2 + up * 1.5, t, 2.0)]
@@ -1375,7 +1375,7 @@ def render_all(objs):
         "threequarter": ((-5.2 * math.sin(math.radians(40)), -5.2 * math.cos(math.radians(40)), 1.70), T, 85.0),
         "side": ((5.2, -0.10, 1.30), T, 85.0),
         "rear": ((0.0, 5.2, 2.00), T, 85.0),
-        "face": ((0.0, -2.6, 0.70), Vector((0.0, 0.0, 0.62)), 105.0),
+        "face": ((0.0, -3.6, 0.95), Vector((0.0, 0.0, 0.66)), 100.0),
     }
     for name, (cam, look, lens) in views.items():
         if VIEWS and name not in VIEWS:

@@ -19,9 +19,11 @@ namespace BubbleWash.EditorTools
                 // water samples #2F89CD (left of the arrows) .. #49BDE3 (right), hue ~200-206 (ours read #3F6CD8 / periwinkle)
                 // round 4 (measured r4 base, lower-left water: ours #46ACE5 vs reference #4E97CF = too cyan / bright): fewer
                 // turquoise patches, a deeper shallow colour, less near-camera brightening
-                C(m, "_DeepColor", "#0B4AA8"); C(m, "_ShallowColor", "#1F80C6"); C(m, "_StreakColor", "#B8F6FF");
-                C(m, "_TurquoiseColor", "#2CC0DC"); F(m, "_PatchAmount", 0.3f); F(m, "_DetailStrength", 0.7f); C(m, "_ReflectTint", "#8CC8FF");
-                C(m, "_CausticColor", "#7FE9FF"); C(m, "_ChevronColor", "#2FE6FF"); C(m, "_EdgeTint", "#E66AC8");
+                // round 4 continuation (v1 measured: arrow notch #43A7E2 vs reference #3386CC, lower-left #8CC6EC vs #4999D0):
+                // deeper shallow colour, fewer turquoise patches, a tighter TURQUOISE halo around the arrows (seam fixed)
+                C(m, "_DeepColor", "#0B4AA8"); C(m, "_ShallowColor", "#1A72C0"); C(m, "_StreakColor", "#B8F6FF");
+                C(m, "_TurquoiseColor", "#2CC0DC"); F(m, "_PatchAmount", 0.22f); F(m, "_DetailStrength", 0.7f); C(m, "_ReflectTint", "#8CC8FF");
+                C(m, "_CausticColor", "#7FE9FF"); C(m, "_ChevronColor", "#24E0DA"); C(m, "_EdgeTint", "#E66AC8");
                 F(m, "_FlowSpeed", 7.5f); F(m, "_Width", 3.6f); F(m, "_Glow", 0.1f); F(m, "_Smoothness", 0.6f);   // PBR gloss low: at 0.95 the pink CharLight_RimFront drew a wavy streak behind him; the glossy look comes from _ReflectBoost
                 F(m, "_StreakAmount", 0.12f); F(m, "_StreakDensity", 1.25f); F(m, "_EdgeTintAmount", 0.28f); F(m, "_SparkleAmount", 0.9f);
                 F(m, "_RainbowAmount", 0.32f); F(m, "_RippleStrength", 0.9f); F(m, "_EdgeFoam", 0.6f);
@@ -31,6 +33,7 @@ namespace BubbleWash.EditorTools
                 F(m, "_ChevronScale", SceneBuilder.ChevronScale); F(m, "_ChevronWidth", SceneBuilder.ChevronWidth); F(m, "_ChevronGlow", 0.75f);
                 F(m, "_ChevronHalfLen", SceneBuilder.ChevronHalfLen); F(m, "_ChevronHalfWidth", SceneBuilder.ChevronHalfWidth);
                 F(m, "_ChevronThick", SceneBuilder.ChevronThick); F(m, "_ChevronOffset", SceneBuilder.ChevronLateral);
+                F(m, "_ChevronEndX", SceneBuilder.ChevronEndX);
             });
             Mat("M_RailRainbow", "BWK/Soft", m =>
             {
@@ -61,9 +64,12 @@ namespace BubbleWash.EditorTools
                 // round 3b: A = light cyan toward the edges, B = turquoise core, C = crisp white-cyan rim; less white-hot / bloom
                 // round 4 (FILLED, reference near arrow: mint-white top #BEF6F5 over turquoise #4EC6DD): A = mint-white core,
                 // B = turquoise border / walls, C = white-cyan hot core under / behind the mascot
-                F(m, "_Mode", 7); C(m, "_ColorA", "#A4F5EC"); C(m, "_ColorB", "#1EC4D0"); C(m, "_ColorC", "#E6FFFD");
-                F(m, "_Glow", 0.3f); F(m, "_StreakAmount", 0.15f); F(m, "_StreakSpeed", 1.6f); F(m, "_ReflectBoost", 0.3f);
-                F(m, "_HotNear", 1.75f); F(m, "_HotFar", 2.05f); F(m, "_HotBoost", 0.25f);
+                // round 4 continuation (v1 arms measured #BDDFDB = pale grey, reference #A6FBF3 .. #CEFAF6 at full value):
+                // saturated aqua x3.4 HDR (Neutral tonemap -> ~#9CF7F1, blooms into the water), turquoise edges, mint-white
+                // (#DEFFF7 in the reference) on the arrow nearest the camera
+                F(m, "_Mode", 7); C(m, "_ColorA", "#5CFFEA"); C(m, "_ColorB", "#1FC4D2"); C(m, "_ColorC", "#A8FFF0");
+                F(m, "_Glow", 0.85f); F(m, "_StreakAmount", 0.12f); F(m, "_StreakSpeed", 1.6f); F(m, "_ReflectBoost", 0.15f);
+                F(m, "_HotNear", 1.75f); F(m, "_HotFar", 2.15f); F(m, "_HotBoost", 0.3f);
             });
             Mat("M_Foam", "BWK/Soft", m =>
             {
@@ -80,8 +86,10 @@ namespace BubbleWash.EditorTools
                 // round 4 (measured r4 base: our lace #DCD4DB pinkish-grey vs reference #CFE8F2 cyan-white; lead: "milky
                 // translucent, soft Fresnel, light blue in thin parts, no plastic specular"): cyan-white milk, blue shading,
                 // soft sheen, alpha-blended so thin / grazing parts let the blue water through (ZWrite on: no sorting holes)
-                F(m, "_Mode", 6); C(m, "_ColorA", "#D4F3FF"); C(m, "_ShadowColor", "#8CB2E4"); C(m, "_ColorB", "#62BFF0"); F(m, "_Wrap", 0.7f);
-                F(m, "_RimPower", 2.0f); F(m, "_RimStrength", 0.8f); F(m, "_SpecStrength", 0.7f); F(m, "_ReflectBoost", 0.25f); F(m, "_Glow", 0.32f);
+                // round 4 continuation (v1 measured: right crown p50 #C9D3DE grey-blue vs reference #C9E7EE cyan-white):
+                // cyan-white milk, cyan-blue shading, a little more self glow
+                F(m, "_Mode", 6); C(m, "_ColorA", "#C8F4FF"); C(m, "_ShadowColor", "#84B8E8"); C(m, "_ColorB", "#5CC8F0"); F(m, "_Wrap", 0.7f);
+                F(m, "_RimPower", 2.0f); F(m, "_RimStrength", 0.8f); F(m, "_SpecStrength", 0.7f); F(m, "_ReflectBoost", 0.25f); F(m, "_Glow", 0.38f);
                 F(m, "_Wobble", 0.01f); F(m, "_WobbleFreq", 7f);
                 F(m, "_MilkAlpha", 0.97f); F(m, "_MilkEdgeAlpha", 0.45f);
                 F(m, "_SrcBlend", (float)BlendMode.SrcAlpha); F(m, "_DstBlend", (float)BlendMode.OneMinusSrcAlpha); F(m, "_ZWrite", 1f);

@@ -29,7 +29,12 @@ namespace BubbleWash.EditorTools
         public const float ChevronWidth = 0.5f;
         // round 4 decor chevron (generated, not SM_Chevron): FAT filled arms like the reference (arm 0.30 m across, small
         // notch), arm centre line from the apex (0, HalfLen) to (+-HalfWidth, -HalfLen) in metres (z = travel)
-        public const float ChevronLateral = 0.28f, ChevronHalfLen = 0.30f, ChevronHalfWidth = 0.44f, ChevronThick = 0.30f;
+        // round 4 continuation (reference f_03.00s 4K back-projected onto the water through the hero camera: outer apex
+        // runner z -0.08, notch 0.51 m behind it, 45-degree arms, arm ends CUT ALONG TRAVEL ~0.42 m beside the axis, arms
+        // ~0.36 m across): HalfLen / HalfWidth now only set the arm slope (2 HL / HW = 1 -> 45 deg) and the apex offset;
+        // every arm edge ends at |x| = ChevronEndX (the old constant-z cut drew a long thin left spike to screen x .14)
+        public const float ChevronLateral = 0.30f, ChevronHalfLen = 0.25f, ChevronHalfWidth = 0.50f, ChevronThick = 0.36f;
+        public const float ChevronEndX = 0.42f;
         const float ChevronHeight = 0.015f;
         // milk crown splashes beside the feet (Art/Models/FX/SM_FX_Crown_xx, left-side asset mirrored for the right).
         // (round 2 anchored the root in screen space; reference f_003.00s: crowns rise at x 0-.40 / .62-1, y .55-.87).
@@ -420,7 +425,8 @@ namespace BubbleWash.EditorTools
                 var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.3f, 0.5f); m.startSpeed = 0.2f;
                 m.startSize = new ParticleSystem.MinMaxCurve(0.4f, 0.75f); m.simulationSpace = ParticleSystemSimulationSpace.Local; m.maxParticles = 40;
                 m.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
-                m.startColor = new Color(1f, 1f, 1f, 0.75f);
+                // round 4: fainter (reference 2.0-3.25 s: no white lace web on the water between the feet, only shadowed teal)
+                m.startColor = new Color(1f, 1f, 1f, 0.4f);
                 var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Circle; sh.radius = 0.4f;
                 var sz = ps.sizeOverLifetime; sz.enabled = true; sz.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0, 0.7f, 1, 1.35f));
                 var col = ps.colorOverLifetime; col.enabled = true;
@@ -607,7 +613,7 @@ namespace BubbleWash.EditorTools
                 float o = T * 0.5f - c * T;                  // offset toward the outer (front) edge
                 float my = HL + o / a;                       // where both arms' offset lines meet (mitre) on the axis
                 float side = r < Rows ? -1f : 1f;
-                float t = (2f * HL + o / a) / b * (Mathf.Abs(r - Rows) / (float)Rows);
+                float t = ChevronEndX / a * (Mathf.Abs(r - Rows) / (float)Rows);   // every edge ends at |x| = ChevronEndX
                 return new Vector3(side * a * t, y, my - b * t);
             }
             var v = new List<Vector3>(); var uv = new List<Vector2>(); var nm = new List<Vector3>(); var tri = new List<int>();
@@ -637,13 +643,14 @@ namespace BubbleWash.EditorTools
                     Quad(Vert(P(r, cols[k], H), new Vector2(cols[k], v0), wn), Vert(P(r + 1, cols[k], H), new Vector2(cols[k], v1), wn),
                          Vert(P(r + 1, cols[k], -0.01f), new Vector2(cols[k], v1), wn), Vert(P(r, cols[k], -0.01f), new Vector2(cols[k], v0), wn), wn);
                 }
-            // flat arm-end caps (facing back toward the camera)
+            // flat arm-end caps, cut along travel (facing outward +-x)
             foreach (int r in new[] { 0, nr - 1 })
                 for (int k = 0; k < cols.Length - 1; k++)
                 {
                     float vv = r / (float)(nr - 1);
-                    Quad(Vert(P(r, cols[k], H), new Vector2(cols[k], vv), Vector3.back), Vert(P(r, cols[k + 1], H), new Vector2(cols[k + 1], vv), Vector3.back),
-                         Vert(P(r, cols[k + 1], -0.01f), new Vector2(cols[k + 1], vv), Vector3.back), Vert(P(r, cols[k], -0.01f), new Vector2(cols[k], vv), Vector3.back), Vector3.back);
+                    var cn = r == 0 ? Vector3.left : Vector3.right;
+                    Quad(Vert(P(r, cols[k], H), new Vector2(cols[k], vv), cn), Vert(P(r, cols[k + 1], H), new Vector2(cols[k + 1], vv), cn),
+                         Vert(P(r, cols[k + 1], -0.01f), new Vector2(cols[k + 1], vv), cn), Vert(P(r, cols[k], -0.01f), new Vector2(cols[k], vv), cn), cn);
                 }
             var mesh = new Mesh { name = "SM_ChevronDecor" };
             mesh.SetVertices(v); mesh.SetUVs(0, uv); mesh.SetNormals(nm); mesh.SetTriangles(tri, 0);

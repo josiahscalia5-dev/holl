@@ -27,14 +27,15 @@ Material:
     m_Floats:
     - _CausticAmount: 0.28
     - _CenterGlow: 0.06
+    - _ChevronEndX: 0.42
     - _ChevronGlow: 0.75
-    - _ChevronHalfLen: 0.3
-    - _ChevronHalfWidth: 0.44
-    - _ChevronOffset: 0.28
+    - _ChevronHalfLen: 0.25
+    - _ChevronHalfWidth: 0.5
+    - _ChevronOffset: 0.3
     - _ChevronScale: 1.35
     - _ChevronSpacing: 1.1
     - _ChevronStart: 5.9
-    - _ChevronThick: 0.3
+    - _ChevronThick: 0.36
     - _ChevronWidth: 0.5
     - _Depth: 0.22
     - _DetailStrength: 0.7
@@ -43,7 +44,7 @@ Material:
     - _FlowSpeed: 7.5
     - _Glow: 0.1
     - _NearBrighten: 0.05
-    - _PatchAmount: 0.3
+    - _PatchAmount: 0.22
     - _RainbowAmount: 0.32
     - _ReflectBoost: 0.45
     - _RippleStrength: 0.9
@@ -56,11 +57,11 @@ Material:
     - _Width: 3.6
     m_Colors:
     - _CausticColor: {r: 0.49803922, g: 0.9137255, b: 1, a: 1}
-    - _ChevronColor: {r: 0.18431373, g: 0.9019608, b: 1, a: 1}
+    - _ChevronColor: {r: 0.14117648, g: 0.8784314, b: 0.85490197, a: 1}
     - _DeepColor: {r: 0.043137256, g: 0.2901961, b: 0.65882355, a: 1}
     - _EdgeTint: {r: 0.9019608, g: 0.41568628, b: 0.78431374, a: 1}
     - _ReflectTint: {r: 0.54901963, g: 0.78431374, b: 1, a: 1}
-    - _ShallowColor: {r: 0.12156863, g: 0.5019608, b: 0.7764706, a: 1}
+    - _ShallowColor: {r: 0.101960786, g: 0.44705883, b: 0.7529412, a: 1}
     - _StreakColor: {r: 0.72156864, g: 0.9647059, b: 1, a: 1}
     - _TurquoiseColor: {r: 0.17254902, g: 0.7529412, b: 0.8627451, a: 1}
   m_BuildTextureStacks: []

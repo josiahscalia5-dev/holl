@@ -49,6 +49,7 @@ Shader "BWK/Water"
         _ChevronHalfWidth ("Chevron Half Width (m)", Float) = 0.44
         _ChevronThick ("Chevron Arm Thickness (m)", Float) = 0.3
         _ChevronOffset ("Chevron Runway Offset (m, +u)", Float) = 0
+        _ChevronEndX ("Chevron Arm End (m beside the axis, 0 = legacy)", Float) = 0
     }
     SubShader
     {
@@ -65,7 +66,7 @@ Shader "BWK/Water"
             half _ChevronGlow;
             half4 _TurquoiseColor, _ReflectTint;
             half _PatchAmount, _DetailStrength;
-            float _ChevronHalfLen, _ChevronHalfWidth, _ChevronThick, _ChevronOffset;
+            float _ChevronHalfLen, _ChevronHalfWidth, _ChevronThick, _ChevronOffset, _ChevronEndX;
         CBUFFER_END
 
         // flowing height field: long swells stretched along the flow + a finer, faster chop
@@ -203,20 +204,30 @@ Shader "BWK/Water"
                 half chevLight = 0;
                 if (_ChevronSpacing > 0.01 && _ChevronHalfLen > 0.01)
                 {
-                    // round 4: fat generated chevrons (apex (0, HL), arm ends (+-HW, -HL), arms T across) on a runway offset
-                    // to the right: a turquoise halo hugging the arrow (glow INTO the water), stronger on the camera side
-                    float ly = m.y - _ChevronStart - round((m.y - _ChevronStart) / _ChevronSpacing) * _ChevronSpacing;
+                    // round 4: fat generated chevrons (apex (0, HL), arm slope 2 HL / HW, arms T across, every arm edge ending
+                    // at |x| = _ChevronEndX) on a runway offset to the right: a turquoise halo hugging the arrow (glow INTO
+                    // the water), stronger on the camera side. Round 4 continuation: the halo of an arrow reaches past the
+                    // half-way line to its neighbour, so the nearest THREE arrows are evaluated (one arrow per period cut the
+                    // halo off along a straight horizontal line across the water = the "grid line" under the bottom arrow).
+                    float k0 = round((m.y - _ChevronStart) / _ChevronSpacing);
                     float lx = abs(m.x - _Width * 0.5 - _ChevronOffset);
                     float alen = sqrt(_ChevronHalfWidth * _ChevronHalfWidth + 4.0 * _ChevronHalfLen * _ChevronHalfLen);
                     float2 ad = float2(_ChevronHalfWidth, -2.0 * _ChevronHalfLen) / alen;
-                    float2 pp = float2(lx, ly - _ChevronHalfLen);
-                    float tt = clamp(dot(pp, ad), 0.0, alen);
-                    float2 dd = pp - ad * tt;
-                    float dist = max(length(dd) - _ChevronThick * 0.5, 0.0);              // 0 under the arrow
-                    half behind = dot(dd, float2(-ad.y, ad.x)) < 0.0 ? 1.3 : 0.8;         // behind = toward the camera
-                    half halo = exp(-dist * dist / (0.018 * behind)) ;
-                    half wide = exp(-dist * dist / 0.12) * 0.22;
-                    chevLight = (halo * 0.8 + wide) * _ChevronGlow;
+                    float tEnd = _ChevronEndX > 0.01 ? _ChevronEndX / ad.x : alen;
+                    half best = 0;
+                    [unroll] for (int j = -1; j <= 1; j++)
+                    {
+                        float ly = m.y - _ChevronStart - (k0 + j) * _ChevronSpacing;
+                        float2 pp = float2(lx, ly - _ChevronHalfLen);
+                        float tt = clamp(dot(pp, ad), 0.0, tEnd);
+                        float2 dd = pp - ad * tt;
+                        float dist = max(length(dd) - _ChevronThick * 0.5, 0.0);              // 0 under the arrow
+                        half behind = dot(dd, float2(-ad.y, ad.x)) < 0.0 ? 1.3 : 0.8;         // behind = toward the camera
+                        half halo = exp(-dist * dist / (0.012 * behind));
+                        half wide = exp(-dist * dist / 0.09) * 0.2;
+                        best = max(best, halo * 0.8 + wide);
+                    }
+                    chevLight = best * _ChevronGlow;
                 }
                 else if (_ChevronSpacing > 0.01)
                 {
