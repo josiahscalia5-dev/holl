@@ -62,13 +62,15 @@ BODY_ELEMS = [  # (centre, semi-axes x/y/z, stiffness): lower belly + upper head
 ]
 # arm = upper arm leaving the body side just under the cuff almost level (clears the cuff bottom roll), then a forearm
 # rising ~60 deg outside the cuff radius, ending in a mitt at cuff height (rear hero: paws outside the hat silhouette)
-ARM_A, ARM_E, ARM_B, ARM_RAD, ARM_S = (Vector((0.30, -0.005, 0.450)), Vector((0.530, -0.020, 0.560)),
-                                       Vector((0.648, -0.030, 0.648)), 0.094, 5.0)
-MITT_C, MITT_AX, MITT_S = Vector((0.702, -0.040, 0.708)), (0.112, 0.090, 0.118), 5.0   # along, palm-normal, across
+# round 5: ONE straight stubby limb (no elbow) raised ~44 deg and slightly forward; paws lower + closer (1b: arm span
+# 1.60 -> ref 1.40-1.47 cuff widths, paw top 0.26 -> ref 0.18-0.23 above the cuff bottom from the hero camera)
+ARM_A, ARM_E, ARM_B, ARM_RAD, ARM_S = (Vector((0.320, -0.010, 0.420)), Vector((0.435, -0.040, 0.530)),
+                                       Vector((0.550, -0.070, 0.640)), 0.098, 5.0)
+MITT_C, MITT_AX, MITT_S = Vector((0.590, -0.080, 0.680)), (0.104, 0.088, 0.112), 5.0   # along, palm-normal, across
 PALM_N = Vector((-0.10, -0.80, 0.45)).normalized()     # palm faces front / up (pads visible from the front)
 HIP, ANKLE, LEG_RAD = Vector((0.205, 0.080, 0.200)), Vector((0.285, 0.245, 0.165)), 0.078
 PAW_C = Vector((0.318, 0.312, 0.178))
-PAW_AX = (0.136, 0.166, 0.082)                          # lateral, heel->toe, thickness
+PAW_AX = (0.128, 0.152, 0.080)                          # lateral, heel->toe, thickness
 TOE_DIR = Vector((0.22, -0.42, 0.88)).normalized()      # toes up (+ a little forward / out)
 SOLE_N0 = Vector((0.18, 0.90, 0.40))                    # soles face back / up toward the rear camera
 # FRONT pose (opening / celebration shots, reference 03 / 05): legs forward, soles toward the front camera.
@@ -81,46 +83,50 @@ TAIL_C, TAIL_R = Vector((0.0, 0.37, 0.22)), 0.030       # tiny tuft hidden in th
 # ------------------------------------------------------------------ beanie (lathe about the tilted hat axis)
 HAT_O = Vector((0.0, 0.0, 0.700))      # cuff-bottom centre on the axis
 HAT_TILT = -6.0                        # deg about X (negative: front edge up, crown leans back)
-RIB_N = 58                             # knit ribs around (UV u * 44 = rib index, see knit_uv)
-CUFF_AMP, CROWN_AMP = 0.0080, 0.0085   # shallow geometric ribs (the knit tile does the stitches)
+RIB_N = 48                             # knit ribs around (UV u * 44 = rib index, see knit_uv)
+CUFF_AMP, CROWN_AMP = 0.0105, 0.0095   # shallow geometric ribs (the knit tile does the stitches)
 ROW_H = 0.024                          # knit row height (m) along the profile
 # (h above the cuff bottom, radius, material) material 0 knit crown, 1 cuff, 2 stripe; first point = tuck (set later)
-CUFF_PROF = [(h * 0.86, r * 0.935) for h, r in (
-    (0.000, 0.500), (0.010, 0.518), (0.032, 0.528), (0.075, 0.532), (0.125, 0.533), (0.172, 0.530),
-    (0.205, 0.523), (0.226, 0.511), (0.238, 0.494), (0.236, 0.478))]
-STRIPE_PROF = [(0.196, 0.432), (0.212, 0.452), (0.240, 0.460), (0.268, 0.458), (0.286, 0.451)]
-DOME_H0, DOME_R0, DOME_H, DOME_E = 0.286, 0.451, 0.228, 2.00
+# round 5: folded cuff that HUGS the head: rounded bottom roll (widest), then the band narrows gently upward
+# (follows the ball, no tin-can wall), soft top fold tucked under ONE wide pale-pink stripe
+CUFF_PROF = [(0.000, 0.470), (0.012, 0.492), (0.035, 0.503), (0.070, 0.501), (0.110, 0.495), (0.150, 0.488),
+             (0.180, 0.481), (0.198, 0.474), (0.206, 0.462), (0.204, 0.452)]
+STRIPE_PROF = [(0.198, 0.452), (0.212, 0.468), (0.245, 0.471), (0.278, 0.467), (0.300, 0.458)]
+# crown = elliptical arc whose centre lies BELOW the stripe top: it leans in (~32 deg) right from the stripe (a short
+# soft dome tapering to the pom-pom, never a vertical wall); slight slouch toward the back
+CROWN_H0, CROWN_R0, CROWN_H, CROWN_PH0, SLOUCH = 0.300, 0.458, 0.170, 18.0, 0.035
+DOME_H0, DOME_R0, DOME_H = CROWN_H0, CROWN_R0, CROWN_H
 TOP_BAND = (9.0, 9.0)                  # (disabled: the reference has ONE pale stripe)              # extra pale band on the crown FRONT (h range), fades out toward the sides
 TOP_BAND_PSI = 70.0                    # +- deg from the front where the band is full width
-POM_H, POM_CORE, POM_R = 0.586, 0.150, 0.258   # pom-pom centre (h), dark core radius, yarn tip radius
+POM_H, POM_CORE, POM_R = 0.528, 0.148, 0.246   # pom-pom centre (h), dark core radius, yarn tip radius
 STAR_H, STAR_PSI, STAR_ROT, STAR_RO, STAR_RI = 0.246, 30.0, -12.0, 0.100, 0.045
 
 # ------------------------------------------------------------------ face (placed on the body surface)
-EYE_DX, EYE_R, EYE_PROT = 0.214, 0.116, 0.036           # eye centre x, footprint radius, protrusion
-EYE_UNDER = 0.088                      # eye centre this far below the cuff bottom (top tucks under the cuff edge)
-IRIS_R, PUPIL_IN, PUPIL_DOWN = 0.107, 0.010, -0.006
-NOSE_DZ, MOUTH_TOP_DZ, MOUTH_W, MOUTH_H = 0.068, 0.118, 0.186, 0.124
+EYE_DX, EYE_R, EYE_PROT = 0.200, 0.130, 0.040           # eye centre x, footprint radius, protrusion
+EYE_UNDER = 0.100                      # eye centre this far below the cuff bottom (top tucks under the cuff edge)
+IRIS_R, PUPIL_IN, PUPIL_DOWN = 0.117, 0.010, -0.004
+NOSE_DZ, MOUTH_TOP_DZ, MOUTH_W, MOUTH_H = 0.072, 0.098, 0.172, 0.150
 BLUSH_DX, BLUSH_DZ, BLUSH_R = 0.300, 0.125, 0.085
 
 # ------------------------------------------------------------------ fur (hair curves)
-FUR_N = 50000 if QUICK else 150000
-FUR_LEN = 0.048
+FUR_N = 60000 if QUICK else 210000
+FUR_LEN = 0.044
 FUR_PTS = 5
-FUR_RAD = (0.0024, 0.0005)
+FUR_RAD = (0.0027, 0.0008)
 CLUMPS = 900 if QUICK else 2000
-POM_N = 9000 if QUICK else 24000
+POM_N = 7000 if QUICK else 17000
 
-COL_FUR = "#DC6A96"           # warm pink coat
+COL_FUR = "#E27A9E"           # warm pink coat
 COL_FUR_UNDER = "#EEC2DA"     # paler pink-white underside
 COL_BLUSH = "#F04C6E"
 COL_PAW = "#FFF6F4"
 COL_PAD = "#F48FAA"
 COL_HAT = "#5D2094"
 COL_HAT_DARK = "#2C0B58"
-COL_HAT_CROWN = "#4F1A84"
-COL_STRIPE = "#D6A2CA"
-COL_STRIPE_DARK = "#9A6A9A"
-COL_POM = "#7B2FB2"
+COL_HAT_CROWN = "#4A1580"
+COL_STRIPE = "#DC9CC8"
+COL_STRIPE_DARK = "#A8628F"
+COL_POM = "#8A41B9"
 
 
 def hat_rot():
@@ -131,9 +137,28 @@ HAT_R = hat_rot()
 HAT_AXIS = HAT_R @ Vector((0.0, 0.0, 1.0))
 
 
+def slouch(h):
+    t = min(1.0, max(0.0, (h - CROWN_H0) / CROWN_H))
+    return SLOUCH * t * t
+
+
 def hat_pt(h, r, psi):
-    """psi: 0 = +X (his left), -90 deg = front (-Y), +90 deg = back."""
-    return HAT_O + HAT_R @ Vector((r * math.cos(psi), r * math.sin(psi), h))
+    """psi: 0 = +X (his left), -90 deg = front (-Y), +90 deg = back. Crown points slouch toward the back."""
+    return HAT_O + HAT_R @ Vector((r * math.cos(psi), r * math.sin(psi) + slouch(h), h))
+
+
+def crown_prof(n=12):
+    """(h, r) of the crown arc from the stripe top to the apex: centre below the stripe top -> inward lean at once."""
+    ph0 = math.radians(CROWN_PH0)
+    A = CROWN_R0 / math.cos(ph0)
+    B = CROWN_H / (1.0 - math.sin(ph0))
+    hc = CROWN_H0 - B * math.sin(ph0)
+    out = []
+    for i in range(1, n + 1):
+        ph = ph0 + (math.pi / 2 - ph0) * i / n
+        out.append((hc + B * math.sin(ph), A * math.cos(ph)))
+    out[-1] = (CROWN_H0 + CROWN_H, 0.0)
+    return out
 
 
 def hat_local(p):
@@ -300,7 +325,7 @@ def knit_tile(path, n=128):
 
 
 def knit_material(name, hex_col, hex_dark, tile, bump=0.35):
-    m, b = principled(name, hex_col, rough=0.92, sheen=0.55, sheen_hex="#E8D8FF", spec=0.25)
+    m, b = principled(name, hex_col, rough=0.92, sheen=0.22, sheen_hex="#C49CF4", spec=0.22)
     nt = m.node_tree
     uv = nt.nodes.new("ShaderNodeUVMap")
     uv.uv_map = "UVMap"
@@ -370,7 +395,7 @@ def eye_material():
     cr.elements[0].color = C.hex_rgba("#0B0507")
     cr.elements[1].position = 1.0
     cr.elements[1].color = C.hex_rgba("#F7F0F2")
-    for pos, hx in ((0.19, "#0E0608"), (0.235, "#2C171C"), (0.33, "#43272D"), (0.42, "#5F4048"),
+    for pos, hx in ((0.19, "#0E0608"), (0.235, "#34161F"), (0.33, "#55283A"), (0.42, "#7A4660"),
                     (0.468, "#24121A"), (0.50, "#1A0C10"), (0.525, "#F2E8EC")):
         e = cr.elements.new(pos)
         e.color = C.hex_rgba(hx)
@@ -437,8 +462,8 @@ def build_materials():
     M["HatCuff"] = knit_material("M_HatCuff", COL_HAT, COL_HAT_DARK, tile)
     M["HatStripe"] = knit_material("M_HatStripe", COL_STRIPE, COL_STRIPE_DARK, tile, bump=0.30)
     M["StarBadge"], _b = principled("M_StarBadge", "#FFCF1F", rough=0.35, coat=0.5, sheen=0.2)
-    M["FurStrand"] = fur_strand_material("M_V4_FurStrands", 0.62, 1.16)
-    M["PomStrand"] = fur_strand_material("M_V4_PomStrands", 0.30, 1.10, rough=0.75)
+    M["FurStrand"] = fur_strand_material("M_V4_FurStrands", 0.72, 1.20)
+    M["PomStrand"] = fur_strand_material("M_V4_PomStrands", 0.34, 0.98, rough=0.75)
     return M
 
 
@@ -696,7 +721,7 @@ def build_mouth(surf, z_top):
         bridge(md, rings[k], rings[k + 1], mat)
     for j in range(len(outline)):
         md.face((rings[-1][j], rings[-1][(j + 1) % len(outline)], centre), 0)
-    tongue = ellipsoid(place(0.0, -MOUTH_H / 2 + 0.036, 0.001), ex, ey, f, 0.056, 0.034, 0.012, seg=16, rings=8)
+    tongue = ellipsoid(place(0.0, -MOUTH_H / 2 + 0.042, 0.001), ex, ey, f, 0.056, 0.042, 0.013, seg=16, rings=8)
     return md, tongue, S, dict(S=S, f=f, ex=ex, ey=ey, zc=zc)
 
 
@@ -704,10 +729,10 @@ def build_nose(surf, z):
     sn, nn = surf.front_point(0.0, z)
     f, ex, ey = face_frame(nn, 0.3)
     nose = ellipsoid(Vector((0.0, 0.0, 0.0)), Vector((1.0, 0.0, 0.0)), Vector((0.0, 1.0, 0.0)),
-                     Vector((0.0, 0.0, 1.0)), 0.019, 0.012, 0.009, seg=12, rings=6)
+                     Vector((0.0, 0.0, 1.0)), 0.023, 0.014, 0.010, seg=12, rings=6)
     out = []
     for v in nose.v:
-        x = v.x * (1.0 + 0.6 * (v.y / 0.012)) if v.y < 0 else v.x
+        x = v.x * (1.0 + 0.6 * (v.y / 0.014)) if v.y < 0 else v.x
         out.append(sn + ex * x + ey * v.y + f * (v.z + 0.002))
     nose.v = out
     return nose, sn
@@ -721,12 +746,7 @@ def knit_uv(psi, v):
 def build_beanie(r_tuck):
     """One lathe surface: tuck -> cuff (rolled bottom, ribbed face, top fold) -> stripe -> round crown dome."""
     prof = [(-0.030, r_tuck, 1)] + [(h, r, 1) for h, r in CUFF_PROF] + [(h, r, 2) for h, r in STRIPE_PROF]
-    nd = 12
-    for i in range(1, nd + 1):
-        ph = (math.pi / 2) * i / nd
-        e = 2.0 / DOME_E
-        prof.append((DOME_H0 + DOME_H * math.sin(ph) ** e, DOME_R0 * math.cos(ph) ** e, 0))
-    prof[-1] = (DOME_H0 + DOME_H, 0.0, 0)
+    prof += [(h, r, 0) for h, r in crown_prof(12)]
     seg = 2 * RIB_N
     md = MD()
     arcs = [0.0]
@@ -809,9 +829,7 @@ def star_outline():
 def cuff_r(h):
     """Smooth outer envelope of the beanie profile (cuff face -> stripe -> crown dome) for badges."""
     pts = list(CUFF_PROF[2:8]) + list(STRIPE_PROF[2:])
-    for i in range(1, 9):
-        ph = (math.pi / 2) * i / 9
-        pts.append((DOME_H0 + DOME_H * math.sin(ph) ** (2.0 / DOME_E), DOME_R0 * math.cos(ph) ** (2.0 / DOME_E)))
+    pts += crown_prof(9)
     for (h0, r0), (h1, r1) in zip(pts, pts[1:]):
         if h0 <= h <= h1:
             return r0 + (r1 - r0) * (h - h0) / (h1 - h0)
@@ -1232,8 +1250,8 @@ def main():
     for side, tag in ((1, "L"), (-1, "R")):
         md, info = build_eye(surf, side, z_e)
         eyes[tag] = (md, info)
-        lights[tag + "1"] = build_catchlight(info, -0.28 * EYE_R, 0.30 * EYE_R, 0.027)
-        lights[tag + "2"] = build_catchlight(info, 0.26 * EYE_R, -0.30 * EYE_R, 0.011, 12)
+        lights[tag + "1"] = build_catchlight(info, -0.27 * EYE_R, 0.30 * EYE_R, 0.035)
+        lights[tag + "2"] = build_catchlight(info, 0.27 * EYE_R, -0.30 * EYE_R, 0.013, 12)
         lashes.extend(build_lashes(info))
     mouth, tongue, mouth_pt, minfo = build_mouth(surf, z_e - MOUTH_TOP_DZ)
     nose, nose_pt = build_nose(surf, z_e - NOSE_DZ)
@@ -1362,7 +1380,7 @@ def main():
         keep &= ~(on_palm & (np.linalg.norm(rel, axis=1) < 0.13))
     # face zone: shorter fur on the front of the head
     face_w = np_smooth(-0.30, -0.42, P[:, 1]) * np_smooth(0.30, 0.42, P[:, 2]) * np_smooth(0.36, 0.28, np.abs(P[:, 0]))
-    Lmul *= 1.0 - 0.45 * face_w
+    Lmul *= 1.0 - 0.58 * face_w
     Lmul *= np.where(np.abs(P[:, 0]) > 0.50, 0.55, 1.0)            # shorter plush on the arms / paws
     P, N, Lmul, face_w = P[keep], N[keep], Lmul[keep], face_w[keep]
     n = len(P)
@@ -1380,7 +1398,7 @@ def main():
     away = away - N * np.sum(away * N, axis=1)[:, None]
     comb = normalize_rows(comb + normalize_rows(away) * face_w[:, None] * 1.5 + 1e-6)
     jitter = normalize_rows(rng.normal(0.0, 1.0, (n, 3)))
-    D = normalize_rows(N * (0.80 - 0.30 * face_w)[:, None] + comb * 0.85 + jitter * 0.16)
+    D = normalize_rows(N * (0.98 - 0.30 * face_w)[:, None] + comb * 0.55 + jitter * 0.20)
     tip = P + D * L[:, None]
     # clumps: tips converge toward their clump's tip (plush tufts)
     kd = KDTree(CLUMPS)
@@ -1391,7 +1409,7 @@ def main():
     near = np.array([kd.find(Vector(p))[1] for p in P])
     ctip = tip[cidx[near]]
     croot = P[cidx[near]]
-    camt = (0.34 + 0.28 * np_smooth(-0.3, 0.6, nz1)) * (1.0 - 0.6 * face_w)
+    camt = (0.22 + 0.22 * np_smooth(-0.3, 0.6, nz1)) * (1.0 - 0.6 * face_w)
     target = ctip + (P - croot) * 0.45
     tip = tip + (target - tip) * camt[:, None]
     # keep tips above the surface (re-normalise length a little)
@@ -1425,10 +1443,11 @@ def main():
         for k, pcen in enumerate(li["pads"]):
             r = 0.070 if k == 0 else 0.037
             ok &= np.linalg.norm(Pf - np.array(pcen), axis=1) > r
+        ok &= (Nf @ np.array(li["sole_n"])) < -0.15          # sole side stays smooth (ref: plush soles, bare pads)
         Pf, Nf = Pf[ok], Nf[ok]
         m = len(Pf)
         rngf = np.random.default_rng(31 + side)
-        Lf = 0.018 * (0.8 + 0.4 * rngf.random(m))
+        Lf = 0.010 * (0.8 + 0.4 * rngf.random(m))
         Df = normalize_rows(Nf + normalize_rows(rngf.normal(0, 1, (m, 3))) * 0.3)
         tipf = Pf + Df * Lf[:, None]
         ptsf = bezier_pts(Pf, Nf, tipf, Lf, 4)
@@ -1455,11 +1474,11 @@ def main():
     Lp = (POM_R - POM_CORE * 0.55) * clen[ci] * (0.86 + 0.18 * rngp.random(m))
     tipp = root + dirs * Lp[:, None]
     ctip = pc + cdir[ci] * (POM_R * clen[ci])[:, None]
-    tipp = tipp + (ctip - tipp) * 0.22                     # bundle tips gather (yarn locks, not needles)
+    tipp = tipp + (ctip - tipp) * 0.34                     # bundle tips gather (yarn locks, not needles)
     curl = perp[ci] * (0.45 + 0.55 * rngp.random(m))[:, None] - ax[None, :] * 0.20
     tipp = tipp + curl * (Lp * 0.16)[:, None]              # soft curved tips
     ptsp = bezier_pts(root, dirs, tipp, Lp, 5)
-    rp = np.tile(np.array([0.0052, 0.0048, 0.0040, 0.0027, 0.0009]), (m, 1)) * (0.8 + 0.4 * rngp.random(m))[:, None]
+    rp = np.tile(np.array([0.0070, 0.0066, 0.0056, 0.0040, 0.0016]), (m, 1)) * (0.8 + 0.4 * rngp.random(m))[:, None]
     colp = np.tile(hexlin(COL_POM), (m, 1)) * (ctone[ci] * (0.92 + 0.12 * rngp.random(m)))[:, None]
     curves["Fur_PomPom"] = make_curves("Fur_PomPom", ptsp, rp, colp, M["PomStrand"], fur_coll)
     print("CHECK pompom strands %d centre %s tip radius %.3f" % (m, tuple(round(c, 3) for c in pom_c), POM_R))

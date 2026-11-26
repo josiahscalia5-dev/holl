@@ -93,7 +93,9 @@ namespace BubbleWash.EditorTools
             // the UPPER-left (around the big yellow star, #a87ea0 vs ours violet #9d6bab). A wide spot aimed through the hero
             // camera at screen (0.15, 0.20) lands exactly there (independent of track mirroring / bends).
             // (v2 aimed at (0.15, 0.20): that ray reaches the wall only at 118 m; v3 aims nearer the corner -> ~112 m)
-            AddHeroSpot(lights, "Spot_PinkUpperLeft", 0.09f, 0.14f, 3.4f, new Color(1f, 0.46f, 0.76f), 16f, 90f, 12f);
+            // round 5: upper-left still violet (hue 293, L50 .45) vs the reference's light pink-mauve (311, .51), and the new
+            // hue-vs-hue grade pulls violets bluer -> pinker (less blue) and stronger
+            AddHeroSpot(lights, "Spot_PinkUpperLeft", 0.09f, 0.14f, 3.4f, new Color(1f, 0.42f, 0.62f), 22f, 90f, 12f);
 
             // Reflection probes: hall probes + one per 30 m tunnel chunk, box = bounds of that bent tunnel segment.
             for (float d = 18f; d < tunnelStart; d += 30f)
@@ -131,7 +133,8 @@ namespace BubbleWash.EditorTools
             // the bulbs / stars / brightest rims (the reference's soft animated-film glow), still no veil on lit surfaces
             // v2 (threshold .9 / intensity 1.4) lifted every wall into a flat pastel lavender (frame L50 .60 vs .56): v3 keeps
             // the threshold at 1.0 (only emissives + hot glints bloom) and widens the halo instead
-            bloom.threshold.Override(1.0f); bloom.intensity.Override(1.25f); bloom.scatter.Override(0.77f);
+            // round 5: bulbs x6 -> x5 (peach cores, no lemon) -> a little more bloom intensity keeps their soft amber halos
+            bloom.threshold.Override(1.0f); bloom.intensity.Override(1.38f); bloom.scatter.Override(0.78f);
             bloom.tint.Override(Color.white); bloom.highQualityFiltering.Override(true);
             bloom.maxIterations.Override(8);
             // Neutral keeps saturated hues far better than ACES (which pushes bright yellow / cyan to white).
@@ -148,13 +151,22 @@ namespace BubbleWash.EditorTools
             smh.shadowsStart.Override(0f); smh.shadowsEnd.Override(0.35f); smh.highlightsStart.Override(0.55f); smh.highlightsEnd.Override(1f);
             // gentle warm-highlight / violet-shadow split (neutral grey = 0.5)
             var st = profile.Add<SplitToning>(true);
-            st.shadows.Override(new Color(0.45f, 0.38f, 0.64f)); st.highlights.Override(new Color(0.56f, 0.52f, 0.48f)); st.balance.Override(-15f);
+            // round 5: shadow tone blue (hue ~235) instead of violet (R > G pushed dark cyan water toward violet; reference
+            // shading is blue-violet with pink only where lit)
+            st.shadows.Override(new Color(0.41f, 0.42f, 0.64f)); st.highlights.Override(new Color(0.56f, 0.52f, 0.48f)); st.balance.Override(-15f);
             // Hue-selective saturation: only the blue-violet range (drum walls, ceiling bays, far tunnel ~225-268 deg) gets
             // richer (x1.28); the purple hat (~280), pink fur, cyan water and gold are untouched.
             var curves = profile.Add<ColorCurves>(true);
             curves.hueVsSat.Override(new TextureCurve(new[] { new Keyframe(0.57f, 0.5f), new Keyframe(0.63f, 0.55f), new Keyframe(0.72f, 0.54f),
                 new Keyframe(0.765f, 0.5f) }, 0.5f, true, new Vector2(0f, 1f)));
-            var vg = profile.Add<Vignette>(true); vg.intensity.Override(0.28f); vg.smoothness.Override(0.48f); vg.color.Override(new Color(0.12f, 0.03f, 0.26f));
+            // round 5: hue-vs-hue (part of the colour-grading LUT, free at runtime): the reference violets sit ~12 deg BLUER
+            // than ours (median hue frame 251 vs 264, tunnel ahead 255 vs 270, upper-right wall 262 vs 284, hat 279 vs 286).
+            // Only 240-300 deg moves (max -12 deg around 280); cyan water (190-215), pink fur / rails (>300) and gold untouched.
+            curves.hueVsHue.Override(new TextureCurve(new[] { new Keyframe(0.66f, 0.5f), new Keyframe(0.70f, 0.475f), new Keyframe(0.775f, 0.4667f),
+                new Keyframe(0.81f, 0.488f), new Keyframe(0.835f, 0.5f) }, 0.5f, true, new Vector2(0f, 1f)));
+            // round 5 (water request): the vignette colour (.12, .03, .26) multiplied G far more than B -> the cyan water in the
+            // bottom corners turned violet (hue 225 / 210 vs reference 205 / 193). Weaker and a neutral deep blue (G ~ B / 2).
+            var vg = profile.Add<Vignette>(true); vg.intensity.Override(0.22f); vg.smoothness.Override(0.48f); vg.color.Override(new Color(0.10f, 0.20f, 0.40f));
             var wb = profile.Add<WhiteBalance>(true); wb.temperature.Override(0f); wb.tint.Override(0f);
             // soft far tunnel (premium film depth): mascot, coins and near rings stay crisp
             var dof = profile.Add<DepthOfField>(true);
@@ -526,11 +538,13 @@ namespace BubbleWash.EditorTools
             // less energy overall: the fur gets the warm saturated key, the hat only grazing light (matte knit).
             // v2: v1 (1, .5, .55) x2.0 gave candy-magenta fur #e687b9 (the violet ambient already supplies the blue): now a
             // near-pure warm coral-red key from the left-back (modelling across the back) -> hue toward the reference's rose
-            CharLight(group, "CharLight_PinkBack", new Vector3(-0.55f, 0.85f, -1.7f), new Color(1f, 0.38f, 0.36f), 1.8f, 3.4f);
+            // round 5 (character request: fur #e374ad too magenta / light vs rose #cc618c; body_zone V .85 vs .77): -17 %
+            CharLight(group, "CharLight_PinkBack", new Vector3(-0.55f, 0.85f, -1.7f), new Color(1f, 0.38f, 0.36f), 1.5f, 3.4f);
             // cool lavender light from the bright tunnel ahead: wraps around the fur silhouette as a rim
             // round 4: pink rim (reference: pink rim light around the fur and arms), less blue than v1
             // v3: v2 fur #e680b3 had too much blue / green vs the reference rose #cc618c (B/R .57 vs .43): weaker, warmer rim
-            CharLight(group, "CharLight_RimFront", new Vector3(0f, 1.15f, 2.2f), new Color(1f, 0.40f, 0.58f), 2.0f, 3.6f);
+            // round 5: weaker and less blue (fur hue 324 vs reference 329, too light)
+            CharLight(group, "CharLight_RimFront", new Vector3(0f, 1.15f, 2.2f), new Color(1f, 0.40f, 0.50f), 1.6f, 3.6f);
 
             // soft violet contact shadow card on the water right under him (stays on the surface during jumps)
             var card = GameObject.CreatePrimitive(PrimitiveType.Quad);
