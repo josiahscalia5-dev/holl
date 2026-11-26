@@ -16,9 +16,12 @@ namespace BubbleWash.EditorTools
             // Ring gold (reference f_003.00s): warm COPPER-ORANGE polished gold - the band reads rose / mauve-copper in its
             // shade (#8d537f..#b06a87 measured), salmon-peach around the bulbs (#c27f72..#eec79b) and orange-gold overall, with
             // crisp white-gold streaks. Never lemon yellow. Violet lows pick up the tunnel; part of the probe stays untinted.
-            GoldLook("M_Gold", high: "#FFF4D0", mid: "#F7901A", low: "#6A2418", rim: "#FFC070", band: "#FFE0A0",
-                brightness: 1.3f, glow: 0.06f, contrast: 1.5f, viewGradient: 1f, env: 0.45f, envTint: 0.7f, envRough: 0.24f,
-                specPower: 150f, specStrength: 2.8f, glints: 2.4f, sparkle: 0f, fog: 0.5f, highlightSize: 8f, streak: 1.4f,
+            // Round 3 (owner sheet 04 "polished bevelled gold"): the ring read pale tan because the untinted lavender probe and
+            // the cream highlight colour dominated -> deeper orange-gold mids, probe almost fully gold-tinted, warmer highlight
+            // colour and stronger, crisper streaks (bright white-gold lines on a rich amber-orange body, dark bevel lows).
+            GoldLook("M_Gold", high: "#FFEBB4", mid: "#F08414", low: "#4E1A12", rim: "#FFB45C", band: "#FFD68A",
+                brightness: 1.12f, glow: 0.05f, contrast: 1.65f, viewGradient: 1f, env: 0.34f, envTint: 0.88f, envRough: 0.2f,
+                specPower: 170f, specStrength: 3.2f, glints: 2.6f, sparkle: 0f, fog: 0.45f, highlightSize: 9f, streak: 1.7f,
                 probeTint: "#8C4E8C");
             GoldLook("M_GoldDark", high: "#FFE0B0", mid: "#C8702A", low: "#4A1636", rim: "#FFB070", band: "#FFCF96",
                 brightness: 1.0f, glow: 0.03f, contrast: 1.6f, viewGradient: 1f, env: 0.5f, envTint: 0.55f, envRough: 0.3f,
@@ -37,8 +40,11 @@ namespace BubbleWash.EditorTools
             // Warm AMBER marquee bulbs (lead: hot pale-orange cores ~#ffc060, orange halos ~#ff8a20). With the Neutral
             // tonemapper a source of about (6, 1.4, 0.3) linear shows as a pale warm-orange core and its weaker bloom halo as
             // saturated orange: deep red-orange edge colour + warm-orange core tint (never lemon: G stays < 0.25 R).
-            EmissiveLook("M_Bulb", "#FF5A1E", 12f, core: 0.5f, corePower: 1.6f, halo: 0.6f, edgeSat: 0.5f, chase: 1f, chaseMin: 0.75f,
-                pulse: 0.05f, fog: 0.08f, coreColor: "#FF8A3A", probeDim: 0.15f);
+            // Round 3 (owner: "excessively bright yellow bulbs -> small warm amber lights with a soft halo"): at x12 the green
+            // channel (~2.1 linear) tonemapped to 0.9 -> pale lemon cores. x4.2 with an amber core keeps G ~0.9 linear:
+            // core tonemaps to golden amber (~#FCC95E), the grazing edge to deep orange, the bloom halo stays orange.
+            EmissiveLook("M_Bulb", "#FF6A10", 4.2f, core: 0.62f, corePower: 1.4f, halo: 0.9f, edgeSat: 0.5f, chase: 1f, chaseMin: 0.75f,
+                pulse: 0.05f, fog: 0.08f, coreColor: "#FFA040", probeDim: 0.3f);
             // end-of-tunnel portal disc (BuildPortal core): radiant warm white-gold, bright but not a screen-filling flare
             EmissiveLook("M_PortalCore", "#FFC860", 3.4f, core: 0.55f, corePower: 2f, halo: 0.3f, edgeSat: 0.3f, pulse: 0.06f, fog: 0.05f);
             // Neon tubes (reference: thick tubes with PALE hot cores - yellow #fbe496, cyan #78eaf5 - inside saturated colour
@@ -57,10 +63,11 @@ namespace BubbleWash.EditorTools
 
             // soft coloured glow cards behind every neon star (additive BWK/LightBlob): the star's light spilling over the wall
             // (reference: the big yellow star is filled with a warm ORANGE glow, the cyan one with a soft cyan haze)
-            StarGlow("M_StarGlow_Yellow", "#FF6A00", 3.4f, 1.35f);
-            StarGlow("M_StarGlow_Cyan", "#14B8FF", 1.6f, 2.0f);
-            StarGlow("M_StarGlow_Pink", "#FF2AA8", 1.6f, 2.0f);
-            StarGlow("M_StarGlow_Purple", "#9A3CFF", 1.6f, 2.0f);
+            // round 3: less yellow glare (owner sheet 01), a little more soft cyan / pink spill on the wall (lead audit)
+            StarGlow("M_StarGlow_Yellow", "#FF7A00", 2.7f, 1.45f);
+            StarGlow("M_StarGlow_Cyan", "#14B8FF", 1.9f, 1.8f);
+            StarGlow("M_StarGlow_Pink", "#FF2AA8", 1.8f, 1.8f);
+            StarGlow("M_StarGlow_Purple", "#9A3CFF", 1.8f, 1.8f);
             // inside of the yellow star (reference: filled with warm orange light): a multiply card first pulls the pale
             // lavender wall / rim behind it toward orange, then the additive glow lights it up
             Mat("M_StarFill_Yellow", "BWK/LightBlob", m =>
@@ -72,19 +79,22 @@ namespace BubbleWash.EditorTools
             // a wide soft warm-lavender halo + a tight warm-white core, both fading out when the camera gets close
             Mat("M_VanishGlow", "BWK/LightBlob", m =>
             {
-                C(m, "_Color", "#FFC8EC"); F(m, "_Strength", 1.5f); F(m, "_Softness", 1f); F(m, "_Core", 1.6f); F(m, "_NearFade", 14f);
+                // round 3: the m3 glow clipped to a big white blob (p90 #ffffff, mean #eddbe9 vs reference #ba8ed3):
+                // half the strength, warmer pink-lavender, smaller cards (SceneBuilder) -> soft luminous end, not a flare
+                C(m, "_Color", "#FFB8D8"); F(m, "_Strength", 0.75f); F(m, "_Softness", 1f); F(m, "_Core", 1.5f); F(m, "_NearFade", 14f);
                 F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
             }, (int)RenderQueue.Transparent - 9);
             Mat("M_VanishCore", "BWK/LightBlob", m =>
             {
-                C(m, "_Color", "#FFF0D8"); F(m, "_Strength", 2.6f); F(m, "_Softness", 1f); F(m, "_Core", 2.4f); F(m, "_NearFade", 14f);
+                C(m, "_Color", "#FFE2C4"); F(m, "_Strength", 1.25f); F(m, "_Softness", 1f); F(m, "_Core", 2.2f); F(m, "_NearFade", 14f);
                 F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
             }, (int)RenderQueue.Transparent - 8);
 
             // soft violet contact shadow under the mascot (multiply card, BWK/LightBlob)
             Mat("M_ContactShadow", "BWK/LightBlob", m =>
             {
-                C(m, "_Color", "#3C1E6E"); F(m, "_Strength", 0.72f); F(m, "_Softness", 0.85f); F(m, "_Core", 1.3f);
+                // round 3 (owner: "seated on the slide, not floating"): deeper, broader violet-blue occlusion
+                C(m, "_Color", "#24145A"); F(m, "_Strength", 0.92f); F(m, "_Softness", 0.9f); F(m, "_Core", 1.1f);
                 F(m, "_Mode", 0f); F(m, "_SrcBlend", (float)BlendMode.DstColor); F(m, "_DstBlend", (float)BlendMode.Zero);
             }, (int)RenderQueue.Transparent - 20);
         }

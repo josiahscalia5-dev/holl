@@ -48,9 +48,15 @@ Material:
     - _Metallic: 0.75
     - _PanelLength: 3
     - _Pattern: 0
+    - _PinkSpillStrength: 0
+    - _PinkSpillWidth: 0.6
     - _PlainBack: 0.5
     - _PlainFront: 0.4
+    - _RimPhase: 0
+    - _RowPitch: 0
     - _Rows: 4
+    - _SeamHighlight: 0
+    - _ShadowTint: 0
     - _SheenStrength: 0
     - _SlotLength: 0.34
     - _SlotPitch: 0.5
@@ -67,7 +73,9 @@ Material:
     - _HighlightColor: {r: 0.7411765, g: 0.7019608, b: 0.9098039, a: 1}
     - _HoleColor: {r: 0.16470589, g: 0.078431375, b: 0.3137255, a: 1}
     - _HoleGlow: {r: 0.627451, g: 0.4392157, b: 1, a: 1}
+    - _PinkSpill: {r: 1, g: 0.45, b: 0.85, a: 1}
     - _SeamColor: {r: 0.19999996, g: 0.09999997, b: 0.39999998, a: 1}
+    - _ShadowColor: {r: 0.21999997, g: 0.17999998, b: 0.5, a: 1}
     - _SheenColor: {r: 0.85, g: 0.75, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

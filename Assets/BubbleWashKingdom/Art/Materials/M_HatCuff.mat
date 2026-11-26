@@ -26,15 +26,15 @@ Material:
     m_Ints: []
     m_Floats:
     - _BumpScale: 6
-    - _BumpStrength: 0.8
+    - _BumpStrength: 1.05
     - _Glow: 0.12
     - _Metallic: 0
     - _Mode: 2
     - _RimPower: 3
     - _RimStrength: 0.35
     - _Smoothness: 0.12
-    - _StitchU: 96
-    - _StitchV: 60
+    - _StitchU: 44
+    - _StitchV: 40
     - _StripeWidth: 0
     - _Stripes: 4
     - _Wrap: 0.5

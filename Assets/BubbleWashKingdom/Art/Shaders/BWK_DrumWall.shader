@@ -57,6 +57,15 @@ Shader "BWK/DrumWall"
         _CeilingColor ("Ceiling metal color", Color) = (0.42, 0.45, 0.85, 1)
         _CeilingTint ("Ceiling color amount", Range(0,1)) = 0
         _CeilingWidth ("Ceiling tint width (0..1 around)", Range(0.05,1)) = 0.45
+        [Header(Round 3 sections and sheen)]
+        _RimPhase ("Rim inside each section (0 = none, fraction of _BandLength)", Range(0,0.95)) = 0
+        _RowPitch ("Slot row pitch (m, 0 = use _Rows)", Float) = 0
+        _PinkSpill ("Pink light near the rims", Color) = (1.0, 0.45, 0.85, 1)
+        _PinkSpillStrength ("Pink rim spill", Range(0,2)) = 0
+        _PinkSpillWidth ("Pink rim spill width (m)", Float) = 0.6
+        _SeamHighlight ("Bevelled seam highlight", Range(0,1)) = 0
+        _ShadowColor ("Deep indigo between the rims", Color) = (0.22, 0.18, 0.5, 1)
+        _ShadowTint ("Indigo amount mid-section", Range(0,1)) = 0
     }
     SubShader
     {
@@ -74,19 +83,41 @@ Shader "BWK/DrumWall"
             float _HoleDepth;
             half _InnerWall, _CeilingTint, _CeilingWidth;
             half4 _CeilingColor;
+            float _RimPhase, _RowPitch, _PinkSpillWidth;
+            half4 _PinkSpill, _ShadowColor;
+            half _PinkSpillStrength, _SeamHighlight, _ShadowTint;
         CBUFFER_END
+
+        // Round 3: sections between gold rings (_BandLength = gold spacing) split by one lavender rim at _RimPhase
+        // (reference f_003.00s: gold ring, broad bay, one big lavender rim, broad bay, next gold ring).
+        // Returns metres after the last rim / ring; L = this section's length.
+        float BWK_Section(float along, out float bandIdx, out float L)
+        {
+            float G = max(_BandLength, 0.5);
+            float gF = (along - _BandOffset) / G;
+            float gIdx = floor(gF);
+            float gl = (gF - gIdx) * G;
+            float P = _RimPhase * G;
+            if (P > 0.25 && P < G - 0.25)
+            {
+                float second = step(P, gl);
+                L = lerp(P, G - P, second);
+                bandIdx = gIdx * 2.0 + second;
+                return gl - P * second;
+            }
+            L = G;
+            bandIdx = gIdx;
+            return gl;
+        }
 
         // Drum-section slot pattern (_Pattern 1) at m = (around, along) in metres: signed capsule distance (< 0 inside a
         // slot) plus the cell ids. Shared by the surface and the parallax lookup at the slot bottom.
-        float BWK_SlotSdf(float2 m, out float rowIdx, out float slotIdx, out float bandIdx, out float local, out float2 q)
+        float BWK_SlotSdf(float2 m, out float rowIdx, out float slotIdx, out float bandIdx, out float local, out float2 q, out float L)
         {
-            float L = max(_BandLength, 0.5);
-            float bandF = (m.y - _BandOffset) / L;
-            bandIdx = floor(bandF);
-            local = (bandF - bandIdx) * L;                                     // metres after the last rim
+            local = BWK_Section(m.y, bandIdx, L);                              // metres after the last rim
             float z0 = _PlainBack;
             float zoneLen = max(L - _PlainFront - z0, 0.2);
-            float rows = max(1.0, _Rows);
+            float rows = _RowPitch > 0.05 ? max(1.0, floor(zoneLen / _RowPitch + 0.5)) : max(1.0, _Rows);
             float rowPitch = zoneLen / rows;
             rowIdx = clamp(floor((local - z0) / rowPitch), 0.0, rows - 1.0);
             float rowLocal = local - z0 - (rowIdx + 0.5) * rowPitch;           // metres from the nearest row centre
@@ -155,6 +186,7 @@ Shader "BWK/DrumWall"
 
                 float hole = 0.0, lip = 0.0, inner = 0.0, glowSel = 0.0, groove = 0.0, detail = 1.0, ao = 1.0;
                 float wallHit = 0.0, wallDepth = 1.0;                              // slot inner wall seen through the hole
+                float secLocal = -1.0, secLen = 1.0, seamHi = 0.0;                 // r3: section position, bevel highlights
                 float2 dir = float2(0.0, 0.0);
                 half3 glowCol = half3(0.0, 0.0, 0.0);
                 half3 viewDir = GetWorldSpaceNormalizeViewDir(i.positionWS);
@@ -177,10 +209,10 @@ Shader "BWK/DrumWall"
                 }
                 else
                 {
-                    float L = max(_BandLength, 0.5);
+                    float L;
                     float rowIdx, slotIdx, bandIdx, local;
                     float2 q;
-                    float sdf = BWK_SlotSdf(m, rowIdx, slotIdx, bandIdx, local, q);   // capsule distance (m), < 0 inside
+                    float sdf = BWK_SlotSdf(m, rowIdx, slotIdx, bandIdx, local, q, L);   // capsule distance (m), < 0 inside
                     float z0 = _PlainBack;
                     float hw = _SlotWidth * 0.5;
                     float ql = length(q);
@@ -192,9 +224,9 @@ Shader "BWK/DrumWall"
                     {
                         float3 vts = float3(dot(viewDir, i.tangentWS.xyz), dot(viewDir, bitangent), dot(viewDir, i.normalWS));
                         float2 shift = -vts.xy / max(vts.z, 0.1) * _HoleDepth;
-                        float r2, s2, b2, l2;
+                        float r2, s2, b2, l2, L2;
                         float2 q2;
-                        float sdfB = BWK_SlotSdf(m + shift, r2, s2, b2, l2, q2);
+                        float sdfB = BWK_SlotSdf(m + shift, r2, s2, b2, l2, q2, L2);
                         float tExit = saturate(-sdf / max(-sdf + max(sdfB, 0.0), 1e-4));
                         wallHit = smoothstep(-0.01, 0.01, sdfB);
                         wallDepth = tExit;
@@ -217,6 +249,15 @@ Shader "BWK/DrumWall"
                     float seamW = fwidth(m.x) * 1.5 + 0.006;
                     float seamX = abs(frac(m.x / (_Circumference / 8.0) + 0.5) - 0.5) * (_Circumference / 8.0);
                     groove = max(groove, (1.0 - smoothstep(0.006, 0.006 + seamW, seamX)) * 0.65);
+                    // r3: bevelled panel edges - a bright chamfer line beside every groove / seam catches the light
+                    float hA = abs(local - (z0 - 0.17) - 0.026);
+                    float hB = abs(local - (L - _PlainFront + 0.15) + 0.026);
+                    float seamS = frac(m.x / (_Circumference / 8.0) + 0.5) - 0.5;
+                    float hS = abs(seamS * (_Circumference / 8.0) - 0.024);
+                    seamHi = max(max(1.0 - smoothstep(0.008, 0.008 + ga, hA), 1.0 - smoothstep(0.008, 0.008 + ga, hB)),
+                                 (1.0 - smoothstep(0.007, 0.007 + seamW, hS)) * 0.8);
+                    secLocal = local;
+                    secLen = L;
                     // ambient occlusion: the drum section is darker where it meets the raised rims / gold rings and in
                     // a soft halo around every perforation (reference f_003.00s: dark values around the holes)
                     float eW = max(_EdgeAOWidth, 1e-3);
@@ -232,7 +273,12 @@ Shader "BWK/DrumWall"
                 // m1: periwinkle-blue ceiling bays, violet side walls (reference f_003.00s)
                 half ceilW = _CeilingTint * smoothstep(_CeilingWidth, 0.0, around);
                 half3 baseCol = lerp(_BaseColor.rgb, _CeilingColor.rgb, ceilW);
+                // r3: deep indigo toward the middle of each bay, lavender-pink near the lit rims
+                half rimDist = secLocal >= 0.0 ? min(secLocal, secLen - secLocal) : 0.0;
+                half midW = smoothstep(0.6, max(secLen * 0.5, 0.7), rimDist) * step(0.5, _Pattern);
+                baseCol = lerp(baseCol, _ShadowColor.rgb, _ShadowTint * midW);
                 half3 metal = lerp(baseCol, _HighlightColor.rgb, saturate(variation * 0.55 + lip * 0.45));
+                metal = lerp(metal, _HighlightColor.rgb * 1.2, saturate(seamHi * _SeamHighlight * detail));
                 metal *= 1.0 + _CeilingLight * (1.0 - around);
                 metal *= 1.0 - (1.0 - detail) * 0.12 * band * step(0.5, _Pattern);   // far: average in the hole darkness
                 metal = lerp(metal, _SeamColor.rgb, saturate(groove) * 0.75);
@@ -252,6 +298,13 @@ Shader "BWK/DrumWall"
                 half3 emission = metal * _Glow * (1.0 - hole)
                                + _HoleGlow.rgb * hole * (1.0 - depthT) * 0.5 * (1.0 - useDepth * 0.7)
                                + _SheenColor.rgb * fres * _SheenStrength * (1.0 - hole);
+                // r3: pink / magenta light spilling onto the metal next to the rims (reference: pink highlights)
+                if (secLocal >= 0.0)
+                {
+                    float w = max(_PinkSpillWidth, 0.05);
+                    half spill = exp(-secLocal / w) + exp(-(secLen - secLocal) / w);
+                    emission += _PinkSpill.rgb * _PinkSpillStrength * saturate(spill) * (1.0 - hole) * (0.6 + 0.4 * fres);
+                }
                 // a few holes lit from behind (light leaking through the drum)
                 half flicker = 0.8 + 0.2 * sin(_Time.y * 2.3 + m.x * 1.7 + m.y * 0.9);
                 emission += glowCol * hole * glowSel * (0.35 + 0.65 * depthT) * flicker;

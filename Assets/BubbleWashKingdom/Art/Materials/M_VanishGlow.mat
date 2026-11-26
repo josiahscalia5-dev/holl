@@ -25,14 +25,14 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Core: 1.6
+    - _Core: 1.5
     - _DstBlend: 1
     - _Mode: 1
     - _NearFade: 14
     - _Softness: 1
     - _SrcBlend: 1
-    - _Strength: 1.5
+    - _Strength: 0.75
     m_Colors:
-    - _Color: {r: 1, g: 0.78431374, b: 0.9254902, a: 1}
+    - _Color: {r: 1, g: 0.72156864, b: 0.84705883, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

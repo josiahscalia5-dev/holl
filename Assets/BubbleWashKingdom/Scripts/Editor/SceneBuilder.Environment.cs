@@ -168,7 +168,11 @@ namespace BubbleWash.EditorTools
         // BWK_DrumWall (_Pattern 1) lines its plain metal / slot rows up with these positions: BuildRings writes
         // _BandOffset = FirstRingDistance and _BandLength = GoldRingSpacing / (RimsPerGap + 1) into M_DrumWall.
         // Chamber gaps (side porthole windows) skip their rims so the big windows fit between two gold rings.
-        const int RimsPerGap = 3;
+        // Round 3 (mirrored track, reference f_003.00s measured on the ceiling): gold ring ~7 m (off frame), ONE big lavender
+        // rim at ~12.2 m (on-screen r ~0.55 W), a broad perforated bay, gold ring 19.75 m (0.33 W), bay, rim ~25 m, gold
+        // 32.5 m (0.20 W). So one rim per gap at RimPhase of the gap (was 3 evenly spaced lips = dense ribbed-hose look).
+        const int RimsPerGap = 1;
+        internal const float RimPhase = 0.40f;
         internal const float GoldRingSpacing = 12.75f;
         const float ChamberStart = 190f, ChamberEnd = 262f;   // stills 07_chambers (215 m) / C2 (220 m)
         const float ChamberPlaneRadius = 3.62f;               // SM_Porthole fallback: window plane distance from the axis
@@ -193,12 +197,15 @@ namespace BubbleWash.EditorTools
             // current SM_Ring carries its marquee bulbs (M_Bulb submesh); older exports need the separate SM_Bulb
             bool ringHasBulbs = ring.Any(p => p.mats != null && p.mats.Any(m => m != null && m.name == "M_Bulb"));
             var bulb = ringHasBulbs ? new List<Part>() : ModelParts("Track", "SM_Bulb");
-            float band = GoldRingSpacing / (RimsPerGap + 1);
+            // r3: one rim per gap at RimPhase; BWK_DrumWall splits each gold section at the same phase (_RimPhase)
+            float rimOffset = RimsPerGap == 1 ? RimPhase * GoldRingSpacing : GoldRingSpacing / (RimsPerGap + 1);
+            float band = RimsPerGap == 1 ? GoldRingSpacing : GoldRingSpacing / (RimsPerGap + 1);
             var wall = Mat("M_DrumWall");
             if (wall != null)
             {
                 wall.SetFloat("_BandOffset", FirstRingDistance);
                 wall.SetFloat("_BandLength", band);
+                wall.SetFloat("_RimPhase", RimsPerGap == 1 ? RimPhase : 0f);
                 EditorUtility.SetDirty(wall);
             }
             var chamberGaps = new HashSet<float>(ChamberGaps());
@@ -228,7 +235,7 @@ namespace BubbleWash.EditorTools
             PlaceRing(tunnelStart - 0.3f, 1.18f); // entrance gate
             // lips in the first gap too (between the entrance gate and the first gold ring)
             if (rim.Count > 0)
-                for (float dr = FirstRingDistance - band; dr > tunnelStart + 0.8f; dr -= band)
+                for (float dr = FirstRingDistance - (RimsPerGap == 1 ? GoldRingSpacing - rimOffset : rimOffset); dr > tunnelStart + 0.8f; dr -= RimsPerGap == 1 ? GoldRingSpacing : rimOffset)
                 {
                     comb.Add(rim, World(dr, 1f));
                     rims++;
@@ -239,7 +246,7 @@ namespace BubbleWash.EditorTools
                 if (rim.Count > 0 && !chamberGaps.Contains(d))
                     for (int r = 1; r <= RimsPerGap; r++)
                     {
-                        float dr = d + r * band;
+                        float dr = d + r * rimOffset;
                         if (dr > portalD - 4f) break;
                         comb.Add(rim, World(dr, 1f));
                         rims++;
@@ -247,7 +254,7 @@ namespace BubbleWash.EditorTools
                 if (d - chunkStart > ChunkLength) { comb.Flush(holder, $"Rings_{chunk++:00}", true); chunkStart = d; }
             }
             comb.Flush(holder, $"Rings_{chunk:00}", true);
-            Debug.Log($"[BWK] rings: {rings} gold (bulbs built in: {ringHasBulbs}), {rims} lavender rims, drum bands {band:F3} m from {FirstRingDistance} m");
+            Debug.Log($"[BWK] rings: {rings} gold (bulbs built in: {ringHasBulbs}), {rims} lavender rims, drum sections {band:F3} m (rim at +{rimOffset:F2} m) from {FirstRingDistance} m");
         }
 
         const float ChamberAngle = 84f;        // window centre, degrees from the ceiling: big windows low beside the slide
@@ -427,8 +434,4 @@ namespace BubbleWash.EditorTools
             var glow = portal.AddComponent<PortalGlow>();
             glow.runner = runner;
             glow.trackDistance = portalD;
-            glow.rays = new Renderer[] { rr };
-            glow.portalLight = light;
-        }
-    }
-}
+            glow.rays = new Rendere

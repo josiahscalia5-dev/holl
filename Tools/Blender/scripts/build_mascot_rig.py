@@ -505,7 +505,8 @@ def tag_fur(objs, info):
                 hide[v.index] = 1 if inside_depth(body_bvh, v.co) > 0.002 else 0
                 furv[v.index] = w
         elif name == 'PomPom':
-            part = [PART_POMPOM] * len(me.polygons)
+            # dark core = shell fur; the radial yarn fibres (M_PawPad, round 3) are real geometry: no shells
+            part = [PART_POMPOM if mats[pl.material_index] == "M_PomPom" else PART_NONE for pl in me.polygons]
             furv = [V_POMPOM] * len(me.vertices)
             hide = [1 if inside_depth(hat_bvh, v.co) > 0.004 else 0 for v in me.vertices]
         a = me.attributes.new("bwk_part", 'INT', 'FACE')

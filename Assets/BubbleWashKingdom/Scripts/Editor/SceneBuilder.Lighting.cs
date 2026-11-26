@@ -58,7 +58,9 @@ namespace BubbleWash.EditorTools
             // tunnel melts into a lighter violet glow while the warm bulbs still punch through (emissives use little fog).
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = new Color(0.76f, 0.60f, 1.0f);
+            // round 3: bluer violet (owner sheet 04 "blue-violet shading, avoid flat lavender"): the mid tunnel measured
+            // p50 #9578d0 vs reference #5c52ac -> the haze between the rings is now a deeper blue-violet
+            RenderSettings.fogColor = new Color(0.56f, 0.50f, 1.0f);
             RenderSettings.fogDensity = 0.0112f;
             RenderSettings.skybox = null;
             RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
@@ -73,7 +75,11 @@ namespace BubbleWash.EditorTools
             BuildRingLights(lights);
             // soft lavender-white fill on the upper-right drum wall just ahead of the hero camera (reference upper-right wall
             // is a lit mid-violet #8069ad, ours read deep indigo): lifts value and lowers saturation there only
-            AddPoint(lights, HeroDistance + 8.5f, 2.4f, 4.6f, new Color(0.9f, 0.8f, 1f), 4.5f, 8f);
+            // round 3 (mirrored track): upper-right now reads too light (L50 .54 vs .40) -> weaker, bluer
+            AddPoint(lights, HeroDistance + 8.5f, 2.4f, 4.6f, new Color(0.72f, 0.66f, 1f), 2.4f, 8f);
+            // round 3: pink reflections on the near-left drum rims (reference / owner sheet 04: hot pink-magenta glints on the
+            // big near ring at the upper left, from the pink rails and neon) - a pink light just inside the left wall
+            AddPoint(lights, HeroDistance + 2.2f, -2.3f, 3.6f, new Color(1f, 0.34f, 0.74f), 4.2f, 6.5f);
 
             // Reflection probes: hall probes + one per 30 m tunnel chunk, box = bounds of that bent tunnel segment.
             for (float d = 18f; d < tunnelStart; d += 30f)
@@ -105,7 +111,9 @@ namespace BubbleWash.EditorTools
             // surfaces never bloom, moderate scatter so dozens of ring bulbs give soft amber halos instead of one milky veil
             // over the tunnel. Untinted: every halo carries its source's own colour (amber bulbs, yellow / cyan / pink stars).
             var bloom = profile.Add<Bloom>(true);
-            bloom.threshold.Override(1.1f); bloom.intensity.Override(1.3f); bloom.scatter.Override(0.64f);
+            // round 3: bulbs now ~1/3 as hot -> slightly lower threshold / wider scatter keeps a soft luminous halo on the
+            // emissives and the brightest rim glints (controlled: lit foam / walls stay below it)
+            bloom.threshold.Override(1.0f); bloom.intensity.Override(1.15f); bloom.scatter.Override(0.7f);
             bloom.tint.Override(Color.white); bloom.highQualityFiltering.Override(true);
             bloom.maxIterations.Override(8);
             // Neutral keeps saturated hues far better than ACES (which pushes bright yellow / cyan to white).
@@ -131,8 +139,9 @@ namespace BubbleWash.EditorTools
             var wb = profile.Add<WhiteBalance>(true); wb.temperature.Override(0f); wb.tint.Override(0f);
             // soft far tunnel (premium film depth): mascot, coins and near rings stay crisp
             var dof = profile.Add<DepthOfField>(true);
-            dof.mode.Override(DepthOfFieldMode.Gaussian); dof.gaussianStart.Override(24f); dof.gaussianEnd.Override(75f);
-            dof.gaussianMaxRadius.Override(1.1f); dof.highQualitySampling.Override(true);
+            // round 3: a little softer far tunnel (reference is dreamier / softer behind the second ring)
+            dof.mode.Override(DepthOfFieldMode.Gaussian); dof.gaussianStart.Override(20f); dof.gaussianEnd.Override(62f);
+            dof.gaussianMaxRadius.Override(1.3f); dof.highQualitySampling.Override(true);
             foreach (var c in profile.components) AssetDatabase.AddObjectToAsset(c, profile);
             vol.sharedProfile = profile;
         }
@@ -223,14 +232,14 @@ namespace BubbleWash.EditorTools
         /// exactly there in the hero capture (lead directive m1: big + few, on the WALLS, none in front of the vanishing point).</summary>
         static readonly (float x, float y, float w, float roll, int color)[] HeroStarLayout =
         {
-            (0.195f, 0.088f, 0.18f, 30f, 0),    // big yellow star on the upper-left wall (orange inner glow)
-            (0.440f, 0.205f, 0.115f, -14f, 1),  // cyan star below-right of it
+            (0.200f, 0.090f, 0.19f, 30f, 0),    // big yellow star on the upper-left wall (orange inner glow)
+            (0.432f, 0.203f, 0.13f, -14f, 1),   // cyan star below-right of it (round 3: reference ~0.12-0.13 wide)
             (0.968f, 0.285f, 0.085f, 18f, 0),   // small yellow star on the right wall, half off-frame
             (0.988f, 0.360f, 0.080f, -10f, 2),  // pink star below it at the frame edge
         };
 
-        const float StarMeshWidth = 1.05f;   // SM_NeonStarTube tip-to-tip incl. tube at scale 1 (outer radius 0.5 + tube 0.068)
-        const float StarMeshRadius = 0.57f;
+        const float StarMeshWidth = 1.07f;   // SM_NeonStarTube tip-to-tip incl. tube at scale 1 (outer radius 0.5 + tube 0.085)
+        const float StarMeshRadius = 0.585f;
 
         /// <summary>Hero camera pose exactly as RunnerCameraRig.Step computes it on a snap (lane 0, no jump, portrait aspect)
         /// with the owner-approved HeroCam* values, so lighting props can be placed in screen space even during the full
@@ -363,8 +372,8 @@ namespace BubbleWash.EditorTools
                 if (bestErr < float.MaxValue)
                 {
                     var q = Quaternion.LookRotation(best - camPos, camUp);
-                    AddCard(Mat("M_VanishGlow"), best, q, 13f);
-                    AddCard(Mat("M_VanishCore"), best - (best - camPos).normalized * 0.5f, q, 7f);
+                    AddCard(Mat("M_VanishGlow"), best, q, 10f);
+                    AddCard(Mat("M_VanishCore"), best - (best - camPos).normalized * 0.5f, q, 4.5f);
                     var c = Quaternion.Inverse(camRot) * (best - camPos);
                     Debug.Log($"[BWK] vanishing glow at depth {bestDepth:F1} m, screen ({0.5f + 0.5f * c.x / (c.z * tanH):F2},{0.5f - 0.5f * c.y / (c.z * tanV):F2})");
                 }
@@ -440,7 +449,8 @@ namespace BubbleWash.EditorTools
             // warm bulb glow on the top of the hat / pom-pom (slightly ahead, so it grazes over the top toward the camera)
             CharLight(group, "CharLight_WarmTop", new Vector3(0.35f, 2.3f, 0.6f), new Color(1f, 0.74f, 0.44f), 2.6f, 4f);
             // soft pink fill on the fluffy back the rear camera sees
-            CharLight(group, "CharLight_PinkBack", new Vector3(-0.35f, 1.7f, -1.6f), new Color(1f, 0.8f, 0.74f), 2.6f, 3.6f);
+            // round 3: warmer coral-pink (reference back fur ~#e58c98 lit; ours read mauve under the violet ambient)
+            CharLight(group, "CharLight_PinkBack", new Vector3(-0.35f, 1.7f, -1.6f), new Color(1f, 0.72f, 0.6f), 3.0f, 3.6f);
             // cool lavender light from the bright tunnel ahead: wraps around the fur silhouette as a rim
             CharLight(group, "CharLight_RimFront", new Vector3(0f, 1.15f, 2.2f), new Color(1f, 0.56f, 0.86f), 3.0f, 3.6f);
 
@@ -451,7 +461,7 @@ namespace BubbleWash.EditorTools
             card.transform.SetParent(group.transform, false);
             card.transform.localPosition = new Vector3(0f, 0.035f, 0.02f);
             card.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            card.transform.localScale = new Vector3(1.3f, 1.5f, 1f);
+            card.transform.localScale = new Vector3(1.5f, 1.9f, 1f);   // round 3: broader, reaches past the feet / tail
             var mr = card.GetComponent<MeshRenderer>();
             mr.sharedMaterial = Mat("M_ContactShadow");
             mr.shadowCastingMode = ShadowCastingMode.Off;
