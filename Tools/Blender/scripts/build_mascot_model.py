@@ -1,20 +1,29 @@
-"""Bubble Wash Kingdom - hero mascot MODEL (no rig yet). Blender 5.3, headless, deterministic.
+"""Bubble Wash Kingdom - hero mascot MODEL (no rig). Blender 5.3, headless, deterministic.
 
-Run from the project root:
+Run from the project root (normally through build_mascot_all.py, which also runs the rig):
   blender --background --factory-startup --python Tools/Blender/scripts/build_mascot_model.py
 
 Outputs
-  Tools/Blender/work/mascot_model.blend                               hand-off file (rig + fur shells)
-  Assets/BubbleWashKingdom/Art/Models/Characters/SK_Mascot_model.fbx  static check export (no armature)
-  Docs/AssetPreviews/SK_Mascot_model_back.png / _front.png / _34.png  (900x900, EEVEE)
+  Tools/Blender/work/mascot_model.blend + mascot_model.json   hand-off to build_mascot_rig.py. The json lists every
+                                                               landmark the rig needs (no duplicated constants).
+  Assets/BubbleWashKingdom/Art/Models/Characters/SK_Mascot_model.fbx   static check export (no armature)
+  Docs/AssetPreviews/SK_Mascot_model_back.png / _front.png / _34.png   (skipped with BWK_QUICK=1)
 
-Objects (every origin = ground point between the feet, identity transforms, collection "SK_Mascot_model"):
-  Body, Eye.L, Eye.R, Catchlight.L1/.L2/.R1/.R2, Mouth (+tiny nose), Tongue, Arm.L, Arm.R,
-  Foot.L, Foot.R, Tail, Beanie, PomPom, StarBadge
-Axes (Docs/AssetSpec.md): meters, Z up, he faces -Y, his right = -X, his left = +X. 1 BW = 0.85 m.
-Body colour attribute "Col" (byte, corner): rgb = tint (white, rosy blush, darker bottom),
-alpha = suggested fur-length mask (0 under the beanie and on the eyes/mouth/nose, 1 elsewhere).
+Design (owner brief + approved video, rear gameplay view first): a round pink plush ball that dominates, a SNUG
+beanie about as wide as the body (tall deep-ribbed cuff ~35-40 %, pale stripe ~13 %, squat violet ribbed dome),
+a pom-pom ~45 % of the hat width, big stubby raised arms with paw pads, stubby pink legs in a wide V-sit ending in
+big cream-white paws (toes up, pointing forward) that peek out on both sides from behind, a soft tail puff.
+
+Objects (identity transforms, origin = ground point under the body, collection "SK_Mascot_model"):
+  Body, Eye.L, Eye.R, Catchlight.L1/.L2/.R1/.R2, Mouth (+tiny nose), Tongue, Arm.L, Arm.R, Leg.L, Leg.R (leg + paw),
+  Tail, Beanie, PomPom, StarBadge
+Axes: meters, Z up, he faces -Y, his right = -X, his left = +X. 1 BW = 0.85 m. The legs are modelled seated.
+Colour attribute "Col" (byte, corner). Fur parts: rgb = tint (blush, darker bottom), alpha = coat selector read by
+BWK/Fur (1 = pink coat, 0 = cream-white paw fur). M_PawPad parts: rgb = pad colour (white palm/sole, pink beans).
+UV0 on fur parts: 1 UV unit = 2.64 m around (u) and 1.32 m along (v) on every part, so BWK/Fur strands have the
+same size everywhere (the shader doubles u for square strands). Seams sit where the rear camera never looks.
 """
+import json
 import math
 import os
 import sys
@@ -26,54 +35,78 @@ from mathutils.bvhtree import BVHTree  # noqa: E402
 
 import bwk_common as C  # noqa: E402
 
-# ------------------------------------------------------------------ proportions (meters)
+QUICK = os.environ.get("BWK_QUICK", "") == "1"
+
+# ------------------------------------------------------------------ body (meters)
 BODY_C = Vector((0.0, 0.0, 0.49))          # body centre
-BODY_W, BODY_D, BODY_H = 0.85, 0.78, 0.84  # width (1 BW), depth, height
+BODY_W, BODY_D, BODY_H = 0.85, 0.80, 0.84  # width (1 BW), depth, height
 BODY_EGG = 0.10                            # >0: fuller toward the bottom
-BODY_SEG = 15                              # quad sphere: 6*15*15 quads = 2700 tris
+BODY_SEG = 16                              # quad sphere: 6*16*16 quads = 3072 tris
+FUR_U, FUR_V = 2.64, 1.32                  # metres per fur UV unit (around, along)
 
-HAT_TILT = math.radians(-3.0)              # rotation about X: front edge up, crown leans back
-HAT_R = Matrix.Rotation(HAT_TILT, 3, 'X')
-HAT_R_INV = HAT_R.transposed()
-HAT_AXIS = HAT_R @ Vector((0.0, 0.0, 1.0))
-CUFF_BOTTOM_A = 74.0                       # deg from the hat axis: lowest point of the cuff roll
-STRIPE_A = (53.6, 43.0)                    # main lavender band just above the cuff (alpha range)
-CROWN_RINGS = [58.0, 53.6, 48.3, 43.0, 37.0, 31.0, 25.0, 19.5, 14.0, 9.0, 4.5]
-TOP_STRIPE_A, TOP_STRIPE_HW = 27.0, 3.2    # extra front stripe (fades out toward the back)
-TOP_STRIPE_FULL, TOP_STRIPE_END = 70.0, 125.0
-RIB_AMP = 0.0035
-CUFF_SEG = 80                              # 40 knit ribs
-CUFF_PROFILE = [  # (alpha deg, offset from body surface, rib weight): roll under -> outer face -> tuck
-    (71.5, -0.006, 0.0), (73.3, 0.008, 0.0), (74.3, 0.024, 0.0), (74.4, 0.040, 0.2), (73.6, 0.053, 0.6),
-    (72.0, 0.060, 1.0), (68.0, 0.065, 1.0), (62.5, 0.066, 1.0), (57.5, 0.063, 1.0), (54.6, 0.056, 0.6),
-    (53.4, 0.045, 0.2), (53.0, 0.031, 0.0), (53.6, 0.022, 0.0)]
-CUFF_OFF = 0.065                           # nominal outer offset (star conforms to it)
-STAR_A, STAR_PHI, STAR_ROT = 61.0, 33.0, -12.0   # on the cuff, 33 deg toward HIS LEFT (+X)
-STAR_RO, STAR_RI = 0.080, 0.035
-POMPOM_R, POMPOM_SINK = 0.20, 0.55
+# ------------------------------------------------------------------ beanie (surface of revolution about the hat axis)
+# Hat frame: origin BODY_C, axis tilted HAT_TILT about X (negative = front edge up, crown leans back). Profile points
+# are (u, r): u = height along the axis, r = radius toward his side (x); around the axis r is scaled by hat_ell(psi)
+# so the hat follows the body's slightly oval cross-section. psi = 0 -> +X, +90 deg -> back (+Y), -90 deg -> front.
+HAT_TILT = -5.0
+HAT_DEPTH = 0.94
+CUFF_BOTTOM_A = 76.0                       # deg from the hat axis: line where the cuff tucks into the fur
+CUFF_RIBS, CROWN_RIBS = 96, 72             # geometric knit ribs around (BWK/Character _StitchU must match)
+CUFF_RIB_AMP, CROWN_RIB_AMP = 0.0055, 0.0034
+CUFF_PROFILE = [  # (u, r, rib weight): roll under -> tall ribbed outer face -> top roll -> tucks inside
+    (0.093, 0.428, 0.0), (0.089, 0.445, 0.1), (0.095, 0.458, 0.5), (0.110, 0.465, 0.9), (0.140, 0.468, 1.0),
+    (0.180, 0.469, 1.0), (0.215, 0.467, 1.0), (0.240, 0.462, 0.9), (0.256, 0.453, 0.5), (0.264, 0.441, 0.2),
+    (0.265, 0.430, 0.0), (0.258, 0.420, 0.0)]
+STRIPE_U = (0.262, 0.330)                  # pale ribbed band right above the cuff
+DOME_U0, DOME_H, DOME_R, DOME_EXP = 0.330, 0.122, 0.449, 2.25   # squat rounded dome (superellipse exponent)
+TOP_STRIPE_PHI, TOP_STRIPE_HW = 47.0, 5.5  # extra pale stripe on the dome front (deg of the dome angle), fades out
+TOP_STRIPE_FULL, TOP_STRIPE_END = 65.0, 118.0   # ... over the front (deg from the front), gone at the back
+STAR_U, STAR_PHI, STAR_ROT = 0.178, 33.0, -12.0  # star badge on the cuff, 33 deg toward HIS LEFT (+X)
+STAR_RO, STAR_RI = 0.072, 0.032
+POMPOM_R, POMPOM_LIFT = 0.165, 0.30        # pom-pom radius; centre this many radii above the dome top
+POMPOM_SEG = 12
 
-EYE_X, EYE_Z = 0.155, 0.52                 # eye centres on the front surface
+# ------------------------------------------------------------------ face (unchanged design)
+EYE_X, EYE_Z = 0.155, 0.505                # eye centres on the front surface
 EYE_H, EYE_RS, EYE_VS = 0.025, 0.12, 1.06  # protrusion, cap sphere radius, vertical stretch
 EYE_SEG = 32
 IRIS_R, PUPIL_IN, PUPIL_DOWN = 0.072, 0.014, 0.007   # UV radius 0.5 = IRIS_R; pupil toward the nose
-MOUTH_Z, MOUTH_W, MOUTH_H, MOUTH_N = 0.39, 0.13, 0.105, 28
-NOSE_Z = 0.462
-BLUSH_X, BLUSH_Z, BLUSH_R = 0.235, 0.405, 0.058
-ARM_Z = 0.50
-ARM_PROFILE = [(-0.07, 0.050), (0.0, 0.058), (0.06, 0.062), (0.115, 0.066), (0.16, 0.063),
-               (0.188, 0.052), (0.204, 0.034), (0.212, 0.0)]
-FOOT_X, FOOT_Y, FOOT_TILT, FOOT_YAW = 0.21, 0.06, 64.0, 10.0
-FOOT_HALF = (0.08, 0.11, 0.05)             # half width, half length, half height
-PAD_LAYOUT = [(0.0, 0.024, 0.037, 0.029, 0.010),        # big pad (heel side, +Y local)
-              (-0.036, -0.038, 0.015, 0.017, 0.0075),    # 3 toe beans (toes = -Y local)
-              (0.0, -0.056, 0.016, 0.018, 0.0075),
-              (0.036, -0.038, 0.015, 0.017, 0.0075)]
-TAIL_R, TAIL_Z = 0.07, 0.335
+MOUTH_Z, MOUTH_W, MOUTH_H, MOUTH_N = 0.375, 0.13, 0.105, 28
+NOSE_Z = 0.448
+BLUSH_X, BLUSH_Z, BLUSH_R = 0.235, 0.39, 0.058
+
+# ------------------------------------------------------------------ arms: big stubby mitts, raised out to the sides
+ARM_Z = 0.465                              # root height on the body side (just under the cuff)
+ARM_UP, ARM_BACK = 30.0, 0.10              # rest direction: 30 deg above horizontal, slightly back
+ARM_SEG = 20
+ARM_PROFILE = [(-0.10, 0.068), (-0.05, 0.078), (0.0, 0.083), (0.06, 0.086), (0.12, 0.088), (0.18, 0.090),
+               (0.225, 0.090), (0.258, 0.084), (0.283, 0.070), (0.300, 0.050), (0.311, 0.026), (0.315, 0.0)]
+PALM_H, PALM_SIZE = 0.215, (0.050, 0.056, 0.012)      # palm pad (along arm, size across / along / thickness)
+ARM_BEANS = [(-48.0, 0.275), (-16.0, 0.290), (16.0, 0.290), (48.0, 0.275)]   # (angle around from palm, h)
+BEAN_SIZE = (0.0155, 0.0145, 0.0075)
+PALM_FACING = Vector((0.0, 0.55, 0.85))    # palm/beans face up and a little back (seen by the rear camera)
+
+# ------------------------------------------------------------------ legs (modelled seated): wide V-sit, toes up
+HIP = Vector((0.19, -0.10, 0.205))         # hip joint inside the lower body (his left; mirrored for the right)
+ANKLE = Vector((0.425, -0.265, 0.118))
+LEG_SEG, LEG_R0, LEG_R1 = 18, 0.088, 0.072 # around, radius at hip / ankle
+TOE_YAW, TOE_PITCH = 16.0, 58.0            # toes splay outward / point up (sole faces forward-down)
+PAW_HALF = (0.100, 0.128, 0.064)           # half width (lateral), half length (heel->toe), half thickness
+PAW_FWD = 0.062                            # paw centre ahead of the ankle along the toe direction
+PAW_SEG = 7
+SOLE_PADS = [(0.0, -0.042, 0.040, 0.044, 0.010),         # big pad (heel side): (lat, along, r_lat, r_along, h)
+             (-0.056, 0.040, 0.018, 0.020, 0.008), (-0.020, 0.062, 0.018, 0.020, 0.008),
+             (0.020, 0.062, 0.018, 0.020, 0.008), (0.056, 0.040, 0.018, 0.020, 0.008)]
+TAIL_R, TAIL_Z, TAIL_OUT = 0.078, 0.30, 0.55   # tail puff radius, height, centre offset (radii) behind the surface
 
 WHITE = (1.0, 1.0, 1.0, 1.0)
-PAD_PINK = (0.98, 0.64, 0.73, 1.0)         # Col tint (sRGB) for pads / beans
+PAD_PINK = (0.97, 0.56, 0.68, 1.0)         # Col (sRGB) for pads / beans on M_PawPad
+SOLE_WHITE = (1.0, 0.97, 0.98, 1.0)
 BLUSH_COL = (1.0, 0.70, 0.72)              # Col tint (sRGB) at the blush centre
 
+HAT_R = Matrix.Rotation(math.radians(HAT_TILT), 3, 'X')
+HAT_R_INV = HAT_R.transposed()
+HAT_AXIS = HAT_R @ Vector((0.0, 0.0, 1.0))
 BODY_BVH = None
 
 
@@ -99,12 +132,22 @@ def set_material_indices(me, idx):
         attr.data.foreach_set("value", idx)
 
 
-def sph_uv(d):
-    """Spherical UV: u = 0.5 at the front (-Y), increasing toward +X, seam at the back; v bottom->top."""
+def sph_uv_frame(d, pole, zero_dir, radius):
+    """Fur UV on a sphere-like part: u around `pole` (seam where d = -zero_dir), v from the -pole to the +pole,
+    scaled by radius so that one UV unit is FUR_U (u) / FUR_V (v) metres like on the body."""
     d = Vector(d).normalized()
-    u = 0.5 + math.atan2(d.x, -d.y) / (2.0 * math.pi)
-    v = 1.0 - math.acos(max(-1.0, min(1.0, d.z))) / math.pi
-    return (u, v)
+    pole = Vector(pole).normalized()
+    z0 = Vector(zero_dir)
+    z0 = (z0 - pole * z0.dot(pole)).normalized()
+    side = pole.cross(z0)
+    u = 0.5 + math.atan2(d.dot(side), d.dot(z0)) / (2.0 * math.pi)
+    v = 1.0 - math.acos(max(-1.0, min(1.0, d.dot(pole)))) / math.pi
+    return (u * uv_period(radius), v * radius * math.pi / FUR_V)
+
+
+def uv_period(radius):
+    """u span of one full turn around a part of this radius (the set_uv wrap period)."""
+    return radius * 2.0 * math.pi / FUR_U
 
 
 def frame_from(ez, up=Vector((0.0, 0.0, 1.0))):
@@ -115,6 +158,10 @@ def frame_from(ez, up=Vector((0.0, 0.0, 1.0))):
         ex = Vector((0.0, 1.0, 0.0)).cross(ez)
     ex.normalize()
     return ex, ez.cross(ex), ez
+
+
+def vlist(v):
+    return [round(float(c), 6) for c in v]
 
 
 class MeshData:
@@ -149,16 +196,16 @@ class MeshData:
         self.v = [mat4 @ v for v in self.v]
         return self
 
-    def set_uv(self, fn, wrap=True):
+    def set_uv(self, fn, wrap=True, period=1.0):
         out = []
         for f in self.f:
             uvs = [list(fn(i)) for i in f]
             if wrap:
                 us = [p[0] for p in uvs]
-                if max(us) - min(us) > 0.5:
+                if max(us) - min(us) > 0.5 * period:
                     for p in uvs:
-                        if p[0] < 0.5:
-                            p[0] += 1.0
+                        if p[0] < 0.5 * period:
+                            p[0] += period
             out.append([tuple(p) for p in uvs])
         self.uv = out
         return self
@@ -221,20 +268,22 @@ def cube_sphere(n):
     return verts, quads, tags
 
 
-def bridge(md, r0, r1, mat, v0=0.0, v1=0.0):
+def bridge(md, r0, r1, mat, v0=0.0, v1=0.0, u_scale=1.0):
     """Quads between ring r0 (lower along the profile) and r1; rings CCW about the profile axis -> outward."""
     n = len(r0)
     for j in range(n):
         k = (j + 1) % n
         md.face((r0[j], r0[k], r1[k], r1[j]), mat,
-                [(j / n, v0), ((j + 1) / n, v0), ((j + 1) / n, v1), (j / n, v1)])
+                [(u_scale * j / n, v0), (u_scale * (j + 1) / n, v0), (u_scale * (j + 1) / n, v1),
+                 (u_scale * j / n, v1)])
 
 
-def fan_top(md, ring, pole, mat, v0=0.0, v1=1.0):
+def fan_top(md, ring, pole, mat, v0=0.0, v1=1.0, u_scale=1.0):
     n = len(ring)
     for j in range(n):
         k = (j + 1) % n
-        md.face((ring[j], ring[k], pole), mat, [(j / n, v0), ((j + 1) / n, v0), ((j + 0.5) / n, v1)])
+        md.face((ring[j], ring[k], pole), mat,
+                [(u_scale * j / n, v0), (u_scale * (j + 1) / n, v0), (u_scale * (j + 0.5) / n, v1)])
 
 
 def ellipsoid(centre, ex, ey, ez, rx, ry, rz, seg=8, rings=4, mat=0, col=WHITE):
@@ -276,6 +325,14 @@ def body_dist(d):
     return (ray(BODY_BVH, BODY_C, d) - BODY_C).length
 
 
+def inside_body(p):
+    """Positive = p is inside the body (depth below the surface along the ray from the centre)."""
+    d = Vector(p) - BODY_C
+    L = d.length
+    hit = BODY_BVH.ray_cast(BODY_C, d / L)
+    return -1.0 if hit[0] is None else hit[3] - L
+
+
 def front_frame(x, z, eps=0.025):
     """Point on the front (-Y) body surface at (x, z) and its smoothed outward normal."""
     def fp(xx, zz):
@@ -297,39 +354,27 @@ def hat_dir(alpha_deg, psi):
     return HAT_R @ Vector((math.sin(a) * math.cos(psi), math.sin(a) * math.sin(psi), math.cos(a)))
 
 
-def hat_point(alpha_deg, psi, off):
-    d = hat_dir(alpha_deg, psi)
-    return BODY_C + d * (body_dist(d) + off)
+def hat_ell(psi):
+    return 1.0 / math.sqrt(math.cos(psi) ** 2 + (math.sin(psi) / HAT_DEPTH) ** 2)
 
 
-CROWN_TOP_OFF = 0.18      # crown top above the head (build_mascot_rig.CROWN_OFF_TOP must match)
-CROWN_HALF_W = 0.452      # horizontal semi-axis of the dome ellipsoid (just outside the head at the cuff)
-_crown_cache = {}
-
-
-def crown_off(alpha):
-    """Beanie crown offset from the head along direction alpha: the outer surface is a rounded ellipsoidal dome
-    (reference beanie: soft hemisphere ~0.5 x cuff width tall), never closer than 3 cm to the head."""
-    key = round(alpha, 4)
-    if key in _crown_cache:
-        return _crown_cache[key]
-    top = body_dist(hat_dir(0.0, 0.0))
-    a = math.radians(alpha)
-    c = top + CROWN_TOP_OFF
-    r = 1.0 / math.sqrt((math.sin(a) / CROWN_HALF_W) ** 2 + (math.cos(a) / c) ** 2)
-    off = max(0.030, r - body_dist(hat_dir(alpha, 0.0)))
-    _crown_cache[key] = off
-    return off
-
-
-def hat_v(alpha):
-    return min(1.0, max(0.0, (CUFF_BOTTOM_A - alpha) / CUFF_BOTTOM_A))
+def hat_pt(u, r, psi):
+    """World point of hat-frame profile coordinates (u along the axis, r radial x-radius) at angle psi."""
+    e = r * hat_ell(psi)
+    return BODY_C + HAT_R @ Vector((e * math.cos(psi), e * math.sin(psi), u))
 
 
 def hat_alpha_of(p):
     """Angle (deg) of a world point from the hat axis, seen from the body centre."""
     d = HAT_R_INV @ (Vector(p) - BODY_C).normalized()
     return math.degrees(math.acos(max(-1.0, min(1.0, d.z))))
+
+
+def dome_ur(phi_deg):
+    """Squat superellipse dome: phi 0 = rim (stripe top), 90 = top of the hat."""
+    p = math.radians(phi_deg)
+    e = 2.0 / DOME_EXP
+    return DOME_U0 + DOME_H * (math.sin(p) ** e), DOME_R * (math.cos(p) ** e)
 
 
 # ------------------------------------------------------------------ materials (preview look; Unity remaps by slot name)
@@ -408,17 +453,17 @@ def _eye_shader(nt, bsdf):
 
 def build_materials():
     M = {
-        "Fur": C.material("M_Fur", "#E8679D", roughness=0.85),
-        "PomPom": C.material("M_PomPom", "#7A32C6", roughness=0.9),
+        "Fur": C.material("M_Fur", "#EE7898", roughness=0.85),
+        "PomPom": C.material("M_PomPom", "#7A3CC8", roughness=0.9),
         "EyeIris": C.material("M_EyeIris", "#3A2236", roughness=0.08, coat=1.0),
         "EyeHighlight": C.material("M_EyeHighlight", "#FFFFFF", roughness=0.2, emission="#FFFFFF",
                                    emission_strength=1.5),
         "Mouth": C.material("M_Mouth", "#5A1A28", roughness=0.55),
         "Tongue": C.material("M_Tongue", "#F27C9A", roughness=0.4, coat=0.2),
-        "PawPad": C.material("M_PawPad", "#FFF1F5", roughness=0.55),
-        "HatKnit": C.material("M_HatKnit", "#5E22B0", roughness=0.9),
-        "HatCuff": C.material("M_HatCuff", "#521C9C", roughness=0.9),
-        "HatStripe": C.material("M_HatStripe", "#B48FD8", roughness=0.9),
+        "PawPad": C.material("M_PawPad", "#FFFFFF", roughness=0.5),
+        "HatKnit": C.material("M_HatKnit", "#7034C0", roughness=0.9),
+        "HatCuff": C.material("M_HatCuff", "#6A2EB6", roughness=0.9),
+        "HatStripe": C.material("M_HatStripe", "#EDE3FA", roughness=0.9),
         "StarBadge": C.material("M_StarBadge", "#FFCB1C", roughness=0.35, coat=0.4),
     }
     for key in ("Fur", "PawPad"):
@@ -430,29 +475,17 @@ def build_materials():
         if key == "Fur":
             _inp(bsdf, "Sheen Tint", C.hex_rgba("#FFB0D0"))
             _noise_bump(nt, bsdf, 160.0, 0.35, 0.01)
-    for key, ribs in (("HatKnit", 64.0), ("HatCuff", 80.0), ("HatStripe", 64.0)):
+    for key, ribs in (("HatKnit", 0.0), ("HatCuff", 0.0), ("HatStripe", 0.0)):
         nt = M[key].node_tree
         bsdf = nt.nodes["Principled BSDF"]
-        _inp(bsdf, "Sheen Weight", 0.15)
-        _uv_ribs(nt, bsdf, ribs, 0.35)
+        _inp(bsdf, "Sheen Weight", 0.25)
+        _inp(bsdf, "Sheen Tint", C.hex_rgba("#E8D8FF"))
+        _noise_bump(nt, bsdf, 900.0, 0.25, 0.002)      # yarn fuzz (the ribs are geometry)
     nt = M["PomPom"].node_tree
     bsdf = nt.nodes["Principled BSDF"]
     _inp(bsdf, "Sheen Weight", 0.3)
     _inp(bsdf, "Sheen Tint", C.hex_rgba("#C9A0FF"))
     _noise_bump(nt, bsdf, 240.0, 0.9, 0.01)
-    # yarn-like light/dark variation (preview only)
-    tc = nt.nodes.new("ShaderNodeTexCoord")
-    nz = nt.nodes.new("ShaderNodeTexNoise")
-    nz.inputs["Scale"].default_value = 45.0
-    _inp(nz, "Detail", 4.0)
-    nt.links.new(tc.outputs["Object"], nz.inputs["Vector"])
-    ramp = nt.nodes.new("ShaderNodeValToRGB")
-    ramp.color_ramp.elements[0].position = 0.35
-    ramp.color_ramp.elements[0].color = C.hex_rgba("#5A1F9E")
-    ramp.color_ramp.elements[1].position = 0.70
-    ramp.color_ramp.elements[1].color = C.hex_rgba("#8E4FDA")
-    nt.links.new(nz.outputs["Fac"], ramp.inputs["Fac"])
-    nt.links.new(ramp.outputs["Color"], bsdf.inputs["Base Color"])
     nt = M["EyeIris"].node_tree
     bsdf = nt.nodes["Principled BSDF"]
     _eye_shader(nt, bsdf)
@@ -461,6 +494,9 @@ def build_materials():
 
 
 # ------------------------------------------------------------------ body
+BODY_POLE, BODY_ZERO = Vector((1.0, 0.0, 0.0)), Vector((0.0, 0.0, 1.0))   # poles at the arm roots, seam underneath
+
+
 def build_body():
     dirs, quads, _ = cube_sphere(BODY_SEG)
     pts = [Vector((p.x * (1.0 - BODY_EGG * p.z), p.y * (1.0 - BODY_EGG * p.z), p.z)) for p in dirs]
@@ -472,25 +508,20 @@ def build_body():
         md.vert((v.x / sx * BODY_W / 2, v.y / sy * BODY_D / 2, BODY_C.z + v.z / sz * BODY_H / 2))
     for q in quads:
         md.face(q, 0)
-    md.set_uv(lambda i: sph_uv(dirs[i]))
+    md.set_uv(lambda i: sph_uv_frame(dirs[i], BODY_POLE, BODY_ZERO, 0.42), period=uv_period(0.42))
     return md
 
 
-def paint_body(md, eye_pts, mouth_pt, nose_pt, blush_pts):
-    """Col.rgb = tint (white, rosy blush, darker bottom); Col.a = suggested fur-length mask."""
+def paint_body(md, blush_pts):
+    """Col.rgb = tint (white, rosy blush, slightly darker bottom); Col.a = 1 (pink coat)."""
     def col(i, _k):
         p = md.v[i]
-        g = 1.0 - 0.18 * smoothstep(0.34, 0.06, p.z)
+        g = 1.0 - 0.16 * smoothstep(0.34, 0.06, p.z)
         rgb = [g, g, g]
         for bp in blush_pts:
             w = 0.95 * math.exp(-((p - bp).length / BLUSH_R) ** 2)
             rgb = [c * (1.0 - w) + b * w for c, b in zip(rgb, BLUSH_COL)]
-        a = smoothstep(CUFF_BOTTOM_A - 6.0, CUFF_BOTTOM_A + 1.0, hat_alpha_of(p))
-        for ep in eye_pts:
-            a *= smoothstep(0.08, 0.12, (p - ep).length)
-        a *= smoothstep(0.075, 0.11, (p - mouth_pt).length)
-        a *= smoothstep(0.02, 0.045, (p - nose_pt).length)
-        return (rgb[0], rgb[1], rgb[2], a)
+        return (rgb[0], rgb[1], rgb[2], 1.0)
     md.set_col(col)
 
 
@@ -502,86 +533,154 @@ def prof_r(profile, h):
     return profile[-1][1]
 
 
-def build_arm(side):
-    """side +1 = Arm.L (+X, his left), -1 = Arm.R. Fur capsule + white palm + 3 pink beans."""
+def arm_frame(side):
     root = ray(BODY_BVH, (0.0, 0.0, ARM_Z), (side, 0.0, 0.0))
-    d = Vector((side * 1.0, 0.06, 0.52)).normalized()     # out, slightly back, ~27 deg up
-    ex, ey, ez = frame_from(d)
+    a = math.radians(ARM_UP)
+    d = Vector((side * math.cos(a), ARM_BACK, math.sin(a))).normalized()
+    pd = PALM_FACING - d * PALM_FACING.dot(d)
+    return root, d, pd.normalized()
+
+
+def build_arm(side):
+    """side +1 = Arm.L (+X, his left), -1 = Arm.R. Fur mitt (rings along the arm, seam underneath) + white palm
+    pad + 4 pink beans on the palm side (up/back: visible from the rear camera)."""
+    root, d, pd = arm_frame(side)
+    under = -pd                                  # seam on the side facing away from the camera
+    ex = under
+    ey = d.cross(ex).normalized()
     md = MeshData()
-    seg = 14
-    rings = []
+    rings, hs = [], []
     for h, r in ARM_PROFILE[:-1]:
-        rings.append([md.vert(root + ez * h + (ex * math.cos(2 * math.pi * j / seg)
-                                              + ey * math.sin(2 * math.pi * j / seg)) * r) for j in range(seg)])
-    tip = md.vert(root + ez * ARM_PROFILE[-1][0])
-    for a, b in zip(rings, rings[1:]):
-        bridge(md, a, b, 0)
-    fan_top(md, rings[-1], tip, 0)
-    md.set_uv(lambda i: sph_uv(md.v[i] - (root + ez * 0.07)))
-    pd = Vector((0.0, -1.0, 0.0))
-    pd = (pd - d * pd.dot(d)).normalized()          # palm faces forward
-    hp = 0.135
-    palm_c = root + d * hp + pd * (prof_r(ARM_PROFILE, hp) - 0.004)
+        rings.append([md.vert(root + d * h + (ex * math.cos(2 * math.pi * j / ARM_SEG)
+                                              + ey * math.sin(2 * math.pi * j / ARM_SEG)) * r)
+                      for j in range(ARM_SEG)])
+        hs.append(h)
+    tip = md.vert(root + d * ARM_PROFILE[-1][0])
+    ru = 2.0 * math.pi * 0.087 / FUR_U          # u span around the arm (same strand size as the body)
+    vv = [h / FUR_V for h in hs] + [ARM_PROFILE[-1][0] / FUR_V]
+    for k, (a, b) in enumerate(zip(rings, rings[1:])):
+        bridge(md, a, b, 0, vv[k], vv[k + 1], ru)
+    fan_top(md, rings[-1], tip, 0, vv[len(rings) - 1], vv[-1], ru)
+    fur_faces = len(md.f)
+    fur_verts = len(md.v)
+    palm_c = root + d * PALM_H + pd * (prof_r(ARM_PROFILE, PALM_H) - 0.004)
     pex = d.cross(pd)
-    md.extend(ellipsoid(palm_c, pex, d, pd, 0.036, 0.040, 0.011, seg=10, rings=5, mat=1, col=WHITE))
-    hb = 0.188
-    for ang in (-34.0, 0.0, 34.0):
+    md.extend(ellipsoid(palm_c, pex, d, pd, PALM_SIZE[0], PALM_SIZE[1], PALM_SIZE[2], seg=12, rings=5, mat=1,
+                        col=SOLE_WHITE))
+    beans = []
+    for ang, hb in ARM_BEANS:
         n = Matrix.Rotation(math.radians(ang), 3, d) @ pd
-        c = root + d * hb + n * (prof_r(ARM_PROFILE, hb) + 0.001)
+        c = root + d * hb + n * (prof_r(ARM_PROFILE, hb) - 0.001)
         bey = (d - n * d.dot(n)).normalized()
-        md.extend(ellipsoid(c, bey.cross(n), bey, n, 0.012, 0.011, 0.006, seg=8, rings=4, mat=1, col=PAD_PINK))
-    return md
+        md.extend(ellipsoid(c, bey.cross(n), bey, n, BEAN_SIZE[0], BEAN_SIZE[1], BEAN_SIZE[2], seg=8, rings=4,
+                            mat=1, col=PAD_PINK))
+        beans.append(c)
+    md.set_col(lambda i, k: (1.0, 1.0, 1.0, 1.0) if md.m[k] == 0 else md.col[k][0])
+    info = dict(root=vlist(root), dir=vlist(d), palm_dir=vlist(pd), palm_c=vlist(palm_c),
+                beans=[vlist(b) for b in beans], length=ARM_PROFILE[-1][0], fur_verts=fur_verts,
+                fur_faces=fur_faces)
+    return md, info
 
 
-# ------------------------------------------------------------------ feet
-def foot_shape(p):
-    e = 0.85
+# ------------------------------------------------------------------ legs + paws (seated V-sit)
+def paw_frame(side):
+    yaw, pitch = math.radians(TOE_YAW), math.radians(TOE_PITCH)
+    th = Vector((side * math.sin(yaw), -math.cos(yaw), 0.0))           # horizontal toe direction
+    lat = Vector((side * math.cos(yaw), math.sin(yaw), 0.0))           # outward lateral axis
+    t = (th * math.cos(pitch) + Vector((0.0, 0.0, 1.0)) * math.sin(pitch)).normalized()   # heel -> toe
+    s = (th * math.sin(pitch) - Vector((0.0, 0.0, 1.0)) * math.cos(pitch)).normalized()   # sole normal
+    return t, lat, s
+
+
+def paw_shape(p):
+    """Unit cube-sphere point -> paw local (lat, along, up-from-sole): rounded bean, flatter sole, wider toes."""
+    e = 0.86
     sx = math.copysign(abs(p.x) ** e, p.x)
     sy = math.copysign(abs(p.y) ** e, p.y)
-    sz = math.copysign(abs(p.z) ** e, p.z) if p.z >= 0 else -(abs(p.z) ** 0.55)
-    w = FOOT_HALF[0] * (1.0 + 0.12 * (-p.y))        # a little wider at the toes (-Y)
-    return Vector((sx * w, sy * FOOT_HALF[1], sz * FOOT_HALF[2]))
+    sz = math.copysign(abs(p.z) ** e, p.z) if p.z >= 0 else -(abs(p.z) ** 0.62)
+    w = PAW_HALF[0] * (1.0 + 0.10 * p.y)                  # a little wider at the toes (+along)
+    return Vector((sx * w, sy * PAW_HALF[1], sz * PAW_HALF[2]))
 
 
-def build_foot(side):
-    """Rounded oval foot, toes -Y; cube face -Z = flat sole (M_PawPad white) with big pad + 3 toe beans."""
-    foot = MeshData()
-    dirs, quads, tags = cube_sphere(4)
+def build_leg(side):
+    """Leg.<tag>: pink fur leg capsule hip -> ankle (seam inside) + cream-white fur paw (Col.a = 0) with a sole
+    big pad + 4 toe beans (M_PawPad, pink). Paw local frame: x = lateral (out), y = heel->toe, z = up from sole."""
+    hip = Vector((side * HIP.x, HIP.y, HIP.z))
+    ank = Vector((side * ANKLE.x, ANKLE.y, ANKLE.z))
+    t, lat, s = paw_frame(side)
+    md = MeshData()
+    axis = (ank - hip).normalized()
+    L = (ank - hip).length
+    ex = (Vector((0.0, 0.0, -1.0)) - axis * axis.z).normalized()     # seam underneath
+    ey = axis.cross(ex).normalized()
+    rings = []
+    n_r = 7
+    ru = 2.0 * math.pi * 0.08 / FUR_U
+    hs = [-0.06 + (L + 0.08) * i / (n_r - 1) for i in range(n_r)]
+    for h in hs:
+        f = min(1.0, max(0.0, h / L))
+        r = LEG_R0 + (LEG_R1 - LEG_R0) * f
+        rings.append([md.vert(hip + axis * h + (ex * math.cos(2 * math.pi * j / LEG_SEG)
+                                                + ey * math.sin(2 * math.pi * j / LEG_SEG)) * r)
+                      for j in range(LEG_SEG)])
+    for k in range(n_r - 1):
+        bridge(md, rings[k], rings[k + 1], 0, hs[k] / FUR_V, hs[k + 1] / FUR_V, ru)
+    leg_faces = len(md.f)
+    leg_verts = len(md.v)
+    # paw: rounded bean in its own frame, toes up, sole facing forward-down
+    centre = ank + t * PAW_FWD - s * 0.006
+    zf = -s                                     # paw local +z = away from the sole (dorsal)
+    ax = t.cross(zf).normalized()               # right-handed (ax, t, zf) on both sides -> outward winding
+    paw = MeshData()
+    dirs, quads, _tags = cube_sphere(PAW_SEG)
     for p in dirs:
-        foot.vert(foot_shape(p))
-    for q, t in zip(quads, tags):
-        foot.face(q, 1 if t == 5 else 0)
-    foot.set_uv(lambda i: sph_uv(dirs[i]))
-    fb = foot.bvh()
-    ez, ex = Vector((0.0, 0.0, -1.0)), Vector((1.0, 0.0, 0.0))
-    ey = ez.cross(ex)
-    for (px, py, rx, ry, rz) in PAD_LAYOUT:
-        hit = ray(fb, (px, py, 0.0), (0.0, 0.0, -1.0))
-        big = rx > 0.02
-        foot.extend(ellipsoid(hit + Vector((0.0, 0.0, rz * 0.25)), ex, ey, ez, rx, ry, rz,
-                              seg=10 if big else 8, rings=5 if big else 4, mat=1, col=PAD_PINK))
-    m = (Matrix.Translation((side * FOOT_X, FOOT_Y, 0.0))
-         @ Matrix.Rotation(math.radians(side * FOOT_YAW), 4, 'Z')
-         @ Matrix.Rotation(math.radians(FOOT_TILT), 4, 'X'))
-    foot.transform(m)
-    zmin = min(v.z for v in foot.v)
-    foot.transform(Matrix.Translation((0.0, 0.0, -zmin)))
-    return foot
+        q = paw_shape(p)
+        paw.vert(centre + ax * q.x + t * q.y + zf * q.z)
+    for qd in quads:
+        paw.face(qd, 0)
+    paw.set_uv(lambda i: sph_uv_frame(dirs[i], Vector((1.0, 0.0, 0.0)), Vector((0.0, 0.0, -1.0)), 0.11),
+               period=uv_period(0.11))
+    paw.set_col(lambda i, k: (1.0, 1.0, 1.0, 0.0))
+    paw_bvh = paw.bvh()
+    md.set_col(lambda i, k: (1.0, 1.0, 1.0, 1.0))
+    md.extend(paw)
+    fur_faces = len(md.f)
+    fur_verts = len(md.v)
+    pads = []
+    px = t.cross(s).normalized()                # right-handed (px, t, s): pads bulge out of the sole
+    for (plat, palong, rl, ra, h) in SOLE_PADS:
+        o = centre + px * plat + t * palong
+        hit = paw_bvh.ray_cast(o, s)                                   # from inside out through the sole
+        if hit[0] is None:
+            raise RuntimeError("pad ray missed the paw")
+        pc = hit[0] + s * (h * 0.15)
+        big = rl > 0.03
+        md.extend(ellipsoid(pc, px, t, s, rl, ra, h, seg=12 if big else 8, rings=5 if big else 4, mat=1,
+                            col=PAD_PINK))
+        pads.append(pc)
+    toe = centre + t * PAW_HALF[1]
+    heel = centre - t * PAW_HALF[1]
+    info = dict(hip=vlist(hip), ankle=vlist(ank), toe=vlist(toe), heel=vlist(heel), paw_c=vlist(centre),
+                toe_dir=vlist(t), lat=vlist(lat), sole_n=vlist(s), pads=[vlist(p) for p in pads],
+                leg_faces=leg_faces, leg_verts=leg_verts, fur_faces=fur_faces, fur_verts=fur_verts)
+    return md, info
 
 
 # ------------------------------------------------------------------ tail
 def build_tail():
     md = MeshData()
-    dirs, quads, _ = cube_sphere(4)
+    dirs, quads, _ = cube_sphere(5)
     back = ray(BODY_BVH, (0.0, 0.0, TAIL_Z), (0.0, 1.0, 0.0))
-    c = back + Vector((0.0, TAIL_R * 0.45, 0.0))
+    c = back + Vector((0.0, TAIL_R * TAIL_OUT, 0.0))
     for p in dirs:
         n = noise.noise(p * 2.5 + Vector((3.1, 7.7, 1.3)))
-        md.vert(c + p * TAIL_R * (1.0 + 0.10 * n))
+        md.vert(c + Vector((p.x, p.y * 0.92, p.z)) * TAIL_R * (1.0 + 0.06 * n))
     for q in quads:
         md.face(q, 0)
-    md.set_uv(lambda i: sph_uv(dirs[i]))
-    return md
+    md.set_uv(lambda i: sph_uv_frame(dirs[i], Vector((1.0, 0.0, 0.0)), Vector((0.0, 0.0, 1.0)), TAIL_R),
+              period=uv_period(TAIL_R))
+    md.set_col(lambda i, k: (1.0, 1.0, 1.0, 1.0))
+    return md, dict(base=vlist(back), c=vlist(c), r=TAIL_R)
 
 
 # ------------------------------------------------------------------ face: eyes, catchlights, mouth, tongue, nose
@@ -698,37 +797,80 @@ def build_mouth():
         out.append(sn + exn * x + eyn * v.y + fn * (v.z + 0.001))
     nose.v = out
     md.extend(nose)
+    md.set_col(lambda i, k: (1.0, 1.0, 1.0, 1.0))
     return md, tongue, S, sn
 
 
 # ------------------------------------------------------------------ beanie, pom-pom, star badge
-def build_beanie():
-    """Crown (knit + lavender bands) + separate folded ribbed cuff band + tapered front stripe.
-    Material indices: 0 M_HatKnit, 1 M_HatCuff, 2 M_HatStripe. UV: u around (seam at the back), v 0..1 up."""
-    KNIT, CUFF, STRIPE = 0, 1, 2
-    psi0 = math.pi / 2
-    crown = MeshData()
-    seg = 48
-    rings = [[crown.vert(hat_point(a, psi0 + 2 * math.pi * j / seg, crown_off(a))) for j in range(seg)]
-             for a in CROWN_RINGS]
-    pole = crown.vert(hat_point(0.0, 0.0, crown_off(0.0)))
-    for k in range(len(rings) - 1):
-        a0, a1 = CROWN_RINGS[k], CROWN_RINGS[k + 1]
-        mat = STRIPE if (a0 <= STRIPE_A[0] + 1e-6 and a1 >= STRIPE_A[1] - 1e-6) else KNIT
-        bridge(crown, rings[k], rings[k + 1], mat, hat_v(a0), hat_v(a1))
-    fan_top(crown, rings[-1], pole, KNIT, hat_v(CROWN_RINGS[-1]), 1.0)
+def profile_normal(pts, k):
+    """Outward normal (dr, du) of a (u, r) profile at point k (direction rotated -90 deg in the (r, u) plane)."""
+    a = pts[max(0, k - 1)]
+    b = pts[min(len(pts) - 1, k + 1)]
+    du, dr = b[0] - a[0], b[1] - a[1]
+    n = Vector((du, -dr))                       # (r, u) components
+    return n.normalized() if n.length > 1e-9 else Vector((1.0, 0.0))
 
-    # extra lavender stripe high on the dome: full width over the front, tapering to nothing at the back
+
+def rib_ring(md, u, r, n_ru, psi0, segs, amp):
+    """Ring of the hat surface with alternating rib offsets (crest at odd j, matching BWK/Character's knit)."""
+    ring = []
+    for j in range(segs):
+        psi = psi0 + 2.0 * math.pi * j / segs
+        o = amp * (1.0 if j % 2 == 1 else -1.0)
+        ring.append(md.vert(hat_pt(u + n_ru.y * o, r + n_ru.x * o, psi)))
+    return ring
+
+
+def arc_v(pts):
+    """Cumulative arc length along a (u, r) profile, normalised later by the caller."""
+    out, acc = [0.0], 0.0
+    for a, b in zip(pts, pts[1:]):
+        acc += math.hypot(b[0] - a[0], b[1] - a[1])
+        out.append(acc)
+    return out
+
+
+def build_beanie():
+    """Crown (hidden collar + pale stripe band + squat ribbed dome) + separate folded ribbed cuff + extra pale stripe
+    on the dome front. Material indices: 0 M_HatKnit, 1 M_HatCuff, 2 M_HatStripe.
+    UV: u around (seam at the back, 0..1), v = arc length along the profile in metres (knit rows are even)."""
+    KNIT, CUFF, STRIPE = 0, 1, 2
+    psi0 = math.pi / 2                          # seam at the back
+    # ---- crown profile (u, r, material of the band above this point)
+    prof = [(0.218, 0.418, STRIPE), (0.250, 0.440, STRIPE), (STRIPE_U[0], 0.451, STRIPE), (0.285, 0.4535, STRIPE),
+            (0.308, 0.453, STRIPE), (STRIPE_U[1], DOME_R, KNIT)]
+    for phi in (10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 69.0, 77.0, 84.0):
+        u, r = dome_ur(phi)
+        prof.append((u, r, KNIT))
+    top_u = DOME_U0 + DOME_H
+    pts = [(p[0], p[1]) for p in prof]
+    arcs = arc_v(pts + [(top_u, 0.0)])
+    crown = MeshData()
+    rings = []
+    for k, (u, r, _m) in enumerate(prof):
+        amp = CROWN_RIB_AMP * min(1.0, r / 0.25) * (0.0 if k == 0 else 1.0)
+        rings.append(rib_ring(crown, u, r, profile_normal(pts, k), psi0, 2 * CROWN_RIBS, amp))
+    pole = crown.vert(BODY_C + HAT_AXIS * top_u)
+    for k in range(len(rings) - 1):
+        bridge(crown, rings[k], rings[k + 1], prof[k][2], arcs[k], arcs[k + 1])
+    fan_top(crown, rings[-1], pole, KNIT, arcs[len(rings) - 1], arcs[-1])
+
+    # ---- extra pale stripe high on the dome: full width over the front, tapering to nothing at the back
     strip = MeshData()
     cols = []
-    K = 40
+    K = 48
     for c in range(K + 1):
-        phi = math.radians(TOP_STRIPE_END * (2.0 * c / K - 1.0))
-        psi = phi - math.pi / 2
-        w = TOP_STRIPE_HW * smoothstep(TOP_STRIPE_END, TOP_STRIPE_FULL, abs(math.degrees(phi)))
-        u = 0.5 + phi / (2 * math.pi)
-        alphas = (TOP_STRIPE_A,) if w < 1e-3 else (TOP_STRIPE_A + w, TOP_STRIPE_A - w)
-        cols.append([(strip.vert(hat_point(a, psi, crown_off(a) + 0.003)), u, hat_v(a)) for a in alphas])
+        phi_f = math.radians(TOP_STRIPE_END * (2.0 * c / K - 1.0))     # angle from the front centre
+        psi = phi_f - math.pi / 2
+        w = TOP_STRIPE_HW * smoothstep(TOP_STRIPE_END, TOP_STRIPE_FULL, abs(math.degrees(phi_f)))
+        u_uv = (psi - psi0) / (2.0 * math.pi) % 1.0
+        angs = (TOP_STRIPE_PHI,) if w < 1e-3 else (TOP_STRIPE_PHI - w, TOP_STRIPE_PHI + w)
+        col = []
+        for a in angs:
+            u, r = dome_ur(a)
+            n = profile_normal([dome_ur(a - 1.0), (u, r), dome_ur(a + 1.0)], 1)
+            col.append((strip.vert(hat_pt(u + n.y * 0.0045, r + n.x * 0.0045, psi)), u_uv, a / 90.0 * 0.15))
+        cols.append(col)
     for c in range(K):
         a_col, b_col = cols[c], cols[c + 1]
         items = [a_col[0], b_col[0], b_col[-1], a_col[-1]]
@@ -738,34 +880,44 @@ def build_beanie():
                 uniq.append(it)
         if len(uniq) > 1 and uniq[0][0] == uniq[-1][0]:
             uniq.pop()
-        strip.face([it[0] for it in uniq], STRIPE, [(it[1], it[2]) for it in uniq])
+        if len(uniq) >= 3:
+            strip.face([it[0] for it in uniq], STRIPE, [(it[1], it[2]) for it in uniq])
 
+    # ---- folded cuff: tucks into the fur at CUFF_BOTTOM_A, rolls out into a tall deep-ribbed band
     cuff = MeshData()
-    seg2 = CUFF_SEG
+    segs = 2 * CUFF_RIBS
+    cpts = [(p[0], p[1]) for p in CUFF_PROFILE]
+    carcs = arc_v(cpts)
     crings = []
-    for (a, off, rw) in CUFF_PROFILE:
-        crings.append([cuff.vert(hat_point(a, psi0 + 2 * math.pi * j / seg2,
-                                           off + RIB_AMP * rw * (1.0 if j % 2 == 0 else -1.0)))
-                       for j in range(seg2)])
+    tuck = []
+    for j in range(segs):                      # tuck ring exactly on the body (2 mm out)
+        psi = psi0 + 2.0 * math.pi * j / segs
+        d = hat_dir(CUFF_BOTTOM_A, psi)
+        tuck.append(cuff.vert(BODY_C + d * (body_dist(d) + 0.002)))
+    crings.append(tuck)
+    for k, (u, r, rw) in enumerate(CUFF_PROFILE):
+        crings.append(rib_ring(cuff, u, r, profile_normal(cpts, k), psi0, segs, CUFF_RIB_AMP * rw))
+    vv = [-0.01] + carcs
     for k in range(len(crings) - 1):
-        bridge(cuff, crings[k], crings[k + 1], CUFF, hat_v(CUFF_PROFILE[k][0]), hat_v(CUFF_PROFILE[k + 1][0]))
+        bridge(cuff, crings[k], crings[k + 1], CUFF, vv[k], vv[k + 1])
     beanie = MeshData().extend(crown).extend(strip).extend(cuff)
-    return beanie, cuff
+    beanie.set_col(lambda i, k: (1.0, 1.0, 1.0, 1.0))
+    return beanie, cuff, top_u
 
 
-def build_pompom():
+def build_pompom(top_u):
     md = MeshData()
-    dirs, quads, _ = cube_sphere(9)
-    top = hat_point(0.0, 0.0, crown_off(0.0))
-    c = top + HAT_AXIS * (POMPOM_R * (1.0 - POMPOM_SINK))
+    dirs, quads, _ = cube_sphere(POMPOM_SEG)
+    c = BODY_C + HAT_AXIS * (top_u + POMPOM_R * POMPOM_LIFT)
     for p in dirs:
         n1 = noise.noise(p * 2.0 + Vector((11.3, 2.9, 5.1)))
         n2 = noise.noise(p * 5.5 + Vector((1.7, 8.2, 3.3)))
-        n3 = noise.noise(p * 11.0 + Vector((4.4, 0.6, 9.9)))
-        md.vert(c + p * POMPOM_R * (1.0 + 0.06 * n1 + 0.04 * n2 + 0.02 * n3))
+        md.vert(c + p * POMPOM_R * (1.0 + 0.035 * n1 + 0.02 * n2))
     for q in quads:
         md.face(q, 0)
-    md.set_uv(lambda i: sph_uv(dirs[i]))
+    md.set_uv(lambda i: sph_uv_frame(dirs[i], Vector((1.0, 0.0, 0.0)), Vector((0.0, 0.0, 1.0)), POMPOM_R),
+              period=uv_period(POMPOM_R))
+    md.set_col(lambda i, k: (1.0, 1.0, 1.0, 1.0))
     return md, c
 
 
@@ -785,18 +937,23 @@ def star_outline():
     return pts
 
 
+def cuff_outer_r(u):
+    """Outer cuff radius (x) at height u: interpolated on the ribbed outer face of CUFF_PROFILE."""
+    face = [(p[0], p[1]) for p in CUFF_PROFILE[2:9]]
+    for (u0, r0), (u1, r1) in zip(face, face[1:]):
+        if u0 <= u <= u1:
+            return r0 + (r1 - r0) * (u - u0) / (u1 - u0)
+    return face[-1][1] if u > face[-1][0] else face[0][1]
+
+
 def build_star():
     """Puffy yellow star conforming to the cuff on HIS LEFT front (+X side)."""
     psi_s = math.radians(STAR_PHI) - math.pi / 2
-    off = CUFF_OFF
 
-    def surf(a, ps):
-        return hat_point(a, ps, off)
+    def surf(u, ps):
+        return hat_pt(u, cuff_outer_r(u) + CUFF_RIB_AMP + 0.002, ps)
 
-    p0 = surf(STAR_A, psi_s)
-    rel = p0 - BODY_C
-    r_hor = (rel - HAT_AXIS * rel.dot(HAT_AXIS)).length
-    r_mer = rel.length
+    r_hor = cuff_outer_r(STAR_U) * hat_ell(psi_s)
     rot = Matrix.Rotation(math.radians(STAR_ROT), 2)
     outline = star_outline()
     ring_sh = [(1.0, -0.006), (1.0, 0.004), (0.93, 0.011), (0.76, 0.017), (0.50, 0.0205)]
@@ -804,12 +961,12 @@ def build_star():
 
     def place(x, y, h):
         q = rot @ Vector((x, y))
-        a = STAR_A - math.degrees(q.y / r_mer)
+        u = STAR_U + q.y
         ps = psi_s + q.x / r_hor
         d = 0.004
-        t_psi = surf(a, ps + d) - surf(a, ps - d)
-        t_up = surf(a - math.degrees(d), ps) - surf(a + math.degrees(d), ps)
-        return surf(a, ps) + t_psi.cross(t_up).normalized() * h
+        t_psi = surf(u, ps + d) - surf(u, ps - d)
+        t_up = surf(u + d, ps) - surf(u - d, ps)
+        return surf(u, ps) + t_psi.cross(t_up).normalized() * h
 
     for s, h in ring_sh:
         ring = []
@@ -823,6 +980,7 @@ def build_star():
         bridge(md, a, b, 0)
     fan_top(md, rings[-1], centre, 0)
     md.set_uv(lambda i: uvs[i], wrap=False)
+    md.set_col(lambda i, k: (1.0, 1.0, 1.0, 1.0))
     return md
 
 
@@ -830,6 +988,19 @@ def build_star():
 def min_gap(md_a, md_b):
     bvh = md_b.bvh()
     return min(bvh.find_nearest(v)[3] for v in md_a.v)
+
+
+def inward_fraction(md):
+    """Fraction of faces whose normal points toward the part centre (sanity check for closed blobs)."""
+    c = sum(md.v, Vector()) / len(md.v)
+    bad = 0
+    for f in md.f:
+        a, b, d = md.v[f[0]], md.v[f[1]], md.v[f[2]]
+        n = (b - a).cross(d - a)
+        fc = sum((md.v[i] for i in f), Vector()) / len(f)
+        if n.dot(fc - c) < 0:
+            bad += 1
+    return bad / max(1, len(md.f))
 
 
 def main():
@@ -852,13 +1023,18 @@ def main():
         lights[tag + "2"] = build_catchlight(info, px - inner * 0.026, py - 0.028, 0.0095, 10, 1)
     mouth, tongue, mouth_pt, nose_pt = build_mouth()
     blush_pts = [front_frame(s * BLUSH_X, BLUSH_Z)[0] for s in (1, -1)]
-    paint_body(body, [eyes["L"][1]["S"], eyes["R"][1]["S"]], mouth_pt, nose_pt, blush_pts)
-    arms = {"L": build_arm(1), "R": build_arm(-1)}
-    feet = {"L": build_foot(1), "R": build_foot(-1)}
-    tail = build_tail()
-    beanie, cuff = build_beanie()
-    pompom, pp_c = build_pompom()
+    paint_body(body, blush_pts)
+    arms, arm_info = {}, {}
+    legs, leg_info = {}, {}
+    for side, tag in ((1, "L"), (-1, "R")):
+        arms[tag], arm_info[tag] = build_arm(side)
+        legs[tag], leg_info[tag] = build_leg(side)
+    tail, tail_info = build_tail()
+    beanie, cuff, top_u = build_beanie()
+    pompom, pp_c = build_pompom(top_u)
     star = build_star()
+    for md in (eyes["L"][0], eyes["R"][0], tongue, *lights.values()):
+        md.set_col(lambda i, k: (1.0, 1.0, 1.0, 1.0))
 
     parts = [
         ("Body", body, [M["Fur"]]),
@@ -872,8 +1048,8 @@ def main():
         ("Tongue", tongue, [M["Tongue"]]),
         ("Arm.L", arms["L"], [M["Fur"], M["PawPad"]]),
         ("Arm.R", arms["R"], [M["Fur"], M["PawPad"]]),
-        ("Foot.L", feet["L"], [M["Fur"], M["PawPad"]]),
-        ("Foot.R", feet["R"], [M["Fur"], M["PawPad"]]),
+        ("Leg.L", legs["L"], [M["Fur"], M["PawPad"]]),
+        ("Leg.R", legs["R"], [M["Fur"], M["PawPad"]]),
         ("Tail", tail, [M["Fur"]]),
         ("Beanie", beanie, [M["HatKnit"], M["HatCuff"], M["HatStripe"]]),
         ("PomPom", pompom, [M["PomPom"]]),
@@ -898,20 +1074,45 @@ def main():
         min(v.x for v in allv), max(v.x for v in allv), min(v.y for v in allv), max(v.y for v in allv),
         min(v.z for v in allv), max(v.z for v in allv)))
     print("CHECK gap eye.L-cuff %.4f  eye.R-cuff %.4f" % (min_gap(eyes["L"][0], cuff), min_gap(eyes["R"][0], cuff)))
-    print("CHECK gap arm.L-cuff %.4f  star-centre z %.3f  pompom centre %s" % (
-        min_gap(arms["L"], cuff), sum(v.z for v in star.v) / len(star.v), tuple(round(c, 3) for c in pp_c)))
+    print("CHECK gap arm.L-cuff %.4f  pompom centre %s  hat top u %.3f  hat top z %.3f" % (
+        min_gap(arms["L"], cuff), tuple(round(c, 3) for c in pp_c), top_u, (BODY_C + HAT_AXIS * top_u).z))
+    for tag in ("L", "R"):
+        li = leg_info[tag]
+        print("CHECK leg.%s paw centre %s toe %s heel %s" % (tag, li["paw_c"], li["toe"], li["heel"]))
+    cuff_in = max(inside_body(v) for v in cuff.v[2 * CUFF_RIBS:])
+    print("CHECK cuff outer rings max depth inside body %.4f (must be < 0)" % cuff_in)
+    for nm, md in (("Body", body), ("Tail", tail), ("PomPom", pompom)):
+        print("CHECK normals %s inward fraction %.3f" % (nm, inward_fraction(md)))
     for tag in ("L", "R"):
         info = eyes[tag][1]
         print("CHECK eye.%s centre %s forward %s" % (tag, tuple(round(c, 3) for c in info["S"]),
                                                      tuple(round(c, 3) for c in info["f"])))
 
+    # hand-off contract for build_mascot_rig.py
+    bottom = min(v.z for v in body.v)
+    contract = dict(
+        BODY_C=vlist(BODY_C), BODY_BOTTOM=[0.0, 0.0, round(bottom, 6)], BODY_HALF=[BODY_W / 2, BODY_D / 2, BODY_H / 2],
+        HAT_TILT=HAT_TILT, HAT_AXIS=vlist(HAT_AXIS), CUFF_BOTTOM_A=CUFF_BOTTOM_A,
+        hat=dict(top_u=top_u, cuff_top_u=CUFF_PROFILE[9][0], stripe_u=list(STRIPE_U), dome_u0=DOME_U0,
+                 pompom_c=vlist(pp_c), pompom_r=POMPOM_R),
+        arms=arm_info, legs=leg_info, tail=tail_info,
+        eyes={t: dict(S=vlist(eyes[t][1]["S"]), f=vlist(eyes[t][1]["f"])) for t in ("L", "R")},
+        mouth_c=vlist(mouth_pt), nose_c=vlist(nose_pt),
+        star_c=vlist(sum(star.v, Vector()) / len(star.v)),
+        counts={n: len(md.v) for n, md, _m in parts})
+    os.makedirs(C.WORK, exist_ok=True)
+    with open(os.path.join(C.WORK, "mascot_model.json"), "w") as fh:
+        json.dump(contract, fh, indent=1)
+    print("SAVED", os.path.join(C.WORK, "mascot_model.json"))
+
     C.export_fbx(objs, C.model_path("Characters", "SK_Mascot_model"))
     C.save_work("mascot_model")
     print("SAVED", C.work_path("mascot_model"))
 
-    render_view(C.preview_path("SK_Mascot_model_back"), (0.0, 2.4, 1.3), (0.0, 0.0, 0.5))
-    render_view(C.preview_path("SK_Mascot_model_front"), (0.0, -2.6, 0.75), (0.0, 0.0, 0.6))
-    render_view(C.preview_path("SK_Mascot_model_34"), (1.85, -1.95, 1.1), (0.0, 0.0, 0.6))
+    if not QUICK:
+        render_view(C.preview_path("SK_Mascot_model_back"), (0.0, 2.4, 1.3), (0.0, 0.0, 0.5))
+        render_view(C.preview_path("SK_Mascot_model_front"), (0.0, -2.6, 0.75), (0.0, 0.0, 0.6))
+        render_view(C.preview_path("SK_Mascot_model_34"), (1.85, -1.95, 1.1), (0.0, 0.0, 0.6))
     print("MASCOT_MODEL_DONE")
 
 

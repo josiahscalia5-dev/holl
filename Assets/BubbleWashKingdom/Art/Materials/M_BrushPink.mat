@@ -27,16 +27,23 @@ Material:
     m_Floats:
     - _BumpScale: 9
     - _BumpStrength: 0.6
+    - _GlintAmount: 0.5
     - _Glow: 0.12
     - _Metallic: 0
     - _Mode: 0
+    - _ReflectBoost: 0
     - _RimPower: 3
     - _RimStrength: 0.35
     - _Smoothness: 0.35
+    - _SpecStrength: 1
     - _StitchU: 64
     - _StitchV: 26
+    - _StreakAmount: 0
+    - _StreakSpeed: 6
     - _StripeWidth: 0.35
     - _Stripes: 4
+    - _Wobble: 0
+    - _WobbleFreq: 3
     - _Wrap: 0.7
     m_Colors:
     - _ColorA: {r: 0.89411765, g: 0.3882353, b: 0.69411767, a: 1}

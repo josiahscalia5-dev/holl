@@ -14,11 +14,109 @@ namespace BubbleWash.EditorTools
 {
     // OWNER: Agent 2 - water & visual effects (foam banks, floating bubbles, runner splash/spray particles, decor chevrons).
     // Only this domain's agent edits this file; the lead developer runs the scene build that calls it.
+    // Determinism: these builders use their own seeded System.Random. They still draw the same number of values from the
+    // shared `rng` as the original foam / bubble placement did, so the lead's item layout (BuildItems) never shifts.
     public static partial class SceneBuilder
     {
-        static void BuildFoam(GameObject env, float L)
+        // decor chevrons down the middle of the water (also drive the light pools in M_Water / BWK_Water)
+        public const float ChevronStart = 6f, ChevronSpacing = 2.2f, ChevronScale = 1.45f;
+        // milk crown splashes beside the feet (Art/Models/FX/SM_FX_Crown_xx, left-side asset mirrored for the right)
+        const float CrownRootX = 0.3f, CrownRootZ = 0.32f, CrownScale = 0.85f;
+
+        // ==================================================================== preview / persistence helpers
+        static string PreviewOutArg()
         {
-            // LOD0 = smooth sphere clusters near the camera, LOD1 = low-poly twins for distant chunks (same placement)
+            var args = System.Environment.GetCommandLineArgs();
+            for (int i = 0; i < args.Length - 1; i++) if (args[i] == "-bwkOut") return args[i + 1].Replace('\\', '/');
+            return null;
+        }
+
+        /// <summary>Any agent preview (AgentPreviewBatch): never write mesh assets.</summary>
+        static bool InAgentPreview => PreviewOutArg() != null;
+
+        /// <summary>This domain's own preview: also rebuild foam / chevrons / floating bubbles in memory.</summary>
+        static bool InWaterFxPreview => (PreviewOutArg() ?? "").Contains("agents/waterfx");
+
+        static Mesh PersistCopy(Mesh src, bool save)
+        {
+            var m = Object.Instantiate(src);
+            m.name = src.name;
+            if (save) SaveMesh(m);
+            return m;
+        }
+
+        /// <summary>Like Combiner, but can keep the combined meshes in memory (previews never write assets).</summary>
+        class FxCombiner
+        {
+            readonly Dictionary<Material, List<CombineInstance>> groups = new Dictionary<Material, List<CombineInstance>>();
+            readonly Dictionary<Material, int> vertexCounts = new Dictionary<Material, int>();
+
+            public void Add(List<Part> parts, Matrix4x4 world)
+            {
+                foreach (var p in parts)
+                    for (int s = 0; s < p.mesh.subMeshCount; s++)
+                    {
+                        var mat = p.mats != null && p.mats.Length > 0 ? p.mats[Mathf.Min(s, p.mats.Length - 1)] : null;
+                        if (mat == null) continue;
+                        if (!groups.TryGetValue(mat, out var l)) { l = new List<CombineInstance>(); groups[mat] = l; vertexCounts[mat] = 0; }
+                        l.Add(new CombineInstance { mesh = p.mesh, subMeshIndex = s, transform = world * p.local });
+                        vertexCounts[mat] += p.mesh.vertexCount;
+                    }
+            }
+
+            public List<Renderer> Flush(GameObject parent, string name, bool save)
+            {
+                var made = new List<Renderer>();
+                foreach (var kv in groups)
+                {
+                    var mesh = new Mesh { name = $"{name}_{kv.Key.name}" };
+                    mesh.indexFormat = vertexCounts[kv.Key] > 60000 ? IndexFormat.UInt32 : IndexFormat.UInt16;
+                    mesh.CombineMeshes(kv.Value.ToArray(), true, true);
+                    mesh.RecalculateBounds();
+                    if (save) SaveMesh(mesh);
+                    var go = Child(parent, mesh.name);
+                    go.AddComponent<MeshFilter>().sharedMesh = mesh;
+                    var mr = go.AddComponent<MeshRenderer>();
+                    mr.sharedMaterial = kv.Key;
+                    mr.shadowCastingMode = ShadowCastingMode.Off;
+                    GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic | StaticEditorFlags.OccluderStatic | StaticEditorFlags.OccludeeStatic | StaticEditorFlags.ReflectionProbeStatic);
+                    made.Add(mr);
+                }
+                groups.Clear();
+                vertexCounts.Clear();
+                return made;
+            }
+        }
+
+        // exact replicas of the original placement loops' shared-rng draws (6 per foam cluster, 4 per bubble step)
+        static void ConsumeLegacyFoamRng(float L)
+        {
+            if (rng == null) return;
+            for (float d = 0f; d < L; d += (d < tunnelStart ? 2.0f : 2.3f))
+                for (int k = 0; k < 4; k++)
+                {
+                    rng.NextDouble(); rng.NextDouble(); rng.NextDouble(); rng.Next(3); rng.NextDouble(); rng.NextDouble();
+                }
+        }
+
+        static void ConsumeLegacyBubbleRng(float L)
+        {
+            if (rng == null) return;
+            for (float d = 6f; d < L - 4f; d += 4.5f + (float)rng.NextDouble() * 4f)
+            {
+                rng.NextDouble(); rng.NextDouble(); rng.NextDouble();
+            }
+        }
+
+        // ==================================================================== foam banks
+        static void BuildFoam(GameObject env, float L) => BuildFoam(env, L, false);
+
+        static void BuildFoam(GameObject env, float L, bool preview)
+        {
+            if (!preview) ConsumeLegacyFoamRng(L);
+            var r = new System.Random(4471);
+            float Rand(float a, float b) => Mathf.Lerp(a, b, (float)r.NextDouble());
+            // LOD0 = full soap-suds clusters near the camera, LOD1 = low-poly twins for distant chunks (same placement)
             string[] names = { "SM_Foam_A", "SM_Foam_B", "SM_Foam_C" };
             var lod0 = names.Select(n => ModelParts("Props", n)).Where(v => v.Count > 0).ToArray();
             var lod1 = names.Select(n => { var p = ModelParts("Props", n + "_LOD1"); return p.Count > 0 ? p : ModelParts("Props", n); }).Where(v => v.Count > 0).ToArray();
@@ -29,122 +127,190 @@ namespace BubbleWash.EditorTools
                 Object.DestroyImmediate(s);
                 lod0 = lod1 = new[] { new List<Part> { new Part(sm, new[] { Mat("M_Foam") }, Matrix4x4.Scale(new Vector3(1.6f, 0.9f, 1.2f))) } };
             }
+            int small = lod0.Length > 2 ? 2 : lod0.Length - 1;   // SM_Foam_C = the small cluster
             var holder = Child(env, "Foam");
-            var comb0 = new Combiner();
-            var comb1 = new Combiner();
+            var comb0 = new FxCombiner();
+            var comb1 = new FxCombiner();
             int chunk = 0; float chunkStart = 0f;
             void FlushChunk()
             {
                 var go = Child(holder, $"Foam_{chunk:00}");
-                var r0 = comb0.Flush(go, $"Foam_{chunk:00}_LOD0", false);
-                var r1 = comb1.Flush(go, $"Foam_{chunk:00}_LOD1", false);
+                var r0 = comb0.Flush(go, $"Foam_{chunk:00}_LOD0", !preview);
+                var r1 = comb1.Flush(go, $"Foam_{chunk:00}_LOD1", !preview);
                 var lg = go.AddComponent<LODGroup>();
-                lg.SetLODs(new[] { new LOD(0.45f, r0.ToArray()), new LOD(0.01f, r1.ToArray()) });
+                lg.SetLODs(new[] { new LOD(0.4f, r0.ToArray()), new LOD(0.01f, r1.ToArray()) });
                 lg.RecalculateBounds();
                 chunk++;
             }
-            for (float d = 0f; d < L; d += (d < tunnelStart ? 2.0f : 2.3f))
+            void Place(TrackFrame f, float lat, float h, float sc, int vi)
+            {
+                // clusters are long along asset X: turn them to run along the track so they never cover the water
+                var rot = f.FlatRotation * Quaternion.Euler(0, 90f + Rand(-20f, 20f) + (r.NextDouble() < 0.5 ? 180f : 0f), 0);
+                var m = Matrix4x4.TRS(f.FlatPoint(lat, h), rot, new Vector3(sc, sc * Rand(0.9f, 1.15f), sc));
+                comb0.Add(lod0[vi], m);
+                comb1.Add(lod1[Mathf.Min(vi, lod1.Length - 1)], m);
+            }
+            for (float d = 0f; d < L; d += (d < tunnelStart ? 1.9f : 1.75f))
             {
                 var f = track.Evaluate(d);
                 bool hall = d < tunnelStart;
                 foreach (int side in new[] { -1, 1 })
                 {
-                    // reference: continuous puffy foam banks right outside both rails (front row) + a taller back row
-                    for (int c = 0; c < 2; c++)
+                    // reference: continuous puffy soap-suds banks right outside both rails (front row) + a taller back row,
+                    // with small puffs spilling onto the rail top between them
+                    if (hall)
                     {
-                        float lat = side * (hall ? (c == 0 ? Mathf.Lerp(2.45f, 3.0f, (float)rng.NextDouble()) : Mathf.Lerp(3.2f, 7.5f, (float)rng.NextDouble()))
-                                                 : (c == 0 ? Mathf.Lerp(2.4f, 2.75f, (float)rng.NextDouble()) : Mathf.Lerp(2.95f, 3.35f, (float)rng.NextDouble())));
-                        float h = hall ? Mathf.Lerp(-0.6f, 0.1f, (float)rng.NextDouble()) : (c == 0 ? Mathf.Lerp(-0.2f, 0.12f, (float)rng.NextDouble()) : Mathf.Lerp(-0.15f, 0.35f, (float)rng.NextDouble()));
-                        float sc = hall ? Mathf.Lerp(0.85f, 1.6f, (float)rng.NextDouble()) : (c == 0 ? Mathf.Lerp(0.7f, 1.05f, (float)rng.NextDouble()) : Mathf.Lerp(0.9f, 1.35f, (float)rng.NextDouble()));
-                        int vi = rng.Next(lod0.Length);
-                        // clusters are long along asset X: turn them to run along the track so they never cover the water
-                        var rot = f.FlatRotation * Quaternion.Euler(0, 90f + Mathf.Lerp(-22f, 22f, (float)rng.NextDouble()) + (rng.NextDouble() < 0.5 ? 180f : 0f), 0);
-                        var m = Matrix4x4.TRS(f.FlatPoint(lat, h), rot, Vector3.one * sc);
-                        comb0.Add(lod0[vi], m);
-                        comb1.Add(lod1[Mathf.Min(vi, lod1.Length - 1)], m);
+                        Place(f, side * Rand(2.45f, 3.0f), Rand(-0.5f, 0.1f), Rand(0.85f, 1.5f), r.Next(lod0.Length));
+                        Place(f, side * Rand(3.2f, 7.5f), Rand(-0.6f, 0.1f), Rand(0.9f, 1.6f), r.Next(lod0.Length));
                     }
+                    else
+                    {
+                        Place(f, side * Rand(2.42f, 2.72f), Rand(-0.18f, 0.08f), Rand(0.75f, 1.05f), r.Next(lod0.Length));
+                        if (r.NextDouble() < 0.8) Place(f, side * Rand(2.95f, 3.35f), Rand(-0.1f, 0.3f), Rand(0.95f, 1.35f), r.Next(lod0.Length));
+                    }
+                    if (r.NextDouble() < 0.6) Place(f, side * Rand(2.28f, 2.45f), Rand(0.02f, 0.14f), Rand(0.42f, 0.62f), small);
                 }
                 if (d - chunkStart > ChunkLength) { FlushChunk(); chunkStart = d; }
             }
             FlushChunk();
         }
 
-        static void BuildFloatingBubbles(GameObject env, float L)
+        // ==================================================================== floating soap bubbles along the track
+        static void BuildFloatingBubbles(GameObject env, float L) => BuildFloatingBubbles(env, L, false);
+
+        static void BuildFloatingBubbles(GameObject env, float L, bool preview)
         {
             var bubble = ModelPrefab("Props", "SM_Bubble");
             if (bubble == null) return;
+            if (!preview) ConsumeLegacyBubbleRng(L);
+            var r = new System.Random(9157);
+            float Rand(float a, float b) => Mathf.Lerp(a, b, (float)r.NextDouble());
             var holder = Child(env, "FloatingBubbles");
-            for (float d = 6f; d < L - 4f; d += 4.5f + (float)rng.NextDouble() * 4f)
+            for (float d = 6f; d < L - 4f; d += Rand(3.2f, 6.5f))
             {
                 var f = track.Evaluate(d);
                 bool hall = d < tunnelStart;
-                float lat = (float)(rng.NextDouble() * 2 - 1) * (hall ? 7f : 3.0f);
-                float h = Mathf.Lerp(0.9f, hall ? 7f : 4.8f, (float)rng.NextDouble());
+                // keep the centre above the slide clear (mascot + camera): bubbles drift beside and above the water
+                float side = r.NextDouble() < 0.5 ? -1f : 1f;
+                float lat = hall ? (float)(r.NextDouble() * 2 - 1) * 7f : side * Rand(1.3f, 3.0f);
+                float h = Mathf.Lerp(0.8f, hall ? 7f : 4.2f, (float)r.NextDouble());
                 var go = Spawn(bubble);
                 go.transform.SetParent(holder.transform, false);
                 go.transform.position = f.FlatPoint(lat, h);
-                go.transform.localScale = Vector3.one * Mathf.Lerp(0.25f, 0.9f, (float)rng.NextDouble());
+                go.transform.localScale = Vector3.one * Rand(0.22f, 0.75f);
                 var bob = go.AddComponent<FloatBob>();
                 bob.amplitude = 0.25f;
                 bob.frequency = 0.2f;
                 bob.swayDegrees = 0f;
-                foreach (var r in go.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
+                foreach (var rr in go.GetComponentsInChildren<Renderer>()) rr.shadowCastingMode = ShadowCastingMode.Off;
             }
         }
 
+        // ==================================================================== runner FX
         static SplashFX BuildRunnerFX(GameObject runnerGo, RunnerController runner, TrackItemRegistry registry)
         {
+            bool save = !InAgentPreview;
             var fxRoot = Child(runnerGo, "FX");
             var fx = fxRoot.AddComponent<SplashFX>();
             fx.runner = runner;
             fx.items = registry;
-            // droplets thrown up and back around the feet (velocity-stretched milky drops)
+            Mesh dropMesh = null, bubbleMesh = null;
+            var dp = ModelParts("FX", "SM_FX_Droplet");
+            if (dp.Count > 0) dropMesh = PersistCopy(dp[0].mesh, save);
+            var bp = ModelParts("FX", "SM_FX_BubbleLow");
+            if (bp.Count > 0) bubbleMesh = PersistCopy(bp[0].mesh, save);
+
+            // fine milky spray thrown up and back around the feet (velocity-stretched drop sprites)
             fx.spray = Particles(fxRoot, "Spray", "M_FX_Splash", new Vector3(0, 0.05f, 0.18f), new Vector3(-120, 0, 0), ps =>
             {
                 var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.25f, 0.45f); m.startSpeed = new ParticleSystem.MinMaxCurve(2.0f, 3.6f);
-                m.startSize = new ParticleSystem.MinMaxCurve(0.05f, 0.13f); m.gravityModifier = 1.5f; m.simulationSpace = ParticleSystemSimulationSpace.Local; m.maxParticles = 160;
-                var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Cone; sh.angle = 55f; sh.radius = 0.45f;
+                m.startSize = new ParticleSystem.MinMaxCurve(0.04f, 0.1f); m.gravityModifier = 1.5f; m.simulationSpace = ParticleSystemSimulationSpace.Local; m.maxParticles = 160;
+                var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Cone; sh.angle = 60f; sh.radius = 0.5f;
                 var e = ps.emission; e.rateOverTime = 0f;
                 var r = ps.GetComponent<ParticleSystemRenderer>(); r.renderMode = ParticleSystemRenderMode.Stretch; r.velocityScale = 0.035f; r.lengthScale = 1.3f;
+                Seed(ps, 11);
             });
-            // milky crown splash sheets flanking the mascot, like the reference's white splash shapes
-            ParticleSystem Sheet(string n, float side)
+            ParticleSystem Sub(ParticleSystem parent, string n, string mat, Vector3 pos, Vector3 euler, System.Action<ParticleSystem> setup)
             {
-                return Particles(fxRoot, n, "M_FX_SplashSheet", new Vector3(side * 0.44f, 0.26f, 0.06f), new Vector3(-74, side * 48f, 0), ps =>
+                var ps = Particles(fxRoot, n, mat, pos, euler, setup);
+                ps.transform.SetParent(parent.transform, true);   // children of Spray are simulated with it in still captures
+                return ps;
+            }
+            // 3D milk droplets flung from both crowns (real lit meshes, velocity-aligned, shrink before they vanish)
+            ParticleSystem Drops(string n, float side, uint seed)
+            {
+                var dir = Quaternion.LookRotation(new Vector3(side * 0.62f, 0.78f, -0.38f)).eulerAngles;
+                return Sub(fx.spray, n, "M_FX_Milk", new Vector3(side * 0.5f, 0.2f, 0.05f), dir, ps =>
                 {
-                    var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.2f, 0.34f); m.startSpeed = new ParticleSystem.MinMaxCurve(0.4f, 1.1f);
-                    m.startSize = new ParticleSystem.MinMaxCurve(0.7f, 1.05f); m.simulationSpace = ParticleSystemSimulationSpace.Local; m.maxParticles = 16;
-                    m.startRotation = new ParticleSystem.MinMaxCurve(-0.25f, 0.25f); m.gravityModifier = 0.4f;
-                    var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Cone; sh.angle = 20f; sh.radius = 0.12f;
-                    var sz = ps.sizeOverLifetime; sz.enabled = true; sz.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.EaseInOut(0, 0.55f, 1, 1.15f));
-                    var col = ps.colorOverLifetime; col.enabled = true;
-                    var g = new Gradient(); g.SetKeys(new[] { new GradientColorKey(Color.white, 0), new GradientColorKey(Color.white, 1) },
-                                                      new[] { new GradientAlphaKey(1f, 0), new GradientAlphaKey(1f, 0.78f), new GradientAlphaKey(0f, 1) });
-                    col.color = g;
-                    var e = ps.emission; e.rateOverTime = 0f;
-                    var r = ps.GetComponent<ParticleSystemRenderer>(); r.flip = new Vector3(0.5f, 0f, 0f); r.sortingFudge = -1f;
+                    var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.3f, 0.6f); m.startSpeed = new ParticleSystem.MinMaxCurve(1.3f, 2.8f);
+                    m.startSize = new ParticleSystem.MinMaxCurve(0.028f, 0.075f); m.gravityModifier = 1.3f; m.simulationSpace = ParticleSystemSimulationSpace.Local;
+                    m.maxParticles = 140; m.startColor = Color.white;
+                    var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Cone; sh.angle = 30f; sh.radius = 0.16f;
+                    var sz = ps.sizeOverLifetime; sz.enabled = true;
+                    sz.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, 0.7f), new Keyframe(0.15f, 1f), new Keyframe(0.75f, 1f), new Keyframe(1f, 0f)));
+                    var e = ps.emission; e.rateOverTime = 34f;
+                    MeshParticles(ps, dropMesh, true);
+                    Seed(ps, seed);
                 });
             }
-            fx.sheets = new[] { Sheet("SplashSheetL", -1f), Sheet("SplashSheetR", 1f) };
-            fx.foamTrail = Particles(fxRoot, "FoamTrail", "M_FX_Soft", new Vector3(0, 0.05f, -0.3f), new Vector3(-90, 0, 0), ps =>
+            var dropsL = Drops("MilkDropsL", -1f, 21);
+            var dropsR = Drops("MilkDropsR", 1f, 22);
+            // small soap bubbles around the splash (reference: clear little bubbles at the feet)
+            var splashBubbles = Sub(fx.spray, "SplashBubbles", "M_Bubble", new Vector3(0, 0.12f, 0.0f), new Vector3(-90, 0, 0), ps =>
             {
-                var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.25f, 0.45f); m.startSpeed = 0.2f;
-                m.startSize = new ParticleSystem.MinMaxCurve(0.3f, 0.6f); m.simulationSpace = ParticleSystemSimulationSpace.Local; m.maxParticles = 60;
-                m.startColor = new Color(1f, 1f, 1f, 0.8f);
-                var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Circle; sh.radius = 0.35f;
-                var sz = ps.sizeOverLifetime; sz.enabled = true; sz.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0, 0.6f, 1, 1.4f));
+                var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.5f, 1.0f); m.startSpeed = new ParticleSystem.MinMaxCurve(0.2f, 0.7f);
+                m.startSize = new ParticleSystem.MinMaxCurve(0.03f, 0.085f); m.gravityModifier = -0.05f; m.simulationSpace = ParticleSystemSimulationSpace.Local;
+                m.maxParticles = 40;
+                var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Box; sh.scale = new Vector3(1.5f, 0.9f, 0.2f);
+                var vel = ps.velocityOverLifetime; vel.enabled = true; vel.space = ParticleSystemSimulationSpace.Local;
+                vel.z = new ParticleSystem.MinMaxCurve(-0.4f, 0.1f); vel.x = new ParticleSystem.MinMaxCurve(0f, 0f); vel.y = new ParticleSystem.MinMaxCurve(0f, 0f);
+                var sz = ps.sizeOverLifetime; sz.enabled = true; sz.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, 0.5f), new Keyframe(0.25f, 1f), new Keyframe(0.9f, 1f), new Keyframe(1f, 0f)));
+                var e = ps.emission; e.rateOverTime = 16f;
+                MeshParticles(ps, bubbleMesh, false);
+                Seed(ps, 23);
+            });
+            // subtle speed lines streaming past the camera at the edges of the view (sense of speed)
+            var speedLines = Sub(fx.spray, "SpeedLines", "M_FX_SpeedLine", new Vector3(0, 1.1f, 7.5f), new Vector3(0, 180, 0), ps =>
+            {
+                var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.25f, 0.32f); m.startSpeed = new ParticleSystem.MinMaxCurve(26f, 32f);
+                m.startSize = new ParticleSystem.MinMaxCurve(0.02f, 0.045f); m.simulationSpace = ParticleSystemSimulationSpace.Local; m.maxParticles = 60;
+                m.startColor = new Color(1f, 1f, 1f, 0.28f);
+                var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Circle; sh.radius = 2.7f; sh.radiusThickness = 0.25f;
+                var e = ps.emission; e.rateOverTime = 30f;
+                var r = ps.GetComponent<ParticleSystemRenderer>(); r.renderMode = ParticleSystemRenderMode.Stretch; r.velocityScale = 0.06f; r.lengthScale = 3f;
+                Seed(ps, 24);
+            });
+            fx.extra = new[] { dropsL, dropsR, splashBubbles, speedLines };
+            fx.extraRates = new[] { 34f, 34f, 16f, 30f };
+            fx.sheets = new ParticleSystem[0];   // flat crown sprites replaced by the 3D crowns below
+
+            // lacy milk foam on the water around and behind the feet
+            fx.foamTrail = Particles(fxRoot, "FoamTrail", "M_FX_FoamLace", new Vector3(0, 0.05f, -0.15f), new Vector3(-90, 0, 0), ps =>
+            {
+                var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.35f, 0.6f); m.startSpeed = 0.2f;
+                m.startSize = new ParticleSystem.MinMaxCurve(0.55f, 1.05f); m.simulationSpace = ParticleSystemSimulationSpace.Local; m.maxParticles = 60;
+                m.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+                m.startColor = new Color(1f, 1f, 1f, 0.9f);
+                var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Circle; sh.radius = 0.5f;
+                var sz = ps.sizeOverLifetime; sz.enabled = true; sz.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0, 0.7f, 1, 1.35f));
                 var col = ps.colorOverLifetime; col.enabled = true;
-                var g = new Gradient(); g.SetKeys(new[] { new GradientColorKey(Color.white, 0), new GradientColorKey(Color.white, 1) }, new[] { new GradientAlphaKey(0.9f, 0), new GradientAlphaKey(0f, 1) });
+                var g = new Gradient(); g.SetKeys(new[] { new GradientColorKey(Color.white, 0), new GradientColorKey(Color.white, 1) }, new[] { new GradientAlphaKey(0.95f, 0), new GradientAlphaKey(0.8f, 0.5f), new GradientAlphaKey(0f, 1) });
                 col.color = g;
                 var r = ps.GetComponent<ParticleSystemRenderer>(); r.renderMode = ParticleSystemRenderMode.HorizontalBillboard;
                 var e = ps.emission; e.rateOverTime = 0f;
+                Seed(ps, 12);
             });
-            fx.crown = Particles(fxRoot, "Crown", "M_FX_Splash", new Vector3(0, 0.1f, 0), new Vector3(-90, 0, 0), ps =>
+            fx.trailRateAtBase = 20f;
+            // landing / boost burst: a ring of 3D milk drops
+            fx.crown = Particles(fxRoot, "Crown", "M_FX_Milk", new Vector3(0, 0.1f, 0), new Vector3(-90, 0, 0), ps =>
             {
-                var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.35f, 0.7f); m.startSpeed = new ParticleSystem.MinMaxCurve(3f, 5.5f);
-                m.startSize = new ParticleSystem.MinMaxCurve(0.12f, 0.3f); m.gravityModifier = 1.8f; m.simulationSpace = ParticleSystemSimulationSpace.Local; m.maxParticles = 120;
-                var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Cone; sh.angle = 40f; sh.radius = 0.5f;
+                var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.35f, 0.7f); m.startSpeed = new ParticleSystem.MinMaxCurve(2.5f, 4.5f);
+                m.startSize = new ParticleSystem.MinMaxCurve(0.04f, 0.1f); m.gravityModifier = 1.8f; m.simulationSpace = ParticleSystemSimulationSpace.Local; m.maxParticles = 120;
+                var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Cone; sh.angle = 45f; sh.radius = 0.5f;
+                var sz = ps.sizeOverLifetime; sz.enabled = true; sz.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(0.7f, 1f), new Keyframe(1f, 0f)));
                 var e = ps.emission; e.rateOverTime = 0f;
+                MeshParticles(ps, dropMesh, true);
+                Seed(ps, 13);
             });
             fx.speedStreaks = Particles(fxRoot, "SpeedStreaks", "M_FX_Streak", new Vector3(0, 1.0f, 6f), new Vector3(0, 180, 0), ps =>
             {
@@ -168,16 +334,96 @@ namespace BubbleWash.EditorTools
                 var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Sphere; sh.radius = 0.25f;
                 var e = ps.emission; e.rateOverTime = 0f;
             });
-            // ambient soap bubbles drifting in front of the mascot
-            Particles(fxRoot, "AmbientBubbles", "M_FX_Bubble", new Vector3(0, 2.2f, 9f), Vector3.zero, ps =>
+            // ambient soap bubbles drifting in front of the mascot (small sprites) ...
+            var ambient = Particles(fxRoot, "AmbientBubbles", "M_FX_Bubble", new Vector3(0, 2.2f, 9f), Vector3.zero, ps =>
             {
                 var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(3f, 5f); m.startSpeed = new ParticleSystem.MinMaxCurve(0.1f, 0.5f);
-                m.startSize = new ParticleSystem.MinMaxCurve(0.12f, 0.55f); m.simulationSpace = ParticleSystemSimulationSpace.World; m.maxParticles = 120;
+                m.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.3f); m.simulationSpace = ParticleSystemSimulationSpace.World; m.maxParticles = 120;
                 m.gravityModifier = -0.04f; m.prewarm = true;
                 var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Box; sh.scale = new Vector3(8f, 4f, 10f);
                 var e = ps.emission; e.rateOverTime = 18f;
+                Seed(ps, 31);
             });
+            // ... and big iridescent 3D bubbles beside the camera (children: simulated with AmbientBubbles in still captures)
+            foreach (var (n, side, seed) in new[] { ("NearBubblesL", -1f, 32u), ("NearBubblesR", 1f, 33u) })
+            {
+                var near = Particles(fxRoot, n, "M_Bubble", new Vector3(side * 1.75f, 1.75f, 0.6f), Vector3.zero, ps =>
+                {
+                    var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(4f, 6f); m.startSpeed = new ParticleSystem.MinMaxCurve(0.05f, 0.2f);
+                    m.startSize = new ParticleSystem.MinMaxCurve(0.18f, 0.55f); m.simulationSpace = ParticleSystemSimulationSpace.World; m.maxParticles = 12;
+                    m.gravityModifier = -0.01f;
+                    var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Box; sh.scale = new Vector3(1.3f, 1.6f, 6f);
+                    var e = ps.emission; e.rateOverTime = 1.1f;
+                    MeshParticles(ps, ModelParts("Props", "SM_Bubble").Select(p => p.mesh).FirstOrDefault() is Mesh bm ? PersistCopy(bm, save) : bubbleMesh, false);
+                    Seed(ps, seed);
+                });
+                near.transform.SetParent(ambient.transform, true);
+            }
+
+            BuildCrowns(fxRoot, runner, save);
+            if (InWaterFxPreview) RebuildEnvironmentFxPreview();
             return fx;
+        }
+
+        static void BuildCrowns(GameObject fxRoot, RunnerController runner, bool save)
+        {
+            var frames = new List<Mesh>();
+            for (int k = 0; k < 32; k++)
+            {
+                var parts = ModelParts("FX", $"SM_FX_Crown_{k:00}");
+                if (parts.Count == 0) break;
+                frames.Add(PersistCopy(parts[0].mesh, save));
+            }
+            if (frames.Count == 0) { Debug.LogWarning("[BWK] SM_FX_Crown frames missing - no 3D splash crowns"); return; }
+            var holder = Child(fxRoot, "Crowns");
+            var sc = holder.AddComponent<SplashCrowns>();
+            sc.runner = runner;
+            sc.frames = frames.ToArray();
+            var milk = Mat("M_FX_Milk");
+            int[] phase = { 0, frames.Count / 2 };
+            var crowns = new List<MeshFilter>();
+            var scales = new List<Vector3>();
+            int idx = 0;
+            foreach (float side in new[] { -1f, 1f })
+            {
+                var go = Child(holder, side < 0 ? "CrownL" : "CrownR");
+                go.transform.localPosition = new Vector3(side * CrownRootX, 0f, CrownRootZ);
+                // asset extends to -X (left); mirror for the right side
+                var s = new Vector3(-side * CrownScale, CrownScale, CrownScale);
+                go.transform.localScale = s;
+                var mf = go.AddComponent<MeshFilter>();
+                mf.sharedMesh = frames[phase[idx] % frames.Count];
+                var mr = go.AddComponent<MeshRenderer>();
+                mr.sharedMaterial = milk;
+                mr.shadowCastingMode = ShadowCastingMode.Off;
+                mr.receiveShadows = true;
+                crowns.Add(mf); scales.Add(s);
+                idx++;
+            }
+            sc.crowns = crowns.ToArray();
+            sc.baseScale = scales.ToArray();
+            sc.baseRotation = new[] { Quaternion.identity, Quaternion.identity };
+            sc.phase = phase;
+        }
+
+        static void Seed(ParticleSystem ps, uint seed)
+        {
+            ps.useAutoRandomSeed = false;
+            ps.randomSeed = seed;
+        }
+
+        static void MeshParticles(ParticleSystem ps, Mesh mesh, bool velocityAligned)
+        {
+            if (mesh == null) return;
+            var r = ps.GetComponent<ParticleSystemRenderer>();
+            r.renderMode = ParticleSystemRenderMode.Mesh;
+            r.mesh = mesh;
+            r.alignment = velocityAligned ? ParticleSystemRenderSpace.Velocity : ParticleSystemRenderSpace.Local;
+            r.SetActiveVertexStreams(new List<ParticleSystemVertexStream>
+            {
+                ParticleSystemVertexStream.Position, ParticleSystemVertexStream.Normal, ParticleSystemVertexStream.Tangent,
+                ParticleSystemVertexStream.Color, ParticleSystemVertexStream.UV
+            });
         }
 
         static ParticleSystem Particles(GameObject parent, string name, string mat, Vector3 pos, Vector3 euler, System.Action<ParticleSystem> setup)
@@ -197,20 +443,50 @@ namespace BubbleWash.EditorTools
             return ps;
         }
 
-        static void BuildDecorChevrons(GameObject env, float L)
+        // ==================================================================== decor chevrons
+        static void BuildDecorChevrons(GameObject env, float L) => BuildDecorChevrons(env, L, false);
+
+        static void BuildDecorChevrons(GameObject env, float L, bool preview)
         {
             var chevron = ModelParts("Props", "SM_Chevron");
             if (chevron.Count == 0) return;
             var holder = Child(env, "DecorChevrons");
-            var comb = new Combiner();
+            // skip the decor line where a centre-lane boost pad already lies on the water
+            var registry = Object.FindFirstObjectByType<TrackItemRegistry>();
+            var boosts = registry != null
+                ? registry.items.Where(it => it != null && it.kind == TrackItemKind.Boost && Mathf.Abs(it.lateral) < 0.6f).Select(it => it.distance).ToList()
+                : new List<float>();
+            var comb = new FxCombiner();
             int chunk = 0; float chunkStart = 0;
-            for (float d = 6f; d < L - 6f; d += 2.4f)
+            for (float d = ChevronStart; d < L - 6f; d += ChevronSpacing)
             {
+                if (boosts.Any(b => Mathf.Abs(b - d) < 1.4f)) continue;
                 var f = track.Evaluate(d);
-                comb.Add(chevron, Matrix4x4.TRS(f.Point(0, 0.03f), f.Rotation, new Vector3(0.85f, 1f, 0.85f)));
-                if (d - chunkStart > ChunkLength) { comb.Flush(holder, $"Chevrons_{chunk++:00}", false); chunkStart = d; }
+                comb.Add(chevron, Matrix4x4.TRS(f.Point(0, 0.03f), f.Rotation, new Vector3(ChevronScale, 1f, ChevronScale)));
+                if (d - chunkStart > ChunkLength) { comb.Flush(holder, $"Chevrons_{chunk++:00}", !preview); chunkStart = d; }
             }
-            comb.Flush(holder, $"Chevrons_{chunk:00}", false);
+            comb.Flush(holder, $"Chevrons_{chunk:00}", !preview);
+        }
+
+        /// <summary>
+        /// Water/FX agent preview only (-bwkOut .../agents/waterfx): rebuild this domain's environment pieces in memory so
+        /// placement changes can be judged without the lead's full build. Never saved; never runs in other agents' previews.
+        /// </summary>
+        static void RebuildEnvironmentFxPreview()
+        {
+            var root = GameObject.Find("Level01_RainbowRush");
+            var envT = root != null ? root.transform.Find("Environment") : null;
+            if (envT == null || track == null) return;
+            foreach (var n in new[] { "Foam", "DecorChevrons", "FloatingBubbles" })
+            {
+                var t = envT.Find(n);
+                if (t != null) Object.DestroyImmediate(t.gameObject);
+            }
+            float L = track.Length;
+            BuildFoam(envT.gameObject, L, true);
+            BuildFloatingBubbles(envT.gameObject, L, true);
+            BuildDecorChevrons(envT.gameObject, L, true);
+            Debug.Log("[BWK] waterfx preview: foam, floating bubbles and decor chevrons rebuilt in memory");
         }
     }
 }

@@ -38,15 +38,15 @@ namespace BubbleWash.EditorTools
             // Ambient: lavender from above, pink-violet around the horizon, cool lavender-blue bounce from the bright water
             // (the "ground" colour is what the tunnel ceiling receives).
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.62f, 0.46f, 1.0f);
-            RenderSettings.ambientEquatorColor = new Color(0.92f, 0.5f, 0.86f);
-            RenderSettings.ambientGroundColor = new Color(0.52f, 0.5f, 1.0f);
-            RenderSettings.ambientIntensity = 0.95f;
-            // Aerial perspective: luminous lavender haze, clear near the mascot, ~35 % at 30 m, ~85 % at 60 m (exp2).
+            RenderSettings.ambientSkyColor = new Color(0.58f, 0.4f, 0.98f);
+            RenderSettings.ambientEquatorColor = new Color(0.9f, 0.44f, 0.82f);
+            RenderSettings.ambientGroundColor = new Color(0.4f, 0.4f, 0.98f);
+            RenderSettings.ambientIntensity = 0.85f;
+            // Aerial perspective: luminous lavender haze, clear near the mascot, ~23 % at 30 m, ~65 % at 60 m (exp2).
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = new Color(0.84f, 0.72f, 1.0f);
-            RenderSettings.fogDensity = 0.021f;
+            RenderSettings.fogColor = new Color(0.76f, 0.6f, 1.0f);
+            RenderSettings.fogDensity = 0.016f;
             RenderSettings.skybox = null;
             RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
             RenderSettings.reflectionIntensity = 1f;
@@ -85,14 +85,15 @@ namespace BubbleWash.EditorTools
             vol.isGlobal = true;
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
             AssetDatabase.CreateAsset(profile, profilePath ?? $"{GenDir}/PostFX_Level01.asset");
-            // Bloom: HDR bulbs (7.5) and neon (4-4.6) glow strongly, the white foam (~1) only a little.
+            // Bloom: very hot HDR bulbs (~20) and neon tubes (~9) carry their saturated hue into wide halos while the
+            // tonemapper clips their centres white-hot; the white foam (~1) only glows a little.
             var bloom = profile.Add<Bloom>(true);
-            bloom.threshold.Override(0.92f); bloom.intensity.Override(1.35f); bloom.scatter.Override(0.8f);
-            bloom.tint.Override(new Color(1f, 0.9f, 0.94f)); bloom.highQualityFiltering.Override(true);
+            bloom.threshold.Override(1.0f); bloom.intensity.Override(1.1f); bloom.scatter.Override(0.78f);
+            bloom.tint.Override(new Color(1f, 0.92f, 0.95f)); bloom.highQualityFiltering.Override(true);
             bloom.maxIterations.Override(8);
             var tm = profile.Add<Tonemapping>(true); tm.mode.Override(TonemappingMode.Neutral);
             var ca = profile.Add<ColorAdjustments>(true);
-            ca.saturation.Override(26f); ca.contrast.Override(14f); ca.postExposure.Override(0.12f);
+            ca.saturation.Override(24f); ca.contrast.Override(18f); ca.postExposure.Override(0f);
             // warm highlights (gold, bulbs, skin of the light) vs violet shadows
             var st = profile.Add<SplitToning>(true);
             st.shadows.Override(new Color(0.44f, 0.38f, 0.66f)); st.highlights.Override(new Color(0.66f, 0.56f, 0.47f)); st.balance.Override(-10f);
@@ -136,8 +137,8 @@ namespace BubbleWash.EditorTools
                 var l = go.AddComponent<Light>();
                 l.type = LightType.Point;
                 l.color = new Color(1f, 0.66f, 0.3f);
-                l.intensity = 7f;
-                l.range = 8.5f;
+                l.intensity = 3.5f;
+                l.range = 8f;
                 l.shadows = LightShadows.None;
             }
         }
@@ -153,19 +154,29 @@ namespace BubbleWash.EditorTools
 
         static void BakeProbes()
         {
-            foreach (var probe in Object.FindObjectsByType<ReflectionProbe>(FindObjectsSortMode.None))
+            // Bake WITHOUT distance fog: the metallic drum wall, water and gold must reflect the real violet tunnel, gold
+            // rings and warm bulbs, not a cubemap filled with pale fog colour (that washed the whole frame out).
+            bool fog = RenderSettings.fog;
+            RenderSettings.fog = false;
+            try
             {
-                string path = $"{GenDir}/{probe.name}.exr";
-                try
-                {
-                    if (Lightmapping.BakeReflectionProbe(probe, path))
+                // two passes: the second bake sees the first pass's reflections on the metal (richer inter-reflections)
+                for (int pass = 0; pass < 2; pass++)
+                    foreach (var probe in Object.FindObjectsByType<ReflectionProbe>(FindObjectsSortMode.None))
                     {
-                        AssetDatabase.ImportAsset(path);
-                        probe.customBakedTexture = AssetDatabase.LoadAssetAtPath<Texture>(path);
+                        string path = $"{GenDir}/{probe.name}.exr";
+                        try
+                        {
+                            if (Lightmapping.BakeReflectionProbe(probe, path))
+                            {
+                                AssetDatabase.ImportAsset(path);
+                                probe.customBakedTexture = AssetDatabase.LoadAssetAtPath<Texture>(path);
+                            }
+                        }
+                        catch (System.Exception e) { Debug.LogWarning($"[BWK] probe bake failed for {probe.name}: {e.Message}"); }
                     }
-                }
-                catch (System.Exception e) { Debug.LogWarning($"[BWK] probe bake failed for {probe.name}: {e.Message}"); }
             }
+            finally { RenderSettings.fog = fog; }
         }
 
         /// <summary>
@@ -226,10 +237,15 @@ namespace BubbleWash.EditorTools
                 comb.Add(recolored, Matrix4x4.TRS(pos, rot, Vector3.one * scale));
                 if (quadMesh != null && glowMats[ci] != null)
                 {
-                    // glow card: same orientation, a little behind the tubes (toward the wall), ~2.3x the star size
-                    var glowPos = pos - facing * 0.16f;
+                    // glow card ~2.3x the star size, just behind the tubes; tilted only half as much toward the camera as
+                    // the star so its soft far edge stays in front of the curved drum wall (no visible intersection)
+                    Vector3 gFacing = (-radial * 0.8f - f.forward * tilt * 0.45f).normalized;
+                    Vector3 gUp = Vector3.ProjectOnPlane(rot * Vector3.up, gFacing);
+                    if (gUp.sqrMagnitude < 1e-4f) gUp = Vector3.ProjectOnPlane(f.forward, gFacing);
+                    var gRot = Quaternion.LookRotation(gFacing, gUp.normalized);
+                    var glowPos = pos - gFacing * 0.12f;
                     glowComb.Add(new List<Part> { new Part(quadMesh, new[] { glowMats[ci] }, Matrix4x4.identity) },
-                                 Matrix4x4.TRS(glowPos, rot, new Vector3(2.3f, 2.3f, 1f) * scale));
+                                 Matrix4x4.TRS(glowPos, gRot, new Vector3(2.3f, 2.3f, 1f) * scale));
                 }
                 count++;
                 if (d - chunkStart > ChunkLength)

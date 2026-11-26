@@ -13,10 +13,47 @@ namespace BubbleWash.EditorTools
         {
             Mat("M_DrumWall", "BWK/DrumWall", m =>
             {
-                // reference 3.75-15 s: larger, sparser round perforations (~25 cm) in a violet-blue metallic drum
-                C(m, "_BaseColor", "#7A5CC9"); C(m, "_HighlightColor", "#B7A6F2"); C(m, "_HoleColor", "#140C2C");
-                C(m, "_HoleGlow", "#5B3FA0"); F(m, "_Circumference", 26.4f); F(m, "_HoleSpacing", 0.6f);
-                F(m, "_HoleRadius", 0.19f); F(m, "_HoleStretch", 1.75f); F(m, "_Glow", 0.16f); F(m, "_Smoothness", 0.8f);
+                // reference f_003.00s / key 5.0 s: glossy lavender-violet drum sections between the rims, rows of slots
+                // elongated around the drum, dark recessed interiors, a few holes lit from behind, grooves + seams, sparkles.
+                // _BandOffset / _BandLength are rewritten by SceneBuilder.BuildRings to match the placed rims.
+                C(m, "_BaseColor", "#7E62CE"); C(m, "_HighlightColor", "#BBA6F4"); C(m, "_HoleColor", "#120A2A");
+                C(m, "_HoleGlow", "#6A48C0"); F(m, "_Circumference", 26.39f); F(m, "_VTile", 4f);
+                F(m, "_Pattern", 1f); F(m, "_BandLength", 8.5f / 3f); F(m, "_BandOffset", 65f);
+                F(m, "_PlainBack", 0.5f); F(m, "_PlainFront", 0.4f); F(m, "_Rows", 4f); F(m, "_SlotPitch", 0.5f);
+                F(m, "_SlotLength", 0.34f); F(m, "_SlotWidth", 0.12f); F(m, "_SlotVariation", 0.45f); F(m, "_LipWidth", 0.035f);
+                F(m, "_Bevel", 0.6f); F(m, "_GlowChance", 0.06f);
+                m.SetColor("_GlowColorA", new Color(1.7f, 0.85f, 1.6f)); m.SetColor("_GlowColorB", new Color(0.75f, 1.35f, 1.9f));
+                C(m, "_SeamColor", "#3A2472"); C(m, "_SheenColor", "#D8C6FF"); F(m, "_SheenStrength", 0.35f);
+                F(m, "_Sparkle", 0.9f); F(m, "_CeilingLight", 0.25f); F(m, "_Glow", 0.16f);
+                F(m, "_Metallic", 0.7f); F(m, "_Smoothness", 0.8f); F(m, "_HoleBand", 1f);
+            });
+            // polished lavender drum lips between the gold rings (SM_DrumRim): the stylised BWK/Gold environment shading
+            // with a lavender palette (pink-white highlights, deep violet undersides) - glossy metal that never goes dark
+            Mat("M_DrumRim", "BWK/Gold", m =>
+            {
+                C(m, "_HighColor", "#FFF0FF"); C(m, "_MidColor", "#A98BEB"); C(m, "_LowColor", "#3B2188");
+                C(m, "_RimColor", "#FFB8F2"); C(m, "_BandColor", "#F1E0FF");
+                F(m, "_Brightness", 1.0f); F(m, "_Emission", 0.08f); F(m, "_Contrast", 1.4f); F(m, "_ViewGradient", 1f);
+                F(m, "_EnvReflect", 0.5f); F(m, "_EnvTint", 0.4f); F(m, "_EnvRoughness", 0.25f);
+                F(m, "_SpecPower", 90f); F(m, "_SpecStrength", 1.6f); F(m, "_GlintStrength", 1.2f);
+                F(m, "_Sparkle", 0.6f); F(m, "_SparkleScale", 16f); F(m, "_FogAmount", 0.75f);
+                F(m, "_HighlightSize", 8f); F(m, "_BandSharpness", 18f); F(m, "_LightInfluence", 0.35f);
+            });
+            // small white-lavender LED studs along the drum lips (reference: sparkling dots on the lavender rims)
+            Mat("M_RimLight", "BWK/Emissive", m =>
+            {
+                C(m, "_Color", "#E9D8FF"); F(m, "_Intensity", 3.2f); F(m, "_CoreWhite", 0.8f); F(m, "_CorePower", 3f);
+                F(m, "_HaloBoost", 0.4f); F(m, "_EdgeSaturate", 0.2f); F(m, "_Chase", 0f); F(m, "_PulseAmount", 0.2f);
+                F(m, "_PulseSpeed", 0.8f); F(m, "_FogAmount", 0.25f);
+            });
+            // inside the side chamber windows: bright silver-lavender washing drum with small round perforations
+            Mat("M_ChamberDrum", "BWK/DrumWall", m =>
+            {
+                C(m, "_BaseColor", "#B6A6EA"); C(m, "_HighlightColor", "#E8DFFF"); C(m, "_HoleColor", "#2A1A55");
+                C(m, "_HoleGlow", "#B48CFF"); F(m, "_Pattern", 0f); F(m, "_Circumference", 26.4f); F(m, "_VTile", 4f);
+                F(m, "_HoleSpacing", 0.22f); F(m, "_HoleRadius", 0.22f); F(m, "_HoleStretch", 1f); F(m, "_PanelLength", 1000f);
+                F(m, "_Glow", 0.28f); F(m, "_Metallic", 0.55f); F(m, "_Smoothness", 0.8f); F(m, "_HoleBand", 1f);
+                F(m, "_SheenStrength", 0.25f); F(m, "_Sparkle", 0.4f);
             });
             Mat("M_DrumWallHall", "BWK/DrumWall", m =>
             {
@@ -36,6 +73,8 @@ namespace BubbleWash.EditorTools
             Emissive("M_ButtonPink", "#FF5FD0", 2.2f);
             Mat("M_Glass", "BWK/Glass", m => { C(m, "_Tint", "#B9D8FF"); F(m, "_Alpha", 0.06f); F(m, "_Glow", 0.06f); }, (int)RenderQueue.Transparent);
             Mat("M_PipeWater", "BWK/FlowGlow", m => { F(m, "_Mode", 0); C(m, "_ColorA", "#1FD2FF"); C(m, "_ColorB", "#FF3FC8"); F(m, "_Intensity", 1.6f); F(m, "_Speed", 1.2f); });
+            // glowing pink liquid in the glass risers beside the side chambers (reference key 7.5 s)
+            Mat("M_PipeWaterPink", "BWK/FlowGlow", m => { F(m, "_Mode", 0); C(m, "_ColorA", "#FF3FB8"); C(m, "_ColorB", "#FFB3EE"); F(m, "_Intensity", 1.7f); F(m, "_Speed", 0.9f); F(m, "_Scale", 2.5f); });
             Mat("M_ChamberSwirl", "BWK/FlowGlow", m => { F(m, "_Mode", 1); C(m, "_ColorA", "#9FE8FF"); F(m, "_Intensity", 1.35f); F(m, "_Speed", 1f); });
             Mat("M_PortalRays", "BWK/FlowGlow", m =>
             {

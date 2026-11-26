@@ -21,6 +21,9 @@ namespace BubbleWash
         public float sprayRateAtBase = 46f;
         public float sheetRateAtBase = 11f;
         public float trailRateAtBase = 14f;
+        [Tooltip("Extra speed-scaled emitters (3D milk droplets, splash bubbles, speed lines); rate at base speed per entry.")]
+        public ParticleSystem[] extra;
+        public float[] extraRates;
 
         void OnEnable()
         {
@@ -89,6 +92,14 @@ namespace BubbleWash
                     if (sh == null) continue;
                     var em = sh.emission;
                     em.rateOverTime = sliding ? sheetRateAtBase * speedK : 0f;
+                }
+            if (extra != null)
+                for (int i = 0; i < extra.Length; i++)
+                {
+                    if (extra[i] == null) continue;
+                    var em = extra[i].emission;
+                    float baseRate = extraRates != null && i < extraRates.Length ? extraRates[i] : 0f;
+                    em.rateOverTime = sliding ? baseRate * speedK : 0f;
                 }
             if (speedStreaks && !runner.Boosting && speedStreaks.isPlaying) speedStreaks.Stop();
         }

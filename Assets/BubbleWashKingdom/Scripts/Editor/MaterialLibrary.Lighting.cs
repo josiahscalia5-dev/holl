@@ -28,13 +28,21 @@ namespace BubbleWash.EditorTools
                 brightness: 1.05f, glow: 0.3f, contrast: 1.6f, viewGradient: 1f, env: 0.45f, envTint: 0.85f, envRough: 0.08f,
                 specPower: 240f, specStrength: 3f, glints: 3f, sparkle: 3.2f, fog: 0.6f, highlightSize: 14f, sparkleScale: 9f);
 
-            // warm golden marquee bulbs: white-hot core, saturated orange-gold body -> bloom paints the orange halo
-            EmissiveLook("M_Bulb", "#FFA431", 7.5f, core: 0.9f, corePower: 5f, halo: 0.35f, edgeSat: 0.15f, chase: 1f, chaseMin: 0.72f, pulse: 0.06f, fog: 0.03f);
-            // saturated neon tubes with white-hot centre lines (bloom gives the soft coloured glow)
-            EmissiveLook("M_Neon", "#19E3FF", 4.4f, core: 0.7f, corePower: 3f, halo: 0.55f, edgeSat: 0.35f, fog: 0.06f, pulse: 0.08f);
-            EmissiveLook("M_Neon_Cyan", "#19E3FF", 4.4f, core: 0.7f, corePower: 3f, halo: 0.55f, edgeSat: 0.35f, fog: 0.06f, pulse: 0.08f);
-            EmissiveLook("M_Neon_Pink", "#FF3CC8", 4.6f, core: 0.62f, corePower: 3f, halo: 0.55f, edgeSat: 0.35f, fog: 0.06f, pulse: 0.08f);
-            EmissiveLook("M_Neon_Yellow", "#FFD21F", 4.0f, core: 0.62f, corePower: 3f, halo: 0.5f, edgeSat: 0.3f, fog: 0.06f, pulse: 0.08f);
+            // Warm golden marquee bulbs: a very hot, saturated orange-gold source. The tonemapper clips the centre to a
+            // white-yellow hot spot while bloom carries the orange-gold hue into a soft halo (reference look).
+            EmissiveLook("M_Bulb", "#FF9A26", 20f, core: 0.12f, corePower: 8f, halo: 0.2f, edgeSat: 0.15f, chase: 1f, chaseMin: 0.75f, pulse: 0.05f, fog: 0.03f);
+            // end-of-tunnel portal disc (BuildPortal core): radiant warm white-gold, bright but not a screen-filling flare
+            EmissiveLook("M_PortalCore", "#FFD27A", 3.2f, core: 0.5f, corePower: 2f, halo: 0.3f, edgeSat: 0f, pulse: 0.06f, fog: 0.05f);
+            // Saturated neon tubes: hot enough for wide coloured bloom, with a thin whiter centre line.
+            EmissiveLook("M_Neon", "#19E3FF", 9f, core: 0.25f, corePower: 5f, halo: 0.4f, edgeSat: 0.3f, fog: 0.06f, pulse: 0.08f);
+            EmissiveLook("M_Neon_Cyan", "#19E3FF", 9f, core: 0.25f, corePower: 5f, halo: 0.4f, edgeSat: 0.3f, fog: 0.06f, pulse: 0.08f);
+            EmissiveLook("M_Neon_Pink", "#FF3CC8", 9.5f, core: 0.22f, corePower: 5f, halo: 0.4f, edgeSat: 0.3f, fog: 0.06f, pulse: 0.08f);
+            EmissiveLook("M_Neon_Yellow", "#FFC81A", 8f, core: 0.2f, corePower: 5f, halo: 0.4f, edgeSat: 0.3f, fog: 0.06f, pulse: 0.08f);
+
+            // soft coloured glow cards behind every neon star (additive BWK/LightBlob): the star's light spilling over the wall
+            StarGlow("M_StarGlow_Yellow", "#FFAE1A", 0.6f);
+            StarGlow("M_StarGlow_Cyan", "#14C6FF", 0.62f);
+            StarGlow("M_StarGlow_Pink", "#FF2EB2", 0.62f);
 
             // soft violet contact shadow under the mascot (multiply card, BWK/LightBlob)
             Mat("M_ContactShadow", "BWK/LightBlob", m =>
@@ -42,6 +50,15 @@ namespace BubbleWash.EditorTools
                 C(m, "_Color", "#3C1E6E"); F(m, "_Strength", 0.72f); F(m, "_Softness", 0.85f); F(m, "_Core", 1.3f);
                 F(m, "_Mode", 0f); F(m, "_SrcBlend", (float)BlendMode.DstColor); F(m, "_DstBlend", (float)BlendMode.Zero);
             }, (int)RenderQueue.Transparent - 20);
+        }
+
+        static void StarGlow(string name, string hex, float strength)
+        {
+            Mat(name, "BWK/LightBlob", m =>
+            {
+                C(m, "_Color", hex); F(m, "_Strength", strength); F(m, "_Softness", 1f); F(m, "_Core", 2.1f);
+                F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
+            }, (int)RenderQueue.Transparent - 10);
         }
 
         static void GoldLook(string name, string high, string mid, string low, string rim, string band, float brightness, float glow,

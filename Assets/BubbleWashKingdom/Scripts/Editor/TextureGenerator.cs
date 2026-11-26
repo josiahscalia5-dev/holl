@@ -20,6 +20,7 @@ namespace BubbleWash.EditorTools
             Save("T_Sparkle", Sparkle(128), TextureWrapMode.Clamp, true, true);
             Save("T_Bubble", Bubble(128), TextureWrapMode.Clamp, true, true);
             Save("T_Streak", Streak(32, 256), TextureWrapMode.Clamp, true, true);
+            Save("T_FoamLace", FoamLace(256, 17), TextureWrapMode.Clamp, true, true);
             AssetDatabase.Refresh();
             Debug.Log("[BWK] Textures generated.");
         }
@@ -149,6 +150,23 @@ namespace BubbleWash.EditorTools
             });
         }
 
+        static float SStep(float a, float b, float x)
+        {
+            float t = Mathf.Clamp01((x - a) / (b - a));
+            return t * t * (3f - 2f * t);
+        }
+
+        static float RoundRect(Vector2 p, Vector2 c, Vector2 half, float soft)
+        {
+            Vector2 d = new Vector2(Mathf.Abs(p.x - c.x) - half.x, Mathf.Abs(p.y - c.y) - half.y);
+            float outside = new Vector2(Mathf.Max(d.x, 0f), Mathf.Max(d.y, 0f)).magnitude + Mathf.Min(Mathf.Max(d.x, d.y), 0f);
+            return SStep(soft, -soft * 0.5f, outside);
+        }
+
+        /// <summary>
+        /// Soap bubble sprite (reference f_003.00s): almost clear centre, thin bright rim, thin-film colour patches
+        /// (pink / cyan / yellow) strongest near the rim, soft white studio-window highlights upper left + lower right.
+        /// </summary>
         static Texture2D Bubble(int size)
         {
             var tex = new Texture2D(size, size, TextureFormat.RGBA32, true);
@@ -158,13 +176,63 @@ namespace BubbleWash.EditorTools
                     float u = (x + 0.5f) / size * 2f - 1f, v = (y + 0.5f) / size * 2f - 1f;
                     float r = Mathf.Sqrt(u * u + v * v);
                     if (r > 1f) { tex.SetPixel(x, y, Color.clear); continue; }
-                    float rim = Mathf.Pow(r, 6f);
                     float ang = Mathf.Atan2(v, u);
-                    Color film = Color.HSVToRGB(Mathf.Repeat(ang / (2f * Mathf.PI) + r * 0.6f, 1f), 0.55f, 1f);
-                    float hl = Mathf.Pow(Mathf.Clamp01(1f - Vector2.Distance(new Vector2(u, v), new Vector2(-0.38f, 0.42f)) * 3.2f), 2f);
-                    float aa = Mathf.SmoothStep(0f, 1f, (1f - r) * size * 0.25f);
-                    Color c = Color.Lerp(film, Color.white, hl);
-                    tex.SetPixel(x, y, new Color(c.r, c.g, c.b, Mathf.Clamp01((0.08f + rim * 0.85f + hl) * aa)));
+                    float rim = Mathf.Pow(r, 7f);
+                    float patch = SStep(0.2f, 0.9f, 0.5f + 0.5f * Mathf.Sin(ang * 3f + r * 5f) * Mathf.Cos(ang * 2f - 1.3f));
+                    Color film = Color.HSVToRGB(Mathf.Repeat(ang / (2f * Mathf.PI) * 1.3f + r * 1.2f + 0.15f * Mathf.Sin(ang * 3f), 1f), 0.6f, 1f);
+                    float filmVis = Mathf.Clamp01(rim * 1.1f + patch * 0.22f * r);
+                    var p = new Vector2(u, v);
+                    float win = RoundRect(p, new Vector2(-0.4f, 0.42f), new Vector2(0.17f, 0.11f), 0.08f)
+                              + RoundRect(p, new Vector2(-0.16f, 0.52f), new Vector2(0.05f, 0.07f), 0.05f) * 0.8f
+                              + RoundRect(p, new Vector2(0.44f, -0.38f), new Vector2(0.1f, 0.05f), 0.06f) * 0.6f;
+                    win = Mathf.Clamp01(win);
+                    float edge = SStep(0.9f, 0.985f, r) * (1f - SStep(0.985f, 1f, r) * 0.6f);
+                    float aa = Mathf.Clamp01((1f - r) * size * 0.5f);
+                    Color c = Color.Lerp(Color.Lerp(film, Color.white, edge * 0.6f), Color.white, win);
+                    float a = Mathf.Clamp01(0.025f + filmVis * 0.75f + edge * 0.5f + win * 0.95f) * aa;
+                    tex.SetPixel(x, y, new Color(c.r, c.g, c.b, a));
+                }
+            tex.Apply();
+            return tex;
+        }
+
+        /// <summary>
+        /// Lacy milk foam lying on the water around the splash (reference f_003.00s): thick white Voronoi cell borders with
+        /// open (transparent) cells and small bubbles, faint blue in the thin parts, faded to nothing toward the sprite edge.
+        /// </summary>
+        static Texture2D FoamLace(int size, int seed)
+        {
+            var rng = new System.Random(seed);
+            var pts = new Vector2[34];
+            for (int i = 0; i < pts.Length; i++) pts[i] = new Vector2((float)rng.NextDouble() * 2.2f - 1.1f, (float)rng.NextDouble() * 2.2f - 1.1f);
+            var bubbles = new (Vector2 c, float r)[18];
+            for (int i = 0; i < bubbles.Length; i++)
+                bubbles[i] = (new Vector2((float)rng.NextDouble() * 1.6f - 0.8f, (float)rng.NextDouble() * 1.6f - 0.8f), 0.025f + (float)rng.NextDouble() * 0.045f);
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, true);
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    var p = new Vector2((x + 0.5f) / size * 2f - 1f, (y + 0.5f) / size * 2f - 1f);
+                    float d1 = 9f, d2 = 9f;
+                    foreach (var q in pts)
+                    {
+                        float d = (p - q).magnitude;
+                        if (d < d1) { d2 = d1; d1 = d; }
+                        else if (d < d2) d2 = d;
+                    }
+                    float edge = d2 - d1;
+                    float wob = 0.5f + 0.5f * Mathf.Sin(p.x * 23f + Mathf.Sin(p.y * 17f) * 2f);
+                    float lace = 1f - SStep(0.03f + wob * 0.03f, 0.07f + wob * 0.04f, edge);
+                    float ring = 0f;
+                    foreach (var b in bubbles)
+                    {
+                        float d = (p - b.c).magnitude;
+                        ring = Mathf.Max(ring, SStep(b.r * 0.55f, b.r * 0.8f, d) * (1f - SStep(b.r, b.r * 1.25f, d)));
+                    }
+                    float body = Mathf.Max(lace, ring);
+                    float mask = SStep(1f, 0.55f, p.magnitude);
+                    Color c = Color.Lerp(new Color(0.8f, 0.9f, 1f), Color.white, SStep(0.3f, 0.9f, body));
+                    tex.SetPixel(x, y, new Color(c.r, c.g, c.b, Mathf.Clamp01(body * mask * 1.05f)));
                 }
             tex.Apply();
             return tex;

@@ -29,7 +29,9 @@ Material:
     - _ChaseMin: 0.45
     - _ChaseScale: 1.6
     - _ChaseSpeed: 1.5
+    - _CorePower: 4
     - _CoreWhite: 0.45
+    - _EdgeSaturate: 0
     - _FogAmount: 0.35
     - _HaloBoost: 0.6
     - _Intensity: 2.2

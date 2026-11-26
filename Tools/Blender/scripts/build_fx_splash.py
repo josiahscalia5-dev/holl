@@ -90,47 +90,57 @@ def build_crown_balls(tau):
     rng = random.Random(SEED)
     B = Balls()
     two_pi_t = 2.0 * math.pi * tau
-
-    # --- vertical lace strands (fixed structure, periodic sway / breathing)
-    ns = 10
-    strands = []
-    for i in range(ns):
-        s0 = (i + 0.5) / ns + rng.uniform(-0.025, 0.025)
-        ph = rng.uniform(0, 2 * math.pi)
-        thick = rng.uniform(0.85, 1.2)
-        top = rng.uniform(0.82, 1.0)
-        strands.append((s0, ph, thick, top))
-    for (s0, ph, thick, top) in strands:
-        fade = smoothstep(-0.02, 0.07, s0) * smoothstep(1.02, 0.86, s0)
-        pts, rad = [], []
-        n = 12
-        for k in range(n + 1):
-            v = k / n * top
-            s = s0 + 0.03 * math.sin(v * 3.1 + ph + two_pi_t) + 0.015 * math.sin(two_pi_t * 2 + ph)
-            sway = 0.025 * math.sin(two_pi_t + ph + v * 2.0)
-            pts.append(wall(s, v, sway))
-            rad.append((0.05 - 0.018 * v) * thick * fade)
-        B.chain(pts, rad)
-
-    # --- horizontal lace: thick base rim on the water, gated mid strand and top rim -> enclosed holes
-    def rim(vfun, rfun, n=48):
-        pts, rad = [], []
-        for k in range(n + 1):
-            s = k / n
-            pts.append(wall(s, vfun(s), 0.02 * math.sin(two_pi_t + s * 9.0)))
-            rad.append(rfun(s))
-        B.chain(pts, rad)
-
-    gate_ph = [rng.uniform(0, 6.28) for _ in range(4)]
-
-    def gate(s, j, lo=0.45, hi=0.75):
-        g = 0.5 + 0.5 * math.sin(s * (11.0 + j * 3.0) + gate_ph[j] + 0.6 * math.sin(two_pi_t + j))
-        return smoothstep(lo, hi, g)
-
     taper = lambda s: smoothstep(-0.02, 0.06, s) * smoothstep(1.03, 0.85, s)  # noqa: E731
-    rim(lambda s: 0.02, lambda s: 0.062 * taper(s) + 0.01)
-    rim(lambda s: 0.42 + 0.1 * math.sin(s * 7.0 + gate_ph[1] + two_pi_t), lambda s: 0.034 * gate(s, 0) * taper(s))
-    rim(lambda s: 0.86 + 0.06 * math.sin(s * 9.0 + gate_ph[2] - two_pi_t), lambda s: 0.038 * gate(s, 2, 0.35, 0.65) * taper(s))
+    SLEN = 1.1                                   # metres of wall per unit s
+
+    # --- lace holes (metric wall coordinates S along, V up): breathing radii, slowly drifting centres
+    holes = []
+    for _ in range(15):
+        S = rng.uniform(0.06, 1.0) * SLEN
+        vf = rng.uniform(0.25, 0.95)
+        rad = rng.uniform(0.022, 0.07)
+        ph = rng.uniform(0, 2 * math.pi)
+        holes.append((S, vf, rad, ph))
+
+    def in_hole(S, V, h):
+        for (hs, vf, rad, ph) in holes:
+            cs = hs + 0.03 * math.sin(two_pi_t + ph)
+            cv = vf * h + 0.02 * math.cos(two_pi_t + ph)
+            r = rad * (0.8 + 0.25 * math.sin(two_pi_t + ph * 1.7))
+            if (S - cs) ** 2 + (V - cv) ** 2 < r * r:
+                return True
+        return False
+
+    rim_ph = rng.uniform(0, 6.28)
+
+    def top_v(s):
+        return 1.0 + 0.1 * math.sin(s * 17.0 + rim_ph + two_pi_t) + 0.05 * math.sin(s * 37.0 - two_pi_t)
+
+    # --- continuous milky sheet (dense metaball grid on the wall surface) with round lace holes
+    step = 0.03
+    ncol = int(SLEN / step)
+    for c in range(ncol + 1):
+        s = c / ncol
+        h = height(s)
+        tv = top_v(s)
+        nrow = max(2, int(h * tv / step))
+        sway = 0.025 * math.sin(two_pi_t + s * 6.0)
+        for k in range(nrow + 1):
+            v = k / nrow * tv
+            V = v * h
+            if k > 0 and in_hole(s * SLEN, V, h):
+                continue
+            r = (0.03 - 0.006 * v) * (0.35 + 0.65 * taper(s)) + 0.004
+            B.ball(wall(s, v, sway), r)
+        # rounded thicker rim along the top edge (classic crown lip)
+        rr = 0.034 * taper(s) * (0.8 + 0.2 * math.sin(s * 23.0 + two_pi_t))
+        if not in_hole(s * SLEN, tv * h, h):
+            B.ball(wall(s, tv, sway), rr)
+
+    # --- thick base where the sheet leaves the water
+    for k in range(40):
+        s = k / 39
+        B.ball(wall(s, 0.0, 0.0) + Vector((0.0, 0.0, 0.01)), 0.045 * taper(s) + 0.01)
 
     # --- foam skirt where the sheet meets the water (flattened blobs along the root, both sides of the wall)
     for k in range(22):
@@ -151,7 +161,7 @@ def build_crown_balls(tau):
         r_tip = rng.uniform(0.034, 0.046)
         age = (tau + phase) % 1.0
         grow = smoothstep(0.0, 0.5, age) * (1.0 - smoothstep(0.62, 1.0, age))
-        root = wall(s0, 0.9, 0.0)
+        root = wall(s0, top_v(s0) * 0.97, 0.0)
         L = lmax * grow
         if L > 0.015:
             pts, rad = [], []
@@ -177,7 +187,7 @@ def build_crown_balls(tau):
         s0 = rng.uniform(0.05, 0.95)
         phase = rng.uniform(0, 1)
         r0 = rng.uniform(0.016, 0.03)
-        vel = Vector((rng.uniform(0.3, 1.1), rng.uniform(0.0, 0.9), rng.uniform(0.6, 1.4)))
+        vel = Vector((rng.uniform(0.3, 1.0), rng.uniform(0.0, 0.8), rng.uniform(0.4, 1.0)))
         age = (tau + phase) % 1.0
         start = wall(s0, rng.uniform(0.5, 0.95), 0.0)
         tt = age * 0.38
@@ -241,7 +251,7 @@ def box_uv(obj, scale=1.0):
 # ================================================================== droplet + low bubble
 def build_droplet(mat):
     bm = bmesh.new()
-    bmesh.ops.create_icosphere(bm, subdivisions=2, radius=0.5)
+    bmesh.ops.create_icosphere(bm, subdivisions=3, radius=0.5)
     for v in bm.verts:
         # head round toward travel (-Y), slightly pointed tail behind (+Y)
         if v.co.y > 0:
@@ -299,7 +309,7 @@ def main():
             o.location = (-2.1 + k * 1.35, 0.0, 0.0)
         else:
             o.hide_render = True
-    C.render_preview(C.preview_path("FX_SplashCrown"), camera_location=(-0.2, 4.2, 2.2), target=(-0.15, 0.4, 0.2),
+    C.render_preview(C.preview_path("FX_SplashCrown"), camera_location=(0.35, 5.6, 2.5), target=(0.35, 0.4, 0.25),
                      lens=38, resolution=(1280, 720), light_scale=1.6)
     print("DONE build_fx_splash")
 

@@ -26,12 +26,16 @@ Material:
     m_Ints: []
     m_Floats:
     - _Alpha: 0.06
+    - _Bubble: 0
+    - _FilmStrength: 1
     - _FresnelPower: 3
     - _Glow: 0.06
     - _Iridescence: 0
     - _IridescenceScale: 1.6
     - _Reflectivity: 0.9
+    - _RimWidth: 5
     - _Smoothness: 0.96
+    - _WindowStrength: 1.2
     m_Colors:
     - _Tint: {r: 0.7254902, g: 0.84705883, b: 1, a: 1}
   m_BuildTextureStacks: []

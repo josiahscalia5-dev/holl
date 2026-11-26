@@ -25,23 +25,30 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _BumpScale: 3.5
-    - _BumpStrength: 0.35
-    - _Glow: 0.12
+    - _BumpScale: 10
+    - _BumpStrength: 0.1
+    - _GlintAmount: 0.45
+    - _Glow: 0.1
     - _Metallic: 0
-    - _Mode: 0
-    - _RimPower: 3
-    - _RimStrength: 0.3
+    - _Mode: 5
+    - _ReflectBoost: 0.25
+    - _RimPower: 2.6
+    - _RimStrength: 0.32
     - _Smoothness: 0.35
+    - _SpecStrength: 0.8
     - _StitchU: 64
     - _StitchV: 26
+    - _StreakAmount: 0
+    - _StreakSpeed: 6
     - _StripeWidth: 0.35
     - _Stripes: 4
-    - _Wrap: 0.65
+    - _Wobble: 0.015
+    - _WobbleFreq: 1.6
+    - _Wrap: 0.7
     m_Colors:
-    - _ColorA: {r: 1, g: 1, b: 1, a: 1}
-    - _ColorB: {r: 0.78, g: 0.8, b: 1, a: 1}
+    - _ColorA: {r: 1, g: 0.9764706, b: 0.99215686, a: 1}
+    - _ColorB: {r: 0.9647059, g: 0.8509804, b: 0.9490196, a: 1}
     - _ColorC: {r: 0.54999995, g: 0.29999998, b: 0.85, a: 1}
-    - _ShadowColor: {r: 0.7882353, g: 0.7490196, b: 0.9019608, a: 1}
+    - _ShadowColor: {r: 0.63529414, g: 0.5882353, b: 0.8, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

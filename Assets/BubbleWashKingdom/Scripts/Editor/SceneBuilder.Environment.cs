@@ -37,28 +37,60 @@ namespace BubbleWash.EditorTools
             bw.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off;
         }
 
+        // ---------------------------------------------------------------- tunnel ring layout (reference f_003.00s, key 5.0 s)
+        // A premium gold marquee ring (SM_Ring, 32 bulbs built in) every RingSpacing m and RimsPerGap lavender drum lips
+        // (SM_DrumRim) between them, so the tunnel reads as a long nest of drum sections receding to the portal.
+        // BWK_DrumWall (_Pattern 1) lines its plain metal / slot rows up with these positions: BuildRings writes
+        // _BandOffset = FirstRingDistance and _BandLength = RingSpacing / (RimsPerGap + 1) into M_DrumWall.
+        // Chamber gaps (side porthole windows) skip their rims so the big windows fit between two gold rings.
+        const int RimsPerGap = 2;
+        const float ChamberStart = 190f, ChamberEnd = 262f;   // stills 07_chambers (215 m) / C2 (220 m)
+        const float ChamberPlaneRadius = 3.62f;               // window plane distance from the tunnel axis (SM_Porthole skirt)
+        static float FirstRingDistance => tunnelStart + 3f;
+
+        /// <summary>Gold-ring gaps [d, d + RingSpacing) that hold a side chamber window (centre d + RingSpacing / 2).</summary>
+        static List<float> ChamberGaps()
+        {
+            var gaps = new List<float>();
+            for (float d = FirstRingDistance; d < portalD - 5f; d += RingSpacing)
+                if (d >= ChamberStart && d + RingSpacing <= ChamberEnd) gaps.Add(d);
+            return gaps;
+        }
+
         static void BuildRings(GameObject env, float L)
         {
             var ring = ModelParts("Track", "SM_Ring");
-            var bulb = ModelParts("Track", "SM_Bulb");
+            var rim = ModelParts("Track", "SM_DrumRim");
             if (ring.Count == 0) { Debug.LogWarning("[BWK] SM_Ring missing - rings skipped"); return; }
-            if (bulb.Count == 0)
+            if (rim.Count == 0) Debug.LogWarning("[BWK] SM_DrumRim missing - lavender rims skipped");
+            // current SM_Ring carries its marquee bulbs (M_Bulb submesh); older exports need the separate SM_Bulb
+            bool ringHasBulbs = ring.Any(p => p.mats != null && p.mats.Any(m => m != null && m.name == "M_Bulb"));
+            var bulb = ringHasBulbs ? new List<Part>() : ModelParts("Track", "SM_Bulb");
+            float band = RingSpacing / (RimsPerGap + 1);
+            var wall = Mat("M_DrumWall");
+            if (wall != null)
             {
-                var s = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                var sm = s.GetComponent<MeshFilter>().sharedMesh;
-                Object.DestroyImmediate(s);
-                bulb.Add(new Part(sm, new[] { Mat("M_Bulb") }, Matrix4x4.TRS(new Vector3(0, 0.08f, 0), Quaternion.identity, Vector3.one * 0.17f)));
+                wall.SetFloat("_BandOffset", FirstRingDistance);
+                wall.SetFloat("_BandLength", band);
+                EditorUtility.SetDirty(wall);
             }
+            var chamberGaps = new HashSet<float>(ChamberGaps());
             var holder = Child(env, "Rings");
             var comb = new Combiner();
-            int chunk = 0;
+            int chunk = 0, rings = 0, rims = 0;
             float chunkStart = tunnelStart;
-            void PlaceRing(float d, float scale)
+            Matrix4x4 World(float d, float scale)
             {
                 var f = track.Evaluate(d);
-                var world = Matrix4x4.TRS(f.FlatPoint(0, TunnelCenter), f.FlatRotation, Vector3.one * scale);
+                return Matrix4x4.TRS(f.FlatPoint(0, TunnelCenter), f.FlatRotation, Vector3.one * scale);
+            }
+            void PlaceRing(float d, float scale)
+            {
+                var world = World(d, scale);
                 comb.Add(ring, world);
-                for (int b = 0; b < BulbsPerRing; b++)
+                rings++;
+                int bulbs = bulb.Count > 0 ? BulbsPerRing : 0;
+                for (int b = 0; b < bulbs; b++)
                 {
                     float a = b / (float)BulbsPerRing * Mathf.PI * 2f;
                     var radial = new Vector3(Mathf.Sin(a), Mathf.Cos(a), 0f);
@@ -67,12 +99,21 @@ namespace BubbleWash.EditorTools
                 }
             }
             PlaceRing(tunnelStart - 0.3f, 1.18f); // entrance gate
-            for (float d = tunnelStart + 3f; d < portalD - 5f; d += RingSpacing)
+            for (float d = FirstRingDistance; d < portalD - 5f; d += RingSpacing)
             {
                 PlaceRing(d, 1f);
+                if (rim.Count > 0 && !chamberGaps.Contains(d))
+                    for (int r = 1; r <= RimsPerGap; r++)
+                    {
+                        float dr = d + r * band;
+                        if (dr > portalD - 4f) break;
+                        comb.Add(rim, World(dr, 1f));
+                        rims++;
+                    }
                 if (d - chunkStart > ChunkLength) { comb.Flush(holder, $"Rings_{chunk++:00}", true); chunkStart = d; }
             }
             comb.Flush(holder, $"Rings_{chunk:00}", true);
+            Debug.Log($"[BWK] rings: {rings} gold (bulbs built in: {ringHasBulbs}), {rims} lavender rims, drum bands {band:F3} m from {FirstRingDistance} m");
         }
 
         static void BuildPortholes(GameObject env)
