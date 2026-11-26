@@ -24,10 +24,41 @@ namespace BubbleWash.EditorTools
             catch (System.Exception e) { Debug.LogError("[BWK] capture failed: " + e); EditorApplication.Exit(1); }
         }
 
+        /// <summary>Stills of the saved scene, no save. -bwkOut DIR (default Captures/stills); -bwkHero also renders the hero
+        /// shot into DIR (+ DIR/bg) and the comparisons into DIR/compare.</summary>
         public static void CaptureStillsBatch()
         {
-            try { CaptureStills(); EditorApplication.Exit(0); }
+            try
+            {
+                string dir = ArgValue("-bwkOut") ?? OutDir;
+                CaptureStills(dir);
+                if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-bwkHero") >= 0)
+                    CaptureHero(dir, dir == OutDir ? CompareDir : dir + "/compare");
+                EditorApplication.Exit(0);
+            }
             catch (System.Exception e) { Debug.LogError("[BWK] capture failed: " + e); EditorApplication.Exit(1); }
+        }
+
+        /// <summary>Renderers of the mascot model under the runner's Visual (hidden for background-only stills).</summary>
+        static List<Renderer> MascotRenderers(RunnerController runner)
+        {
+            var list = new List<Renderer>();
+            if (runner != null && runner.visual != null)
+                foreach (Transform c in runner.visual)
+                    if (c.name.Contains("Mascot"))
+                        list.AddRange(c.GetComponentsInChildren<Renderer>().Where(r => r.enabled));
+            return list;
+        }
+
+        /// <summary>Renders dir/file and, with the mascot model hidden, dir/bg/file (owner brief 2026-11-26: background-only
+        /// comparisons so the scenery can be judged on its own; water / splash FX stay visible).</summary>
+        static void RenderWithBackground(Camera cam, int w, int h, string dir, string file, List<Renderer> mascot)
+        {
+            Render(cam, w, h, $"{dir}/{file}");
+            Directory.CreateDirectory($"{dir}/bg");
+            foreach (var r in mascot) r.enabled = false;
+            try { Render(cam, w, h, $"{dir}/bg/{file}"); }
+            finally { foreach (var r in mascot) r.enabled = true; }
         }
 
         public static void HeroBatch()
@@ -317,7 +348,7 @@ namespace BubbleWash.EditorTools
                 var lens = rig.vcam.Lens;
                 cam.transform.SetPositionAndRotation(rig.transform.position, rig.transform.rotation * Quaternion.Euler(0f, 0f, lens.Dutch));
                 cam.fieldOfView = lens.FieldOfView;
-                Render(cam, w, h, $"{stillsDir}/hero_{tag}.png");
+                RenderWithBackground(cam, w, h, stillsDir, $"hero_{tag}.png", MascotRenderers(runner));
             }
             rig.aspectOverride = 0f;
             if (brain) brain.enabled = true;
@@ -385,11 +416,14 @@ namespace BubbleWash.EditorTools
         }
 
         [MenuItem("Bubble Wash/Capture Stills")]
-        public static void CaptureStills()
+        public static void CaptureStills() => CaptureStills(OutDir);
+
+        /// <summary>Every still is written twice: outDir/NAME (normal) and outDir/bg/NAME (mascot hidden).</summary>
+        public static void CaptureStills(string outDir)
         {
             if (EditorSceneManager.GetActiveScene().path != SceneBuilder.ScenePath)
                 EditorSceneManager.OpenScene(SceneBuilder.ScenePath);
-            Directory.CreateDirectory(OutDir);
+            Directory.CreateDirectory(outDir);
             var runner = Object.FindFirstObjectByType<RunnerController>();
             var rig = Object.FindFirstObjectByType<RunnerCameraRig>(FindObjectsInactive.Include);
             var cam = Camera.main;
@@ -398,6 +432,7 @@ namespace BubbleWash.EditorTools
             if (brain) brain.enabled = false;
             runner.track.Rebuild();
             float L = runner.track.Length;
+            var mascot = MascotRenderers(runner);
 
             var animator = runner.GetComponentInChildren<Animator>();
             AnimationClip slide = null;
@@ -425,7 +460,7 @@ namespace BubbleWash.EditorTools
                     var lens = rig.vcam.Lens;
                     cam.transform.SetPositionAndRotation(rig.transform.position, rig.transform.rotation * Quaternion.Euler(0f, 0f, lens.Dutch));
                     cam.fieldOfView = lens.FieldOfView;
-                    Render(cam, w, h, $"{OutDir}/{s.name}_{tag}.png");
+                    RenderWithBackground(cam, w, h, outDir, $"{s.name}_{tag}.png", mascot);
                 }
             }
 
@@ -448,12 +483,12 @@ namespace BubbleWash.EditorTools
                     if ((it.transform.position - camPos).sqrMagnitude < 16f)
                         foreach (var r in it.GetComponentsInChildren<Renderer>())
                             if (r.enabled) { r.enabled = false; hiddenItems.Add(r); }
-                Render(cam, 1280, 720, $"{OutDir}/{name}_16x9.png");
+                RenderWithBackground(cam, 1280, 720, outDir, $"{name}_16x9.png", mascot);
                 foreach (var r in hiddenItems) r.enabled = true;
             }
             rig.aspectOverride = 0f;
             if (brain) brain.enabled = true;
-            Debug.Log("[BWK] Stills written to " + Path.GetFullPath(OutDir));
+            Debug.Log("[BWK] Stills written to " + Path.GetFullPath(outDir) + " (+ bg/ with the mascot hidden)");
         }
 
         /// <summary>Edit-mode stills: run the sliding splash emitters for a moment so the water FX show like in play.</summary>
