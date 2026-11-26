@@ -1,5 +1,17 @@
 # Bubble Wash Kingdom - lead handoff (2026-11-26 12:30, lead session cd43a82d on the third Pro account)
 
+## STATUS 17:58 (lead c8eeab8b, sixth account) - exact resume point (private details: Captures/handoff/NEXT_ACCOUNT_START.md)
+- Newest checkpoint: checkpoint-20-r8 (lead_r8 build 17:34, stills Captures/stills_r8/). 17:48 takeover: the previous
+  lead's process had ended with the account switch; its masters run A (asset artist, master door) died while still reading
+  and wrote nothing; its 21:11 auto-start timer was killed (17:50); one autosave loop.
+- 17:56 MASTERS WAVE running (Tools/workflows/bwk-round8-cinematic.js, args.wave "masters", run wf_ba0f43b0-0f4): asset
+  artist (new master washing-machine door 11+12 as a prefab at every chamber window, then console / roller / glass arches /
+  entrance arch / rails) + gold/metal (golden starburst first, master gold, brushed drum wall, bulb rings), then water
+  (thick crown geometry, turquoise water, glass pipes, softer foam, iridescent bubbles). New lead preview option:
+  AgentPreviewBatch -bwkStills renders every section still of the in-memory level.
+- Next: lead_r8m integration build -> section triptychs (before = stills_r8) -> bwk-round7-verify.js {tag: "r8m"} ->
+  Play Mode recording -> checkpoint-21-r8m.
+
 ## STATUS 16:50 (lead e8142997, fifth account) - exact resume point (private details: Captures/handoff/NEXT_ACCOUNT_START.md)
 - 16:10 takeover: the previous lead's process had ended with the account switch (its round-8 agents too); its 18:31 wake
   timer was killed (16:13) so round 8 cannot run twice; one autosave loop. The asset agent's orphaned full build

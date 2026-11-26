@@ -81,6 +81,23 @@ namespace BubbleWash.EditorTools
             // small warm-gold hot centre, moderate intensity so the rays stay gold after tonemapping and bloom.
             EmissiveLook("M_PortalBurst", "#FF9A1C", 2.1f, core: 0.35f, corePower: 2.6f, halo: 0.6f, edgeSat: 0.5f, pulse: 0.08f, fog: 0.04f,
                 coreColor: "#FFCC6A", probeDim: 0.4f);
+            // MASTER 24 golden destination (masters wave 17:56; owner: "STILL too white"): the four additive glow layers of the
+            // asset artist's SM_Starburst_r8 get lighting-owned materials (remapped by SceneBuilder.TunePortalDestination, so
+            // the M_Burst*_r8 copies in MaterialLibrary.Assets.cs no longer drive the portal). Measured r8 finale (bg, portal
+            // crop): a hard cream-WHITE sun (the M_Bulb x5 Core disc) + thin rays reaching half the ring; reference f_14.50s =
+            // broad golden-yellow rays from a cream centre out to the bulb ring over a dark violet field, golden stars.
+            // Every colour keeps B/R < .1 so ray overlaps at the centre tonemap to cream-yellow (B stays low), never white;
+            // single rays mid-length stay saturated gold (hue ~35 deg after Neutral tonemapping).
+            void DestGlow(string name, string hex, float strength, float core, int queueOffset) => Mat(name, "BWK/LightBlob", m =>
+            {
+                C(m, "_Color", hex); F(m, "_Strength", strength); F(m, "_Softness", 1f); F(m, "_Core", core);
+                F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
+                F(m, "_NearFade", 0f);
+            }, (int)RenderQueue.Transparent + queueOffset);
+            DestGlow("M_DestHaze", "#FFB54A", 0.5f, 1.1f, -10);    // golden halo, broad (behind the rays)
+            DestGlow("M_DestRays", "#FFBE45", 2.2f, 1.15f, -9);    // golden-yellow rays fading toward the ring
+            DestGlow("M_DestCream", "#FFD487", 0.75f, 1.8f, -8);   // small cream centre (not white: B/R .25)
+            DestGlow("M_DestSparkle", "#FFBA3E", 2.0f, 1.3f, -7);  // small golden 4-point sparkles
             // Neon tubes (reference: thick tubes with PALE hot cores - yellow #fbe496, cyan #78eaf5 - inside saturated colour
             // edges and soft tinted halos): saturated edge hue, tinted core across most of the tube face (broad _CorePower),
             // moderate intensity so the tonemapper keeps the colour and the bloom carries the hue.

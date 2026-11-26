@@ -23,6 +23,7 @@ namespace BubbleWash.EditorTools
         static void BuildLighting(GameObject root, float L, string profilePath = null)
         {
             EnsurePerObjectLightLimit();
+            TunePortalDestination(root);
             var lights = Child(root, "Lighting");
             // Key light: near-vertical warm top light. Works for every track heading (the slide winds through all
             // directions), lights hat / pom-pom / coin tops, and drops the mascot's soft shadow right beneath him.
