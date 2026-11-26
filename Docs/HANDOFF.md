@@ -48,7 +48,12 @@
   foam blobs and flat lace splashes throughout; (4) restore the glossy multicoloured slide rails; (5) reduce the cyan
   arrow brightness; (6) golden portal = controlled golden starburst, not white; (7) the empty purple environment and the
   AWKWARD CAMERA MOVEMENT around 26-29 s of the recording; (8) a polished, continuous FINISHING SEQUENCE. References: the
-  video + "three annotated visual comparison sheets" (not found in this session's uploads at 13:30 - asked the owner).
+  video + the owner's three ANNOTATED SHEETS (received 13:35; private copies Reference/annotated/01_S1_opening_hall.png, 02_S4_tunnel.png, 03_S7_portal.png; numbered notes assigned in the round-7 water and round-8 prompts).
+- 13:40 OWNER'S ASSET LIBRARY = the OFFICIAL visual asset construction guide going forward: ZIP extracted to
+  `Reference/asset_library/` (private, gitignored; 00_READ_ME_Asset_Index.md, Individual_References/01-24, BWK_Asset_Sheet_01-04,
+  frame map). Assets 01-24 mapped to owners in the round-7 water + round-8 prompts; every agent audits its assets first
+  (keep / material / refine / replace -> Captures/agents/_shared/asset_audit.md) and delivers per-asset library | before |
+  after sheets; the lead then compiles them + section comparisons. 23 mascot = later. Not yet inspected by the lead (usage).
   Ownership: (3)+(5) round-7 water resume prompt; (2)(4)(6)(7 scenery) round-8 prompts; (1)(7 camera)(8) LEAD (camera rig,
   gameplay) - the owner's request counts as approval for fixing the opening / end camera behaviour; the hero framing
   2.75/1.3/10/58 stays; show [reference | before | after] for each camera fix.
