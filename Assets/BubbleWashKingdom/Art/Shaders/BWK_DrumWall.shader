@@ -66,6 +66,8 @@ Shader "BWK/DrumWall"
         _SeamHighlight ("Bevelled seam highlight", Range(0,1)) = 0
         _ShadowColor ("Deep indigo between the rims", Color) = (0.22, 0.18, 0.5, 1)
         _ShadowTint ("Indigo amount mid-section", Range(0,1)) = 0
+        _FlangeWidth ("Raised flange next to rims / rings (m, 0 = off)", Float) = 0
+        _FlangeColor ("Flange color", Color) = (0.72, 0.56, 0.95, 1)
     }
     SubShader
     {
@@ -86,6 +88,8 @@ Shader "BWK/DrumWall"
             float _RimPhase, _RowPitch, _PinkSpillWidth;
             half4 _PinkSpill, _ShadowColor;
             half _PinkSpillStrength, _SeamHighlight, _ShadowTint;
+            float _FlangeWidth;
+            half4 _FlangeColor;
         CBUFFER_END
 
         // Round 3: sections between gold rings (_BandLength = gold spacing) split by one lavender rim at _RimPhase
@@ -283,6 +287,16 @@ Shader "BWK/DrumWall"
                 metal *= 1.0 - (1.0 - detail) * 0.12 * band * step(0.5, _Pattern);   // far: average in the hole darkness
                 metal = lerp(metal, _SeamColor.rgb, saturate(groove) * 0.75);
                 metal *= ao;
+                // r3: raised lavender flange where each bay meets a rim / gold ring (reference: violet band before the gold)
+                half flange = 0.0;
+                if (secLocal >= 0.0 && _FlangeWidth > 0.0)
+                {
+                    float fd = min(secLocal, secLen - secLocal);
+                    float faa = fwidth(secLocal) * 1.5 + 1e-3;
+                    flange = 1.0 - smoothstep(_FlangeWidth - faa, _FlangeWidth + faa, fd);
+                    half edgeHi = 1.0 - smoothstep(0.0, faa * 2.0 + 0.01, abs(fd - _FlangeWidth + 0.02));
+                    metal = lerp(metal, _FlangeColor.rgb * (1.0 + 0.35 * edgeHi), flange);
+                }
                 half depthT = smoothstep(0.0, 0.7, inner);
                 half3 holeCol = lerp(_HoleColor.rgb * 1.8 + _HoleGlow.rgb * 0.12, _HoleColor.rgb * 0.35, depthT);
                 // slot depth: the far inner wall (metal in shadow, darker the deeper the ray hits it) over a black bottom

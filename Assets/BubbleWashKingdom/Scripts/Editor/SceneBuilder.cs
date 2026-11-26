@@ -51,6 +51,28 @@ namespace BubbleWash.EditorTools
         /// camera values (2.75 / 1.3 / 10 / 58) are untouched. Set to 1 to restore the original layout.</summary>
         const float TrackMirrorX = -1f;
 
+        /// <summary>Round 3: the reference bends only gently right ahead of the hero frame (mascot centred at ~0.52 W,
+        /// vanishing point ~0.61 W). The original bend made the frozen look-ahead camera yaw ~3.6 deg (mascot 0.45 W, glow
+        /// 0.70 W). This scales the lateral bend of knots 9-12 (just past the hero point) about the heading entering
+        /// knot 8 and translates every later knot by the same offset, so the downstream layout keeps its shape.
+        /// Tools/track_camera_model.py predicts mascot ~0.50 W / vanishing point ~0.62 W at 0.6. 1 = original bend.</summary>
+        const float HeroBendScale = 0.6f;
+
+        static Vector3[] LayoutKnots()
+        {
+            var k = (Vector3[])Knots.Clone();
+            float slope = (Knots[8].x - Knots[7].x) / (Knots[8].z - Knots[7].z);
+            for (int i = 9; i <= 12; i++)
+            {
+                float dz = Knots[i].z - Knots[i - 1].z, dxo = Knots[i].x - Knots[i - 1].x;
+                k[i].x = k[i - 1].x + slope * dz + (dxo - slope * dz) * HeroBendScale;
+            }
+            float shift = k[12].x - Knots[12].x;
+            for (int i = 13; i < k.Length; i++) k[i].x = Knots[i].x + shift;
+            for (int i = 0; i < k.Length; i++) k[i].x *= TrackMirrorX;
+            return k;
+        }
+
         static System.Random rng;
         static TrackPath track;
         static float tunnelStart, portalD;
@@ -132,7 +154,7 @@ namespace BubbleWash.EditorTools
             var container = trackGo.AddComponent<SplineContainer>();
             var spline = container.Spline;
             spline.Clear();
-            foreach (var k in Knots) spline.Add(new BezierKnot(new float3(TrackMirrorX * k.x, k.y, k.z)), TangentMode.AutoSmooth);
+            foreach (var k in LayoutKnots()) spline.Add(new BezierKnot(new float3(k.x, k.y, k.z)), TangentMode.AutoSmooth);
             track = trackGo.AddComponent<TrackPath>();
             track.Rebuild();
             float L = track.Length;

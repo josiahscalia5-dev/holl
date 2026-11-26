@@ -63,6 +63,7 @@ namespace BubbleWash.EditorTools
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
                 F(m, "_Density", 200); F(m, "_FurLength", 0.052f); F(m, "_Gravity", 0.012f); F(m, "_Thinning", 0.8f); F(m, "_ClumpAmount", 0.8f); F(m, "_ClumpScale", 5f);
                 F(m, "_AO", 0.2f); F(m, "_Curl", 1.5f); F(m, "_Underfur", 0.8f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.45f);
+                F(m, "_TuftScale", 24f); F(m, "_TuftAmount", 0.55f);   // ~5.5 cm plush tufts converging toward their tips
                 C(m, "_RimColor", "#FFD0C8"); F(m, "_Glow", 0.14f); F(m, "_RimStrength", 0.5f);
             }, (int)RenderQueue.AlphaTest);
             Mat("M_PomPom", "BWK/Fur", m =>

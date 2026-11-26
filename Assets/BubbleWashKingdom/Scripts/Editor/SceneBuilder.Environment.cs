@@ -218,9 +218,14 @@ namespace BubbleWash.EditorTools
                 var f = track.Evaluate(d);
                 return Matrix4x4.TRS(f.FlatPoint(0, TunnelCenter), f.FlatRotation, Vector3.one * scale);
             }
+            // r3: subtle per-ring variation (owner: no identical-looking repetition) - each gold ring / rim is rolled
+            // about the tunnel axis by a deterministic fraction of its bulb / stud pitch and scaled +-1 %
+            float Hash(float d) => Mathf.Abs(Mathf.Sin(d * 12.9898f + 78.233f) * 43758.5453f) % 1f;
+            Matrix4x4 Vary(float d, float pitchDeg) =>
+                Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(0f, 0f, (Hash(d) - 0.5f) * pitchDeg), Vector3.one * (1f + (Hash(d + 3.7f) - 0.5f) * 0.02f));
             void PlaceRing(float d, float scale)
             {
-                var world = World(d, scale);
+                var world = World(d, scale) * Vary(d, 360f / BulbsPerRing);
                 comb.Add(ring, world);
                 rings++;
                 int bulbs = bulb.Count > 0 ? BulbsPerRing : 0;
@@ -237,7 +242,7 @@ namespace BubbleWash.EditorTools
             if (rim.Count > 0)
                 for (float dr = FirstRingDistance - (RimsPerGap == 1 ? GoldRingSpacing - rimOffset : rimOffset); dr > tunnelStart + 0.8f; dr -= RimsPerGap == 1 ? GoldRingSpacing : rimOffset)
                 {
-                    comb.Add(rim, World(dr, 1f));
+                    comb.Add(rim, World(dr, 1f) * Vary(dr, 360f / 32f));
                     rims++;
                 }
             for (float d = FirstRingDistance; d < portalD - 5f; d += GoldRingSpacing)
@@ -248,7 +253,7 @@ namespace BubbleWash.EditorTools
                     {
                         float dr = d + r * rimOffset;
                         if (dr > portalD - 4f) break;
-                        comb.Add(rim, World(dr, 1f));
+                        comb.Add(rim, World(dr, 1f) * Vary(dr, 360f / 32f));
                         rims++;
                     }
                 if (d - chunkStart > ChunkLength) { comb.Flush(holder, $"Rings_{chunk++:00}", true); chunkStart = d; }
@@ -434,4 +439,8 @@ namespace BubbleWash.EditorTools
             var glow = portal.AddComponent<PortalGlow>();
             glow.runner = runner;
             glow.trackDistance = portalD;
-            glow.rays = new Rendere
+            glow.rays = new Renderer[] { rr };
+            glow.portalLight = light;
+        }
+    }
+}

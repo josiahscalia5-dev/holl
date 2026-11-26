@@ -19,8 +19,8 @@ namespace BubbleWash.EditorTools
             // Round 3 (owner sheet 04 "polished bevelled gold"): the ring read pale tan because the untinted lavender probe and
             // the cream highlight colour dominated -> deeper orange-gold mids, probe almost fully gold-tinted, warmer highlight
             // colour and stronger, crisper streaks (bright white-gold lines on a rich amber-orange body, dark bevel lows).
-            GoldLook("M_Gold", high: "#FFEBB4", mid: "#F08414", low: "#4E1A12", rim: "#FFB45C", band: "#FFD68A",
-                brightness: 1.12f, glow: 0.05f, contrast: 1.65f, viewGradient: 1f, env: 0.34f, envTint: 0.88f, envRough: 0.2f,
+            GoldLook("M_Gold", high: "#FFEDBC", mid: "#F48C16", low: "#6A2418", rim: "#FFB860", band: "#FFDA90",
+                brightness: 1.32f, glow: 0.12f, contrast: 1.5f, viewGradient: 1f, env: 0.36f, envTint: 0.86f, envRough: 0.2f,
                 specPower: 170f, specStrength: 3.2f, glints: 2.6f, sparkle: 0f, fog: 0.45f, highlightSize: 9f, streak: 1.7f,
                 probeTint: "#8C4E8C");
             GoldLook("M_GoldDark", high: "#FFE0B0", mid: "#C8702A", low: "#4A1636", rim: "#FFB070", band: "#FFCF96",
@@ -41,9 +41,9 @@ namespace BubbleWash.EditorTools
             // tonemapper a source of about (6, 1.4, 0.3) linear shows as a pale warm-orange core and its weaker bloom halo as
             // saturated orange: deep red-orange edge colour + warm-orange core tint (never lemon: G stays < 0.25 R).
             // Round 3 (owner: "excessively bright yellow bulbs -> small warm amber lights with a soft halo"): at x12 the green
-            // channel (~2.1 linear) tonemapped to 0.9 -> pale lemon cores. x4.2 with an amber core keeps G ~0.9 linear:
+            // channel (~2.1 linear) tonemapped to 0.9 -> pale lemon cores. x5.6 with a half-amber core keeps G ~1.0 linear:
             // core tonemaps to golden amber (~#FCC95E), the grazing edge to deep orange, the bloom halo stays orange.
-            EmissiveLook("M_Bulb", "#FF6A10", 4.2f, core: 0.62f, corePower: 1.4f, halo: 0.9f, edgeSat: 0.5f, chase: 1f, chaseMin: 0.75f,
+            EmissiveLook("M_Bulb", "#FF6A10", 5.6f, core: 0.5f, corePower: 1.3f, halo: 1.0f, edgeSat: 0.5f, chase: 1f, chaseMin: 0.75f,
                 pulse: 0.05f, fog: 0.08f, coreColor: "#FFA040", probeDim: 0.3f);
             // end-of-tunnel portal disc (BuildPortal core): radiant warm white-gold, bright but not a screen-filling flare
             EmissiveLook("M_PortalCore", "#FFC860", 3.4f, core: 0.55f, corePower: 2f, halo: 0.3f, edgeSat: 0.3f, pulse: 0.06f, fog: 0.05f);

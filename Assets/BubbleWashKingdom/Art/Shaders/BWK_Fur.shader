@@ -30,6 +30,8 @@ Shader "BWK/Fur"
         _EdgeSoft ("Strand Edge Softness", Range(0.01, 0.5)) = 0.18
         _SilhouetteFade ("Silhouette Halo Fade", Range(0, 1)) = 0.6
         _PawGlow ("Paw Coat Self Glow", Range(0, 1)) = 0
+        _TuftScale ("Tuft Cells per UV unit", Float) = 24
+        _TuftAmount ("Tuft Clumping (0 = off)", Range(0, 0.9)) = 0
     }
     SubShader
     {
@@ -42,6 +44,7 @@ Shader "BWK/Fur"
             float4 _NoiseTex_ST;
             float _Density, _FurLength, _Gravity, _Thinning, _ClumpScale, _RimPower;
             half _ClumpAmount, _Wrap, _RimStrength, _AO, _Glow, _UseVertexTint, _StaticMode, _Curl, _Underfur, _EdgeSoft, _SilhouetteFade, _PawGlow;
+            float _TuftScale, _TuftAmount;
         CBUFFER_END
         ENDHLSL
 
@@ -113,7 +116,20 @@ Shader "BWK/Fur"
                 float h = i.shell.x;
                 // Procedural strands, resolution independent: guard hairs lean inside their cell with height (soft crossing
                 // tips), lengths vary in clumps, and a denser, shorter underfur layer fills the coat like a plush toy.
-                float2 suv = float2(i.uv.x * 2.0, i.uv.y) * _Density;   // UV.x unit = 2x UV.y unit in metres -> square cells
+                // Tufts (round 3, "long irregular plush clumps"): the coat is split into irregular tuft cells; toward the
+                // tips the strands of a tuft converge on its (jittered) centre, so the pile breaks into soft clumps with
+                // partings between them. Strands are looked up at their ROOT position (expanded away from the centre).
+                float2 base = float2(i.uv.x * 2.0, i.uv.y);              // UV.x unit = 2x UV.y unit in metres -> square cells
+                float2 tuv = base * _TuftScale;
+                float2 tcell = floor(tuv);
+                float2 tc = tcell + 0.5 + (float2(BWK_Hash21(tcell + 21.7), BWK_Hash21(tcell + 4.3)) - 0.5) * 0.45;
+                half tRnd = BWK_Hash21(tcell + 11.9);
+                float pull = _TuftAmount * h * (0.7 + 0.6 * tRnd);
+                float2 rel = (tuv - tc) / max(1.0 - pull, 0.2);
+                float2 rootOff = abs(tc + rel - (tcell + 0.5));          // root outside its own tuft cell -> parting
+                half parting = (_TuftAmount > 0.001 && h > 0.001) ? saturate(1.0 - (max(rootOff.x, rootOff.y) - 0.5) * 6.0) : 1.0;
+                float2 rootUV = (_TuftAmount > 0.001) ? (tc + rel) / _TuftScale : base;
+                float2 suv = rootUV * _Density;
                 float2 cell = floor(suv);
                 float2 jit = float2(BWK_Hash21(cell), BWK_Hash21(cell + 17.3)) - 0.5;
                 float2 lean = (float2(BWK_Hash21(cell + 5.7), BWK_Hash21(cell + 9.1)) - 0.5) * 0.8 * h;
@@ -121,8 +137,9 @@ Shader "BWK/Fur"
                 half rnd = BWK_Hash21(cell + 3.1);
                 half clump = BWK_ValueNoise(float2(i.uv.x * 2.0, i.uv.y) * _ClumpScale);
                 half lenVar = lerp(1.0, 0.55 + clump * 0.9, _ClumpAmount) * (0.72 + 0.28 * rnd);
+                lenVar *= lerp(1.0, 0.62 + 0.62 * tRnd, saturate(_TuftAmount * 1.6));   // every tuft has its own length
                 half guard = saturate(1.0 - d * 1.75) * lenVar;
-                float2 suv2 = float2(i.uv.x * 2.0, i.uv.y) * _Density * 1.85 + 3.7;
+                float2 suv2 = rootUV * _Density * 1.85 + 3.7;
                 float2 cell2 = floor(suv2);
                 float2 jit2 = float2(BWK_Hash21(cell2 + 1.3), BWK_Hash21(cell2 + 7.7)) - 0.5;
                 float d2 = length(frac(suv2) - 0.5 - jit2 * 0.4 - lean * 0.6);
@@ -136,7 +153,7 @@ Shader "BWK/Fur"
                     // soft coverage instead of a hard cut (alpha-to-coverage), and the outer shells thin out where the
                     // surface turns away so the silhouette is a soft plush halo instead of a row of needles
                     half edge = strand - h * _Thinning * 0.85;
-                    alpha = saturate(edge / _EdgeSoft + 0.5);
+                    alpha = saturate(edge / _EdgeSoft + 0.5) * parting;
                     half ndv = saturate(dot(n, v));
                     alpha *= lerp(1.0, saturate(ndv * 2.5 + 0.15), _SilhouetteFade * h);
                     clip(alpha - 0.02);
@@ -148,6 +165,7 @@ Shader "BWK/Fur"
                 half coat = lerp(1.0, i.color.a, _UseVertexTint);
                 half3 col = lerp(pawC, pinkC, coat) * lerp(half3(1, 1, 1), i.color.rgb, _UseVertexTint);
                 col *= lerp(0.86, 1.06, strand);   // low strand contrast: plush, not needles
+                col *= lerp(1.0, lerp(0.84, 1.04, tRnd), saturate(_TuftAmount * 1.6));   // tufts vary a little in tone
                 half3 light = BWK_WrapLight(i.positionWS, n, _Wrap);
                 half ao = lerp(1.0 - _AO, 1.0, h);
                 half rim = BWK_Fresnel(n, v, _RimPower) * _RimStrength * (0.4 + 0.6 * h);

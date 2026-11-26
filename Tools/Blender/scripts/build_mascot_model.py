@@ -65,23 +65,24 @@ HAT_RS = 1.10                              # round 3: cuff + stripe radii x1.10 
 # reference (rear view, W_h = cuff width): folded ribbed brim ~0.07 H tall and wider than the body (overhangs it);
 # thick pale ribbed stripe ~0.045 H knitted into the crown; tall round ribbed crown (~0.9 W_h wide at its base);
 # pom-pom ~0.45 W_h sitting on the crown top.
-CUFF_PROFILE = [(u, r * HAT_RS, w) for (u, r, w) in [  # (u, r, rib weight): roll under -> ribbed face -> top fold
+CUFF_STRETCH = 1.25                        # brim taller (ref ~0.07 H): profile u stretched about its bottom (0.140)
+CUFF_PROFILE = [(0.140 + (u - 0.140) * CUFF_STRETCH, r * HAT_RS, w) for (u, r, w) in [  # (u, r, rib weight): roll under -> ribbed face -> top fold
     (0.148, 0.432, 0.0), (0.140, 0.448, 0.1), (0.144, 0.460, 0.5), (0.157, 0.466, 0.9), (0.183, 0.469, 1.0),
     (0.215, 0.470, 1.0), (0.248, 0.468, 1.0), (0.272, 0.463, 0.9), (0.287, 0.454, 0.5), (0.295, 0.443, 0.2),
     (0.295, 0.432, 0.0), (0.288, 0.424, 0.0)]]
-STRIPE_U = (0.293, 0.410)                  # thick pale ribbed band above the folded brim (same surface as the crown)
-DOME_U0, DOME_H, DOME_R, DOME_EXP = 0.418, 0.275, 0.466, 2.25   # tall round dome (super-elliptical shoulder)
+STRIPE_U = (0.332, 0.440)                  # thick pale ribbed band above the folded brim (same surface as the crown)
+DOME_U0, DOME_H, DOME_R, DOME_EXP = 0.448, 0.285, 0.452, 2.0    # tall ROUND dome (elliptical profile)
 TOP_STRIPE_PHI, TOP_STRIPE_HW = 47.0, 5.5  # extra pale stripe on the dome front (deg of the dome angle), fades out
 TOP_STRIPE_FULL, TOP_STRIPE_END = 45.0, 78.0    # ... over the front only (deg from the front): never seen from behind
 STAR_U, STAR_PHI, STAR_ROT = 0.192, 33.0, -12.0  # star badge on the cuff, 33 deg toward HIS LEFT (+X)
 STAR_RO, STAR_RI = 0.072, 0.032
-POMPOM_R, POMPOM_LIFT = 0.172, 0.62        # pom-pom CORE radius (dark shell-fur ball); centre this many radii above
-POMPOM_SEG = 12                            # the dome top (it sinks a little into the crown)
+POMPOM_R, POMPOM_LIFT = 0.172, 0.34        # pom-pom CORE radius (dark shell-fur ball); centre this many radii above
+POMPOM_SEG = 9                             # the dome top (it sinks a little into the crown)
 # round 3 starburst: real radial yarn fibres (geometry) around the dark core, dark violet roots -> light lilac tips.
 # Material M_PawPad (BWK/Character fabric mode = vertex colour x white), Col = raw shader multipliers (see PAD_PINK).
-POM_FIBRES = 1100                          # fibre count over the whole sphere (the ones pointing into the hat are skipped)
-POM_FIB_IN, POM_FIB_LEN = 0.80, (0.050, 0.098)   # root depth (x core radius) and length range beyond the core
-POM_FIB_W = (0.0105, 0.0018)               # root / tip half width (triangular cross-section, tapering)
+POM_FIBRES = 2400                          # fibre count over the whole sphere (the ones pointing into the hat are skipped)
+POM_FIB_IN, POM_FIB_LEN = 0.80, (0.045, 0.086)   # root depth (x core radius) and length range beyond the core
+POM_FIB_W = (0.0080, 0.0024)               # root / tip half width (triangular cross-section, tapering)
 POM_COL_ROOT, POM_COL_MID, POM_COL_TIP = (0.24, 0.08, 0.40), (0.46, 0.22, 0.68), (0.84, 0.68, 0.98)
 
 # ------------------------------------------------------------------ face (unchanged design, follows the body centre)
@@ -96,21 +97,25 @@ BLUSH_X, BLUSH_Z, BLUSH_R = 0.235, 0.47 + FACE_DZ, 0.058
 # ------------------------------------------------------------------ arms: big stubby mitts raised up and out ("wheee")
 # Reference rear view: the arms leave the body sides just under the cuff and rise ~45 deg, so the paws sit at cuff
 # height OUTSIDE the hat silhouette. Seen from behind = back of the mitt (no palm pads), tips a little lighter.
-ARM_Z = 0.515                              # root height on the body side (rest; just under the brim when seated)
-ARM_UP, ARM_BACK = 44.0, 0.22              # rest direction: ~44 deg up and out, angled back past the brim
+ARM_Z = 0.500                              # root height on the body side (rest; under the brim when seated)
+ARM_UP, ARM_BACK = 44.0, 0.22              # chord direction used by the rig (recomputed from the bent centre line)
+# round 3: SHORT, THICK stubby arms bent at the shoulder: the upper arm runs out almost level UNDER the wide brim
+# (hidden by it from the rear camera), then the forearm/mitt rises ~58 deg outside the brim edge, so the paws sit at
+# brim/stripe height outside the hat silhouette as in the reference, with no hat penetration (no cuff-solve lowering).
+ARM_A0, ARM_A1, ARM_B0, ARM_B1 = 6.0, 60.0, 0.06, 0.30   # elevation (deg) / back component: upper arm, forearm
+ARM_BEND = (0.11, 0.25)                    # arc-length range of the shoulder bend
 ARM_SEG = 20
-# round 3: SHORT, THICK stubby arms (reference: they emerge from under the brim, paws at brim height)
-ARM_PROFILE = [(-0.10, 0.082), (-0.05, 0.094), (0.0, 0.100), (0.07, 0.104), (0.14, 0.108), (0.20, 0.114),
-               (0.250, 0.119), (0.285, 0.118), (0.314, 0.107), (0.336, 0.088), (0.352, 0.062), (0.361, 0.033),
-               (0.364, 0.0)]
-ARM_TIP_FROM, ARM_TIP_TO, ARM_TIP_CREAM = 0.22, 0.35, 0.30   # Col.a fades toward the cream coat at the paw tip
+ARM_PROFILE = [(-0.10, 0.082), (-0.05, 0.094), (0.0, 0.100), (0.08, 0.103), (0.16, 0.106), (0.24, 0.112),
+               (0.300, 0.118), (0.340, 0.118), (0.372, 0.108), (0.395, 0.089), (0.411, 0.063), (0.420, 0.033),
+               (0.423, 0.0)]
+ARM_TIP_FROM, ARM_TIP_TO, ARM_TIP_CREAM = 0.26, 0.40, 0.30   # Col.a fades toward the cream coat at the paw tip
 PALM_FACING = Vector((0.0, -0.55, 0.85))   # palm side (front/up): only used as the seam-free side reference
 
 # ------------------------------------------------------------------ legs + feet (seated): the reference rear view shows
 # big cream feet with pink beans at the bottom-left / bottom-right of the body, SOLES FACING THE CAMERA (toes up and
 # splayed out ~20 deg) while he sits on his bottom: the short legs fold back under him (plush W-sit).
-PAW_C = Vector((0.292, 0.285, 0.255))      # paw centre (his left; mirrored), beside/behind the seat on the camera side
-HIP = Vector((0.205, 0.030, 0.240))        # hip joint inside the lower body
+PAW_C = Vector((0.300, 0.220, 0.255))      # paw centre (his left; mirrored), beside/behind the seat on the camera side
+HIP = Vector((0.205, 0.000, 0.240))        # hip joint inside the lower body
 SOLE_UP, SOLE_OUT, TOE_OUT = 26.0, 0.20, 20.0   # sole normal tilt up toward the camera / outward turn; toes lean out
 LEG_SEG, LEG_R0, LEG_R1 = 18, 0.092, 0.082 # around, radius at hip / ankle
 PAW_HALF = (0.128, 0.150, 0.078)           # half width (lateral), half length (heel->toe), half thickness
@@ -564,21 +569,45 @@ def arm_frame(side):
     return root, d, pd.normalized()
 
 
+def arm_dir(side, h):
+    a0, a1 = math.radians(ARM_A0), math.radians(ARM_A1)
+    d0 = Vector((side * math.cos(a0), ARM_B0, math.sin(a0))).normalized()
+    d1 = Vector((side * math.cos(a1), ARM_B1, math.sin(a1))).normalized()
+    t = smoothstep(ARM_BEND[0], ARM_BEND[1], h)
+    return (d0 * (1.0 - t) + d1 * t).normalized()
+
+
+def arm_centre(root, side, h):
+    """Bent centre line: integrate the direction field from the root (h may be negative: inside the body)."""
+    if h <= 0.0:
+        return root + arm_dir(side, 0.0) * h
+    n = max(1, int(h / 0.004))
+    p = root.copy()
+    for k in range(n):
+        p += arm_dir(side, (k + 0.5) * h / n) * (h / n)
+    return p
+
+
 def build_arm(side):
     """side +1 = Arm.L (+X, his left), -1 = Arm.R. Fur mitt (rings along the arm, seam underneath) + white palm
     pad + 4 pink beans on the palm side (up/back: visible from the rear camera)."""
-    root, d, pd = arm_frame(side)
+    root, _d, pd = arm_frame(side)
+    L = ARM_PROFILE[-1][0]
+    tip_p = arm_centre(root, side, L)
+    d = (tip_p - root).normalized()             # chord: the rig's arm axis
     under = -pd                                  # seam on the side facing away from the camera
-    ex = under
-    ey = d.cross(ex).normalized()
     md = MeshData()
     rings, hs = [], []
     for h, r in ARM_PROFILE[:-1]:
-        rings.append([md.vert(root + d * h + (ex * math.cos(2 * math.pi * j / ARM_SEG)
-                                              + ey * math.sin(2 * math.pi * j / ARM_SEG)) * r)
+        dh = arm_dir(side, max(0.0, h))
+        ex = (under - dh * under.dot(dh)).normalized()
+        ey = dh.cross(ex).normalized()
+        cp = arm_centre(root, side, h)
+        rings.append([md.vert(cp + (ex * math.cos(2 * math.pi * j / ARM_SEG)
+                                    + ey * math.sin(2 * math.pi * j / ARM_SEG)) * r)
                       for j in range(ARM_SEG)])
         hs.append(h)
-    tip = md.vert(root + d * ARM_PROFILE[-1][0])
+    tip = md.vert(tip_p)
     ru = 2.0 * math.pi * 0.087 / FUR_U          # u span around the arm (same strand size as the body)
     vv = [h / FUR_V for h in hs] + [ARM_PROFILE[-1][0] / FUR_V]
     for k, (a, b) in enumerate(zip(rings, rings[1:])):
@@ -594,7 +623,7 @@ def build_arm(side):
         return (1.0, 1.0, 1.0, 1.0 - ARM_TIP_CREAM * smoothstep(ARM_TIP_FROM, ARM_TIP_TO, h))
     md.set_col(tip_col)
     info = dict(root=vlist(root), dir=vlist(d), palm_dir=vlist(pd), palm_c=vlist(palm_c),
-                beans=[], length=ARM_PROFILE[-1][0], fur_verts=fur_verts, fur_faces=fur_faces)
+                beans=[], length=(tip_p - root).length, fur_verts=fur_verts, fur_faces=fur_faces)
     return md, info
 
 
@@ -862,9 +891,9 @@ def build_beanie():
     # round 3: the thick pale stripe and the crown are ONE knitted surface (no tube step between them): the stripe
     # rises almost vertically out from behind the brim's top fold and the crown continues it into a tall round dome
     S = HAT_RS
-    prof = [(0.235, 0.412 * S, STRIPE), (0.268, 0.436 * S, STRIPE), (STRIPE_U[0], 0.445 * S, STRIPE),
-            (0.330, 0.447 * S, STRIPE), (0.365, 0.443 * S, STRIPE), (0.392, 0.436 * S, STRIPE),
-            (STRIPE_U[1], 0.430 * S, KNIT), (DOME_U0, DOME_R, KNIT)]
+    prof = [(0.250, 0.412 * S, STRIPE), (0.300, 0.436 * S, STRIPE), (STRIPE_U[0], 0.445 * S, STRIPE),
+            (0.365, 0.446 * S, STRIPE), (0.398, 0.441 * S, STRIPE), (0.424, 0.432 * S, STRIPE),
+            (STRIPE_U[1], 0.422 * S, KNIT), (DOME_U0, DOME_R, KNIT)]
     for phi in (8.0, 16.0, 24.0, 32.0, 40.0, 48.0, 56.0, 64.0, 71.0, 78.0, 84.0):
         u, r = dome_ur(phi)
         prof.append((u, r, KNIT))
@@ -985,7 +1014,7 @@ def groom_pompom_strands(c):
         tip += bend * 0.012 * rng.random()
         mid = root + (tip - root) * 0.62 + bend * 0.003
         w0 = POM_FIB_W[0] * (0.8 + 0.4 * rng.random())
-        out.append(([root, mid, tip], [w0, w0 * 0.55, POM_FIB_W[1]], 0.88 + 0.24 * rng.random()))
+        out.append(([root, mid, tip], [w0, w0 * 0.72, POM_FIB_W[1]], 0.88 + 0.24 * rng.random()))
     return out
 
 
@@ -1010,10 +1039,18 @@ def strands_to_mesh_gn(strands, c):
     rad.data.foreach_set("value", [r for s in strands for r in s[1]])
     obj = bpy.data.objects.new(name, cv)
     bpy.context.scene.collection.objects.link(obj)
+    # the GN modifier lives on an (empty) MESH carrier that pulls the hair in through Object Info, so the evaluated
+    # result is a plain mesh object (new_from_object refuses evaluated CURVES objects)
+    carrier = bpy.data.objects.new(name + "Mesh", bpy.data.meshes.new(name + "Mesh"))
+    bpy.context.scene.collection.objects.link(carrier)
     ng = bpy.data.node_groups.new(name + "_GN", 'GeometryNodeTree')
     ng.interface.new_socket(name="Geometry", in_out='INPUT', socket_type='NodeSocketGeometry')
     ng.interface.new_socket(name="Geometry", in_out='OUTPUT', socket_type='NodeSocketGeometry')
-    gi, go = ng.nodes.new('NodeGroupInput'), ng.nodes.new('NodeGroupOutput')
+    go = ng.nodes.new('NodeGroupOutput')
+    ng.nodes.new('NodeGroupInput')
+    oi = ng.nodes.new('GeometryNodeObjectInfo')
+    oi.transform_space = 'ORIGINAL'
+    oi.inputs['Object'].default_value = obj
     st = ng.nodes.new('GeometryNodeCurveSplineType')
     st.spline_type = 'POLY'
     c2m = ng.nodes.new('GeometryNodeCurveToMesh')
@@ -1021,15 +1058,16 @@ def strands_to_mesh_gn(strands, c):
     circ.mode = 'RADIUS'
     circ.inputs['Resolution'].default_value = 3
     circ.inputs['Radius'].default_value = 1.0
-    ng.links.new(gi.outputs[0], st.inputs['Curve'])
+    ng.links.new(oi.outputs['Geometry'], st.inputs['Curve'])
     ng.links.new(st.outputs['Curve'], c2m.inputs['Curve'])
     ng.links.new(circ.outputs['Curve'], c2m.inputs['Profile Curve'])
     if 'Scale' in c2m.inputs:                  # 4.2+: profile scale is an explicit field -> feed the radius
         ng.links.new(ng.nodes.new('GeometryNodeInputRadius').outputs[0], c2m.inputs['Scale'])
     ng.links.new(c2m.outputs['Mesh'], go.inputs[0])
-    obj.modifiers.new("PomFibres", 'NODES').node_group = ng
+    carrier.modifiers.new("PomFibres", 'NODES').node_group = ng
+    bpy.context.view_layer.update()
     deps = bpy.context.evaluated_depsgraph_get()
-    me = bpy.data.meshes.new_from_object(obj.evaluated_get(deps))
+    me = bpy.data.meshes.new_from_object(carrier.evaluated_get(deps))
     per = len(me.vertices) // max(1, len(strands))
     if per * len(strands) != len(me.vertices) or not me.polygons:
         raise RuntimeError("unexpected GN fibre mesh: %d verts for %d strands" % (len(me.vertices), len(strands)))
@@ -1040,6 +1078,9 @@ def strands_to_mesh_gn(strands, c):
     for p in me.polygons:
         idx = list(p.vertices)
         fib.face(idx, 1, [(0.0, 0.0)] * len(idx), [fibre_col(fib.v[i], c, shades[i // per]) for i in idx])
+    cmesh = carrier.data
+    bpy.data.objects.remove(carrier)
+    bpy.data.meshes.remove(cmesh)
     bpy.data.objects.remove(obj)
     bpy.data.hair_curves.remove(cv)
     bpy.data.meshes.remove(me)

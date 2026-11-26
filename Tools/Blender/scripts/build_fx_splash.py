@@ -85,11 +85,11 @@ SHEETS = [
     dict(name="curtain",
          root=((-0.05, 0.14), (0.14, 0.24), (0.34, 0.32), (0.54, 0.40)),
          fan=((0.05, 0.30, 0.95), (0.16, 0.30, 0.94), (0.30, 0.30, 0.90), (0.46, 0.34, 0.82)),
-         flen=(0.26, 0.50, 0.58, 0.44), flare=0.40, hole=(0.022, 0.080), solid=0.16, fingers=12),
+         flen=(0.40, 0.72, 0.80, 0.62), flare=0.34, hole=(0.024, 0.090), solid=0.12, fingers=13),
     dict(name="skirt",
          root=((0.44, 0.44), (0.26, 0.66), (0.02, 0.84), (-0.26, 0.96)),
-         fan=((0.60, 0.40, 0.69), (0.45, 0.60, 0.66), (0.20, 0.75, 0.63), (0.02, 0.80, 0.60)),
-         flen=(0.30, 0.24, 0.17, 0.10), flare=0.30, hole=(0.016, 0.048), solid=0.22, fingers=7),
+         fan=((0.50, 0.30, 0.81), (0.38, 0.45, 0.80), (0.18, 0.55, 0.82), (0.02, 0.60, 0.80)),
+         flen=(0.42, 0.36, 0.28, 0.18), flare=0.28, hole=(0.018, 0.055), solid=0.18, fingers=8),
 ]
 SHEET_STEP = 0.019     # metaball grid spacing on the sheet (m)
 SHEET_R = 0.0125       # sheet ball radius -> ~3.5 cm thick milky sheet
@@ -146,7 +146,7 @@ class Sheet:
     def point(self, s, v, sway=0.0):
         p = self.rootp(s) + self.fan_dir(s) * v
         o = self.outward(s)
-        return p + (o * self.flare + Vector((0, 0, -0.22))) * v * v + o * (sway * v)
+        return p + (o * self.flare + Vector((0, 0, -0.10))) * v * v + o * (sway * v)
 
     def fan_len(self, s):
         return lin(self.flen, s)

@@ -25,9 +25,12 @@ namespace BubbleWash.EditorTools
         // narrower than long: steeper arms like the reference (bottom chevron arm meets the frame bottom at x ~.2)
         public const float ChevronWidth = 0.5f;
         // milk crown splashes beside the feet (Art/Models/FX/SM_FX_Crown_xx, left-side asset mirrored for the right).
-        // Root anchored in SCREEN space of the hero frame (reference f_003.00s: crowns rise at x 0-.35 / .65-1, y .55-.87).
-        static readonly Vector2 CrownRootScreenL = new Vector2(0.29f, 0.85f), CrownRootScreenR = new Vector2(0.75f, 0.85f);   // beside / in front of the feet, never over them
-        const float CrownScale = 1.1f, CrownYaw = 50f;   // yaw turns the sheet to face the camera
+        // (round 2 anchored the root in screen space; reference f_003.00s: crowns rise at x 0-.40 / .62-1, y .55-.87).
+        // Round 3b: the crown asset (build_fx_splash.py) is authored in runner-local space around the left foot (foot ~(-0.30, 0.17, -0.30))
+        // and checked through the hero camera in Blender (Docs/AssetPreviews/FX_SplashCrown_r3.png): a perforated milky curtain rising
+        // outward beside each foot + a low perforated skirt curling under the foot toward the camera. Origin = (-CrownRootX, 0, CrownRootZ).
+        const float CrownRootX = 0.40f, CrownRootZ = -0.05f;
+        const float CrownScale = 1.0f, CrownYaw = 0f;   // authored facing the hero camera: no yaw
         // reference f_003.00s foreground bubbles: screen x, screen y (0..1 from the top-left of the 9:16 hero frame),
         // diameter as a fraction of the frame width, w > 0 = height above the water (m), w < 0 = -camera depth (m)
         static readonly Vector4[] HeroBubbleSpots =
@@ -307,10 +310,8 @@ namespace BubbleWash.EditorTools
         {
             bool save = !InAgentPreview;
             var heroCam = MeasureHeroCam(runner);
-            var crownL = heroCam.At(CrownRootScreenL.x, CrownRootScreenL.y, 0f, out _);
-            crownL.x = Mathf.Min(crownL.x, -0.2f);
-            var crownR = heroCam.At(CrownRootScreenR.x, CrownRootScreenR.y, 0f, out _);
-            crownR.x = Mathf.Max(crownR.x, 0.15f);
+            var crownL = new Vector3(-CrownRootX, 0f, CrownRootZ);
+            var crownR = new Vector3(CrownRootX, 0f, CrownRootZ);
             var fxRoot = Child(runnerGo, "FX");
             var fx = fxRoot.AddComponent<SplashFX>();
             fx.runner = runner;

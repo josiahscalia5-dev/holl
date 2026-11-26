@@ -1447,9 +1447,14 @@ SIDE_CAM = ((2.75, -0.30, 0.62), (0.0, -0.10, 0.42))
 FRONT_CAM = ((0.0, -2.7, 0.78), (0.0, 0.0, 0.52))
 
 
-def render_game_view(path, label="Slide f7 - Unity portrait gameplay camera", res=(540, 960)):
+def game_view_cam():
     cam = Vector(HERO_CAM)
     look = cam + Vector((0.0, -math.cos(math.radians(HERO_PITCH)), -math.sin(math.radians(HERO_PITCH))))
+    return cam, look
+
+
+def render_game_view(path, label="Slide f7 - Unity portrait gameplay camera", res=(540, 960)):
+    cam, look = game_view_cam()
     return render(path, cam, look, 0.0, res, label=label, vfov=GAME_VFOV, subject=(0.0, -0.05, 0.5), samples=40)
 
 
@@ -1466,6 +1471,16 @@ def make_previews(arm, actions):
         set_action(arm, actions, "Slide", 7)
         render(C.preview_path("SK_Mascot_seated_side"), SIDE_CAM[0], SIDE_CAM[1], 50.0, (700, 700),
                subject=(0.0, -0.1, 0.45), label="Slide - side (travel = left)", samples=24)
+        tag = os.environ.get("BWK_INSPECT", "")
+        if tag:                                     # named inspection set (our renders only: public folder)
+            render(C.preview_path("SK_Mascot_%s_game_9x16" % tag), *game_view_cam(), 0.0, (540, 960),
+                   label="Slide f7 - hero camera", vfov=GAME_VFOV, subject=(0.0, -0.05, 0.5), samples=40)
+            render(C.preview_path("SK_Mascot_%s_rear" % tag), REAR_CAM[0], REAR_CAM[1], 50.0, (700, 700),
+                   subject=(0.0, 0.0, 0.62), label="Slide - rear", samples=32)
+            render(C.preview_path("SK_Mascot_%s_side" % tag), SIDE_CAM[0], SIDE_CAM[1], 45.0, (700, 700),
+                   subject=(0.0, -0.1, 0.62), label="Slide - side (travel = left)", samples=32)
+            render(C.preview_path("SK_Mascot_%s_front" % tag), FRONT_CAM[0], FRONT_CAM[1], 45.0, (700, 700),
+                   subject=(0.0, -0.1, 0.62), label="Slide - front", samples=32)
         return
     set_action(arm, actions, "Slide", 0)
     p_rear = os.path.join(SCRATCH, "rear_gameplay.tga")
