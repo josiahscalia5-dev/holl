@@ -241,7 +241,16 @@ namespace BubbleWash.EditorTools
                 float cs = Mathf.Clamp(mascotH / 1.43f, 0.8f, 1.4f);
                 Put("SM_FX_Crown_v2_L", 0f, 0f, 0f, 0f, Vector3.one * cs, rt);
                 Put("SM_FX_Crown_v2_R", 0f, 0f, 0f, 0f, Vector3.one * cs, rt);
-                Debug.Log($"[BWK] shot0825: water crowns at the runner, scale {cs:F2}");
+                // lead 11:20: the v2 crowns replace the old perforated sheet crowns (SplashFX.sheets) in the test shot/scene;
+                // v4 showed both at once. The level scene is untouched (this tool never saves it).
+                int hidden = 0;
+                foreach (var sc in Object.FindObjectsByType<SplashCrowns>(FindObjectsSortMode.None))
+                { sc.gameObject.SetActive(false); hidden++; }   // the round-3/4 perforated 3D crown flipbook (SceneBuilder.WaterFX BuildCrowns)
+                foreach (var fx in Object.FindObjectsByType<SplashFX>(FindObjectsSortMode.None))
+                    if (fx.sheets != null)
+                        foreach (var s in fx.sheets)
+                            if (s) { s.Clear(true); s.gameObject.SetActive(false); hidden++; }
+                Debug.Log($"[BWK] shot0825: water crowns at the runner, scale {cs:F2}; old sheet crowns hidden: {hidden}");
             }
             var rnd = new System.Random(825 + (int)d);
             foreach (var o in new[] { (-1.2f, -2.2f, 0f, 1.15f), (-3.0f, -2.4f, 0.1f, 1.25f), (-5.0f, -2.5f, 0.2f, 1.05f) })

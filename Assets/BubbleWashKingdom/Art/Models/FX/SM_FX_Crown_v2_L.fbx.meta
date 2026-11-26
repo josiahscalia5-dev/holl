@@ -3,11 +3,16 @@ guid: 786c2597b09265a489f6b8d42cf083df
 ModelImporter:
   serializedVersion: 24300
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_FX_Milk_v2
+    second: {fileID: 2100000, guid: 8ab9d4235022a2d4789c7380b4644e19, type: 2}
   materials:
     materialImportMode: 2
-    materialName: 0
-    materialSearch: 1
+    materialName: 1
+    materialSearch: 2
     materialLocation: 1
     searchTexturesGlobally: 0
   animations:
