@@ -53,7 +53,7 @@ namespace BubbleWash.EditorTools
                 // round 3: turquoise (#3ef0e6) with a mint core; white-cyan (#e0fff8) and hotter right under / behind the mascot
                 F(m, "_Mode", 7); C(m, "_ColorA", "#A6FFF4"); C(m, "_ColorB", "#14D8CE"); C(m, "_ColorC", "#F2FFFC");
                 F(m, "_Glow", 0.36f); F(m, "_StreakAmount", 0.25f); F(m, "_StreakSpeed", 1.6f); F(m, "_ReflectBoost", 0.4f);
-                F(m, "_HotNear", 2.25f); F(m, "_HotFar", 2.7f); F(m, "_HotBoost", 0.7f);
+                F(m, "_HotNear", 1.75f); F(m, "_HotFar", 2.05f); F(m, "_HotBoost", 0.7f);
             });
             Mat("M_Foam", "BWK/Soft", m =>
             {
@@ -66,8 +66,8 @@ namespace BubbleWash.EditorTools
             Mat("M_FX_Milk", "BWK/Soft", m =>
             {
                 // milky crown splashes + 3D droplets (Mode 6): creamy white, blue-grey shading, cool water bounce, wet highlights
-                F(m, "_Mode", 6); C(m, "_ColorA", "#FFFFFF"); C(m, "_ShadowColor", "#B6C4EC"); C(m, "_ColorB", "#9ED8F5"); F(m, "_Wrap", 0.6f);
-                F(m, "_RimPower", 2.0f); F(m, "_RimStrength", 0.45f); F(m, "_SpecStrength", 1.0f); F(m, "_ReflectBoost", 0.3f); F(m, "_Glow", 0.38f);
+                F(m, "_Mode", 6); C(m, "_ColorA", "#FFFFFF"); C(m, "_ShadowColor", "#9FB2E6"); C(m, "_ColorB", "#8CCFF2"); F(m, "_Wrap", 0.55f);
+                F(m, "_RimPower", 1.8f); F(m, "_RimStrength", 0.6f); F(m, "_SpecStrength", 1.0f); F(m, "_ReflectBoost", 0.3f); F(m, "_Glow", 0.24f);
                 F(m, "_Wobble", 0.01f); F(m, "_WobbleFreq", 7f);
             });
             Particle("M_FX_Splash", $"{Tex}/T_Splash.png", additive: false, "#FFFFFF");

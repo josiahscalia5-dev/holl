@@ -73,7 +73,7 @@ TOP_STRIPE_PHI, TOP_STRIPE_HW = 47.0, 5.5  # extra pale stripe on the dome front
 TOP_STRIPE_FULL, TOP_STRIPE_END = 45.0, 78.0    # ... over the front only (deg from the front): never seen from behind
 STAR_U, STAR_PHI, STAR_ROT = 0.192, 33.0, -12.0  # star badge on the cuff, 33 deg toward HIS LEFT (+X)
 STAR_RO, STAR_RI = 0.072, 0.032
-POMPOM_R, POMPOM_LIFT = 0.228, 0.0         # pom-pom radius; centre this many radii above the dome top
+POMPOM_R, POMPOM_LIFT = 0.228, -0.22       # pom-pom radius; centre this many radii above the dome top
 POMPOM_SEG = 12
 
 # ------------------------------------------------------------------ face (unchanged design, follows the body centre)
@@ -88,8 +88,8 @@ BLUSH_X, BLUSH_Z, BLUSH_R = 0.235, 0.47 + FACE_DZ, 0.058
 # ------------------------------------------------------------------ arms: big stubby mitts raised up and out ("wheee")
 # Reference rear view: the arms leave the body sides just under the cuff and rise ~45 deg, so the paws sit at cuff
 # height OUTSIDE the hat silhouette. Seen from behind = back of the mitt (no palm pads), tips a little lighter.
-ARM_Z = 0.480                              # root height on the body side (rest; just under the cuff when seated)
-ARM_UP, ARM_BACK = 49.0, 0.03              # rest direction: 44 deg above horizontal, very slightly back
+ARM_Z = 0.520                              # root height on the body side (rest; just under the cuff when seated)
+ARM_UP, ARM_BACK = 52.0, 0.10              # rest direction: 52 deg above horizontal, very slightly back
 ARM_SEG = 20
 ARM_PROFILE = [(-0.10, 0.072), (-0.05, 0.082), (0.0, 0.088), (0.06, 0.091), (0.12, 0.094), (0.18, 0.099),
                (0.235, 0.106), (0.275, 0.108), (0.307, 0.102), (0.332, 0.087), (0.350, 0.064), (0.362, 0.035),
@@ -100,7 +100,7 @@ PALM_FACING = Vector((0.0, -0.55, 0.85))   # palm side (front/up): only used as 
 # ------------------------------------------------------------------ legs + feet (seated): the reference rear view shows
 # big cream feet with pink beans at the bottom-left / bottom-right of the body, SOLES FACING THE CAMERA (toes up and
 # splayed out ~20 deg) while he sits on his bottom: the short legs fold back under him (plush W-sit).
-PAW_C = Vector((0.300, 0.285, 0.215))      # paw centre (his left; mirrored), behind the bottom on the camera side
+PAW_C = Vector((0.262, 0.320, 0.245))      # paw centre (his left; mirrored), behind the bottom on the camera side
 HIP = Vector((0.200, 0.020, 0.230))        # hip joint inside the lower body
 SOLE_UP, SOLE_OUT, TOE_OUT = 22.0, 0.18, 22.0   # sole normal tilt up toward the camera / outward turn; toes lean out
 LEG_SEG, LEG_R0, LEG_R1 = 18, 0.090, 0.080 # around, radius at hip / ankle

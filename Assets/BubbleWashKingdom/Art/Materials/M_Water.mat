@@ -30,8 +30,8 @@ Material:
     - _ChevronGlow: 0.55
     - _ChevronScale: 1.35
     - _ChevronSpacing: 0.95
-    - _ChevronStart: 6.4
-    - _ChevronWidth: 0.74
+    - _ChevronStart: 6.1
+    - _ChevronWidth: 0.5
     - _Depth: 0.22
     - _EdgeFoam: 0.6
     - _EdgeTintAmount: 0.28

@@ -17,7 +17,7 @@ namespace BubbleWash.EditorTools
                 // reference beanie dome: violet ribbed knit. The ribs are geometry (build_mascot_model.py CROWN_RIBS = 72,
                 // UV.x = 0..1 around, UV.y = arc length in metres): _StitchU must equal CROWN_RIBS, _StitchV = rows per metre.
                 // albedo chosen so the dome renders like the reference crown (~#76319f) under the tunnel's violet light
-                F(m, "_Mode", 2); C(m, "_ColorA", "#6C4482"); C(m, "_ColorB", "#EDE6FF"); F(m, "_Stripes", 3); F(m, "_StripeWidth", 0.0f);
+                F(m, "_Mode", 2); C(m, "_ColorA", "#74457E"); C(m, "_ColorB", "#EDE6FF"); F(m, "_Stripes", 3); F(m, "_StripeWidth", 0.0f);
                 F(m, "_StitchU", 72); F(m, "_StitchV", 55); F(m, "_BumpStrength", 0.75f); F(m, "_Smoothness", 0.14f); F(m, "_Glow", 0.08f);
             });
             Mat("M_HatCuff", "BWK/Character", m =>
@@ -44,7 +44,7 @@ namespace BubbleWash.EditorTools
             Mat("M_PawPad", "BWK/Character", m =>
             {
                 // soft candy-pink toe beans: fabric mode multiplies _ColorA by the vertex colour (pads = pink Col)
-                F(m, "_Mode", 4); C(m, "_ColorA", "#FFFFFF"); F(m, "_BumpScale", 0.6f); F(m, "_Smoothness", 0.38f); F(m, "_Glow", 0.16f);
+                F(m, "_Mode", 4); C(m, "_ColorA", "#FFFFFF"); F(m, "_BumpScale", 0.6f); F(m, "_Smoothness", 0.3f); F(m, "_Glow", 0.42f);
                 F(m, "_RimStrength", 0.25f);
             });
             Lit_("M_StarBadge", "#FFD43F", metallic: 0.1f, smooth: 0.6f, emission: "#7A4A00");
@@ -55,21 +55,21 @@ namespace BubbleWash.EditorTools
                 // Strand cells are square (the shader doubles UV.x); fine dense guard hairs + thick underfur = plush.
                 // coral-leaning albedo: the tunnel light is violet, so this renders as the reference's warm pink (~#d06e94).
                 // Short dense minky pile, soft alpha-to-coverage strands, little clumping/curl: plush, not needles.
-                C(m, "_RootColor", "#BC5552"); C(m, "_BaseColor", "#DF695E"); C(m, "_TipColor", "#EE9C8E");
-                C(m, "_PawRootColor", "#EDE4EC"); C(m, "_PawTipColor", "#FFFFFF");
+                C(m, "_RootColor", "#C45E58"); C(m, "_BaseColor", "#E8786A"); C(m, "_TipColor", "#F6B0A0");
+                C(m, "_PawRootColor", "#F6EAE6"); C(m, "_PawTipColor", "#FFF8F2");
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
                 F(m, "_Density", 260); F(m, "_FurLength", 0.032f); F(m, "_Gravity", 0.005f); F(m, "_Thinning", 0.6f); F(m, "_ClumpAmount", 0.45f); F(m, "_ClumpScale", 9f);
                 F(m, "_AO", 0.15f); F(m, "_Curl", 1.0f); F(m, "_Underfur", 0.85f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.6f);
-                C(m, "_RimColor", "#FFD0C8"); F(m, "_Glow", 0.10f); F(m, "_RimStrength", 0.5f);
+                C(m, "_RimColor", "#FFD0C8"); F(m, "_Glow", 0.14f); F(m, "_RimStrength", 0.5f);
             }, (int)RenderQueue.AlphaTest);
             Mat("M_PomPom", "BWK/Fur", m =>
             {
                 // dense soft yarn pom-pom: short, very dense, little thinning so the silhouette stays round and soft
                 // deeper violet yarn (reference ~#8741b3, dark centre, lighter radiating tips): straight radial fibres
-                C(m, "_RootColor", "#3A1E58"); C(m, "_BaseColor", "#6E3E8E"); C(m, "_TipColor", "#B28AD2");
+                C(m, "_RootColor", "#42205A"); C(m, "_BaseColor", "#7A3E8E"); C(m, "_TipColor", "#C08ED6");
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
-                F(m, "_Density", 170); F(m, "_FurLength", 0.032f); F(m, "_Gravity", 0.0f); F(m, "_Thinning", 0.55f); F(m, "_AO", 0.4f);
-                F(m, "_Curl", 0.5f); F(m, "_Underfur", 0.9f); F(m, "_ClumpAmount", 0.3f); F(m, "_EdgeSoft", 0.25f); F(m, "_SilhouetteFade", 0.5f);
+                F(m, "_Density", 240); F(m, "_FurLength", 0.026f); F(m, "_Gravity", 0.0f); F(m, "_Thinning", 0.45f); F(m, "_AO", 0.4f);
+                F(m, "_Curl", 0.5f); F(m, "_Underfur", 0.9f); F(m, "_ClumpAmount", 0.3f); F(m, "_EdgeSoft", 0.3f); F(m, "_SilhouetteFade", 0.75f);
                 C(m, "_RimColor", "#C8A8F0"); F(m, "_Glow", 0.03f); F(m, "_RimStrength", 0.4f);
             }, (int)RenderQueue.AlphaTest);
             // static (shell-less) preview variants: no clipping, no offset

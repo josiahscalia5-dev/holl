@@ -21,12 +21,12 @@ namespace BubbleWash.EditorTools
         // decor chevrons down the middle of the water (also drive the light pools in M_Water / BWK_Water). Reference
         // f_002.00-f_003.25: a runway of glowing chevrons about one chevron length apart (SM_Chevron is 1.31 x 0.65 m).
         // phase / spacing put the hero frame's chevron tips at the reference: under him (screen y .72) and at the bottom (y .87)
-        public const float ChevronStart = 6.4f, ChevronSpacing = 0.95f, ChevronScale = 1.35f;
+        public const float ChevronStart = 6.1f, ChevronSpacing = 0.95f, ChevronScale = 1.35f;
         // narrower than long: steeper arms like the reference (bottom chevron arm meets the frame bottom at x ~.2)
-        public const float ChevronWidth = 0.74f;
+        public const float ChevronWidth = 0.5f;
         // milk crown splashes beside the feet (Art/Models/FX/SM_FX_Crown_xx, left-side asset mirrored for the right).
         // Root anchored in SCREEN space of the hero frame (reference f_003.00s: crowns rise at x 0-.35 / .65-1, y .55-.87).
-        static readonly Vector2 CrownRootScreenL = new Vector2(0.31f, 0.80f);
+        static readonly Vector2 CrownRootScreenL = new Vector2(0.31f, 0.80f), CrownRootScreenR = new Vector2(0.78f, 0.81f);
         const float CrownScale = 1.05f, CrownYaw = 50f;   // yaw turns the sheet to face the camera
         // reference f_003.00s foreground bubbles: screen x, screen y (0..1 from the top-left of the 9:16 hero frame),
         // diameter as a fraction of the frame width, w > 0 = height above the water (m), w < 0 = -camera depth (m)
@@ -309,6 +309,8 @@ namespace BubbleWash.EditorTools
             var heroCam = MeasureHeroCam(runner);
             var crownL = heroCam.At(CrownRootScreenL.x, CrownRootScreenL.y, 0f, out _);
             crownL.x = Mathf.Min(crownL.x, -0.2f);
+            var crownR = heroCam.At(CrownRootScreenR.x, CrownRootScreenR.y, 0f, out _);
+            crownR.x = Mathf.Max(crownR.x, 0.15f);
             var fxRoot = Child(runnerGo, "FX");
             var fx = fxRoot.AddComponent<SplashFX>();
             fx.runner = runner;
@@ -339,7 +341,7 @@ namespace BubbleWash.EditorTools
             ParticleSystem Drops(string n, float side, uint seed)
             {
                 var dir = Quaternion.LookRotation(new Vector3(side * 0.62f, 0.78f, -0.38f)).eulerAngles;
-                return Sub(fx.spray, n, "M_FX_Milk", new Vector3(side * (Mathf.Abs(crownL.x) + 0.2f), 0.35f, crownL.z - 0.1f), dir, ps =>
+                return Sub(fx.spray, n, "M_FX_Milk", new Vector3(side < 0 ? -(Mathf.Abs(crownL.x) + 0.2f) : Mathf.Abs(crownR.x) + 0.2f, 0.35f, crownL.z - 0.1f), dir, ps =>
                 {
                     var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.3f, 0.6f); m.startSpeed = new ParticleSystem.MinMaxCurve(1.3f, 2.8f);
                     m.startSize = new ParticleSystem.MinMaxCurve(0.02f, 0.055f); m.gravityModifier = 1.3f; m.simulationSpace = ParticleSystemSimulationSpace.Local;
@@ -471,12 +473,12 @@ namespace BubbleWash.EditorTools
                 near.transform.SetParent(ambient.transform, true);
             }
 
-            BuildCrowns(fxRoot, runner, save, crownL);
+            BuildCrowns(fxRoot, runner, save, crownL, crownR);
             if (InWaterFxPreview) RebuildEnvironmentFxPreview();
             return fx;
         }
 
-        static void BuildCrowns(GameObject fxRoot, RunnerController runner, bool save, Vector3 rootL)
+        static void BuildCrowns(GameObject fxRoot, RunnerController runner, bool save, Vector3 rootL, Vector3 rootR)
         {
             var frames = new List<Mesh>();
             for (int k = 0; k < 32; k++)
@@ -498,7 +500,7 @@ namespace BubbleWash.EditorTools
             foreach (float side in new[] { -1f, 1f })
             {
                 var go = Child(holder, side < 0 ? "CrownL" : "CrownR");
-                go.transform.localPosition = new Vector3(side * Mathf.Abs(rootL.x), 0f, rootL.z);
+                go.transform.localPosition = side < 0 ? new Vector3(-Mathf.Abs(rootL.x), 0f, rootL.z) : new Vector3(Mathf.Abs(rootR.x), 0f, rootR.z);
                 go.transform.localRotation = Quaternion.Euler(0f, -side * CrownYaw, 0f);
                 // asset extends to -X (left); mirror for the right side
                 var s = new Vector3(-side * CrownScale, CrownScale, CrownScale);
@@ -515,7 +517,7 @@ namespace BubbleWash.EditorTools
             sc.crowns = crowns.ToArray();
             sc.baseScale = scales.ToArray();
             sc.baseRotation = new[] { Quaternion.Euler(0f, CrownYaw, 0f), Quaternion.Euler(0f, -CrownYaw, 0f) };
-            Debug.Log($"[BWK] waterfx crowns: root L ({-Mathf.Abs(rootL.x):F2}, 0, {rootL.z:F2}) scale {CrownScale} yaw {CrownYaw}, {frames.Count} frames");
+            Debug.Log($"[BWK] waterfx crowns: root L ({-Mathf.Abs(rootL.x):F2}, 0, {rootL.z:F2}) R ({Mathf.Abs(rootR.x):F2}, 0, {rootR.z:F2}) scale {CrownScale} yaw {CrownYaw}, {frames.Count} frames");
             sc.phase = phase;
         }
 
