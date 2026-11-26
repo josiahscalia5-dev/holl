@@ -8,7 +8,8 @@
 - Autosave: the loop restarted by the previous lead at 12:09 published chat history (BWK_PUBLISH_CHAT=1); the owner's new
   brief says keep chat history local, so it was restarted at 12:20 WITHOUT chat publishing (public ChatHistory/ is frozen
   at autosave c4fdbe9, which already contains the 4e740a08 export and the first 617 lines of this session's export).
-  OPEN QUESTION: remove ChatHistory/ from the public tree (git history keeps it; never rewrite history)?
+  12:35 OWNER: "Yes, remove it" -> autosave.sh now removes ChatHistory/ from the public tree (pushed 3e05fbb, 0 chat files
+  on GitHub main; older public commits still contain them - history is never rewritten). Exports stay local in ChatHistory/.
 - Integrations (12:20): Claude Docs + scheduled-tasks connectors connected; Remote Control ON for this session; computer
   use, Claude in Chrome and the built-in browser available (computer use asks per app). NOT installed and never were:
   Unity MCP (would block batchmode: Unity can't open the project twice), Playwright, Chrome for Testing, Frontend Design
@@ -19,7 +20,7 @@
   `CaptureStillsBatch -bwkOut DIR -bwkHero`. Previous build captured 12:18 -> `Captures/stills_prev_r6/` (+ bg/, compare/).
   `bash Tools/section_triptych.sh <tag> [prevDir] [newDir]` -> `Captures/sections/S<n>_triptych_<tag>.png` (row 1 reference
   | previous | newest, row 2 the same with the mascot hidden) + ALL sheets. Previous full gameplay recording kept as
-  `Captures/playmode/gameplay_autopilot_9x16_prev_r5_0921.mp4`.
+  `Captures/playmode/gameplay_autopilot_9x16_prev_r6_1146.mp4 (11:46 run, S5 straight)`.
 - 12:27 Round 7 workflow launched (task wzik2ppqr, run wf_e8ef4a2c-f69, prompts updated with the shared colour sheet,
   section boundaries 14-115 / 110-318 / 318-351 m, gameplay-untouched rules, max 5 full builds). Resume a cut-off run with
   `Workflow({scriptPath: ".../bwk-round7-wholelevel.js", resumeFromRunId: "wf_e8ef4a2c-f69"})`; agent transcripts in
