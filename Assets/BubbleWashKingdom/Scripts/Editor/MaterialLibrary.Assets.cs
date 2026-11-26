@@ -38,17 +38,44 @@ namespace BubbleWash.EditorTools
             // SM_BrushRoller_r8 (build_hall_assets.py): smooth rounded band body + 8 coincident fur shells (UV1.x = shell
             // fraction, UV1.y = 1), band colour in the vertex colour (linear pink / white / cyan), alpha 1 = "coat" path of
             // BWK/Fur. White-ish albedo ramps so the vertex colour sets the hue; dark lilac roots give the tuft depth.
+            // r8 v2: v1 rendered 93 % blue-violet (roller crop of 01_hall_start; ref f_00.50s pink 33 % / cyan 6.7 % / white
+            // 7.5 %). Pixel solve on the v1 bands (pink band rendered lin .16/.03/.44, white band .07/.10/.60): the hall light
+            // reaching the roller is almost pure blue (~.03/.04/.75 + glow), so no albedo can make pink from it. Fix = more
+            // colour-true self light (glow .6, the only R/G source) + a cream ramp (lin 1/1/.57) that takes the surplus blue
+            // out of every band: predicted pink #D05EA4 / white #D0C7DD / cyan #63A9D9 vs ref #C35FA2 / #E2D1E9 / #6CB0D2.
             Mat("M_RollerFur_r8", "BWK/Fur", m =>
             {
-                C(m, "_RootColor", "#B3A0C6"); C(m, "_BaseColor", "#F6F0F8"); C(m, "_TipColor", "#FFFFFF");
+                C(m, "_RootColor", "#E1E1AF"); C(m, "_BaseColor", "#FFFFC6"); C(m, "_TipColor", "#FFFFD2");
                 F(m, "_UseVertexTint", 1f); F(m, "_StaticMode", 0f);
                 F(m, "_Density", 30f); F(m, "_FurLength", 0.30f); F(m, "_Gravity", 0f); F(m, "_Thinning", 0.85f);
-                F(m, "_ClumpAmount", 0.5f); F(m, "_ClumpScale", 4f); F(m, "_AO", 0.45f); F(m, "_Curl", 0.45f);
+                F(m, "_ClumpAmount", 0.5f); F(m, "_ClumpScale", 4f); F(m, "_AO", 0.35f); F(m, "_Curl", 0.45f);
                 F(m, "_Underfur", 0.85f); F(m, "_EdgeSoft", 0.22f); F(m, "_SilhouetteFade", 0.5f);
                 F(m, "_TuftScale", 7f); F(m, "_TuftAmount", 0.55f);           // ~14 cm soft rounded tufts (reference)
-                F(m, "_Wrap", 0.65f); C(m, "_RimColor", "#FFFFFF"); F(m, "_RimPower", 2.4f); F(m, "_RimStrength", 0.45f);
-                F(m, "_Glow", 0.16f);
+                F(m, "_Wrap", 0.65f); C(m, "_RimColor", "#FFF4E6"); F(m, "_RimPower", 2.4f); F(m, "_RimStrength", 0.3f);
+                F(m, "_Glow", 0.6f);
             }, (int)RenderQueue.AlphaTest);
+
+            // ---------------------------------------------------------------- 01 pink laundry console (r8 v2)
+            // v1 still: the console body rendered deep violet #5A28B0 (ref f_00.50s console crop pink 25.6 % #CF64A1, ours
+            // 0.9 %): M_HallPink_r7's emission keyword is not saved (m_ValidKeywords empty), so URP Lit pink x the blue hall
+            // light = violet. Console-only copy on BWK/Soft mode 1 (uniform candy plastic, clear-coat probe reflection,
+            // colour-true glow; the glow is a property, not a keyword): albedo lin .95/.20/.32 x (light + .6) ~ #CB63AE.
+            Mat("M_ConsolePink_r8", "BWK/Soft", m =>
+            {
+                F(m, "_Mode", 1); C(m, "_ColorA", "#F97C99"); C(m, "_ColorB", "#F97C99"); C(m, "_ColorC", "#F97C99");
+                F(m, "_Smoothness", 0.9f); F(m, "_Metallic", 0f); F(m, "_Glow", 0.6f);
+                F(m, "_RimPower", 3f); F(m, "_RimStrength", 0.3f);
+                F(m, "_StreakAmount", 0f); F(m, "_ReflectBoost", 0.6f);
+            });
+            // the screen read as a pale grey-white card (M_Screen emissive #5E8FC7 x 1.6); reference = deep blue glass behind
+            // the cyan neon T-shirt (the icon keeps M_Neon_Cyan)
+            Mat("M_ConsoleScreen_r8", "BWK/Soft", m =>
+            {
+                F(m, "_Mode", 1); C(m, "_ColorA", "#1E5A8C"); C(m, "_ColorB", "#1E5A8C"); C(m, "_ColorC", "#1E5A8C");
+                F(m, "_Smoothness", 0.96f); F(m, "_Metallic", 0f); F(m, "_Glow", 0.5f);
+                F(m, "_RimPower", 4f); F(m, "_RimStrength", 0.2f);
+                F(m, "_StreakAmount", 0f); F(m, "_ReflectBoost", 0.8f);
+            });
         }
     }
 }

@@ -83,6 +83,32 @@ namespace BubbleWash.EditorTools
             return Quaternion.LookRotation(z, y);
         }
 
+        /// <summary>r8 v2 (asset artist): raises a roller centre just enough that its fur bottom stays >= minClear above the
+        /// slide wherever the roller hangs over the slide corridor (horizontal distance to the centre line < 3 m), sampled
+        /// along its axis. SM_BrushRoller_r8: band peak radius 0.98 m and 2.62 m long in asset space, + 0.30 m world fur.</summary>
+        static Vector3 HallRollerClear(Vector3 p, Quaternion rot, float scale, float minClear, string label)
+        {
+            float radius = 0.98f * scale + 0.32f, halfLen = 1.4f * scale, lift = 0f, worst = float.MaxValue;
+            for (int i = -4; i <= 4; i++)
+            {
+                Vector3 q = p + rot * Vector3.right * (halfLen * i / 4f);
+                float bestD = float.MaxValue, slideY = 0f;
+                for (float d = 0f; d <= HallMouthD + 12f; d += 0.5f)
+                {
+                    var f = track.Evaluate(d);
+                    Vector3 rel = q - f.position;
+                    float hd = new Vector2(rel.x, rel.z).magnitude;
+                    if (hd < bestD) { bestD = hd; slideY = f.position.y; }
+                }
+                if (bestD > 3f) continue;
+                float clear = q.y - radius - slideY;
+                worst = Mathf.Min(worst, clear);
+                lift = Mathf.Max(lift, minClear - clear);
+            }
+            Debug.Log($"[BWK] hall roller r8 {label}: scale {scale:F2}, min clearance over the slide {(worst == float.MaxValue ? -1f : worst):F2} m, lifted {lift:F2} m");
+            return p + Vector3.up * lift;
+        }
+
         /// <summary>Brush roller = spinning bristle body (about its own X axis, like the video) + static gold hub and arm.</summary>
         static void HallRoller(GameObject parent, Vector3 pos, Quaternion rot, float scale, float spin)
         {
@@ -173,8 +199,12 @@ namespace BubbleWash.EditorTools
             HallPlace(holder, "Machinery", "SM_CyanPipeArch_r7", p, HallFaceCam(cam, p, 8f), 1.45f);
             // big fluffy roller upper left of the door ring, seen from the side (stripes side by side), hub on the left;
             // >= 2.6 m above the slide so the rear camera and a jumping mascot pass under it
-            p = P(0.34f, 0.06f, 9.5f);
-            HallRoller(holder, p, HallRollerRot(cam.rot * new Vector3(-1f, 0.1f, 0.35f)), 1.15f, 40f);
+            // r8 v2 (asset artist, owner sheet 01 item 2 "lower placement", proportion fix): reference f_00.50s roller spans
+            // u .30-.59 / v 0-.38 of the frame, ours (v1 still) u .22-.45 / v 0-.19 -> 1.3x larger and lower (v .06 -> .14),
+            // lifted back only as far as the 2.6 m slide clearance needs (HallRollerClear logs it)
+            var rRot = HallRollerRot(cam.rot * new Vector3(-1f, 0.1f, 0.35f));
+            p = HallRollerClear(P(0.36f, 0.14f, 9.5f), rRot, 1.5f, 2.6f, "S1");
+            HallRoller(holder, p, rRot, 1.5f, 40f);
             // polished gold pipes and valves on the left below the console
             p = P(0.06f, 0.5f, 7.5f);
             HallPlace(holder, "Machinery", "SM_GoldValves_r7", p, HallFaceCam(cam, p, 35f), 1.0f, new Vector3(0f, 1.8f, 0f));
@@ -213,7 +243,9 @@ namespace BubbleWash.EditorTools
             HallPlace(holder, "Machinery", "SM_CyanPipeArch_r7", track.Evaluate(HallMouthD - 0.5f).FlatPoint(-2.6f, 10.6f), f.FlatRotation, 1.5f);
             HallPlace(holder, "Machinery", "SM_GoldValves_r7", f.FlatPoint(4.8f, 7.2f), f.FlatRotation, 1.15f);
             var fr = track.Evaluate(HallMouthD - 4f);
-            HallRoller(holder, fr.FlatPoint(-4.4f, 7.0f), HallRollerRot(-fr.flatRight + fr.forward * 0.6f), 1.2f, -36f);
+            // r8 v2: rollers lower and larger (sheet 01 item 2), clearance-checked like the S1 roller
+            var dRot = HallRollerRot(-fr.flatRight + fr.forward * 0.6f);
+            HallRoller(holder, HallRollerClear(fr.FlatPoint(-4.4f, 6.2f), dRot, 1.35f, 2.6f, "door"), dRot, 1.35f, -36f);
 
             // ---- the hall between start and door (density: no stretch without landmarks; |lateral| >= 4.6 m or high)
             HallWallItem(holder, 26f, 1, "SM_GoldValves_r7", 6.8f, -0.4f, 1.2f);
@@ -221,12 +253,23 @@ namespace BubbleWash.EditorTools
             HallWallItem(holder, 33f, -1, "SM_CyanPipeArch_r7", 8.4f, 4.4f, 1.4f);
             HallWallItem(holder, 33f, 1, "SM_HallConsole_r7", 7.4f, 0.8f, 1.3f);
             var fr2 = track.Evaluate(30f);
-            HallRoller(holder, fr2.FlatPoint(4.6f, 6.6f), HallRollerRot(fr2.flatRight + fr2.forward * 0.5f), 1.1f, 34f);
+            var r2Rot = HallRollerRot(fr2.flatRight + fr2.forward * 0.5f);
+            HallRoller(holder, HallRollerClear(fr2.FlatPoint(4.6f, 5.2f), r2Rot, 1.3f, 2.6f, "30m"), r2Rot, 1.3f, 34f);
             foreach (var (d, side) in new[] { (22f, 1), (26f, -1) })
             {
                 var ft = track.Evaluate(d);
                 HallTower(holder, ft.FlatPoint(9.6f * side, 4.4f), Quaternion.LookRotation(ft.flatRight * side, Vector3.up) * Quaternion.Euler(0f, 30f * side, 0f), 1.2f);
             }
+
+            // r8 v2 (asset artist, asset 01 / sheet 01 item 1): the consoles get their own glossy hot-pink body + deep blue
+            // screen (MaterialLibrary.Assets.cs) before the shared hall remap below; the gold / buttons / neon stay as they are
+            var consoleMap = new Dictionary<string, Material>
+            {
+                ["M_MachinePink"] = Mat("M_ConsolePink_r8"),
+                ["M_Screen"] = Mat("M_ConsoleScreen_r8"),
+            };
+            foreach (Transform t in holder.transform)
+                if (t.name == "SM_HallConsole_r7") HallRemap(t.gameObject, consoleMap);
 
             // ---- light lavender-pink / hot pink machine materials for the whole r7 set (not the shared materials)
             var map = new Dictionary<string, Material>

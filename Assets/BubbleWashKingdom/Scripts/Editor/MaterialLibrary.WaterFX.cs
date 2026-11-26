@@ -116,10 +116,22 @@ namespace BubbleWash.EditorTools
                 // measured on the reference milk mask (Tools/fx_splash_trace.py, f_08.25s): core p80-100 #E9F9F9, mid #D1E7ED,
                 // shade p0-20 #B0C5D6 / #B3B9D6: opaque thick milk (no blending: the reference crowns are not see-through),
                 // cyan-white body, blue-grey shading, cool bounce from the water, glossy wet highlights
-                F(m, "_Mode", 6); C(m, "_ColorA", "#E9F9F9"); C(m, "_ShadowColor", "#A9BED6"); C(m, "_ColorB", "#9CC6E8"); F(m, "_Wrap", 0.55f);
-                F(m, "_RimPower", 2.6f); F(m, "_RimStrength", 0.55f); F(m, "_SpecStrength", 0.9f); F(m, "_ReflectBoost", 0.3f); F(m, "_Glow", 0.22f);
-                F(m, "_Wobble", 0.006f); F(m, "_WobbleFreq", 6f); F(m, "_MilkAlpha", 1f); F(m, "_MilkEdgeAlpha", 1f);
-            });
+                F(m, "_Mode", 6); C(m, "_ColorA", "#E9F9F9"); C(m, "_ShadowColor", "#A9BED6"); C(m, "_ColorB", "#9CC6E8"); F(m, "_Wrap", 0.42f);
+                F(m, "_RimPower", 2.6f); F(m, "_RimStrength", 0.55f); F(m, "_SpecStrength", 1.1f); F(m, "_ReflectBoost", 0.3f);
+                F(m, "_Wobble", 0.006f); F(m, "_WobbleFreq", 6f);
+                // round 8 (lead r8v1 review: "flat opaque white cut-out shapes in every rear frame"; measured hero splash pixels
+                // ours luma p10/50/90 207/216/228 std 9.7 #D5D8D9 vs reference 178/212/230 std 19.8 #C5D1E4): self glow .22
+                // pushed the milk past 1.0 so the tonemapper clipped it flat -> glow .04, rounded volume shading (_MilkSoft:
+                // white cores, blue-grey roll-off, water-lit thin edges #7DBFE8, soft wet top rims) and a soft translucent
+                // silhouette band (alpha .3 at grazing edges; blended, ZWrite on -> no sorting holes inside a crown)
+                F(m, "_Glow", 0.04f); F(m, "_MilkSoft", 1f); C(m, "_MilkThin", "#7DBFE8");
+                // p2 (p1 measured: L std 10.7 vs ref 19.8, mean #CCD0D2 neutral vs ref #C5D1E4 / #CAE5EB): thickness
+                // variation (thick ribs / thin water-lit film, 9 per metre) and a slightly bluer milk body + shade
+                F(m, "_BumpScale", 9f); F(m, "_BumpStrength", 0.85f);
+                C(m, "_ColorA", "#E4F6FC"); C(m, "_ShadowColor", "#A2BCE0");
+                F(m, "_MilkAlpha", 1f); F(m, "_MilkEdgeAlpha", 0.3f);
+                F(m, "_SrcBlend", (float)BlendMode.SrcAlpha); F(m, "_DstBlend", (float)BlendMode.OneMinusSrcAlpha); F(m, "_ZWrite", 1f);
+            }, (int)RenderQueue.Transparent);
             Mat("M_Foam_v2", "BWK/Soft", m =>
             {
                 // reference foam (4K f_08.00s crops): bright white bubble tops #F3F5FB, faint blue-lavender crevices #B8BEDC,

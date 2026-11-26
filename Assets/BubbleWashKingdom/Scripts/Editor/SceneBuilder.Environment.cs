@@ -279,6 +279,10 @@ namespace BubbleWash.EditorTools
         // outer 2.38 m) and 2.33 m at camera height (camera <= ~1.3 m off the axis). The rear camera at 10-15 m now sees the
         // face 45-51 deg off-axis (ellipse 0.63-0.71 wide) instead of ~90 deg.
         const float WindowYaw = -26f;
+        // r8 v2 (asset artist, owner sheet 02 item 1 "lower the chamber window into view"): the window centre drops 0.6 m
+        // (straight down, same lateral position, so the -26 deg frame keeps its 2.40 m inner edge clear of the 2.38 m rail);
+        // rear still 07 showed the near window cut by the frame top (v -0.1 .. 0.55), R5 had it above the top-left corner
+        const float WindowDrop = 0.6f;
         const float CyanPipeAngle = 35f, CyanPipeRadius = 2.8f, CyanPipeScale = 2.0f, CyanPipeStart = 238f;
         const float CyanPipeEnd = 312f;          // the hall agent's portal set (318-351 m) has its own curved cyan pipe (travel-left)
         static readonly bool PreviewRebuildsEnvironment = false;   // r7: agent previews keep the saved scene's environment
@@ -342,7 +346,7 @@ namespace BubbleWash.EditorTools
                     var f = track.Evaluate(d);
                     float ang = side * WindowAngle * Mathf.Deg2Rad;
                     var radial = f.flatRight * Mathf.Sin(ang) + f.flatUp * Mathf.Cos(ang);
-                    var pos = f.FlatPoint(0, TunnelCenter) + radial * ChamberWindowPlaneRadius;
+                    var pos = f.FlatPoint(0, TunnelCenter) + radial * ChamberWindowPlaneRadius - Vector3.up * WindowDrop;
                     var inward = Vector3.ProjectOnPlane(-radial, Vector3.up).normalized;
                     var rot = Quaternion.AngleAxis(side * WindowYaw, Vector3.up) * Quaternion.LookRotation(inward, Vector3.up);
                     var go = Spawn(prefab);

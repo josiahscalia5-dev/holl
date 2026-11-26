@@ -300,8 +300,18 @@ Shader "BWK/Soft"
                     // grazing edges of the lace strands turn translucent blue (reference: milky cores, light-blue thin parts)
                     col = lerp(col, _ShadowColor.rgb * 0.55 + _ColorB.rgb * 0.45, fr * _RimStrength);
                     half fv = saturate(dot(n, v));
+                    half thick = 1.0;
                     if (_MilkSoft > 0.001)
                     {
+                        // milk thickness (p2): a broad sheet facing the camera has one normal -> one flat colour. Vary the
+                        // film thickness with streaky object-space value noise (stretched along the rise, drifting up), so
+                        // thick milky ribs alternate with thin water-lit blue film like the reference's lacy spray
+                        // (_BumpScale = ribs per metre, _BumpStrength = amount; both unused by mode 6 otherwise)
+                        float3 q = i.positionOS * _BumpScale;
+                        half t1 = BWK_ValueNoise3(q * float3(1.0, 0.4, 1.0) + float3(0.0, _Time.y * 0.5, 0.0));
+                        half t2 = BWK_ValueNoise3(q * 2.3 + 7.1);
+                        thick = saturate((t1 * 0.65 + t2 * 0.35 - 0.5) * 2.6 + 0.6);
+                        thick = lerp(1.0, thick, saturate(_BumpStrength) * _MilkSoft);
                         // round 8 (lead: the crowns read as flat opaque white cut-outs in every rear view): ROUNDED milk
                         // volume - the thick cores that face the camera stay creamy white, the body rolls off toward its
                         // silhouette into a cool blue-grey that the turquoise water shines through (thin translucent
@@ -313,6 +323,7 @@ Shader "BWK/Soft"
                         half3 soft = lerp(deep, col, vol * vol * (3.0 - 2.0 * vol));
                         half up = saturate(n.y * 0.6 + 0.4);
                         soft += _ColorA.rgb * pow(1.0 - fv, 3.0) * smoothstep(0.55, 0.95, up) * 0.55;
+                        soft = lerp(lerp(deep, _MilkThin.rgb, 0.4), soft, thick);           // thin film -> water-lit blue
                         col = lerp(col, soft, _MilkSoft);
                     }
                     half3 hv = normalize(L.direction + v);
@@ -327,7 +338,7 @@ Shader "BWK/Soft"
                     // translucency: opaque milky where the sheet faces the camera, see-through blue at thin / grazing parts
                     half alpha = lerp(_MilkAlpha, _MilkEdgeAlpha, saturate(fr * 1.4));
                     // round 8: soft translucent silhouette band (not a hard paper edge) where the volume shading is on
-                    alpha = lerp(alpha, lerp(_MilkEdgeAlpha, _MilkAlpha, smoothstep(0.03, 0.42, fv)), _MilkSoft);
+                    alpha = lerp(alpha, lerp(_MilkEdgeAlpha, _MilkAlpha, smoothstep(0.03, 0.42, fv)) * lerp(0.6, 1.0, thick), _MilkSoft);
                     col = MixFog(col, i.fog);
                     return half4(col, alpha);
                 }
