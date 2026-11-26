@@ -26,9 +26,13 @@ namespace BubbleWash.EditorTools
                 // round 7 (library 16 "flowing turquoise"; hero bottom water ours #79B6E3 vs reference #6EBCDF = a touch too
                 // blue / grey): a few more turquoise flow patches
                 C(m, "_TurquoiseColor", "#2CC0DC"); F(m, "_PatchAmount", 0.28f); F(m, "_DetailStrength", 0.7f); C(m, "_ReflectTint", "#8CC8FF");
+                // round 8 (r8v1 hero bottom water #72A2D6 L .51 vs reference #6EBCDF L .64: the darker round-8 grade turned it
+                // blue-grey again; library 16 "turquoise flowing water with glossy streaks"): a lighter turquoise shallow
+                // colour, more turquoise flow patches and a little more of the glossy flow streaks
+                C(m, "_ShallowColor", "#1C84C8"); F(m, "_PatchAmount", 0.36f);
                 C(m, "_CausticColor", "#7FE9FF"); C(m, "_ChevronColor", "#24E0DA"); C(m, "_EdgeTint", "#E66AC8");
                 F(m, "_FlowSpeed", 7.5f); F(m, "_Width", 3.6f); F(m, "_Glow", 0.1f); F(m, "_Smoothness", 0.6f);   // PBR gloss low: at 0.95 the pink CharLight_RimFront drew a wavy streak behind him; the glossy look comes from _ReflectBoost
-                F(m, "_StreakAmount", 0.12f); F(m, "_StreakDensity", 1.25f); F(m, "_EdgeTintAmount", 0.28f); F(m, "_SparkleAmount", 0.9f);
+                F(m, "_StreakAmount", 0.18f); F(m, "_StreakDensity", 1.25f); F(m, "_EdgeTintAmount", 0.28f); F(m, "_SparkleAmount", 0.9f);
                 F(m, "_RainbowAmount", 0.32f); F(m, "_RippleStrength", 0.9f); F(m, "_EdgeFoam", 0.6f);
                 F(m, "_CausticAmount", 0.28f); F(m, "_Depth", 0.22f); F(m, "_NearBrighten", 0.05f); F(m, "_ReflectBoost", 0.45f); F(m, "_CenterGlow", 0.06f);
                 // light halos around the decor chevrons: same period / geometry / runway offset as SceneBuilder.BuildDecorChevrons
@@ -77,8 +81,10 @@ namespace BubbleWash.EditorTools
                 // round 7 (owner 13:30 "reduce excessive cyan arrow brightness"; library 20 "bright centre and gentle glow,
                 // keep the shape legible without washing out the lane"): HDR x3.4 -> x2.2 (core just over the bloom
                 // threshold: soft halo instead of a glaring block), less white-hot near the camera, paler mint fill
-                F(m, "_Mode", 7); C(m, "_ColorA", "#7DF7E6"); C(m, "_ColorB", "#22BCCB"); C(m, "_ColorC", "#C2FFF2");
-                F(m, "_Glow", 0.55f); F(m, "_StreakAmount", 0.08f); F(m, "_StreakSpeed", 1.6f); F(m, "_ReflectBoost", 0.15f);
+                // round 8 (library 20: a PALE mint fill inside a glowing saturated-cyan edge, not a solid mint block): paler,
+                // less saturated fill (_ColorA), brighter cyan border band (_ColorB), slightly lower HDR so the fill stays mint
+                F(m, "_Mode", 7); C(m, "_ColorA", "#9CF5EA"); C(m, "_ColorB", "#16D4EE"); C(m, "_ColorC", "#C2FFF2");
+                F(m, "_Glow", 0.5f); F(m, "_StreakAmount", 0.08f); F(m, "_StreakSpeed", 1.6f); F(m, "_ReflectBoost", 0.15f);
                 F(m, "_HotNear", 1.75f); F(m, "_HotFar", 2.15f); F(m, "_HotBoost", 0.12f);
             });
             Mat("M_Foam", "BWK/Soft", m =>

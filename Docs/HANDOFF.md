@@ -1,5 +1,15 @@
 # Bubble Wash Kingdom - lead handoff (2026-11-26 12:30, lead session cd43a82d on the third Pro account)
 
+## STATUS 16:50 (lead e8142997, fifth account) - exact resume point (private details: Captures/handoff/NEXT_ACCOUNT_START.md)
+- 16:10 takeover: the previous lead's process had ended with the account switch (its round-8 agents too); its 18:31 wake
+  timer was killed (16:13) so round 8 cannot run twice; one autosave loop. The asset agent's orphaned full build
+  assets_r8_v1 finished OK (16:14) -> local tag checkpoint-19d-r8-wip (asset v1 + metal v1), stills Captures/stills_r8v1/.
+- Lead review of r8v1: rails warmer pink + amber (better); starburst yellow instead of white but a hard lemon polygon (needs
+  soft warm-gold rays + sparkles); S1 rollers bluish and too high, console navy instead of hot pink; milk crowns still flat
+  opaque white cut-outs in every rear view; chamber interiors still not readable.
+- 16:48 round 8 relaunched (run wf_e85e2884-782): water + assets, then metal; time-boxed; RESUME notes through the new
+  `args.resume` of Tools/workflows/bwk-round8-cinematic.js. Next: lead_r8 integration -> sheets -> scores -> recording.
+
 ## STATUS 14:45 (lead a0655f8d) - exact resume point (private details: Captures/handoff/NEXT_ACCOUNT_START.md)
 - Done + tagged locally: checkpoint-18c-camera (owner corrections 1, 7, 8: rear opening crane, finish in front of the
   portal, Play Mode test passed) and checkpoint-19-r7w (round-7 water pass integrated by build lead_r7w, stills

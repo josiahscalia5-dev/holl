@@ -43,6 +43,8 @@ Shader "BWK/Soft"
         _HotBoost ("Chevron white-hot extra glow (mode 7)", Range(0,3)) = 0.6
         _MilkAlpha ("Milk opacity facing the camera (mode 6, blended materials)", Range(0,1)) = 1
         _MilkEdgeAlpha ("Milk opacity at thin / grazing edges (mode 6)", Range(0,1)) = 1
+        _MilkSoft ("Round-8 rounded milk volume shading (mode 6, 0 = off)", Range(0,1)) = 0
+        _MilkThin ("Thin milk edge, lit through by the water (mode 6, _MilkSoft)", Color) = (0.49, 0.75, 0.91, 1)
         // blend state (defaults = opaque; round 4: M_FX_Milk renders translucent with SrcAlpha / OneMinusSrcAlpha)
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 1
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 0
@@ -60,6 +62,8 @@ Shader "BWK/Soft"
             half _ReflectBoost, _StreakAmount, _StreakSpeed, _Wobble, _WobbleFreq, _SpecStrength, _GlintAmount;
             half _HotNear, _HotFar, _HotBoost;
             half _MilkAlpha, _MilkEdgeAlpha, _SrcBlend, _DstBlend, _ZWrite;
+            half4 _MilkThin;
+            half _MilkSoft;
         CBUFFER_END
         ENDHLSL
         Pass
@@ -295,6 +299,22 @@ Shader "BWK/Soft"
                     half fr = BWK_Fresnel(n, v, _RimPower);
                     // grazing edges of the lace strands turn translucent blue (reference: milky cores, light-blue thin parts)
                     col = lerp(col, _ShadowColor.rgb * 0.55 + _ColorB.rgb * 0.45, fr * _RimStrength);
+                    half fv = saturate(dot(n, v));
+                    if (_MilkSoft > 0.001)
+                    {
+                        // round 8 (lead: the crowns read as flat opaque white cut-outs in every rear view): ROUNDED milk
+                        // volume - the thick cores that face the camera stay creamy white, the body rolls off toward its
+                        // silhouette into a cool blue-grey that the turquoise water shines through (thin translucent
+                        // edges, alpha below), and only surfaces turning up toward the tunnel light keep a soft bright wet
+                        // rim. Measured f_03.00s splash pixels: luma p10/50/90 178/212/230, mean #C5D1E4 (L) / #CAE5EB (R);
+                        // ours r8v1 207/216/228 #D5D8D9 = flat grey-white (self glow pushed it past 1.0 -> tonemap clip).
+                        half vol = smoothstep(0.0, 0.85, fv);
+                        half3 deep = lerp(_ShadowColor.rgb, _MilkThin.rgb, 0.55);
+                        half3 soft = lerp(deep, col, vol * vol * (3.0 - 2.0 * vol));
+                        half up = saturate(n.y * 0.6 + 0.4);
+                        soft += _ColorA.rgb * pow(1.0 - fv, 3.0) * smoothstep(0.55, 0.95, up) * 0.55;
+                        col = lerp(col, soft, _MilkSoft);
+                    }
                     half3 hv = normalize(L.direction + v);
                     half nh = saturate(dot(n, hv));
                     half3 nv = mul((float3x3)UNITY_MATRIX_V, n);
@@ -306,6 +326,8 @@ Shader "BWK/Soft"
                     col = col * tint + _ColorA.rgb * _Glow;
                     // translucency: opaque milky where the sheet faces the camera, see-through blue at thin / grazing parts
                     half alpha = lerp(_MilkAlpha, _MilkEdgeAlpha, saturate(fr * 1.4));
+                    // round 8: soft translucent silhouette band (not a hard paper edge) where the volume shading is on
+                    alpha = lerp(alpha, lerp(_MilkEdgeAlpha, _MilkAlpha, smoothstep(0.03, 0.42, fv)), _MilkSoft);
                     col = MixFog(col, i.fog);
                     return half4(col, alpha);
                 }
