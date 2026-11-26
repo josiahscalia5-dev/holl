@@ -3,11 +3,21 @@ guid: db523fa2b1a944c458ae901d156c2ce8
 ModelImporter:
   serializedVersion: 24300
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_DrumRim
+    second: {fileID: 2100000, guid: 3b3b71f46cc6b574697c132b67943aaa, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_RimLight
+    second: {fileID: 2100000, guid: b95ca930e0172554489000f09990991d, type: 2}
   materials:
     materialImportMode: 2
-    materialName: 0
-    materialSearch: 1
+    materialName: 1
+    materialSearch: 2
     materialLocation: 1
     searchTexturesGlobally: 0
   animations:
