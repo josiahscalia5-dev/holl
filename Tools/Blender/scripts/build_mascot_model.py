@@ -64,16 +64,16 @@ CUFF_RIB_AMP, CROWN_RIB_AMP = 0.0075, 0.0045
 # pale stripe ~0.09 W_h tapering in toward its top roll; crown emerges narrower (~0.83 W_h) as a soft round dome;
 # pom-pom ~0.48 W_h sitting low on the dome.
 CUFF_PROFILE = [  # (u, r, rib weight): roll under -> tall ribbed outer face -> top roll -> tucks inside
-    (0.135, 0.452, 0.0), (0.127, 0.470, 0.1), (0.132, 0.483, 0.5), (0.147, 0.490, 0.9), (0.180, 0.493, 1.0),
-    (0.225, 0.494, 1.0), (0.265, 0.492, 1.0), (0.293, 0.486, 0.9), (0.309, 0.476, 0.5), (0.317, 0.464, 0.2),
-    (0.317, 0.452, 0.0), (0.309, 0.442, 0.0)]
-STRIPE_U = (0.315, 0.405)                  # pale ribbed band right above the cuff (~9 % of the hat width)
-DOME_U0, DOME_H, DOME_R, DOME_EXP = 0.413, 0.21, 0.388, 2.0     # soft round dome (elliptical profile)
+    (0.148, 0.432, 0.0), (0.140, 0.448, 0.1), (0.144, 0.460, 0.5), (0.157, 0.466, 0.9), (0.183, 0.469, 1.0),
+    (0.215, 0.470, 1.0), (0.248, 0.468, 1.0), (0.272, 0.463, 0.9), (0.287, 0.454, 0.5), (0.295, 0.443, 0.2),
+    (0.295, 0.432, 0.0), (0.288, 0.424, 0.0)]
+STRIPE_U = (0.293, 0.373)                  # pale ribbed band right above the cuff (~9 % of the hat width)
+DOME_U0, DOME_H, DOME_R, DOME_EXP = 0.381, 0.15, 0.372, 2.0     # soft round dome (elliptical profile)
 TOP_STRIPE_PHI, TOP_STRIPE_HW = 47.0, 5.5  # extra pale stripe on the dome front (deg of the dome angle), fades out
 TOP_STRIPE_FULL, TOP_STRIPE_END = 45.0, 78.0    # ... over the front only (deg from the front): never seen from behind
 STAR_U, STAR_PHI, STAR_ROT = 0.192, 33.0, -12.0  # star badge on the cuff, 33 deg toward HIS LEFT (+X)
 STAR_RO, STAR_RI = 0.072, 0.032
-POMPOM_R, POMPOM_LIFT = 0.228, -0.22       # pom-pom radius; centre this many radii above the dome top
+POMPOM_R, POMPOM_LIFT = 0.262, 0.70        # pom-pom radius; centre this many radii above the dome top
 POMPOM_SEG = 12
 
 # ------------------------------------------------------------------ face (unchanged design, follows the body centre)
@@ -91,10 +91,10 @@ BLUSH_X, BLUSH_Z, BLUSH_R = 0.235, 0.47 + FACE_DZ, 0.058
 ARM_Z = 0.500                              # root height on the body side (rest; just under the cuff when seated)
 ARM_UP, ARM_BACK = 50.0, 0.24              # rest direction: 50 deg up, angled back past the cuff
 ARM_SEG = 20
-ARM_PROFILE = [(-0.10, 0.072), (-0.05, 0.082), (0.0, 0.088), (0.06, 0.091), (0.12, 0.094), (0.18, 0.099),
-               (0.235, 0.106), (0.275, 0.108), (0.307, 0.102), (0.332, 0.087), (0.350, 0.064), (0.362, 0.035),
-               (0.366, 0.0)]
-ARM_TIP_FROM, ARM_TIP_TO, ARM_TIP_CREAM = 0.22, 0.36, 0.22   # Col.a fades toward the cream coat at the paw tip
+ARM_PROFILE = [(-0.10, 0.072), (-0.05, 0.082), (0.0, 0.088), (0.08, 0.090), (0.16, 0.092), (0.24, 0.098),
+               (0.305, 0.108), (0.345, 0.111), (0.380, 0.105), (0.407, 0.089), (0.426, 0.065), (0.438, 0.035),
+               (0.442, 0.0)]
+ARM_TIP_FROM, ARM_TIP_TO, ARM_TIP_CREAM = 0.28, 0.43, 0.22   # Col.a fades toward the cream coat at the paw tip
 PALM_FACING = Vector((0.0, -0.55, 0.85))   # palm side (front/up): only used as the seam-free side reference
 
 # ------------------------------------------------------------------ legs + feet (seated): the reference rear view shows
@@ -849,8 +849,8 @@ def build_beanie():
     KNIT, CUFF, STRIPE = 0, 1, 2
     psi0 = math.pi / 2                          # seam at the back
     # ---- crown profile (u, r, material of the band above this point)
-    prof = [(0.255, 0.430, STRIPE), (0.290, 0.457, STRIPE), (STRIPE_U[0], 0.467, STRIPE), (0.348, 0.466, STRIPE),
-            (0.378, 0.456, STRIPE), (0.397, 0.440, STRIPE), (STRIPE_U[1], 0.414, KNIT), (DOME_U0, DOME_R, KNIT)]
+    prof = [(0.235, 0.412, STRIPE), (0.268, 0.436, STRIPE), (STRIPE_U[0], 0.445, STRIPE), (0.322, 0.444, STRIPE),
+            (0.348, 0.436, STRIPE), (0.365, 0.422, STRIPE), (STRIPE_U[1], 0.398, KNIT), (DOME_U0, DOME_R, KNIT)]
     for phi in (10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 69.0, 77.0, 84.0):
         u, r = dome_ur(phi)
         prof.append((u, r, KNIT))

@@ -29,6 +29,7 @@ Shader "BWK/Fur"
         _PawTipColor ("Paw Coat Tip (vertex alpha 0)", Color) = (1, 0.98, 0.98, 1)
         _EdgeSoft ("Strand Edge Softness", Range(0.01, 0.5)) = 0.18
         _SilhouetteFade ("Silhouette Halo Fade", Range(0, 1)) = 0.6
+        _PawGlow ("Paw Coat Self Glow", Range(0, 1)) = 0
     }
     SubShader
     {
@@ -40,7 +41,7 @@ Shader "BWK/Fur"
             half4 _RootColor, _BaseColor, _TipColor, _RimColor, _PawRootColor, _PawTipColor;
             float4 _NoiseTex_ST;
             float _Density, _FurLength, _Gravity, _Thinning, _ClumpScale, _RimPower;
-            half _ClumpAmount, _Wrap, _RimStrength, _AO, _Glow, _UseVertexTint, _StaticMode, _Curl, _Underfur, _EdgeSoft, _SilhouetteFade;
+            half _ClumpAmount, _Wrap, _RimStrength, _AO, _Glow, _UseVertexTint, _StaticMode, _Curl, _Underfur, _EdgeSoft, _SilhouetteFade, _PawGlow;
         CBUFFER_END
         ENDHLSL
 
@@ -150,7 +151,7 @@ Shader "BWK/Fur"
                 half3 light = BWK_WrapLight(i.positionWS, n, _Wrap);
                 half ao = lerp(1.0 - _AO, 1.0, h);
                 half rim = BWK_Fresnel(n, v, _RimPower) * _RimStrength * (0.4 + 0.6 * h);
-                half3 c = col * light * ao + _RimColor.rgb * rim * light + col * _Glow;
+                half3 c = col * light * ao + _RimColor.rgb * rim * light + col * (_Glow + _PawGlow * (1.0 - coat));
                 c = MixFog(c, i.fog);
                 return half4(c, alpha);
             }

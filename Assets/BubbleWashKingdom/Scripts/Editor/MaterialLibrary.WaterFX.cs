@@ -17,7 +17,7 @@ namespace BubbleWash.EditorTools
                 // round 3: deep azure body (#1a5fd0 .. #3095d5 in the reference), cyan streaks, cyan light only around the chevrons
                 C(m, "_DeepColor", "#103C9E"); C(m, "_ShallowColor", "#1E6CC4"); C(m, "_StreakColor", "#B8F6FF");
                 C(m, "_CausticColor", "#7FE9FF"); C(m, "_ChevronColor", "#2FE6FF"); C(m, "_EdgeTint", "#E66AC8");
-                F(m, "_FlowSpeed", 7.5f); F(m, "_Width", 3.6f); F(m, "_Glow", 0.1f); F(m, "_Smoothness", 0.95f);
+                F(m, "_FlowSpeed", 7.5f); F(m, "_Width", 3.6f); F(m, "_Glow", 0.1f); F(m, "_Smoothness", 0.86f);   // 0.95 mirrored the pink back light as a streak behind him
                 F(m, "_StreakAmount", 0.35f); F(m, "_StreakDensity", 1.25f); F(m, "_EdgeTintAmount", 0.28f); F(m, "_SparkleAmount", 1.1f);
                 F(m, "_RainbowAmount", 0.32f); F(m, "_RippleStrength", 0.9f); F(m, "_EdgeFoam", 0.6f);
                 F(m, "_CausticAmount", 0.5f); F(m, "_Depth", 0.22f); F(m, "_NearBrighten", 0.15f); F(m, "_ReflectBoost", 0.35f); F(m, "_CenterGlow", 0.08f);
@@ -66,8 +66,8 @@ namespace BubbleWash.EditorTools
             Mat("M_FX_Milk", "BWK/Soft", m =>
             {
                 // milky crown splashes + 3D droplets (Mode 6): creamy white, blue-grey shading, cool water bounce, wet highlights
-                F(m, "_Mode", 6); C(m, "_ColorA", "#FFFFFF"); C(m, "_ShadowColor", "#9FB2E6"); C(m, "_ColorB", "#8CCFF2"); F(m, "_Wrap", 0.55f);
-                F(m, "_RimPower", 1.8f); F(m, "_RimStrength", 0.6f); F(m, "_SpecStrength", 1.0f); F(m, "_ReflectBoost", 0.3f); F(m, "_Glow", 0.24f);
+                F(m, "_Mode", 6); C(m, "_ColorA", "#FFFFFF"); C(m, "_ShadowColor", "#8DB0EA"); C(m, "_ColorB", "#86CCF4"); F(m, "_Wrap", 0.55f);
+                F(m, "_RimPower", 1.6f); F(m, "_RimStrength", 0.8f); F(m, "_SpecStrength", 1.0f); F(m, "_ReflectBoost", 0.3f); F(m, "_Glow", 0.2f);
                 F(m, "_Wobble", 0.01f); F(m, "_WobbleFreq", 7f);
             });
             Particle("M_FX_Splash", $"{Tex}/T_Splash.png", additive: false, "#FFFFFF");

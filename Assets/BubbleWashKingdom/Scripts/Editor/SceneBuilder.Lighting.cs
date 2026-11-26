@@ -71,6 +71,9 @@ namespace BubbleWash.EditorTools
             // Warm pools of bulb light at every gold ring (same spacing as BuildRings): glints on the gold, warm sheen on the
             // metallic drum wall and the water around each ring, violet in between -> depth rhythm down the tunnel.
             BuildRingLights(lights);
+            // soft lavender-white fill on the upper-right drum wall just ahead of the hero camera (reference upper-right wall
+            // is a lit mid-violet #8069ad, ours read deep indigo): lifts value and lowers saturation there only
+            AddPoint(lights, HeroDistance + 3.5f, 2.6f, 4.3f, new Color(0.86f, 0.74f, 1f), 2.6f, 6.5f);
 
             // Reflection probes: hall probes + one per 30 m tunnel chunk, box = bounds of that bent tunnel segment.
             for (float d = 18f; d < tunnelStart; d += 30f)
@@ -122,7 +125,7 @@ namespace BubbleWash.EditorTools
             // Hue-selective saturation: only the blue-violet range (drum walls, ceiling bays, far tunnel ~225-268 deg) gets
             // richer (x1.28); the purple hat (~280), pink fur, cyan water and gold are untouched.
             var curves = profile.Add<ColorCurves>(true);
-            curves.hueVsSat.Override(new TextureCurve(new[] { new Keyframe(0.57f, 0.5f), new Keyframe(0.63f, 0.57f), new Keyframe(0.72f, 0.57f),
+            curves.hueVsSat.Override(new TextureCurve(new[] { new Keyframe(0.57f, 0.5f), new Keyframe(0.63f, 0.55f), new Keyframe(0.72f, 0.54f),
                 new Keyframe(0.765f, 0.5f) }, 0.5f, true, new Vector2(0f, 1f)));
             var vg = profile.Add<Vignette>(true); vg.intensity.Override(0.28f); vg.smoothness.Override(0.48f); vg.color.Override(new Color(0.12f, 0.03f, 0.26f));
             var wb = profile.Add<WhiteBalance>(true); wb.temperature.Override(0f); wb.tint.Override(0f);
@@ -295,6 +298,11 @@ namespace BubbleWash.EditorTools
             var glowComb = new LightCombiner(save);
             List<Part> Recolor(Material mat) =>
                 outline.Select(p => new Part(p.mesh, Enumerable.Repeat(mat, Mathf.Max(1, p.mesh.subMeshCount)).ToArray(), p.local)).ToList();
+            void AddCard(Material m, Vector3 pos, Quaternion rot, float size)
+            {
+                if (quadMesh == null || m == null) return;
+                glowComb.Add(new List<Part> { new Part(quadMesh, new[] { m }, Matrix4x4.identity) }, Matrix4x4.TRS(pos, rot, new Vector3(size, size, 1f)));
+            }
             void AddGlow(int ci, Vector3 pos, Quaternion rot, float size)
             {
                 if (quadMesh == null || glowMats[ci] == null) return;
@@ -333,8 +341,33 @@ namespace BubbleWash.EditorTools
                 // glow card facing the camera, just behind the tubes, ~1.8x the star: soft enough that the part cut by the
                 // drum wall is invisible (its radius beyond the inset is < 4 % intensity)
                 AddGlow(s.color, pos - toCam * (0.06f * scale), Quaternion.LookRotation(-toCam, upHint), StarMeshWidth * 2.2f * scale);
+                if (s.color == 0) AddCard(Mat("M_StarFill_Yellow"), pos - toCam * (0.04f * scale), Quaternion.LookRotation(-toCam, upHint), StarMeshWidth * 1.15f * scale);
                 heroCount++;
                 Debug.Log($"[BWK] hero star c{s.color} screen ({s.x:F2},{s.y:F2}) track {wf.distance:F1} m depth {Vector3.Dot(pos - camPos, camFwd):F1} m scale {scale:F2}");
+            }
+
+            // ---- luminous far tunnel (reference: rings receding into warm-white light at x ~.55, y ~.30 of the hero frame):
+            // pick the tunnel-axis point 35-75 m ahead that projects closest to that spot, put a wide soft halo + a tight
+            // warm-white core there facing the hero camera (LightBlob _NearFade: they vanish as the runner approaches)
+            {
+                Vector3 best = Vector3.zero; float bestErr = float.MaxValue, bestDepth = 0f;
+                for (float a = 35f; a <= 75f; a += 1f)
+                {
+                    var p = track.Evaluate(HeroDistance + a).FlatPoint(0, TunnelCenter - 0.3f);
+                    var c = Quaternion.Inverse(camRot) * (p - camPos);
+                    if (c.z < 5f) continue;
+                    float u = 0.5f + 0.5f * c.x / (c.z * tanH), v = 0.5f - 0.5f * c.y / (c.z * tanV);
+                    float err = (u - 0.55f) * (u - 0.55f) * 3.2f + (v - 0.30f) * (v - 0.30f);
+                    if (err < bestErr) { bestErr = err; best = p; bestDepth = c.z; }
+                }
+                if (bestErr < float.MaxValue)
+                {
+                    var q = Quaternion.LookRotation(best - camPos, camUp);
+                    AddCard(Mat("M_VanishGlow"), best, q, 13f);
+                    AddCard(Mat("M_VanishCore"), best - (best - camPos).normalized * 0.5f, q, 5.5f);
+                    var c = Quaternion.Inverse(camRot) * (best - camPos);
+                    Debug.Log($"[BWK] vanishing glow at depth {bestDepth:F1} m, screen ({0.5f + 0.5f * c.x / (c.z * tanH):F2},{0.5f - 0.5f * c.y / (c.z * tanV):F2})");
+                }
             }
 
             // ---- rest of the tunnel: sparse big stars on the upper walls, never inside the hero view

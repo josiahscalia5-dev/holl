@@ -28,7 +28,7 @@ import bwk_common as C  # noqa: E402
 
 GROUP = "FX"
 FRAMES = 12
-RES = 0.0095          # metaball polygonisation step (m): milk strands are 5-9 cm thick (round, fused holes)
+RES = 0.0075          # metaball polygonisation step (m): milk strands are 3-5 cm thick (round lace holes)
 TARGET_TRIS = 9000    # per crown frame after decimation
 SEED = 20261125
 
@@ -188,7 +188,7 @@ def build_crown_elements(tau):
     inside_w = lambda q: 0.0 <= q[0] <= SLEN and 0.0 <= q[1] <= Hm(q[0])  # noqa: E731
     base_sites = poisson(rng, 5000, lambda q: 0.0 <= q[0] <= SLEN and 0.0 <= q[1] <= height(q[0] / SLEN) * 1.12,
                          lambda: (rng.uniform(-0.02, SLEN + 0.02), rng.uniform(0.0, 0.95)),
-                         lambda q: 0.065 + 0.12 * min(1.0, q[1] / max(0.05, height(min(1.0, max(0.0, q[0] / SLEN))))))
+                         lambda q: 0.09 + 0.15 * min(1.0, q[1] / max(0.05, height(min(1.0, max(0.0, q[0] / SLEN))))))
     sites = []
     for (S, V) in base_sites:
         a, b = rng.uniform(0, 6.28), rng.uniform(0, 6.28)
@@ -212,7 +212,7 @@ def build_crown_elements(tau):
             continue
         mid_s = max(0.0, min(1.0, 0.5 * (S0 + S1) / SLEN))
         vf = min(1.0, 0.5 * (V0 + V1) / max(0.05, Hm(0.5 * (S0 + S1))))
-        r = (0.040 - 0.012 * vf) * (0.6 + 0.4 * taper(mid_s)) * edge_rng.uniform(0.85, 1.2)
+        r = (0.026 - 0.008 * vf) * (0.6 + 0.4 * taper(mid_s)) * edge_rng.uniform(0.85, 1.2)   # round 4: thinner lace
         n = max(1, int(math.ceil(L / 0.045)))
         sway = 0.02 * math.sin(tw + mid_s * 6.0)
         pts = [to3d(S0 + (S1 - S0) * k / n, V0 + (V1 - V0) * k / n, sway) for k in range(n + 1)]
@@ -227,9 +227,9 @@ def build_crown_elements(tau):
     # --- thick solid root where the sheet leaves the water + rim with beads
     nb = 36
     root_pts = [wall(k / nb, 0.0) + Vector((0, 0, 0.02)) for k in range(nb + 1)]
-    E.chain(root_pts, [0.03 * taper(k / nb) + 0.02 for k in range(nb + 1)])
+    E.chain(root_pts, [0.022 * taper(k / nb) + 0.016 for k in range(nb + 1)])
     low_pts = [wall(k / nb, 0.12) for k in range(nb + 1)]
-    E.chain(low_pts, [0.024 * taper(k / nb) + 0.012 for k in range(nb + 1)])
+    E.chain(low_pts, [0.014 * taper(k / nb) + 0.008 for k in range(nb + 1)])
     nr = 44
     rim_on = [edge_rng.random() > 0.22 for _ in range(nr)]
     for k in range(nr):
@@ -238,7 +238,7 @@ def build_crown_elements(tau):
         s0, s1 = k / nr, (k + 1) / nr
         a = wall(s0, top(s0), 0.02 * math.sin(tw + s0 * 6.0))
         b = wall(s1, top(s1), 0.02 * math.sin(tw + s1 * 6.0))
-        E.cap(a, b, 0.026 * (0.5 + 0.5 * taper(0.5 * (s0 + s1))))
+        E.cap(a, b, 0.02 * (0.5 + 0.5 * taper(0.5 * (s0 + s1))))
     for k in range(14):                              # beads sitting on the rim
         s = (k + edge_rng.uniform(0.2, 0.8)) / 14
         E.ball(wall(s, top(s), 0.02 * math.sin(tw + s * 6.0)), edge_rng.uniform(0.03, 0.045) * (0.6 + 0.4 * taper(s)))
@@ -314,7 +314,7 @@ def build_crown_elements(tau):
             E.ball(p, r_tip * 0.95 * (1.0 - a) ** 0.5)
 
     # --- loose droplets on ballistic arcs (periodic)
-    for j in range(24):
+    for j in range(34):
         s0 = rng.uniform(0.03, 0.9)
         phase = rng.uniform(0, 1)
         r0 = rng.uniform(0.014, 0.032)

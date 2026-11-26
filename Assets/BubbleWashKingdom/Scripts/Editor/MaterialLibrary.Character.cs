@@ -56,7 +56,7 @@ namespace BubbleWash.EditorTools
                 // coral-leaning albedo: the tunnel light is violet, so this renders as the reference's warm pink (~#d06e94).
                 // Short dense minky pile, soft alpha-to-coverage strands, little clumping/curl: plush, not needles.
                 C(m, "_RootColor", "#C45E58"); C(m, "_BaseColor", "#E8786A"); C(m, "_TipColor", "#F6B0A0");
-                C(m, "_PawRootColor", "#F6EAE6"); C(m, "_PawTipColor", "#FFF8F2");
+                C(m, "_PawRootColor", "#FFF0E2"); C(m, "_PawTipColor", "#FFF9EE"); F(m, "_PawGlow", 0.45f);   // warm white: reads WHITE under the violet light
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
                 F(m, "_Density", 260); F(m, "_FurLength", 0.032f); F(m, "_Gravity", 0.005f); F(m, "_Thinning", 0.6f); F(m, "_ClumpAmount", 0.45f); F(m, "_ClumpScale", 9f);
                 F(m, "_AO", 0.15f); F(m, "_Curl", 1.0f); F(m, "_Underfur", 0.85f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.6f);
@@ -68,8 +68,8 @@ namespace BubbleWash.EditorTools
                 // deeper violet yarn (reference ~#8741b3, dark centre, lighter radiating tips): straight radial fibres
                 C(m, "_RootColor", "#42205A"); C(m, "_BaseColor", "#7A3E8E"); C(m, "_TipColor", "#C08ED6");
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
-                F(m, "_Density", 210); F(m, "_FurLength", 0.030f); F(m, "_Gravity", 0.0f); F(m, "_Thinning", 0.6f); F(m, "_AO", 0.4f);
-                F(m, "_Curl", 0.25f); F(m, "_Underfur", 0.85f); F(m, "_ClumpAmount", 0.3f); F(m, "_EdgeSoft", 0.2f); F(m, "_SilhouetteFade", 0.55f);
+                F(m, "_Density", 190); F(m, "_FurLength", 0.042f); F(m, "_Gravity", 0.0f); F(m, "_Thinning", 0.8f); F(m, "_AO", 0.4f);
+                F(m, "_Curl", 0.12f); F(m, "_Underfur", 0.8f); F(m, "_ClumpAmount", 0.3f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.3f);
                 C(m, "_RimColor", "#C8A8F0"); F(m, "_Glow", 0.03f); F(m, "_RimStrength", 0.4f);
             }, (int)RenderQueue.AlphaTest);
             // static (shell-less) preview variants: no clipping, no offset

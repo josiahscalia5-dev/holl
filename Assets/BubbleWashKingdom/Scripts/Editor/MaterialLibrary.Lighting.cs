@@ -61,6 +61,25 @@ namespace BubbleWash.EditorTools
             StarGlow("M_StarGlow_Cyan", "#14B8FF", 1.6f, 2.0f);
             StarGlow("M_StarGlow_Pink", "#FF2AA8", 1.6f, 2.0f);
             StarGlow("M_StarGlow_Purple", "#9A3CFF", 1.6f, 2.0f);
+            // inside of the yellow star (reference: filled with warm orange light): a multiply card first pulls the pale
+            // lavender wall / rim behind it toward orange, then the additive glow lights it up
+            Mat("M_StarFill_Yellow", "BWK/LightBlob", m =>
+            {
+                C(m, "_Color", "#FF9A40"); F(m, "_Strength", 0.95f); F(m, "_Softness", 0.9f); F(m, "_Core", 0.9f);
+                F(m, "_Mode", 0f); F(m, "_SrcBlend", (float)BlendMode.DstColor); F(m, "_DstBlend", (float)BlendMode.Zero);
+            }, (int)RenderQueue.Transparent - 12);
+            // far-tunnel luminous vanishing point (reference: rings receding into warm white light at x ~.55 y ~.30):
+            // a wide soft warm-lavender halo + a tight warm-white core, both fading out when the camera gets close
+            Mat("M_VanishGlow", "BWK/LightBlob", m =>
+            {
+                C(m, "_Color", "#FFC8EC"); F(m, "_Strength", 0.75f); F(m, "_Softness", 1f); F(m, "_Core", 1.6f); F(m, "_NearFade", 14f);
+                F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
+            }, (int)RenderQueue.Transparent - 9);
+            Mat("M_VanishCore", "BWK/LightBlob", m =>
+            {
+                C(m, "_Color", "#FFF0D8"); F(m, "_Strength", 1.6f); F(m, "_Softness", 1f); F(m, "_Core", 2.4f); F(m, "_NearFade", 14f);
+                F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
+            }, (int)RenderQueue.Transparent - 8);
 
             // soft violet contact shadow under the mascot (multiply card, BWK/LightBlob)
             Mat("M_ContactShadow", "BWK/LightBlob", m =>

@@ -26,7 +26,7 @@ namespace BubbleWash.EditorTools
         public const float ChevronWidth = 0.5f;
         // milk crown splashes beside the feet (Art/Models/FX/SM_FX_Crown_xx, left-side asset mirrored for the right).
         // Root anchored in SCREEN space of the hero frame (reference f_003.00s: crowns rise at x 0-.35 / .65-1, y .55-.87).
-        static readonly Vector2 CrownRootScreenL = new Vector2(0.31f, 0.80f), CrownRootScreenR = new Vector2(0.78f, 0.81f);
+        static readonly Vector2 CrownRootScreenL = new Vector2(0.20f, 0.80f), CrownRootScreenR = new Vector2(0.86f, 0.81f);   // outside both feet
         const float CrownScale = 1.05f, CrownYaw = 50f;   // yaw turns the sheet to face the camera
         // reference f_003.00s foreground bubbles: screen x, screen y (0..1 from the top-left of the 9:16 hero frame),
         // diameter as a fraction of the frame width, w > 0 = height above the water (m), w < 0 = -camera depth (m)
