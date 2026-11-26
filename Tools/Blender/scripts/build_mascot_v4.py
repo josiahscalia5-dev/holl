@@ -62,58 +62,63 @@ BODY_ELEMS = [  # (centre, semi-axes x/y/z, stiffness): lower belly + upper head
 ]
 # arm = upper arm leaving the body side just under the cuff almost level (clears the cuff bottom roll), then a forearm
 # rising ~60 deg outside the cuff radius, ending in a mitt at cuff height (rear hero: paws outside the hat silhouette)
-ARM_A, ARM_E, ARM_B, ARM_RAD, ARM_S = (Vector((0.28, -0.005, 0.505)), Vector((0.585, -0.020, 0.585)),
-                                       Vector((0.655, -0.032, 0.735)), 0.080, 5.0)
-MITT_C, MITT_AX, MITT_S = Vector((0.680, -0.040, 0.790)), (0.104, 0.074, 0.098), 5.0   # along, palm-normal, across
+ARM_A, ARM_E, ARM_B, ARM_RAD, ARM_S = (Vector((0.28, -0.005, 0.505)), Vector((0.580, -0.020, 0.585)),
+                                       Vector((0.690, -0.030, 0.700)), 0.086, 5.0)
+MITT_C, MITT_AX, MITT_S = Vector((0.735, -0.040, 0.752)), (0.100, 0.080, 0.106), 5.0   # along, palm-normal, across
 PALM_N = Vector((-0.10, -0.80, 0.45)).normalized()     # palm faces front / up (pads visible from the front)
 HIP, ANKLE, LEG_RAD = Vector((0.205, 0.080, 0.200)), Vector((0.285, 0.245, 0.165)), 0.078
 PAW_C = Vector((0.318, 0.312, 0.178))
-PAW_AX = (0.132, 0.162, 0.080)                          # lateral, heel->toe, thickness
+PAW_AX = (0.136, 0.166, 0.082)                          # lateral, heel->toe, thickness
 TOE_DIR = Vector((0.22, -0.42, 0.88)).normalized()      # toes up (+ a little forward / out)
 SOLE_N0 = Vector((0.18, 0.90, 0.40))                    # soles face back / up toward the rear camera
-TAIL_C, TAIL_R = Vector((0.0, 0.43, 0.25)), 0.055
+# FRONT pose (opening / celebration shots, reference 03 / 05): legs forward, soles toward the front camera.
+# Built as a second leg set "LegFront.*" (hidden in gameplay renders); the gameplay W-sit set is "Leg.*".
+FRONT_LEG = dict(hip=Vector((0.200, -0.150, 0.200)), ankle=Vector((0.270, -0.360, 0.150)),
+                 paw_c=Vector((0.300, -0.455, 0.175)), toe=Vector((0.20, 0.30, 0.93)),
+                 sole=Vector((0.16, -0.93, 0.33)))
+TAIL_C, TAIL_R = Vector((0.0, 0.37, 0.22)), 0.030       # tiny tuft hidden in the fur (rig needs a tail)
 
 # ------------------------------------------------------------------ beanie (lathe about the tilted hat axis)
 HAT_O = Vector((0.0, 0.0, 0.680))      # cuff-bottom centre on the axis
 HAT_TILT = -4.0                        # deg about X (negative: front edge up, crown leans back)
-RIB_N = 60                             # knit ribs around (UV u * 44 = rib index, see knit_uv)
-CUFF_AMP, CROWN_AMP = 0.0040, 0.0030   # shallow geometric ribs (the knit tile does the stitches)
-ROW_H = 0.040                          # knit row height (m) along the profile
+RIB_N = 66                             # knit ribs around (UV u * 44 = rib index, see knit_uv)
+CUFF_AMP, CROWN_AMP = 0.0062, 0.0048   # shallow geometric ribs (the knit tile does the stitches)
+ROW_H = 0.024                          # knit row height (m) along the profile
 # (h above the cuff bottom, radius, material) material 0 knit crown, 1 cuff, 2 stripe; first point = tuck (set later)
 CUFF_PROF = [(0.000, 0.500), (0.010, 0.518), (0.032, 0.528), (0.075, 0.532), (0.125, 0.533), (0.172, 0.530),
              (0.205, 0.523), (0.226, 0.511), (0.238, 0.494), (0.236, 0.478)]
 STRIPE_PROF = [(0.226, 0.466), (0.252, 0.483), (0.290, 0.490), (0.326, 0.488), (0.350, 0.481)]
-DOME_H0, DOME_R0, DOME_H, DOME_E = 0.350, 0.481, 0.215, 2.25
-TOP_BAND = (0.455, 0.505)              # extra pale band on the crown FRONT (h range), fades out toward the sides
+DOME_H0, DOME_R0, DOME_H, DOME_E = 0.350, 0.481, 0.275, 1.75
+TOP_BAND = (0.470, 0.515)              # extra pale band on the crown FRONT (h range), fades out toward the sides
 TOP_BAND_PSI = 70.0                    # +- deg from the front where the band is full width
-POM_H, POM_CORE, POM_R = 0.620, 0.140, 0.250   # pom-pom centre (h), dark core radius, yarn tip radius
+POM_H, POM_CORE, POM_R = 0.700, 0.130, 0.270   # pom-pom centre (h), dark core radius, yarn tip radius
 STAR_H, STAR_PSI, STAR_ROT, STAR_RO, STAR_RI = 0.165, 33.0, -10.0, 0.102, 0.046
 
 # ------------------------------------------------------------------ face (placed on the body surface)
-EYE_DX, EYE_R, EYE_PROT = 0.195, 0.096, 0.030           # eye centre x, footprint radius, protrusion
-EYE_UNDER = 0.080                      # eye centre this far below the cuff bottom (top tucks under the cuff edge)
-IRIS_R, PUPIL_IN, PUPIL_DOWN = 0.080, 0.012, 0.010
-NOSE_DZ, MOUTH_TOP_DZ, MOUTH_W, MOUTH_H = 0.078, 0.104, 0.165, 0.150
-BLUSH_DX, BLUSH_DZ, BLUSH_R = 0.300, 0.118, 0.078
+EYE_DX, EYE_R, EYE_PROT = 0.208, 0.110, 0.034           # eye centre x, footprint radius, protrusion
+EYE_UNDER = 0.074                      # eye centre this far below the cuff bottom (top tucks under the cuff edge)
+IRIS_R, PUPIL_IN, PUPIL_DOWN = 0.093, 0.013, 0.010
+NOSE_DZ, MOUTH_TOP_DZ, MOUTH_W, MOUTH_H = 0.082, 0.110, 0.188, 0.165
+BLUSH_DX, BLUSH_DZ, BLUSH_R = 0.300, 0.125, 0.085
 
 # ------------------------------------------------------------------ fur (hair curves)
-FUR_N = 26000 if QUICK else 90000
-FUR_LEN = 0.052
+FUR_N = 50000 if QUICK else 150000
+FUR_LEN = 0.048
 FUR_PTS = 5
-FUR_RAD = (0.0024, 0.0005)
-CLUMPS = 900 if QUICK else 2200
-POM_N = 2500 if QUICK else 7000
+FUR_RAD = (0.0019, 0.0006)
+CLUMPS = 1400 if QUICK else 3200
+POM_N = 6000 if QUICK else 16000
 
-COL_FUR = "#E5768E"           # warm pink coat
+COL_FUR = "#E86E8C"           # warm pink coat
 COL_FUR_UNDER = "#F6C9D2"     # paler pink-white underside
-COL_BLUSH = "#F25A78"
+COL_BLUSH = "#F04C6E"
 COL_PAW = "#FFF6F4"
 COL_PAD = "#F48FAA"
 COL_HAT = "#7436BE"
 COL_HAT_DARK = "#3E1576"
 COL_STRIPE = "#EDD5F0"
 COL_STRIPE_DARK = "#A98AB8"
-COL_POM = "#8A41B9"
+COL_POM = "#7E36BA"
 
 
 def hat_rot():
@@ -268,12 +273,13 @@ def knit_tile(path, n=128):
     h = np.zeros((n, n))
     for s in (-1.0, 1.0):
         xc = 0.5 + s * (0.05 + 0.30 * y)
-        d = (x - xc) / 0.165
-        leg = np.clip(1.0 - d * d, 0.0, 1.0) ** 0.65
+        d = (x - xc) / 0.150
+        leg = np.clip(1.0 - d * d, 0.0, 1.0) ** 0.8
         env = np.sin(np.pi * np.clip(y * 0.90 + 0.05, 0.0, 1.0)) ** 0.45
         h = np.maximum(h, leg * env)
     edge = np.clip(np.abs(x - 0.5) * 2.0, 0.0, 1.0)
-    h *= 1.0 - 0.45 * edge ** 8
+    col = np.cos(np.pi * (x - 0.5)) ** 0.8                 # rounded rib column
+    h = 0.62 * col + 0.38 * h * (1.0 - 0.45 * edge ** 8)
     rng = np.random.default_rng(7)
     h = np.clip(h + rng.normal(0.0, 0.025, h.shape), 0.0, 1.0)
     img = bpy.data.images.new("V4_KnitTile", n, n, alpha=False, float_buffer=False)
@@ -291,7 +297,7 @@ def knit_tile(path, n=128):
     return img
 
 
-def knit_material(name, hex_col, hex_dark, tile, bump=0.55):
+def knit_material(name, hex_col, hex_dark, tile, bump=0.35):
     m, b = principled(name, hex_col, rough=0.92, sheen=0.55, sheen_hex="#E8D8FF", spec=0.25)
     nt = m.node_tree
     uv = nt.nodes.new("ShaderNodeUVMap")
@@ -321,11 +327,11 @@ def knit_material(name, hex_col, hex_dark, tile, bump=0.55):
             s.default_value = C.hex_rgba(hex_dark)
         elif s.identifier == "B_Color":
             s.default_value = C.hex_rgba(hex_col)
-    fac = nt.nodes.new("ShaderNodeMath")
-    fac.operation = 'POWER'
-    fac.inputs[1].default_value = 0.55
-    nt.links.new(tex.outputs["Color"], fac.inputs[0])
-    nt.links.new(fac.outputs[0], [s for s in mix.inputs if s.identifier == "Factor_Float"][0])
+    fac = nt.nodes.new("ShaderNodeMapRange")
+    fac.inputs["To Min"].default_value = 0.42
+    fac.inputs["To Max"].default_value = 1.0
+    nt.links.new(tex.outputs["Color"], fac.inputs["Value"])
+    nt.links.new(fac.outputs["Result"], [s for s in mix.inputs if s.identifier == "Factor_Float"][0])
     nt.links.new([s for s in mix.outputs if s.identifier == "Result_Color"][0], b.inputs["Base Color"])
     bp = nt.nodes.new("ShaderNodeBump")
     bp.inputs["Strength"].default_value = bump
@@ -362,8 +368,8 @@ def eye_material():
     cr.elements[0].color = C.hex_rgba("#0B0507")
     cr.elements[1].position = 1.0
     cr.elements[1].color = C.hex_rgba("#F7F0F2")
-    for pos, hx in ((0.19, "#100709"), (0.235, "#3A1F22"), (0.33, "#5A3434"), (0.42, "#7A5056"),
-                    (0.468, "#2A1418"), (0.50, "#1E0E12"), (0.525, "#F2E8EC")):
+    for pos, hx in ((0.19, "#0E0608"), (0.235, "#2C171C"), (0.33, "#43272D"), (0.42, "#5F4048"),
+                    (0.468, "#24121A"), (0.50, "#1A0C10"), (0.525, "#F2E8EC")):
         e = cr.elements.new(pos)
         e.color = C.hex_rgba(hx)
     nt.links.new(ln.outputs["Value"], ramp.inputs["Fac"])
@@ -419,7 +425,7 @@ def build_materials():
     at = nt.nodes.new("ShaderNodeAttribute")
     at.attribute_name = "Col"
     nt.links.new(at.outputs["Color"], b.inputs["Base Color"])
-    M["PomPom"], _b = principled("M_PomPom", "#3C1466", rough=0.9, sheen=0.3, sheen_hex="#C9A0FF")
+    M["PomPom"], _b = principled("M_PomPom", "#2E0F55", rough=0.9, sheen=0.3, sheen_hex="#C9A0FF")
     M["EyeIris"] = eye_material()
     M["EyeHighlight"], _b = principled("M_EyeHighlight", "#FFFFFF", rough=0.2, emit="#FFFFFF", emit_s=2.0)
     M["Mouth"], _b = principled("M_Mouth", "#3A0C1A", rough=0.5)
@@ -427,10 +433,10 @@ def build_materials():
     M["Lash"], _b = principled("M_EyeLash", "#1E0E12", rough=0.4)
     M["HatKnit"] = knit_material("M_HatKnit", COL_HAT, COL_HAT_DARK, tile)
     M["HatCuff"] = knit_material("M_HatCuff", COL_HAT, COL_HAT_DARK, tile)
-    M["HatStripe"] = knit_material("M_HatStripe", COL_STRIPE, COL_STRIPE_DARK, tile, bump=0.45)
+    M["HatStripe"] = knit_material("M_HatStripe", COL_STRIPE, COL_STRIPE_DARK, tile, bump=0.30)
     M["StarBadge"], _b = principled("M_StarBadge", "#FFCF1F", rough=0.35, coat=0.5, sheen=0.2)
-    M["FurStrand"] = fur_strand_material("M_V4_FurStrands", 0.62, 1.12)
-    M["PomStrand"] = fur_strand_material("M_V4_PomStrands", 0.35, 1.25, rough=0.7)
+    M["FurStrand"] = fur_strand_material("M_V4_FurStrands", 0.72, 1.10)
+    M["PomStrand"] = fur_strand_material("M_V4_PomStrands", 0.40, 1.12, rough=0.7)
     return M
 
 
@@ -503,9 +509,21 @@ def body_elements():
     return els
 
 
-def paw_frame(side):
-    toe = Vector((side * TOE_DIR.x, TOE_DIR.y, TOE_DIR.z)).normalized()
-    sole = Vector((side * SOLE_N0.x, SOLE_N0.y, SOLE_N0.z))
+def leg_set(front=False):
+    if front:
+        return dict(hip=FRONT_LEG["hip"], ankle=FRONT_LEG["ankle"], paw_c=FRONT_LEG["paw_c"],
+                    toe=FRONT_LEG["toe"].normalized(), sole=FRONT_LEG["sole"])
+    return dict(hip=HIP, ankle=ANKLE, paw_c=PAW_C, toe=TOE_DIR, sole=SOLE_N0)
+
+
+def mirror(v, side):
+    return Vector((side * v.x, v.y, v.z))
+
+
+def paw_frame(side, front=False):
+    ls = leg_set(front)
+    toe = mirror(ls["toe"], side).normalized()
+    sole = mirror(ls["sole"], side)
     sole = (sole - toe * sole.dot(toe)).normalized()
     dorsal = -sole
     lat = toe.cross(dorsal).normalized()
@@ -514,11 +532,10 @@ def paw_frame(side):
     return lat, toe, sole
 
 
-def leg_elements(side):
-    hip = Vector((side * HIP.x, HIP.y, HIP.z))
-    ank = Vector((side * ANKLE.x, ANKLE.y, ANKLE.z))
-    pc = Vector((side * PAW_C.x, PAW_C.y, PAW_C.z))
-    lat, toe, sole = paw_frame(side)
+def leg_elements(side, front=False):
+    ls = leg_set(front)
+    hip, ank, pc = mirror(ls["hip"], side), mirror(ls["ankle"], side), mirror(ls["paw_c"], side)
+    lat, toe, sole = paw_frame(side, front)
     ex = lat
     ey = toe
     ez = ex.cross(ey).normalized()
@@ -677,7 +694,7 @@ def build_mouth(surf, z_top):
         bridge(md, rings[k], rings[k + 1], mat)
     for j in range(len(outline)):
         md.face((rings[-1][j], rings[-1][(j + 1) % len(outline)], centre), 0)
-    tongue = ellipsoid(place(0.0, -MOUTH_H / 2 + 0.040, -0.006), ex, ey, f, 0.052, 0.036, 0.016, seg=16, rings=8)
+    tongue = ellipsoid(place(0.0, -MOUTH_H / 2 + 0.044, -0.006), ex, ey, f, 0.060, 0.040, 0.017, seg=16, rings=8)
     return md, tongue, S, dict(S=S, f=f, ex=ex, ey=ey, zc=zc)
 
 
@@ -935,10 +952,12 @@ def main():
     zs = [v.co.z for v in me_body.vertices]
     print("CHECK body z range %.3f %.3f" % (min(zs), max(zs)))
 
-    # ---- legs (separate unions, pressed against the seat)
+    # ---- legs (separate unions, pressed against the seat): gameplay W-sit "Leg" + front-shot "LegFront"
+    LEGSETS = (("Leg", False), ("LegFront", True))
     legs = {}
-    for side, tag in ((1, "L"), (-1, "R")):
-        legs[tag] = mball_object("V4Leg%sMB" % tag, leg_elements(side), coll)
+    for prefix, front in LEGSETS:
+        for side, tag in ((1, "L"), (-1, "R")):
+            legs[prefix + "." + tag] = mball_object("V4%s%sMB" % (prefix, tag), leg_elements(side, front), coll)
 
     # ---- hat fit: tuck radius from the body just under the cuff bottom
     r_tuck = 9.0
@@ -1016,19 +1035,21 @@ def main():
         pads_arm[tag] = pk
     leg_surf = {t: Surf(m) for t, m in legs.items()}
     pads_leg, leg_info = {}, {}
-    for side, tag in ((1, "L"), (-1, "R")):
-        lat, toe, sole = paw_frame(side)
-        pc = Vector((side * PAW_C.x, PAW_C.y, PAW_C.z))
-        pk = MD()
-        pink = (0.96, 0.56, 0.66, 1.0)
-        centres = [pc - toe * 0.040]
-        pk.extend(pad_disc(leg_surf[tag], pc - toe * 0.040, sole, lat, toe, 0.058, 0.050, 0.012, pink))
-        for u, w in ((-0.078, 0.060), (-0.028, 0.096), (0.028, 0.096), (0.078, 0.060)):
-            q = pc + lat * u + toe * w
-            centres.append(q)
-            pk.extend(pad_disc(leg_surf[tag], q, sole, lat, toe, 0.022, 0.025, 0.010, pink, 10))
-        pads_leg[tag] = pk
-        leg_info[tag] = dict(paw_c=pc, toe=toe, sole_n=sole, lat=lat, pads=centres)
+    for prefix, front in LEGSETS:
+        for side, tag in ((1, "L"), (-1, "R")):
+            key = prefix + "." + tag
+            lat, toe, sole = paw_frame(side, front)
+            pc = mirror(leg_set(front)["paw_c"], side)
+            pk = MD()
+            pink = (0.96, 0.56, 0.66, 1.0)
+            centres = [pc - toe * 0.045]
+            pk.extend(pad_disc(leg_surf[key], pc - toe * 0.045, sole, lat, toe, 0.060, 0.052, 0.013, pink))
+            for u, w in ((-0.072, 0.040), (-0.026, 0.078), (0.026, 0.078), (0.072, 0.040)):
+                q = pc + lat * u + toe * w
+                centres.append(q)
+                pk.extend(pad_disc(leg_surf[key], q, sole, lat, toe, 0.027, 0.031, 0.011, pink, 12))
+            pads_leg[key] = pk
+            leg_info[key] = dict(paw_c=pc, toe=toe, sole_n=sole, lat=lat, pads=centres)
 
     tail = ellipsoid(TAIL_C, Vector((1, 0, 0)), Vector((0, 1, 0)), Vector((0, 0, 1)), TAIL_R, TAIL_R, TAIL_R)
     pom_core, pom_c = build_pompom_core()
@@ -1050,14 +1071,15 @@ def main():
     add("Mouth", mouth, [M["Mouth"], M["Fur"]])
     add("Tongue", tongue, [M["Tongue"]])
     add("Lashes", lashes, [M["Lash"]])
-    for side, tag in ((1, "L"), (-1, "R")):
+    for key, me_leg in legs.items():
         lm = MD()
-        lm.v = [v.co.copy() for v in legs[tag].vertices]
-        for p in legs[tag].polygons:
+        lm.v = [v.co.copy() for v in me_leg.vertices]
+        for p in me_leg.polygons:
             lm.face(tuple(p.vertices), 0, col=[(1.0, 1.0, 1.0, 0.0)] * len(p.vertices))
-        lm.extend(pads_leg[tag])
-        lm.m = [0] * (len(lm.f) - len(pads_leg[tag].f)) + [1] * len(pads_leg[tag].f)
-        add("Leg." + tag, lm, [M["Fur"], M["PawPad"]])
+        lm.extend(pads_leg[key])
+        lm.m = [0] * (len(lm.f) - len(pads_leg[key].f)) + [1] * len(pads_leg[key].f)
+        add(key, lm, [M["Fur"], M["PawPad"]])
+    for tag in ("L", "R"):
         add("PalmPads." + tag, pads_arm[tag], [M["PawPad"]])
     add("Tail", tail, [M["Fur"]])
     add("Beanie", beanie, [M["HatKnit"], M["HatCuff"], M["HatStripe"]])
@@ -1075,8 +1097,10 @@ def main():
     Lmul = np.ones(len(P))
     # under the hat: no fur
     Q = (np.array(HAT_R.transposed()) @ (P - np.array(HAT_O)).T).T
-    keep &= Q[:, 2] < 0.004
-    Lmul *= 0.55 + 0.45 * np_smooth(0.0, -0.06, Q[:, 2])
+    rq = np.hypot(Q[:, 0], Q[:, 1])
+    inside = rq < 0.545
+    keep &= ~(inside & (Q[:, 2] > 0.004))
+    Lmul *= np.where(inside, 0.55 + 0.45 * np_smooth(0.0, -0.06, Q[:, 2]), 1.0)
     # face features
     for tag in ("L", "R"):
         S = np.array(eyes[tag][1]["S"])
@@ -1093,9 +1117,10 @@ def main():
     # palm pads
     for side, tag in ((1, "L"), (-1, "R")):
         along, pn, across = mitt_frame(side)
-        c = np.array(Vector((side * MITT_C.x, MITT_C.y, MITT_C.z)) + pn * 0.06)
-        dp = np.linalg.norm(P - c, axis=1)
-        keep &= dp > 0.085
+        mc3 = np.array(Vector((side * MITT_C.x, MITT_C.y, MITT_C.z)))
+        rel = P - mc3
+        on_palm = (rel @ np.array(pn)) > 0.035
+        keep &= ~(on_palm & (np.linalg.norm(rel, axis=1) < 0.13))
     # face zone: shorter fur on the front of the head
     face_w = np_smooth(-0.30, -0.42, P[:, 1]) * np_smooth(0.30, 0.42, P[:, 2]) * np_smooth(0.36, 0.28, np.abs(P[:, 0]))
     Lmul *= 1.0 - 0.45 * face_w
@@ -1104,7 +1129,7 @@ def main():
     nz1 = noise3(P, 9.0, (3.1, 7.7, 1.3))
     nz2 = noise3(P, 23.0, (8.2, 1.4, 5.9))
     rng = np.random.default_rng(5)
-    L = FUR_LEN * Lmul * (0.80 + 0.30 * nz1 + 0.14 * nz2 + 0.12 * rng.random(n))
+    L = FUR_LEN * Lmul * (0.84 + 0.24 * nz1 + 0.10 * nz2 + 0.10 * rng.random(n))
     L = np.clip(L, 0.006, None)
     # combing: down along the surface + outward from the face centre on the front
     down = np.array([0.0, 0.0, -1.0])
@@ -1114,7 +1139,7 @@ def main():
     away = away - N * np.sum(away * N, axis=1)[:, None]
     comb = normalize_rows(comb + normalize_rows(away) * face_w[:, None] * 1.5 + 1e-6)
     jitter = normalize_rows(rng.normal(0.0, 1.0, (n, 3)))
-    D = normalize_rows(N * 1.0 + comb * 0.55 + jitter * 0.22)
+    D = normalize_rows(N * 0.80 + comb * 0.85 + jitter * 0.16)
     tip = P + D * L[:, None]
     # clumps: tips converge toward their clump's tip (plush tufts)
     kd = KDTree(CLUMPS)
@@ -1125,8 +1150,8 @@ def main():
     near = np.array([kd.find(Vector(p))[1] for p in P])
     ctip = tip[cidx[near]]
     croot = P[cidx[near]]
-    camt = (0.40 + 0.35 * np_smooth(-0.3, 0.6, nz1)) * (1.0 - 0.6 * face_w)
-    target = ctip + (P - croot) * 0.30
+    camt = (0.28 + 0.30 * np_smooth(-0.3, 0.6, nz1)) * (1.0 - 0.6 * face_w)
+    target = ctip + (P - croot) * 0.45
     tip = tip + (target - tip) * camt[:, None]
     # keep tips above the surface (re-normalise length a little)
     pts = bezier_pts(P, N, tip, L, FUR_PTS)
@@ -1150,12 +1175,13 @@ def main():
     print("CHECK fur strands %d of %d (area %.2f m2) in %.1f s" % (n, FUR_N, area, time.time() - t0))
 
     # ---- short cream fur on the feet (sole pads stay bare)
-    for side, tag in ((1, "L"), (-1, "R")):
-        Pf, Nf, _a = sample_surface(legs[tag], 9000 if not QUICK else 3000, 21 + side)
-        li = leg_info[tag]
+    for ki, key in enumerate(legs):
+        side = 1 if key.endswith("L") else -1
+        Pf, Nf, _a = sample_surface(legs[key], 12000 if not QUICK else 4000, 21 + ki)
+        li = leg_info[key]
         ok = np.ones(len(Pf), dtype=bool)
         for k, pcen in enumerate(li["pads"]):
-            r = 0.068 if k == 0 else 0.032
+            r = 0.070 if k == 0 else 0.037
             ok &= np.linalg.norm(Pf - np.array(pcen), axis=1) > r
         Pf, Nf = Pf[ok], Nf[ok]
         m = len(Pf)
@@ -1166,7 +1192,7 @@ def main():
         ptsf = bezier_pts(Pf, Nf, tipf, Lf, 4)
         rf = np.tile(np.array([0.0022, 0.0016, 0.0010, 0.0004]), (m, 1))
         colf = np.tile(hexlin(COL_PAW), (m, 1)) * (0.93 + 0.07 * rngf.random(m))[:, None]
-        make_curves("Fur_Paw." + tag, ptsf, rf, colf, M["FurStrand"], fur_coll)
+        make_curves("Fur_" + key, ptsf, rf, colf, M["FurStrand"], fur_coll)
 
     # ---- pom-pom yarn: radial strands around the dark core
     rngp = np.random.default_rng(9)
@@ -1176,14 +1202,14 @@ def main():
     dirs = dirs[dirs @ ax > -0.55]
     m = len(dirs)
     pc = np.array(pom_c)
-    root = pc + dirs * POM_CORE * 0.45
+    root = pc + dirs * POM_CORE * 0.35
     clump = noise3(dirs, 3.0, (4.2, 1.1, 7.7))
-    Lp = (POM_R - POM_CORE * 0.45) * (0.86 + 0.12 * clump + 0.08 * rngp.random(m))
+    Lp = (POM_R - POM_CORE * 0.35) * (0.90 + 0.07 * clump + 0.06 * rngp.random(m))
     tipp = root + dirs * Lp[:, None]
     bend = dirs - ax[None, :] * (dirs @ ax)[:, None]
     tipp += bend * 0.010 * rngp.random(m)[:, None]
     ptsp = bezier_pts(root, dirs, tipp, Lp, 4)
-    rp = np.tile(np.array([0.0060, 0.0045, 0.0030, 0.0008]), (m, 1)) * (0.8 + 0.4 * rngp.random(m))[:, None]
+    rp = np.tile(np.array([0.0038, 0.0032, 0.0024, 0.0009]), (m, 1)) * (0.8 + 0.4 * rngp.random(m))[:, None]
     colp = np.tile(hexlin(COL_POM), (m, 1)) * (0.85 + 0.25 * rngp.random(m))[:, None]
     make_curves("Fur_PomPom", ptsp, rp, colp, M["PomStrand"], fur_coll)
     print("CHECK pompom strands %d centre %s tip radius %.3f" % (m, tuple(round(c, 3) for c in pom_c), POM_R))
@@ -1199,10 +1225,8 @@ def main():
         arms={t: dict(root=list(Vector((s * ARM_A.x, ARM_A.y, ARM_A.z))), mitt_c=list(Vector((s * MITT_C.x, MITT_C.y,
                                                                                                   MITT_C.z))))
               for s, t in ((1, "L"), (-1, "R"))},
-        legs={t: dict(hip=list(Vector((s * HIP.x, HIP.y, HIP.z))), ankle=list(Vector((s * ANKLE.x, ANKLE.y, ANKLE.z))),
-                      paw_c=list(leg_info[t]["paw_c"]), toe_dir=list(leg_info[t]["toe"]),
-                      sole_n=list(leg_info[t]["sole_n"]), pads=[list(p) for p in leg_info[t]["pads"]])
-              for s, t in ((1, "L"), (-1, "R"))})
+        legs={k: dict(paw_c=list(v["paw_c"]), toe_dir=list(v["toe"]), sole_n=list(v["sole_n"]),
+                      pads=[list(p) for p in v["pads"]]) for k, v in leg_info.items()})
     with open(os.path.join(OUT, "mascot_v4_landmarks.json"), "w") as fh:
         json.dump(land, fh, indent=1, default=float)
     allv = [o.matrix_world @ v.co for o in objs.values() for v in o.data.vertices]
@@ -1221,7 +1245,8 @@ def main():
 def write_ready(blend, objs, armature, notes):
     ready = dict(
         blend=blend.replace("\\", "/"), collection=COLL_NAME, armature=armature,
-        objects=sorted(objs.keys()) + ["Fur_Body", "Fur_Paw.L", "Fur_Paw.R", "Fur_PomPom"],
+        objects=sorted(objs.keys()) + ["Fur_Body", "Fur_Leg.L", "Fur_Leg.R", "Fur_LegFront.L", "Fur_LegFront.R",
+                                        "Fur_PomPom"],
         face_controls=("no rig yet: eyes = objects Eye.L/.R + Catchlight.*; blink = scale Eye.* about its centre "
                        "(landmarks json eyes.S) along local Z; mouth = Mouth/Tongue objects" if armature is None else
                        "see notes"),
@@ -1310,6 +1335,21 @@ def render_view(path, cam, look, lens=None, vfov=None, res=(900, 900), samples=4
             bpy.data.lights.remove(d)
 
 
+FRONT_VIEWS = ("front", "threequarter", "face")
+
+
+def leg_pose(front):
+    """Front shots (opening / celebration) use the legs-forward set; gameplay views the W-sit set."""
+    for o in bpy.data.objects:
+        nm = o.name
+        if "LegFront." in nm:
+            o.hide_render = not front
+            o.hide_viewport = not front
+        elif "Leg." in nm:
+            o.hide_render = front
+            o.hide_viewport = front
+
+
 def render_all(objs):
     floor = add_floor()
     T = Vector((0.0, 0.0, 0.72))
@@ -1324,8 +1364,10 @@ def render_all(objs):
     for name, (cam, look, lens) in views.items():
         if VIEWS and name not in VIEWS:
             continue
+        leg_pose(name in FRONT_VIEWS)
         render_view(C.preview_path("SK_Mascot_v4_" + name), cam, look, lens=lens, samples=samples,
                     subject=(0.0, 0.0, 0.62))
+    leg_pose(False)
     if not VIEWS or "hero" in VIEWS:
         # Blender hero view: same effective camera as build_mascot_rig.py render_game_view (mascot scaled 0.93 and
         # seated 5 cm lower) -> camera expressed in the unscaled model frame

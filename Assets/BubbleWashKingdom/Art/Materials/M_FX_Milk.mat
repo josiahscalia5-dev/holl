@@ -16,7 +16,7 @@ Material:
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
+  m_CustomRenderQueue: 3000
   stringTagMap: {}
   disabledShaderPasses: []
   m_LockedProperties: 
@@ -27,18 +27,22 @@ Material:
     m_Floats:
     - _BumpScale: 6
     - _BumpStrength: 0.5
+    - _DstBlend: 10
     - _GlintAmount: 0.5
-    - _Glow: 0.4
+    - _Glow: 0.32
     - _HotBoost: 0.6
     - _HotFar: 3.5
     - _HotNear: 3
     - _Metallic: 0
+    - _MilkAlpha: 0.97
+    - _MilkEdgeAlpha: 0.45
     - _Mode: 6
-    - _ReflectBoost: 0.3
-    - _RimPower: 1.8
-    - _RimStrength: 0.7
+    - _ReflectBoost: 0.25
+    - _RimPower: 2
+    - _RimStrength: 0.8
     - _Smoothness: 0.35
-    - _SpecStrength: 1
+    - _SpecStrength: 0.7
+    - _SrcBlend: 5
     - _StitchU: 64
     - _StitchV: 26
     - _StreakAmount: 0
@@ -47,11 +51,12 @@ Material:
     - _Stripes: 4
     - _Wobble: 0.01
     - _WobbleFreq: 7
-    - _Wrap: 0.65
+    - _Wrap: 0.7
+    - _ZWrite: 1
     m_Colors:
-    - _ColorA: {r: 1, g: 1, b: 1, a: 1}
-    - _ColorB: {r: 0.5411765, g: 0.8235294, b: 0.9647059, a: 1}
+    - _ColorA: {r: 0.83137256, g: 0.9529412, b: 1, a: 1}
+    - _ColorB: {r: 0.38431373, g: 0.7490196, b: 0.9411765, a: 1}
     - _ColorC: {r: 0.54999995, g: 0.29999998, b: 0.85, a: 1}
-    - _ShadowColor: {r: 0.65882355, g: 0.7607843, b: 0.9411765, a: 1}
+    - _ShadowColor: {r: 0.54901963, g: 0.69803923, b: 0.89411765, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

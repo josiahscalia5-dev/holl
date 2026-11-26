@@ -27,6 +27,9 @@ Material:
     m_Floats:
     - _BandLength: 2.8333
     - _BandOffset: 65
+    - _BaySheen: 0
+    - _BaySheenPos: 0.5
+    - _BaySheenWidth: 0.22
     - _Bevel: 0.6
     - _CeilingLight: 0
     - _CeilingTint: 0
@@ -60,8 +63,15 @@ Material:
     - _RowPitch: 0
     - _Rows: 4
     - _SeamHighlight: 0
+    - _SeamMargin: 0
     - _ShadowTint: 0
     - _SheenStrength: 0.25
+    - _SideRowPitch: 1.6
+    - _SideSlotLength: 0.56
+    - _SideSlotPitch: 1.1
+    - _SideSlotWidth: 0.42
+    - _SideZone: 2
+    - _SlotDropout: 0
     - _SlotLength: 0.34
     - _SlotPitch: 0.5
     - _SlotVariation: 0.4
@@ -71,6 +81,7 @@ Material:
     - _VTile: 4
     m_Colors:
     - _BaseColor: {r: 0.7137255, g: 0.6509804, b: 0.91764706, a: 1}
+    - _BaySheenColor: {r: 0.5, g: 0.65999997, b: 0.92, a: 1}
     - _CeilingColor: {r: 0.41999996, g: 0.45, b: 0.85, a: 1}
     - _DepthTintColor: {r: 0.29999998, g: 0.39999998, b: 0.7, a: 1}
     - _FlangeColor: {r: 0.72, g: 0.56, b: 0.95, a: 1}

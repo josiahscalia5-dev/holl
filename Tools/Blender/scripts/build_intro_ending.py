@@ -327,6 +327,59 @@ def mascot_source():
     return os.path.join(ROOT, "Tools", "Blender", "work", "mascot_rig.blend"), "stand-in"
 
 
+READY = os.path.join(ROOT, "Tools", "Blender", "work", "mascot_v4", "READY.json")
+
+
+def load_v4(path):
+    """Agent 1's v4 model (no armature yet): every listed object is parented to an animatable control empty at its
+    ground origin; each eye (+ catchlights) gets a pivot empty at the eye centre for blinks (READY.json face note)."""
+    with open(READY) as f:
+        info = json.load(f)
+    lm_path = os.path.join(os.path.dirname(READY), "mascot_v4_landmarks.json")
+    lm = json.load(open(lm_path)) if os.path.exists(lm_path) else {}
+    names = set(info.get("objects") or [])
+    with bpy.data.libraries.load(path, link=False) as (src, dst):
+        dst.objects = [n for n in src.objects if not names or n in names]
+    sc = bpy.context.scene
+    obs = [o for o in dst.objects if o is not None]
+    for o in obs:
+        sc.collection.objects.link(o)
+        if o.animation_data:
+            o.animation_data_clear()
+    ctrl = bpy.data.objects.new("MascotCtrl", None)
+    sc.collection.objects.link(ctrl)
+    bpy.context.view_layer.update()
+    for o in obs:
+        if o.parent is None or o.parent not in obs:
+            mw = o.matrix_world.copy()
+            o.parent = ctrl
+            o.matrix_world = mw
+    pivots = []
+    bpy.context.view_layer.update()
+    for tag in ("L", "R"):
+        S = (lm.get("eyes", {}).get(tag, {}) or {}).get("S")
+        eye = bpy.data.objects.get("Eye." + tag)
+        if S is None or eye is None:
+            continue
+        pv = bpy.data.objects.new("EyePivot." + tag, None)
+        sc.collection.objects.link(pv)
+        pv.parent = ctrl
+        pv.location = S
+        bpy.context.view_layer.update()
+        for o in obs:
+            if o.name == "Eye." + tag or o.name.startswith("Catchlight." + tag):
+                if o.parent is not None and o.parent.name.startswith("Eye."):
+                    continue
+                mw = o.matrix_world.copy()
+                o.parent = pv
+                o.matrix_world = mw
+        pivots.append(pv)
+    hat = lm.get("hat", {})
+    height = (hat.get("pom_c", [0, 0, 1.378])[2] + hat.get("pom_r", 0.27))
+    log("v4 objects %d, eye pivots %d, height %.3f" % (len(obs), len(pivots), height))
+    return ctrl, pivots, height, [o.type for o in obs]
+
+
 def append_mascot(path):
     with bpy.data.libraries.load(path, link=False) as (src, dst):
         dst.objects = [n for n in src.objects]
@@ -554,16 +607,23 @@ def stage_scene():
     # mascot (needed first: the contact-shadow empty follows it)
     mpath, mkind = mascot_source()
     log("mascot source:", mkind, mpath)
-    arm, meshes = append_mascot(mpath)
-    if arm is None:
-        raise RuntimeError("no armature in " + mpath)
-    arm.animation_data_clear()
-    for ob in meshes:
-        if ob.animation_data:
-            ob.animation_data_clear()
-        if mkind == "stand-in":
+    pivots = []
+    if mkind == "v4":
+        arm, pivots, height, types = load_v4(mpath)
+        log("v4 object types", sorted(set(types)))
+        S = float(os.environ.get("BWK_MASCOT_SCALE", "%.4f" % (0.165 * 1.42 / height)))
+        body_c, shadow_s = 0.45, 0.72
+    else:
+        arm, meshes = append_mascot(mpath)
+        if arm is None:
+            raise RuntimeError("no armature in " + mpath)
+        arm.animation_data_clear()
+        for ob in meshes:
+            if ob.animation_data:
+                ob.animation_data_clear()
             stand_in_fur(ob)
-    S = float(os.environ.get("BWK_MASCOT_SCALE", "0.165"))
+        S = float(os.environ.get("BWK_MASCOT_SCALE", "0.165"))
+        body_c, shadow_s = 0.53, 0.62
     arm.scale = (S, S, S)
     ex, ey = EMERGE
     d_out = pile_depth(ex, ey) + float(os.environ.get("BWK_DOUT", "0.045"))   # body centre depth when out
@@ -573,33 +633,42 @@ def stage_scene():
     shadow = bpy.data.objects.new("ContactShadow", None)
     sc.collection.objects.link(shadow)
     shadow.parent = arm
-    shadow.location = (0.0, 0.0, 0.53)      # body centre in rig space
+    shadow.location = (0.0, 0.0, body_c)    # body centre in model space
     shadow.empty_display_size = 1.0
 
-    pb = arm.pose.bones
-    for b in pb:
-        b.rotation_mode = 'XYZ'
+    pb = arm.pose.bones if arm.type == 'ARMATURE' else None
+    if pb is not None:
+        for b in pb:
+            b.rotation_mode = 'XYZ'
     for f in range(SHOT_FIRST, END + 1):
         st = mascot_state(f)
         k = st["rise"]
         loc = p_hide.lerp(p_out, k) + Vector((0.0, 0.0, st["pop"] * 0.05))
         arm.location = loc
-        arm.rotation_euler = (math.radians(-6.0 * (1 - k)), 0.0, 0.0)
+        if pb is not None:
+            arm.rotation_euler = (math.radians(-6.0 * (1 - k)), 0.0, 0.0)
+        else:   # no rig: the whole (ball-shaped) body nods / turns to look around
+            arm.rotation_euler = (math.radians(-6.0 * (1 - k) - 0.6 * st["pitch"]), 0.0, math.radians(0.8 * st["look"]))
         arm.keyframe_insert("location", frame=f)
         arm.keyframe_insert("rotation_euler", frame=f)
         # contact shadow fades in with the emergence (tiny scale == no shadow: frame 325 stays == the plate)
-        s = 0.62 * max(0.002, smooth((f - 334) / 14.0))
+        s = shadow_s * max(0.002, smooth((f - 334) / 14.0))
         shadow.scale = (s, s, s)
         shadow.keyframe_insert("scale", frame=f)
-        # head bone: local X = nod, local Y (bone axis, up) = look left / right
-        pb["head"].rotation_euler = (math.radians(st["pitch"]), math.radians(st["look"]), 0.0)
-        pb["head"].keyframe_insert("rotation_euler", frame=f)
-        for tag in ("L", "R"):
-            e = pb.get("eye." + tag)
-            if e is not None:
-                w = 1.0 + st["eyes_wide"]
-                e.scale = (w + 0.05 * st["blink"], 1.0, max(0.08, w - 0.92 * st["blink"]))
-                e.keyframe_insert("scale", frame=f)
+        w = 1.0 + st["eyes_wide"]
+        eye_scale = (w + 0.05 * st["blink"], w, max(0.08, w - 0.92 * st["blink"]))
+        if pb is not None:
+            # head bone: local X = nod, local Y (bone axis, up) = look left / right
+            pb["head"].rotation_euler = (math.radians(st["pitch"]), math.radians(st["look"]), 0.0)
+            pb["head"].keyframe_insert("rotation_euler", frame=f)
+            for tag in ("L", "R"):
+                e = pb.get("eye." + tag)
+                if e is not None:
+                    e.scale = (eye_scale[0], 1.0, eye_scale[2])
+                    e.keyframe_insert("scale", frame=f)
+        for pv in pivots:
+            pv.scale = eye_scale
+            pv.keyframe_insert("scale", frame=f)
 
     # proxies: backdrop (whole plate), lower pile (full towel region, darkened where it hides under the top towel),
     # top towel (above the gap edge), lifted by the mascot through a shape key
@@ -770,9 +839,51 @@ def stage_assemble():
     log("CHECK assembled", out)
 
 
+def fit_h(a, th):
+    h, w, _ = a.shape
+    tw = int(round(w * th / h))
+    ys = np.clip((np.arange(th) + 0.5) * h / th, 0, h - 1).astype(int)
+    xs = np.clip((np.arange(tw) + 0.5) * w / tw, 0, w - 1).astype(int)
+    if h > th * 1.5:   # box-average when shrinking a lot
+        k = int(h // th)
+        a = box_blur_rgb(a, max(1, k // 2))
+    return a[ys][:, xs]
+
+
+def box_blur_rgb(a, r):
+    return np.stack([box_blur(a[..., c], r) for c in range(3)], -1)
+
+
+def crop_rel(a, spec):
+    """spec 'x0,y0,x1,y1' as fractions of width / height."""
+    h, w, _ = a.shape
+    x0, y0, x1, y1 = (float(v) for v in spec.split(","))
+    return a[int(y0 * h):int(y1 * h), int(x0 * w):int(x1 * w)]
+
+
+def stage_compare():
+    """approved (03 crop) | incorrect (07 crop) | corrected (our frame crop), equal heights, private output."""
+    panels = []
+    for img_env, crop_env, default in (("BWK_APPROVED", "BWK_APPROVED_CROP", "0.33,0.24,0.66,0.80"),
+                                       ("BWK_INCORRECT", "BWK_INCORRECT_CROP", "0.17,0.24,0.83,0.71"),
+                                       ("BWK_CORRECTED", "BWK_CORRECTED_CROP", "0.17,0.24,0.83,0.71")):
+        a = load_px(os.environ[img_env])
+        panels.append(fit_h(crop_rel(a, os.environ.get(crop_env, default)), 720))
+    g = 10
+    wsum = sum(p.shape[1] for p in panels) + g * (len(panels) - 1)
+    S = np.full((720, wsum, 3), 0.06, np.float32)
+    x = 0
+    for p in panels:
+        S[:, x:x + p.shape[1]] = p
+        x += p.shape[1] + g
+    out = os.environ.get("BWK_COMPARE_OUT", os.path.join(OUT, "compare.png"))
+    save_px(S, out)
+    log("CHECK compare written", out, S.shape)
+
+
 if __name__ == "__main__":
     for s in STAGES:
         log("stage", s)
         {"plate": stage_plate, "scene": stage_scene, "render": stage_render, "encode": stage_encode,
-         "assemble": stage_assemble}[s]()
+         "assemble": stage_assemble, "compare": stage_compare}[s]()
     log("DONE", STAGES)

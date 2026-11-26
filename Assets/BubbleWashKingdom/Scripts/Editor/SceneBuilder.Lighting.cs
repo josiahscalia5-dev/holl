@@ -56,7 +56,10 @@ namespace BubbleWash.EditorTools
             RenderSettings.ambientSkyColor = new Color(0.40f, 0.38f, 1.0f);
             RenderSettings.ambientEquatorColor = new Color(0.56f, 0.34f, 0.96f);
             RenderSettings.ambientGroundColor = new Color(0.32f, 0.44f, 0.98f);   // round 4: deeper blue on down-facing bays
-            RenderSettings.ambientIntensity = 1.05f;
+            // round 4: 1.05 -> 0.94: the walls / ceiling bays read lighter and flatter than the reference (upper-right L50 .44
+            // vs .40, tunnel ahead .57 vs .49) and the fur too light (L .61 vs .48); the pink spot / point lights carry the
+            // upper-left glow instead
+            RenderSettings.ambientIntensity = 0.94f;
             // Aerial perspective: saturated lavender-violet (never pale grey): the near tunnel stays clear and rich, the far
             // tunnel melts into a lighter violet glow while the warm bulbs still punch through (emissives use little fog).
             RenderSettings.fog = true;
@@ -89,7 +92,8 @@ namespace BubbleWash.EditorTools
             // round 4 v2: the point light above lands on the left wall at mid height; the reference's light mauve-pink wall is
             // the UPPER-left (around the big yellow star, #a87ea0 vs ours violet #9d6bab). A wide spot aimed through the hero
             // camera at screen (0.15, 0.20) lands exactly there (independent of track mirroring / bends).
-            AddHeroSpot(lights, "Spot_PinkUpperLeft", 0.15f, 0.20f, 3.2f, new Color(1f, 0.46f, 0.76f), 14f, 80f, 12f);
+            // (v2 aimed at (0.15, 0.20): that ray reaches the wall only at 118 m; v3 aims nearer the corner -> ~112 m)
+            AddHeroSpot(lights, "Spot_PinkUpperLeft", 0.09f, 0.14f, 3.4f, new Color(1f, 0.46f, 0.76f), 16f, 90f, 12f);
 
             // Reflection probes: hall probes + one per 30 m tunnel chunk, box = bounds of that bent tunnel segment.
             for (float d = 18f; d < tunnelStart; d += 30f)
@@ -125,14 +129,17 @@ namespace BubbleWash.EditorTools
             // emissives and the brightest rim glints (controlled: lit foam / walls stay below it)
             // round 4 (lead gap 1 "controlled bloom halos", sheet 04): slightly lower threshold + wider scatter -> soft halos on
             // the bulbs / stars / brightest rims (the reference's soft animated-film glow), still no veil on lit surfaces
-            bloom.threshold.Override(0.9f); bloom.intensity.Override(1.4f); bloom.scatter.Override(0.78f);
+            // v2 (threshold .9 / intensity 1.4) lifted every wall into a flat pastel lavender (frame L50 .60 vs .56): v3 keeps
+            // the threshold at 1.0 (only emissives + hot glints bloom) and widens the halo instead
+            bloom.threshold.Override(1.0f); bloom.intensity.Override(1.25f); bloom.scatter.Override(0.77f);
             bloom.tint.Override(Color.white); bloom.highQualityFiltering.Override(true);
             bloom.maxIterations.Override(8);
             // Neutral keeps saturated hues far better than ACES (which pushes bright yellow / cyan to white).
             var tm = profile.Add<Tonemapping>(true); tm.mode.Override(TonemappingMode.Neutral);
             var ca = profile.Add<ColorAdjustments>(true);
             // richer, darker mids than the washed-out HDR baseline (frame L50 .63 -> reference .55)
-            ca.saturation.Override(4f); ca.contrast.Override(8f); ca.postExposure.Override(-0.25f);
+            // round 4 v3: more contrast (reference: deep blue-violet bays against bright rims / glows; ours read flat)
+            ca.saturation.Override(4f); ca.contrast.Override(12f); ca.postExposure.Override(-0.25f);
             // blue-violet shadows / low mids (depth, dark holes); warm highlights keep gold and bulbs warm
             var smh = profile.Add<ShadowsMidtonesHighlights>(true);
             smh.shadows.Override(new Vector4(0.92f, 0.88f, 1.14f, -0.03f));
@@ -522,7 +529,8 @@ namespace BubbleWash.EditorTools
             CharLight(group, "CharLight_PinkBack", new Vector3(-0.55f, 0.85f, -1.7f), new Color(1f, 0.38f, 0.36f), 1.8f, 3.4f);
             // cool lavender light from the bright tunnel ahead: wraps around the fur silhouette as a rim
             // round 4: pink rim (reference: pink rim light around the fur and arms), less blue than v1
-            CharLight(group, "CharLight_RimFront", new Vector3(0f, 1.15f, 2.2f), new Color(1f, 0.42f, 0.70f), 2.6f, 3.6f);
+            // v3: v2 fur #e680b3 had too much blue / green vs the reference rose #cc618c (B/R .57 vs .43): weaker, warmer rim
+            CharLight(group, "CharLight_RimFront", new Vector3(0f, 1.15f, 2.2f), new Color(1f, 0.40f, 0.58f), 2.0f, 3.6f);
 
             // soft violet contact shadow card on the water right under him (stays on the surface during jumps)
             var card = GameObject.CreatePrimitive(PrimitiveType.Quad);

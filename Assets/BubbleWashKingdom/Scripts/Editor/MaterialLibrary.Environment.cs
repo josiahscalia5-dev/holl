@@ -19,42 +19,52 @@ namespace BubbleWash.EditorTools
                 // SMALL ROUNDED OVAL HOLES (~0.36 x 0.25 m, 0.62 m apart around, rows ~1 m apart) with real depth.
                 // Sections: gold ring - bay - one lavender rim at _RimPhase (0.40) - bay - gold ring; _BandOffset /
                 // _BandLength / _RimPhase are rewritten by SceneBuilder.BuildRings (gold every 12.75 m from 71.5 m).
-                C(m, "_BaseColor", "#BEAED2"); C(m, "_HighlightColor", "#D2BCF2"); C(m, "_HoleColor", "#0A0620");
-                C(m, "_HoleGlow", "#4A2E9A"); F(m, "_Circumference", 26.39f); F(m, "_VTile", 4f);
+                // Round 4 (reference 4K f_03.00s): ceiling panels (within 45 deg of the top) carry short rounded dashes in
+                // broken rows; the side walls carry big rounded ovals stacked in columns (3 per 3.3 m panel, rows 1.6 m
+                // apart); the zone edge is a panel seam with plain metal beside it. Less saturated, pinker mauve side walls
+                // (ref #7652a8 vs ours #5d36b5), weaker blue depth tint, purple-grey holes, pale steel-blue bay sheen.
+                C(m, "_BaseColor", "#C8AECC"); C(m, "_HighlightColor", "#DCC0EC"); C(m, "_HoleColor", "#120A22");
+                C(m, "_HoleGlow", "#4A2C78"); F(m, "_Circumference", 26.39f); F(m, "_VTile", 4f);
                 C(m, "_CeilingColor", "#6A9AB8"); F(m, "_CeilingTint", 0.9f); F(m, "_CeilingWidth", 0.55f);
                 F(m, "_Pattern", 1f); F(m, "_BandLength", 12.75f); F(m, "_BandOffset", 71.5f); F(m, "_RimPhase", 0.40f);
-                F(m, "_PlainBack", 0.85f); F(m, "_PlainFront", 0.75f); F(m, "_Rows", 5f); F(m, "_RowPitch", 1.0f);
-                F(m, "_SlotPitch", 0.62f); F(m, "_SlotLength", 0.36f); F(m, "_SlotWidth", 0.25f); F(m, "_SlotVariation", 0.15f);
+                F(m, "_PlainBack", 0.85f); F(m, "_PlainFront", 0.75f); F(m, "_Rows", 5f); F(m, "_RowPitch", 0.85f);
+                F(m, "_SlotPitch", 0.55f); F(m, "_SlotLength", 0.32f); F(m, "_SlotWidth", 0.17f); F(m, "_SlotVariation", 0.2f);
+                F(m, "_SideZone", 0.25f); F(m, "_SideSlotPitch", 1.1f); F(m, "_SideSlotLength", 0.56f); F(m, "_SideSlotWidth", 0.42f);
+                F(m, "_SideRowPitch", 1.6f); F(m, "_SeamMargin", 0.06f); F(m, "_SlotDropout", 0.18f);
                 F(m, "_LipWidth", 0.035f); F(m, "_Bevel", 0.7f); F(m, "_GlowChance", 0.04f); F(m, "_HoleDepth", 0.10f);
                 F(m, "_InnerWall", 0.65f);
                 m.SetColor("_GlowColorA", new Color(1.7f, 0.85f, 1.6f)); m.SetColor("_GlowColorB", new Color(0.75f, 1.35f, 1.9f));
                 C(m, "_SeamColor", "#2A1858"); C(m, "_SheenColor", "#F0B0F0"); F(m, "_SheenStrength", 0.05f);
-                F(m, "_Sparkle", 0.25f); F(m, "_CeilingLight", 0.04f); F(m, "_Glow", 0.13f);
+                F(m, "_Sparkle", 0.25f); F(m, "_CeilingLight", 0.04f); F(m, "_Glow", 0.16f);
                 F(m, "_Metallic", 0.5f); F(m, "_Smoothness", 0.52f); F(m, "_HoleBand", 1f);
                 F(m, "_EdgeAO", 0.35f); F(m, "_EdgeAOWidth", 0.5f); F(m, "_HoleAO", 0.45f); F(m, "_HoleAOWidth", 0.07f);
                 C(m, "_ShadowColor", "#3A4A96"); F(m, "_ShadowTint", 0.3f);
-                C(m, "_DepthTintColor", "#5A86C0"); F(m, "_DepthTint", 0.6f); F(m, "_DepthTintStart", 10f); F(m, "_DepthTintEnd", 17f);
-                C(m, "_PinkSpill", "#FF6ED2"); F(m, "_PinkSpillStrength", 0.4f); F(m, "_PinkSpillWidth", 0.75f);
+                C(m, "_DepthTintColor", "#6280B4"); F(m, "_DepthTint", 0.4f); F(m, "_DepthTintStart", 10f); F(m, "_DepthTintEnd", 17f);
+                C(m, "_PinkSpill", "#FF6ED2"); F(m, "_PinkSpillStrength", 0.5f); F(m, "_PinkSpillWidth", 0.75f);
                 F(m, "_SeamHighlight", 0.5f); F(m, "_FlangeWidth", 0.2f); C(m, "_FlangeColor", "#9A74DE");
+                C(m, "_BaySheenColor", "#86A8E6"); F(m, "_BaySheen", 0.3f); F(m, "_BaySheenWidth", 0.25f); F(m, "_BaySheenPos", 0.6f);
             });
             // polished lavender drum lips between the gold rings (SM_DrumRim, m1: fat rolled lip): the stylised BWK/Gold
             // environment shading with a lavender palette - violet body, magenta-pink fresnel edge, soft pink-lavender
             // studio streaks (reference: broad glossy lavender bands with pink-white glints; r3: less white, pinker highs)
+            // r4: deeper violet body, pinker highlights (reference top rim band mean #7951b2 / bright #d892df vs ours
+            // #aa77d9 / #e2bdec: ours read pale lavender)
             Mat("M_DrumRim", "BWK/Gold", m =>
             {
-                C(m, "_HighColor", "#F6C8FA"); C(m, "_MidColor", "#9A6AE6"); C(m, "_LowColor", "#3A1E88");
-                C(m, "_RimColor", "#FF6AD6"); C(m, "_BandColor", "#D6AEF8");
-                F(m, "_Brightness", 1.0f); F(m, "_Emission", 0.10f); F(m, "_Contrast", 1.5f); F(m, "_ViewGradient", 1f);
+                C(m, "_HighColor", "#FFB8F0"); C(m, "_MidColor", "#7E52C8"); C(m, "_LowColor", "#34186E");
+                C(m, "_RimColor", "#FF6AD6"); C(m, "_BandColor", "#E0A0F0");
+                F(m, "_Brightness", 0.92f); F(m, "_Emission", 0.10f); F(m, "_Contrast", 1.5f); F(m, "_ViewGradient", 1f);
                 F(m, "_EnvReflect", 0.45f); F(m, "_EnvTint", 0.5f); F(m, "_EnvRoughness", 0.25f);
                 F(m, "_SpecPower", 90f); F(m, "_SpecStrength", 1.3f); F(m, "_GlintStrength", 1.0f);
                 F(m, "_Sparkle", 0.4f); F(m, "_SparkleScale", 16f); F(m, "_FogAmount", 0.75f);
                 F(m, "_HighlightSize", 7f); F(m, "_BandSharpness", 14f); F(m, "_LightInfluence", 0.35f);
                 F(m, "_StreakStrength", 0.8f); F(m, "_StreakHeight", 0.6f);
             });
-            // soft pink-white LED studs along the drum lips (reference: soft pink-white glints on the lavender rims)
+            // soft pink LED lamps along the drum lips (reference: soft pink glows on the violet rims; r4: 24 bigger lamps,
+            // pinker, less white core)
             Mat("M_RimLight", "BWK/Emissive", m =>
             {
-                C(m, "_Color", "#FF92E4"); F(m, "_Intensity", 2.4f); F(m, "_CoreWhite", 0.45f); F(m, "_CorePower", 3f);
+                C(m, "_Color", "#FF5CCB"); F(m, "_Intensity", 2.8f); F(m, "_CoreWhite", 0.3f); F(m, "_CorePower", 3f);
                 F(m, "_HaloBoost", 0.5f); F(m, "_EdgeSaturate", 0.3f); F(m, "_Chase", 0f); F(m, "_PulseAmount", 0.2f);
                 F(m, "_PulseSpeed", 0.8f); F(m, "_FogAmount", 0.25f);
             });

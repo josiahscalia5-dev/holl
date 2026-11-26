@@ -173,6 +173,7 @@ namespace BubbleWash.EditorTools
         // rim at ~12.2 m (on-screen r ~0.55 W), a broad perforated bay, gold ring 19.75 m (0.33 W), bay, rim ~25 m, gold
         // 32.5 m (0.20 W). So one rim per gap at RimPhase of the gap (was 3 evenly spaced lips = dense ribbed-hose look).
         const int RimsPerGap = 1;
+        const float RimLamps = 24f;                           // SM_DrumRim pink LED lamps (build_track RIM_LEDS, r4: was 32)
         internal const float RimPhase = 0.40f;
         internal const float GoldRingSpacing = 12.75f;
         const float ChamberStart = 190f, ChamberEnd = 262f;   // stills 07_chambers (215 m) / C2 (220 m)
@@ -243,7 +244,7 @@ namespace BubbleWash.EditorTools
             if (rim.Count > 0)
                 for (float dr = FirstRingDistance - (RimsPerGap == 1 ? GoldRingSpacing - rimOffset : rimOffset); dr > tunnelStart + 0.8f; dr -= RimsPerGap == 1 ? GoldRingSpacing : rimOffset)
                 {
-                    comb.Add(rim, World(dr, 1f) * Vary(dr, 360f / 32f));
+                    comb.Add(rim, World(dr, 1f) * Vary(dr, 360f / RimLamps));
                     rims++;
                 }
             for (float d = FirstRingDistance; d < portalD - 5f; d += GoldRingSpacing)
@@ -254,7 +255,7 @@ namespace BubbleWash.EditorTools
                     {
                         float dr = d + r * rimOffset;
                         if (dr > portalD - 4f) break;
-                        comb.Add(rim, World(dr, 1f) * Vary(dr, 360f / 32f));
+                        comb.Add(rim, World(dr, 1f) * Vary(dr, 360f / RimLamps));
                         rims++;
                     }
                 if (d - chunkStart > ChunkLength) { comb.Flush(holder, $"Rings_{chunk++:00}", true); chunkStart = d; }
