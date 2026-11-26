@@ -24,7 +24,7 @@ namespace BubbleWash.EditorTools
             {
                 // tall folded cuff: CUFF_RIBS = 96 deep geometric ribs
                 // warmer, lighter violet than before (rendered indigo #5414a9; reference cuff ~#74329e)
-                F(m, "_Mode", 2); C(m, "_ColorA", "#8E5A88"); C(m, "_ColorB", "#8E5A88"); F(m, "_StripeWidth", 0f);
+                F(m, "_Mode", 2); C(m, "_ColorA", "#945A84"); C(m, "_ColorB", "#945A84"); F(m, "_StripeWidth", 0f);
                 F(m, "_StitchU", 96); F(m, "_StitchV", 60); F(m, "_BumpStrength", 0.8f); F(m, "_Smoothness", 0.12f); F(m, "_Glow", 0.12f);
             });
             Mat("M_HatStripe", "BWK/Character", m =>
@@ -44,7 +44,7 @@ namespace BubbleWash.EditorTools
             Mat("M_PawPad", "BWK/Character", m =>
             {
                 // soft candy-pink toe beans: fabric mode multiplies _ColorA by the vertex colour (pads = pink Col)
-                F(m, "_Mode", 4); C(m, "_ColorA", "#FFFFFF"); F(m, "_BumpScale", 0.6f); F(m, "_Smoothness", 0.3f); F(m, "_Glow", 0.42f);
+                F(m, "_Mode", 4); C(m, "_ColorA", "#FFFFFF"); F(m, "_BumpScale", 0.6f); F(m, "_Smoothness", 0.3f); F(m, "_Glow", 0.65f);
                 F(m, "_RimStrength", 0.25f);
             });
             Lit_("M_StarBadge", "#FFD43F", metallic: 0.1f, smooth: 0.6f, emission: "#7A4A00");
