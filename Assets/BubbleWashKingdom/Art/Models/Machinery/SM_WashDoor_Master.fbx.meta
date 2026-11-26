@@ -3,11 +3,51 @@ guid: 5d4757ba9bafc2248befb83cda263910
 ModelImporter:
   serializedVersion: 24300
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_ChamberDrum
+    second: {fileID: 2100000, guid: 2c08f71ef7e6abd4590cc5c6a0d47154, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_DoorRainbow_r8
+    second: {fileID: 2100000, guid: efe05bc04aca70a4caf5f23a966db358, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_DoorSock_r8
+    second: {fileID: 2100000, guid: de9903710acfd4b42aeae31d87d8d106, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_DrumRim
+    second: {fileID: 2100000, guid: 3b3b71f46cc6b574697c132b67943aaa, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Foam
+    second: {fileID: 2100000, guid: 53b13402d6da04a4fba03a7e2d7ee7f1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Glass
+    second: {fileID: 2100000, guid: f7c4fb84325cbfc4b8c72d63df0f6728, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Gold
+    second: {fileID: 2100000, guid: e312a9ec70578a1498820a43dfc35ba9, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_GoldDark
+    second: {fileID: 2100000, guid: 62df52bf6f192a34ebf79256fafb7ae8, type: 2}
   materials:
     materialImportMode: 2
-    materialName: 0
-    materialSearch: 1
+    materialName: 1
+    materialSearch: 2
     materialLocation: 1
     searchTexturesGlobally: 0
   animations:
