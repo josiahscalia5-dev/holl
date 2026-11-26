@@ -7,8 +7,11 @@ Builds, exports (FBX -> Assets/BubbleWashKingdom/Art/Models/Track/) and previews
   SM_GlassPipe_Module  glass tube r 0.28 around a glowing core r 0.20  M_Glass, M_PipeWater
   SM_Pipe_Coupler      gold band r 0.33 x 0.12 with 6 hex bolt heads   M_Gold
   SM_Pipe_Elbow        90 degree glass elbow, bend radius 0.8          M_Glass, M_PipeWater
-  SM_Ring              gold tunnel ring r 3.75-4.30 with 28 sockets    M_Gold, M_GoldDark (+ empties Socket_00..27)
-  SM_Bulb              warm marquee bulb, origin at its base, +Z       M_Bulb
+  SM_Ring              premium chunky gold ring r 3.60-4.26 x 0.44: rope bead, recessed dark-gold channel with 32
+                       large glass marquee bulbs in gold cups, 8 bolted clamp plates, 24 rivets   M_Gold, M_GoldDark, M_Bulb
+  SM_DrumRim           lavender drum lip r 3.82-4.26 (rope bead, front bevel, long back slope) with 48 LED studs
+                       placed between the gold rings (nested-drum depth)                           M_DrumRim, M_RimLight
+  SM_Bulb              warm marquee bulb, origin at its base, +Z       M_Bulb (legacy, not placed by BuildRings)
 
 Every surface is swept or revolved from an analytic 2D profile with exact per-vertex normals (stored as
 custom split normals), so the curved slide walls, rails and fillets shade perfectly smooth at mobile
@@ -23,6 +26,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import bmesh  # noqa: E402
 import bpy  # noqa: E402
 from mathutils import Matrix, Vector  # noqa: E402
 
@@ -54,19 +58,36 @@ CORE_R, CORE_SIDES = 0.20, 12
 CPL_RO, CPL_RI, CPL_HW, CPL_FILLET, CPL_SEGS = 0.33, 0.272, 0.06, 0.018, 32
 ELBOW_R, ELBOW_SEGS = 0.8, 12
 
-# ------------------------------------------------------------------ ring + bulb
-RING_RI, RING_RO, RING_DEPTH = 3.75, 4.30, 0.45
-RING_SEGS = 56                  # 2 segments per bulb pitch, sockets sit on vertex columns (mobile)
-LIP_R, OUTER_FILLET = 0.055, 0.06
-LIP_END_DEG = 240.0             # lip arc ends where the channel wall starts (tangent)
-CHANNEL_RHO = 3.83              # channel floor radius (lip tops at 3.75 -> 8 cm recess)
-SOCKETS = 28
-SOCKET_R, SOCKET_SIDES = 0.055, 8
-SOCKET_BASE_RHO, SOCKET_CAP_RHO = CHANNEL_RHO + 0.015, 3.79
+# ------------------------------------------------------------------ premium gold ring (profile in (rho, y); +y faces
+# the approaching player, i.e. Unity -Z after the FBX axis fix)
+RING_SEGS = 64                  # 2 segments per bulb pitch: bulbs and plates sit on vertex columns
+RING_BULBS = 32                 # dense marquee row (reference f_003.00s / key 5.0 s: ~28-32 big warm bulbs per ring)
+RG_BACK_Y, RG_OUT = -0.20, 4.26           # back face; outer surface buried in the drum wall (r 4.2)
+RG_IN_FACE = 3.70                         # inner face (toward the axis) under the rope bead
+RG_IB_C, RG_IB_R = (3.72, 0.10), 0.12     # inner rope bead: apex rho 3.60, front y 0.22
+RG_CORNER_R = 0.10                        # rounded back-inner corner
+RG_FLOOR_Y = 0.05                         # recessed bulb channel floor (dark gold)
+RG_OB_C, RG_OB_R = (4.13, 0.10), 0.09     # outer bead against the wall: front y 0.19
+RG_BULB_RHO = 3.942                       # channel centre line
+BULB_R2, BULB_H2 = 0.088, 0.097           # glass bulb half-width / half-height (marquee lamp, slightly tall)
+BULB_Y = RG_FLOOR_Y + 0.112               # bulb centre: crown ~0.04 above the rope bead
+BULB_TILT = math.radians(10.0)            # bulbs lean toward the tunnel axis (gameplay camera)
+CUP_RO, CUP_RI, CUP_TOP = 0.106, 0.082, 0.064
+PLATES = 8                                # bolted clamp plates across the channel (segment joints)
+
+# ------------------------------------------------------------------ lavender drum rim (nested-drum lips between rings)
+RIM_SEGS, RIM_LEDS = 64, 48
+RIM_C, RIM_R = (3.97, 0.0), 0.15          # rope bead, apex rho 3.82
+RIM_FRONT, RIM_BACK = (4.26, 0.05), (4.26, -0.34)   # front bevel / long back slope meet the wall
+RIM_LED_DEG = 118.0                       # LED studs on the front-inner face of the bead
+
+# ------------------------------------------------------------------ legacy single bulb asset
 BULB_RX, BULB_HALF_H = 0.085, 0.10          # slightly elongated sphere (1.18 : 1)
 BULB_SIDES, BULB_BANDS = 6, 4                  # even band count -> equator ring at r 0.085; ~36 tris (mobile)
-BULB_CENTRE_RHO = 3.70
-BULB_BASE_RHO = BULB_CENTRE_RHO + BULB_HALF_H  # 3.80 = socket seat = bulb origin
+
+# ------------------------------------------------------------------ gameplay layout mirrored from SceneBuilder (previews)
+RING_SPACING = 8.5                        # SceneBuilder.RingSpacing: gold rings
+RIMS_PER_GAP = 2                          # lavender rims between two gold rings (every 2.83 m)
 
 X_AXIS, Y_AXIS, Z_AXIS = Vector((1.0, 0.0, 0.0)), Vector((0.0, 1.0, 0.0)), Vector((0.0, 0.0, 1.0))
 
@@ -377,80 +398,170 @@ def build_coupler(mats):
     return mb.build("SM_Pipe_Coupler", mats)
 
 
-# ================================================================== 6-7. ring and bulb
-def ring_profiles():
-    hd = RING_DEPTH * 0.5
-    lc_p, lc_m = (RING_RI + LIP_R, hd - LIP_R), (RING_RI + LIP_R, -hd + LIP_R)
-    oc_p, oc_m = (RING_RO - OUTER_FILLET, hd - OUTER_FILLET), (RING_RO - OUTER_FILLET, -hd + OUTER_FILLET)
-    gold = chain(
-        arc_pts(lc_p, LIP_R, LIP_END_DEG, 90.0, 4),                          # +Y lip: channel side, over the top
-        line_pts((lc_p[0], hd), (oc_p[0], hd), (0.0, 1.0)),                  # +Y face (toward the player)
-        arc_pts(oc_p, OUTER_FILLET, 90.0, 0.0, 2),
-        line_pts((RING_RO, oc_p[1]), (RING_RO, oc_m[1]), (1.0, 0.0)),        # outer band (inside the drum wall)
-        arc_pts(oc_m, OUTER_FILLET, 0.0, -90.0, 2),
-        line_pts((oc_m[0], -hd), (lc_m[0], -hd), (0.0, -1.0)),               # -Y face
-        arc_pts(lc_m, LIP_R, -90.0, -LIP_END_DEG, 4),                        # -Y lip, ends on the channel side
+# ================================================================== 6-7. premium ring, drum rim and bulb
+def lathe_axis(mb, prof, mat, segs, origin, axis, e1):
+    """Revolve an (r, h, n_r, n_h, v) profile around `axis` through `origin` (small parts: cups, bulbs, rivets).
+    r = 0 points become a single shared pole vertex."""
+    A = Vector(axis).normalized()
+    e1 = Vector(e1) - A * Vector(e1).dot(A)
+    if e1.length < 1e-6:
+        e1 = X_AXIS - A * X_AXIS.dot(A) if abs(A.dot(X_AXIS)) < 0.9 else Z_AXIS - A * Z_AXIS.dot(A)
+    e1.normalize()
+    e2 = A.cross(e1)
+    O = Vector(origin)
+    poles = {}
+    for j, (r, h, nr, nh, v) in enumerate(prof):
+        if r < 1e-7:
+            poles[j] = mb.vert(O + A * h, A * (1.0 if nh >= 0.0 else -1.0), (0.5, v))
+    rows = []
+    for k in range(segs + 1):
+        phi = 2.0 * math.pi * k / segs
+        d = e1 * math.cos(phi) + e2 * math.sin(phi)
+        rows.append([poles[j] if j in poles else mb.vert(O + A * h + d * r, d * nr + A * nh, (k / segs, v))
+                     for j, (r, h, nr, nh, v) in enumerate(prof)])
+    for k in range(segs):
+        for j in range(len(prof) - 1):
+            q = [rows[k][j], rows[k][j + 1], rows[k + 1][j + 1], rows[k + 1][j]]
+            if j in poles:
+                q = [rows[k][j], rows[k][j + 1], rows[k + 1][j + 1]]
+            elif (j + 1) in poles:
+                q = [rows[k][j], rows[k][j + 1], rows[k + 1][j]]
+            mb.face(q, mat)
+
+
+def ellipsoid_prof(rx, hz, bands, z0=0.0):
+    """Closed ellipsoid profile from the bottom pole to the top pole (exact ellipse normals)."""
+    out = []
+    for i in range(bands + 1):
+        lat = -0.5 * math.pi + math.pi * i / bands
+        c, s = math.cos(lat), math.sin(lat)
+        n = Vector((c / rx, s / hz)).normalized()
+        out.append((rx * c if 0 < i < bands else 0.0, z0 + hz * s, n.x, n.y, i / bands))
+    return out
+
+
+def dome_prof(r0, h, skirt=0.006, bands=3):
+    """Domed rivet / LED stud: short skirt into the surface, then a quarter ellipse to the pole."""
+    out = [(r0, -skirt, 1.0, 0.0, 0.0)]
+    for i in range(bands + 1):
+        t = 0.5 * math.pi * i / bands
+        n = Vector((math.cos(t) / r0, math.sin(t) / h)).normalized()
+        out.append((r0 * math.cos(t) if i < bands else 0.0, h * math.sin(t), n.x, n.y, (i + 1) / (bands + 1)))
+    return out
+
+
+def rounded_block(mb, center, ex, ey, ez, size, radius, mat, segs=2):
+    """Box with all edges rounded (bmesh bevel), smooth vertex normals, oriented by the (ex, ey, ez) axes."""
+    bm = bmesh.new()
+    bmesh.ops.create_cube(bm, size=1.0)
+    for v in bm.verts:
+        v.co = Vector((v.co.x * size[0], v.co.y * size[1], v.co.z * size[2]))
+    bmesh.ops.bevel(bm, geom=list(bm.verts) + list(bm.edges), offset=radius, offset_type='OFFSET',
+                    segments=segs, profile=0.5, affect='EDGES', clamp_overlap=True)
+    bm.normal_update()
+    bm.verts.index_update()
+    M = Matrix((tuple(ex), tuple(ey), tuple(ez))).transposed()
+    ids = [mb.vert(Vector(center) + M @ v.co, (M @ v.normal).normalized(),
+                   (v.co.x / size[0] + 0.5, v.co.y / size[1] + 0.5)) for v in bm.verts]
+    for f in bm.faces:
+        mb.face([ids[lp.vert.index] for lp in f.loops], mat)
+    bm.free()
+
+
+def tangent_angle(c, r, p, upper):
+    """Angle (deg) of the tangent point on circle (c, r) seen from the external point p (upper / lower branch)."""
+    dx, dy = p[0] - c[0], p[1] - c[1]
+    base, off = math.atan2(dy, dx), math.acos(r / math.hypot(dx, dy))
+    return math.degrees(base + off if upper else base - off)
+
+
+def ring_parts():
+    """Closed ring cross-section as separately revolved parts (hard creases between parts):
+    back face + rounded back-inner corner + inner face | inner rope bead | dark channel floor | outer bead | buried."""
+    cx, cy = RG_IB_C
+    dy = math.sqrt(RG_IB_R ** 2 - (RG_IN_FACE - cx) ** 2)
+    a_in = math.degrees(math.atan2(-dy, RG_IN_FACE - cx)) % 360.0       # ~260: inner face meets the rope bead
+    a_fl = math.degrees(math.asin((RG_FLOOR_Y - cy) / RG_IB_R))         # ~-25: rope bead meets the channel floor
+    floor0 = cx + RG_IB_R * math.cos(math.radians(a_fl))
+    ox, oy = RG_OB_C
+    b_fl = 180.0 + math.degrees(math.asin((oy - RG_FLOOR_Y) / RG_OB_R))  # ~214: outer bead meets the floor
+    floor1 = ox + RG_OB_R * math.cos(math.radians(b_fl))
+    cc = (RG_IN_FACE + RG_CORNER_R, RG_BACK_Y + RG_CORNER_R)
+    back_inner = chain(
+        line_pts((RG_OUT, RG_BACK_Y), (cc[0], RG_BACK_Y), (0.0, -1.0), 2),
+        arc_pts(cc, RG_CORNER_R, -90.0, -180.0, 4),
+        line_pts((RG_IN_FACE, cc[1]), (RG_IN_FACE, cy - dy), (-1.0, 0.0), 1),
     )
-    a = math.radians(LIP_END_DEG)
-    n_p = (math.cos(a), math.sin(a))
-    p1 = (lc_p[0] + LIP_R * n_p[0], lc_p[1] + LIP_R * n_p[1])
-    tan = (-n_p[1], n_p[0])                                                  # deeper into the channel (+rho)
-    t = (CHANNEL_RHO - p1[0]) / tan[0]
-    fp = (CHANNEL_RHO, p1[1] + t * tan[1])
-    n_m, p1m, fm = (n_p[0], -n_p[1]), (p1[0], -p1[1]), (fp[0], -fp[1])
-    channel = [line_pts(p1, fp, n_p), line_pts(fp, fm, (-1.0, 0.0)), line_pts(fm, p1m, n_m)]
-    return gold, channel, fp[1]
-
-
-def socket_matrix(j):
-    """Bulb seat for socket j: origin at radius 3.80, local +Z toward the ring centre, local +Y = Blender +Y."""
-    er, t = ring_frame(2.0 * math.pi * j / SOCKETS)
-    w = -er
-    m = Matrix(((t.x, Y_AXIS.x, w.x), (t.y, Y_AXIS.y, w.y), (t.z, Y_AXIS.z, w.z))).to_4x4()
-    m.translation = er * BULB_BASE_RHO
-    return m
-
-
-def add_socket(mb, alpha, mat):
-    er, t = ring_frame(alpha)
-    base_c, cap_c = er * SOCKET_BASE_RHO, er * SOCKET_CAP_RHO
-    lo, hi = [], []
-    for k in range(SOCKET_SIDES + 1):
-        b = 2.0 * math.pi * k / SOCKET_SIDES
-        d = math.cos(b) * Y_AXIS + math.sin(b) * t
-        lo.append(mb.vert(base_c + SOCKET_R * d, d, (k / SOCKET_SIDES, 0.0)))
-        hi.append(mb.vert(cap_c + SOCKET_R * d, d, (k / SOCKET_SIDES, 0.5)))
-    for k in range(SOCKET_SIDES):
-        mb.face((lo[k], lo[k + 1], hi[k + 1], hi[k]), mat)
-    cap = []
-    for k in range(SOCKET_SIDES):
-        b = 2.0 * math.pi * k / SOCKET_SIDES
-        d = math.cos(b) * Y_AXIS + math.sin(b) * t
-        cap.append(mb.vert(cap_c + SOCKET_R * d, -er, (0.5 + 0.5 * math.cos(b), 0.5 + 0.5 * math.sin(b))))
-    for k in range(1, SOCKET_SIDES - 1):
-        mb.face((cap[0], cap[k], cap[k + 1]), mat)
+    parts = [
+        (back_inner, 0),
+        (arc_pts(RG_IB_C, RG_IB_R, a_in, a_fl, 20), 0),                              # rope bead (polished)
+        (line_pts((floor0, RG_FLOOR_Y), (floor1, RG_FLOOR_Y), (0.0, 1.0), 2), 1),    # recessed channel
+        (arc_pts(RG_OB_C, RG_OB_R, b_fl, 0.0, 12), 0),                               # outer bead
+        (chain(line_pts((ox + RG_OB_R, oy), (RG_OUT, oy), (0.0, 1.0)),
+               line_pts((RG_OUT, oy), (RG_OUT, RG_BACK_Y), (1.0, 0.0))), 1),         # buried in the wall
+    ]
+    print("CHECK ring rope bead %.1f..%.1f deg, channel floor rho %.3f..%.3f (width %.3f)" % (
+        a_in, a_fl, floor0, floor1, floor1 - floor0))
+    return parts
 
 
 def build_ring(mats):
+    """mats: M_Gold, M_GoldDark, M_Bulb. Bulbs are part of the ring (one combined draw per material in Unity)."""
+    G, GD, BL = 0, 1, 2
     mb = MeshBuilder()
-    gold, channel, floor_hw = ring_profiles()
-    revolve(mb, with_u(gold), 0, RING_SEGS)
-    for part in channel:
-        revolve(mb, with_u(part), 1, RING_SEGS)
-    for j in range(SOCKETS):
-        add_socket(mb, 2.0 * math.pi * j / SOCKETS, 0)
-    obj = mb.build("SM_Ring", mats)
-    print("CHECK ring channel floor half-width %.3f, socket radius %.3f" % (floor_hw, SOCKET_R))
-    sockets = []
-    for j in range(SOCKETS):
-        e = bpy.data.objects.new("Socket_%02d" % j, None)
-        e.empty_display_type = 'SINGLE_ARROW'
-        e.empty_display_size = 0.2
-        bpy.context.scene.collection.objects.link(e)
-        e.parent = obj
-        e.matrix_world = socket_matrix(j)
-        sockets.append(e)
-    return obj, sockets
+    for prof, mat in ring_parts():
+        revolve(mb, with_u(prof), mat, RING_SEGS)
+    cup = with_u(chain(
+        line_pts((CUP_RI, 0.012), (CUP_RI, CUP_TOP - (CUP_RO - CUP_RI) * 0.5), (-1.0, 0.0)),
+        arc_pts(((CUP_RO + CUP_RI) * 0.5, CUP_TOP - (CUP_RO - CUP_RI) * 0.5), (CUP_RO - CUP_RI) * 0.5, 180.0, 0.0, 4),
+        line_pts((CUP_RO, CUP_TOP - (CUP_RO - CUP_RI) * 0.5), (CUP_RO, -0.03), (1.0, 0.0)),
+    ))
+    cup_floor = [(CUP_RI, 0.012, 0.0, 1.0, 0.0), (0.0, 0.012, 0.0, 1.0, 1.0)]
+    bulb = ellipsoid_prof(BULB_R2, BULB_H2, 8)
+    for j in range(RING_BULBS):
+        er, t = ring_frame(2.0 * math.pi * j / RING_BULBS)
+        axis = Y_AXIS * math.cos(BULB_TILT) - er * math.sin(BULB_TILT)
+        base = er * RG_BULB_RHO + Y_AXIS * RG_FLOOR_Y
+        lathe_axis(mb, cup, G, 12, base, axis, t)
+        lathe_axis(mb, cup_floor, GD, 12, base, axis, t)
+        lathe_axis(mb, bulb, BL, 10, base + axis * (BULB_Y - RG_FLOOR_Y), axis, t)
+    rivet = dome_prof(0.021, 0.015)
+    for j in range(RING_BULBS):
+        alpha = 2.0 * math.pi * (j + 0.5) / RING_BULBS
+        er, t = ring_frame(alpha)
+        if j % (RING_BULBS // PLATES) == 0:
+            # bolted clamp plate bridging the channel (segment joint), two domed bolts on top
+            ctr = er * RG_BULB_RHO + Y_AXIS * (RG_FLOOR_Y + 0.032)
+            rounded_block(mb, ctr, er, t, Y_AXIS, (0.36, 0.085, 0.075), 0.022, GD)
+            for rr in (RG_BULB_RHO - 0.1, RG_BULB_RHO + 0.1):
+                lathe_axis(mb, dome_prof(0.019, 0.013), G, 8, er * rr + Y_AXIS * (RG_FLOOR_Y + 0.0695), Y_AXIS, t)
+        else:
+            lathe_axis(mb, rivet, G, 8, er * RG_OB_C[0] + Y_AXIS * (RG_OB_C[1] + RG_OB_R - 0.003), Y_AXIS, t)
+    return mb.build("SM_Ring", mats)
+
+
+def build_rim(mats):
+    """mats: M_DrumRim, M_RimLight. Lavender lip of a drum section: front bevel, rope bead, long back slope."""
+    mb = MeshBuilder()
+    a_f = tangent_angle(RIM_C, RIM_R, RIM_FRONT, upper=True)
+    a_b = tangent_angle(RIM_C, RIM_R, RIM_BACK, upper=False) % 360.0
+    nf = (math.cos(math.radians(a_f)), math.sin(math.radians(a_f)))
+    nb = (math.cos(math.radians(a_b)), math.sin(math.radians(a_b)))
+    pf = (RIM_C[0] + RIM_R * nf[0], RIM_C[1] + RIM_R * nf[1])
+    pb = (RIM_C[0] + RIM_R * nb[0], RIM_C[1] + RIM_R * nb[1])
+    prof = chain(line_pts(RIM_FRONT, pf, nf, 2), arc_pts(RIM_C, RIM_R, a_f, a_b, 18), line_pts(pb, RIM_BACK, nb, 3))
+    revolve(mb, with_u(prof), 0, RIM_SEGS)
+    revolve(mb, with_u(line_pts(RIM_BACK, RIM_FRONT, (1.0, 0.0))), 0, RIM_SEGS)       # buried outer face
+    a = math.radians(RIM_LED_DEG)
+    n2 = (math.cos(a), math.sin(a))
+    led = dome_prof(0.024, 0.018, skirt=0.008, bands=2)
+    for j in range(RIM_LEDS):
+        er, t = ring_frame(2.0 * math.pi * (j + 0.5) / RIM_LEDS)
+        p = er * (RIM_C[0] + RIM_R * n2[0]) + Y_AXIS * (RIM_C[1] + RIM_R * n2[1])
+        lathe_axis(mb, led, 1, 6, p, er * n2[0] + Y_AXIS * n2[1], t)
+    print("CHECK rim bead %.1f..%.1f deg, apex rho %.3f, front y %.3f" % (a_f, a_b, RIM_C[0] - RIM_R,
+                                                                        RIM_C[1] + RIM_R))
+    return mb.build("SM_DrumRim", mats)
 
 
 def build_bulb(mats):
@@ -491,6 +602,8 @@ def make_materials():
         "M_Gold": C.material("M_Gold", "#F2B54A", metallic=1.0, roughness=0.22),
         "M_GoldDark": C.material("M_GoldDark", "#B5782A", metallic=1.0, roughness=0.38),
         "M_Bulb": C.material("M_Bulb", "#FFF2C6", roughness=0.2, emission="#FFC86B", emission_strength=8.0),
+        "M_DrumRim": C.material("M_DrumRim", "#B79CF0", metallic=0.7, roughness=0.18),
+        "M_RimLight": C.material("M_RimLight", "#FFF4FF", roughness=0.2, emission="#F6E8FF", emission_strength=6.0),
     }
 
 
@@ -596,22 +709,53 @@ def preview_materials(mats):
     for attr in ("use_transparency_overlap", "show_transparent_back"):
         if hasattr(glass, attr):
             setattr(glass, attr, False)
-    # drum wall: staggered perforation grid from UV (56 around x 9 per v unit = ~0.46 m cells, seamless)
-    nt = mats["M_DrumWall"].node_tree
-    u, v = uv_xy(nt)
-    mu, mv = math_out(nt, 'MULTIPLY', u, 56.0), math_out(nt, 'MULTIPLY', v, 9.0)
-    shift = math_out(nt, 'MULTIPLY', math_out(nt, 'MODULO', math_out(nt, 'FLOOR', mv), 2.0), 0.5)
-    fu = math_out(nt, 'SUBTRACT', math_out(nt, 'FRACT', math_out(nt, 'ADD', mu, shift)), 0.5)
-    fv = math_out(nt, 'SUBTRACT', math_out(nt, 'FRACT', mv), 0.5)
-    d = math_out(nt, 'SQRT', math_out(nt, 'ADD', math_out(nt, 'POWER', fu, 2.0), math_out(nt, 'POWER', fv, 2.0)))
-    col = ramp(nt, d, [(0.17, "#1B1533"), (0.21, "#8E5CC4")])
-    nt.links.new(col, nt.nodes["Principled BSDF"].inputs["Base Color"])
-    for name, color, rough in (("M_Gold", "#FFC24A", 0.24), ("M_GoldDark", "#C98A2E", 0.34)):
+    drum_wall_preview_nodes(mats["M_DrumWall"])
+    for name, color, rough in (("M_Gold", "#FFC24A", 0.2), ("M_GoldDark", "#C98A2E", 0.3)):
         b = mats[name].node_tree.nodes["Principled BSDF"]
         b.inputs["Base Color"].default_value = C.hex_rgba(color)
         b.inputs["Roughness"].default_value = rough
     # no bloom in the preview render: a softer emission keeps the marquee bulbs warm instead of clipped white
-    mats["M_Bulb"].node_tree.nodes["Principled BSDF"].inputs["Emission Strength"].default_value = 3.0
+    mats["M_Bulb"].node_tree.nodes["Principled BSDF"].inputs["Emission Strength"].default_value = 4.0
+    mats["M_RimLight"].node_tree.nodes["Principled BSDF"].inputs["Emission Strength"].default_value = 4.0
+
+
+HERO_D = 105.5                                   # track distance of the Unity hero shot (mascot); preview y = -(d - 105.5)
+FIRST_RING_D = 65.0                              # SceneBuilder: first gold ring at tunnelStart (62) + 3 m
+BAND_LEN = RING_SPACING / (RIMS_PER_GAP + 1)     # drum section length: one rim or ring every 2.83 m
+
+
+def drum_wall_preview_nodes(mat):
+    """Preview of the BWK_DrumWall layout from world position: drum sections between the rims, each with 4 staggered
+    rows of slots elongated around the drum, plain metal next to every rim (mirrors the Unity shader's band logic)."""
+    nt = mat.node_tree
+    geo = nt.nodes.new("ShaderNodeNewGeometry")
+    sep = nt.nodes.new("ShaderNodeSeparateXYZ")
+    nt.links.new(geo.outputs["Position"], sep.inputs[0])
+    ang = math_out(nt, 'ARCTAN2', sep.outputs[0], math_out(nt, 'SUBTRACT', sep.outputs[2], TUN_ZC))
+    around = math_out(nt, 'MULTIPLY', ang, TUN_R)
+    dist = math_out(nt, 'SUBTRACT', HERO_D - FIRST_RING_D, sep.outputs[1])          # track distance - first ring
+    local = math_out(nt, 'MULTIPLY', math_out(nt, 'FRACT', math_out(nt, 'DIVIDE', dist, BAND_LEN)), BAND_LEN)
+    z0, z1, rows = 0.45, BAND_LEN - 0.35, 4.0
+    pitch_r = (z1 - z0) / rows
+    rc = math_out(nt, 'DIVIDE', math_out(nt, 'SUBTRACT', local, z0), pitch_r)
+    inzone = math_out(nt, 'MULTIPLY', math_out(nt, 'GREATER_THAN', rc, 0.0), math_out(nt, 'LESS_THAN', rc, rows))
+    row_local = math_out(nt, 'MULTIPLY', math_out(nt, 'SUBTRACT', math_out(nt, 'FRACT', rc), 0.5), pitch_r)
+    stagger = math_out(nt, 'MULTIPLY', math_out(nt, 'MODULO', math_out(nt, 'FLOOR', rc), 2.0), 0.5)
+    pitch_a, slot_len, slot_w = 0.5, 0.34, 0.12
+    ac = math_out(nt, 'ADD', math_out(nt, 'DIVIDE', around, pitch_a), stagger)
+    a_local = math_out(nt, 'MULTIPLY', math_out(nt, 'SUBTRACT', math_out(nt, 'FRACT', ac), 0.5), pitch_a)
+    hx = math_out(nt, 'MAXIMUM', math_out(nt, 'SUBTRACT', math_out(nt, 'ABSOLUTE', a_local),
+                                          slot_len * 0.5 - slot_w * 0.5), 0.0)
+    sdf = math_out(nt, 'SUBTRACT', math_out(nt, 'SQRT', math_out(nt, 'ADD', math_out(nt, 'POWER', hx, 2.0),
+                                                                 math_out(nt, 'POWER', row_local, 2.0))), slot_w * 0.5)
+    # outside the zone: push the SDF far positive (plain metal)
+    sdf = math_out(nt, 'ADD', sdf, math_out(nt, 'MULTIPLY', math_out(nt, 'SUBTRACT', 1.0, inzone), 1.0))
+    col = ramp(nt, sdf, [(0.0, "#170D30"), (0.012, "#3A2470"), (0.02, "#C6B2FF"), (0.05, "#8F78DA"),
+                         (0.3, "#8A70D6")])
+    bsdf = nt.nodes["Principled BSDF"]
+    nt.links.new(col, bsdf.inputs["Base Color"])
+    bsdf.inputs["Metallic"].default_value = 0.45
+    bsdf.inputs["Roughness"].default_value = 0.3
 
 
 def preview_world():
@@ -705,9 +849,64 @@ def inst(src, coll, loc=(0.0, 0.0, 0.0), rot=(0.0, 0.0, 0.0), matrix=None):
     return o
 
 
-def add_bulbs(bulb, coll, ring_loc):
-    for j in range(SOCKETS):
-        inst(bulb, coll, matrix=Matrix.Translation(ring_loc) @ socket_matrix(j))
+def ring_layout():
+    """Preview y (mascot at 0, travel -Y) of the gold rings and lavender rims exactly as BuildRings places them."""
+    rings, rims = [], []
+    k0 = int(math.floor((HERO_D - FIRST_RING_D) / RING_SPACING)) - 1
+    for k in range(k0, k0 + 12):
+        d = FIRST_RING_D + k * RING_SPACING
+        rings.append(-(d - HERO_D))
+        for r in range(1, RIMS_PER_GAP + 1):
+            rims.append(-(d + r * BAND_LEN - HERO_D))
+    return rings, rims
+
+
+def mascot_proxy(coll):
+    """Rough seated mascot stand-in (scale / framing reference only, never exported)."""
+    parts = []
+    for name, loc, scale, color in (("PV_Body", (0.0, 0.0, 0.46), (0.44, 0.40, 0.44), "#F28BB5"),
+                                    ("PV_Hat", (0.0, 0.03, 0.84), (0.37, 0.37, 0.24), "#7B2FD0"),
+                                    ("PV_Pom", (0.0, 0.05, 1.13), (0.19, 0.19, 0.19), "#9B4BF0")):
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=32, ring_count=16, location=loc)
+        o = bpy.context.active_object
+        o.name = name
+        o.scale = scale
+        for c in list(o.users_collection):
+            c.objects.unlink(o)
+        coll.objects.link(o)
+        o.data.materials.append(C.material(name + "_M", color, roughness=0.8))
+        for p in o.data.polygons:
+            p.use_smooth = True
+        parts.append(o)
+    return parts
+
+
+def gameplay_camera(back, height, pitch_deg, fov_deg):
+    """Rear follow camera like RunnerCameraRig: `back` m behind and `height` m above the slide at the mascot,
+    looking along the travel direction pitched down; vertical FOV like Unity."""
+    loc = Vector((0.0, back, height))
+    p = math.radians(pitch_deg)
+    target = loc + Vector((0.0, -math.cos(p), -math.sin(p)))
+    cam = C.add_camera(loc, target)
+    cam.data.sensor_fit = 'VERTICAL'
+    cam.data.angle_y = math.radians(fov_deg)
+    cam.data.clip_start = 0.12
+    cam.data.clip_end = 120.0
+    return cam
+
+
+def render_cam(name, cam, res, background="#8A6CD0"):
+    scene = bpy.context.scene
+    C.setup_preview_scene(background)
+    scene.camera = cam
+    scene.render.resolution_x, scene.render.resolution_y = res
+    scene.render.resolution_percentage = 100
+    scene.render.film_transparent = False
+    scene.render.image_settings.file_format = 'PNG'
+    path = C.preview_path(name)
+    scene.render.filepath = path
+    bpy.ops.render.render(write_still=True)
+    print("PREVIEW", scene.render.engine, path)
 
 
 def add_light(coll, name, kind, energy, color, loc, target=None, size=1.0, shadow=True, spec=1.0):
@@ -741,26 +940,40 @@ def render_previews(a):
         pass
     env = preview_world()
 
-    # (a) assembly, reference rear gameplay view (slide from y = +4, tunnel from the first ring at y = -4)
+    # (a) hero gameplay views: rings + rims exactly where BuildRings puts them around the Unity hero distance,
+    # through the RunnerCameraRig framings (portrait 2.55 m / 1.5 m / 10 deg / FOV 58, landscape 2.9 / 1.6 / 9 / 52)
     pa = new_collection("PV_Assembly")
-    for i in range(-1, 22):
+    for i in range(-2, 24):
         inst(a["slide"], pa, (0.0, -LENGTH * i, 0.0))
-    for i in range(1, 23):
-        inst(a["tunnel"], pa, (0.0, -LENGTH * i, 0.0))
-    for yr in (-4.0, -14.0):
+        inst(a["tunnel"], pa, (0.0, -LENGTH * i + LENGTH * 1.0, 0.0)).visible_shadow = False   # as in Unity
+    rings, rims = ring_layout()
+    for yr in rings:
+        if yr > 8.0:
+            continue
         inst(a["ring"], pa, (0.0, yr, TUN_ZC))
-        add_bulbs(a["bulb"], pa, Vector((0.0, yr, TUN_ZC)))
-        for ang in (0.0, 120.0, 240.0):
+        for ang in (35.0, 145.0, 215.0, 325.0):
             er, _ = ring_frame(math.radians(ang))
-            add_light(pa, "PV_RingGlow", 'POINT', 35.0, "#FFC46E", Vector((0.0, yr + 0.3, TUN_ZC)) + er * 3.4,
-                      size=0.4, shadow=False, spec=0.6)
-    add_light(pa, "PV_SlideTop", 'AREA', 260.0, "#FFE7C2", (0.0, 1.5, 4.5), (0.0, -1.0, 0.0), size=5.0, spec=0.1)
-    for yd, e in ((-30.0, 500.0), (-58.0, 500.0)):
-        add_light(pa, "PV_TunnelDeep", 'POINT', e, "#C3A6FF", (0.0, yd, 3.0), size=1.0, shadow=False, spec=0.3)
-    env.inputs["Strength"].default_value = 0.55
+            add_light(pa, "PV_RingGlow", 'POINT', 18.0, "#FFB45A", Vector((0.0, yr + 0.45, TUN_ZC)) + er * 3.3,
+                      size=0.3, shadow=False, spec=0.5)
+    for yr in rims:
+        if yr > 8.0:
+            continue
+        inst(a["rim"], pa, (0.0, yr, TUN_ZC))
+    mascot_proxy(pa)
+    sun = add_light(pa, "PV_Key", 'SUN', 2.2, "#FFE6F2", (0.0, 0.0, 10.0), (0.6, -1.2, 0.0), spec=0.6)
+    sun.data.angle = math.radians(8.0)
+    add_light(pa, "PV_CharWarm", 'POINT', 25.0, "#FFB861", (0.6, -1.2, 2.3), size=0.5, shadow=False, spec=0.4)
+    for yd in (-20.0, -40.0, -62.0):
+        add_light(pa, "PV_TunnelDeep", 'POINT', 900.0, "#D9C2FF", (0.0, yd, TUN_ZC), size=1.0, shadow=False,
+                  spec=0.4)
+    env.inputs["Strength"].default_value = 0.75
     show_only(pa)
-    render_view("Track_assembly", (0.0, 3.3, 1.55), (0.0, -8.0, 0.9), 28.0, (1280, 720),
-                light_scale=0.8, spec=0.12, energy=0.7)
+    cam9 = gameplay_camera(2.55, 1.5, 10.0, 58.0)
+    render_cam("Track_hero_9x16", cam9, (720, 1280))
+    cam16 = gameplay_camera(2.9, 1.6, 9.0, 52.0)
+    render_cam("Track_hero_16x9", cam16, (1280, 720))
+    for o in (cam9, cam16):
+        bpy.data.objects.remove(o, do_unlink=True)
 
     # (b) slide cross-section close-up: preview-only cut face + the gameplay profile curve on the open end
     ps = new_collection("PV_Section")
@@ -784,14 +997,16 @@ def render_previews(a):
     render_view("Track_slide_section", (1.15, 5.0, 1.75), (0.0, -0.9, 0.2), 35.0, (1280, 720),
                 light_scale=0.9, spec=0.3)
 
-    # (c) ring detail: inner channel, sockets and bulbs at the top
+    # (c) ring detail: rope bead, dark channel, bulbs in cups, clamp plate; a lavender rim behind it
     pr = new_collection("PV_Ring")
     inst(a["ring"], pr)
-    add_bulbs(a["bulb"], pr, Vector((0.0, 0.0, 0.0)))
-    add_light(pr, "PV_RingFront", 'POINT', 120.0, "#FFE3B0", (0.6, 1.6, 2.2), size=0.5)
+    inst(a["rim"], pr, (0.0, -BAND_LEN, 0.0))
+    inst(a["tunnel"], pr, (0.0, 2.0, -TUN_ZC))
+    inst(a["tunnel"], pr, (0.0, -2.0, -TUN_ZC))
+    add_light(pr, "PV_RingFront", 'POINT', 90.0, "#FFE3B0", (0.6, 1.6, 2.2), size=0.5)
     env.inputs["Strength"].default_value = 0.9
     show_only(pr)
-    render_view("Track_ring_detail", (0.5, 2.4, 1.0), (-0.2, 0.0, 3.45), 30.0, (1000, 1000))
+    render_view("Track_ring_detail", (0.9, 2.2, 1.2), (-0.35, -0.6, 3.55), 30.0, (1000, 1000))
 
     # (d) pipes: module + couplers + elbow + vertical module
     pp = new_collection("PV_Pipes")
@@ -844,23 +1059,24 @@ def main():
         "coupler": build_coupler([m["M_Gold"]]),
         "elbow": build_elbow([m["M_Glass"], m["M_PipeWater"]]),
     }
-    ring, _sockets = build_ring([m["M_Gold"], m["M_GoldDark"]])
-    assets["ring"] = ring
+    assets["ring"] = build_ring([m["M_Gold"], m["M_GoldDark"], m["M_Bulb"]])
+    assets["rim"] = build_rim([m["M_DrumRim"], m["M_RimLight"]])
     assets["bulb"] = build_bulb([m["M_Bulb"]])
     bpy.context.view_layer.update()
 
     check_slide_profile(assets["slide"])
-    for key in ("slide", "tunnel", "pipe", "coupler", "elbow", "ring", "bulb"):
+    for key in ("slide", "tunnel", "pipe", "coupler", "elbow", "ring", "rim", "bulb"):
         export(assets[key])
     end_p, end_t = elbow_frames()[-1][0], Vector((0.0, 0.0, 1.0))
     print("CHECK elbow end centre (%.3f, %.3f, %.3f) direction (%.0f, %.0f, %.0f)" % (*end_p, *end_t))
-    print("CHECK bulb centre radius %.3f, bulb base / socket seat radius %.3f" % (BULB_CENTRE_RHO, BULB_BASE_RHO))
+    print("CHECK ring bulbs %d at rho %.3f, bulb centre y %.3f, crown y %.3f" % (
+        RING_BULBS, RG_BULB_RHO, BULB_Y, BULB_Y + BULB_H2))
     C.save_work("build_track")
 
     preview_materials(m)
     render_previews(assets)
     verify_fbx(["SM_Slide_Module", "SM_Tunnel_Module", "SM_GlassPipe_Module", "SM_Pipe_Coupler", "SM_Pipe_Elbow",
-                "SM_Ring", "SM_Bulb"])
+                "SM_Ring", "SM_DrumRim", "SM_Bulb"])
     print("BUILD_TRACK_DONE")
 
 
