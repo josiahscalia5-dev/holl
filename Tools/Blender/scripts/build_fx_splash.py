@@ -8,10 +8,11 @@
                           Asset axes: +X = outward (mascot's left), +Y = backward (toward the camera), Z up.
                           Origin = placed by Unity at runner-local (-CrownRootX, 0, CrownRootZ) (SceneBuilder.WaterFX),
                           just outside / ahead of the left foot. Slot M_FX_Milk.
+  SM_FX_CrownR_00 .. _11  round 4: the same crown WITHOUT the low skirt, for the right side (Unity mirrors it).
   SM_FX_Droplet           milk droplet, radius 0.5 sphere slightly stretched along the travel axis (-Y)   M_FX_Milk
   SM_FX_BubbleLow         low-poly soap bubble sphere r 0.5 for small bubble particles                    M_Bubble
 
-Preview: Docs/AssetPreviews/FX_SplashCrown_r3.png = both crowns seen through the owner-approved hero camera
+Preview: Docs/AssetPreviews/FX_SplashCrown_r4.png = both crowns seen through the owner-approved hero camera
 (2.75 / 1.3 / 10 / 58, measured runner-local pose) around a stand-in mascot (Blender render only, no reference pixels).
 Prints PREVIEW-BBOX lines = screen coverage of each crown (x, y from the top-left of the 9:16 frame).
 Env BWK_FX_QUICK=1: build frames 0 and 6 only, no export (placement check).
@@ -82,15 +83,23 @@ class Elems:
 #  SKIRT:   a low perforated sheet thrown back toward the camera from the curtain's outer end, curling in UNDER the foot
 #           on screen (y ~.80-.90) while staying below the sole.
 SHEETS = [
+    # round 4 (lead: "opaque flat white sheets / cauliflower"; reference f_003.00s lace = thick milky strands around
+    # BIG round openings, the blue water visible through more than half of the crown): holes up to 2x bigger, packed
+    # closer (gap = sheet left between two rims), no solid band above the root -> a lace of rims, not a wall with holes
     dict(name="curtain",
          root=((-0.05, 0.14), (0.14, 0.24), (0.34, 0.32), (0.54, 0.40)),
          fan=((0.05, 0.30, 0.95), (0.16, 0.30, 0.94), (0.30, 0.30, 0.90), (0.46, 0.34, 0.82)),
-         flen=(0.40, 0.72, 0.80, 0.62), flare=0.34, hole=(0.024, 0.090), solid=0.12, fingers=13, roll=0.024, drops=3.0),
+         flen=(0.40, 0.72, 0.80, 0.62), flare=0.34, hole=(0.036, 0.125), solid=0.05, gap=0.012, fingers=17, roll=0.024,
+         drops=3.0),
     dict(name="skirt",
          root=((0.44, 0.44), (0.30, 0.66), (0.12, 0.84), (-0.06, 0.96)),
          fan=((0.40, 0.22, 0.89), (0.22, 0.26, 0.94), (0.10, 0.30, 0.95), (0.0, 0.32, 0.95)),
-         flen=(0.32, 0.22, 0.13, 0.07), flare=0.22, hole=(0.018, 0.046), solid=0.16, fingers=7, roll=0.012, drops=1.0),
+         flen=(0.32, 0.22, 0.13, 0.07), flare=0.22, hole=(0.026, 0.070), solid=0.08, gap=0.012, fingers=7, roll=0.012,
+         drops=1.0),
 ]
+# round 4: the RIGHT crown (SM_FX_CrownR_xx, mirrored in Unity) has no skirt: the reference's lower right is open
+# water + a falling droplet stream, only the lower LEFT has lace down to the frame bottom
+SHEETS_R = SHEETS[:1]
 SHEET_STEP = 0.019     # metaball grid spacing on the sheet (m)
 SHEET_R = 0.0125       # sheet ball radius -> ~3.5 cm thick milky sheet
 RIM_R = 0.0165         # hole rim capsule radius -> thick rounded rims
@@ -120,6 +129,7 @@ class Sheet:
         self.name = spec["name"]
         self.roll = spec.get("roll", 0.024)
         self.drops = spec.get("drops", 3.0)
+        self.gap = spec.get("gap", 0.028)
         tot, prev = 0.0, self.rootp(0.0)
         for k in range(1, 101):
             p = self.rootp(k / 100)
@@ -180,7 +190,7 @@ def sheet_elements(E, sh, rng, tau, salt):
 
     holes = []
     hmin, hmax = sh.hole
-    for _ in range(4000):
+    for _ in range(7000):
         S = rng.uniform(0.0, Stot)
         V = rng.uniform(0.03, 0.75)
         t = top(S)
@@ -190,7 +200,7 @@ def sheet_elements(E, sh, rng, tau, salt):
         if vf < sh.solid:
             continue
         r = lerp(hmin, hmax, vf ** 0.9) * rng.uniform(0.65, 1.2)
-        if all((S - S2) ** 2 + (V - V2) ** 2 >= (r + r2 + 0.028) ** 2 for (S2, V2, r2, _a) in holes):
+        if all((S - S2) ** 2 + (V - V2) ** 2 >= (r + r2 + sh.gap) ** 2 for (S2, V2, r2, _a) in holes):
             holes.append((S, V, r, rng.uniform(0, 6.28)))
     live = [(S + 0.008 * math.sin(tw + a), V + 0.012 * math.sin(tw + a * 1.7), r * (1.0 + 0.08 * math.sin(tw + a * 2.3)))
             for (S, V, r, a) in holes]            # periodic: holes drift on the sheet and breathe
@@ -280,11 +290,11 @@ def sheet_elements(E, sh, rng, tau, salt):
     return n_sheet, len(live)
 
 
-def build_crown_elements(tau):
+def build_crown_elements(tau, sheets=SHEETS):
     """All metaball elements for loop phase tau in [0, 1). Structure is seeded; motion is periodic in tau."""
     E = Elems()
     info = []
-    for k, spec in enumerate(SHEETS):
+    for k, spec in enumerate(sheets):
         rng = random.Random(SEED + 101 * k)
         n_sheet, n_holes = sheet_elements(E, Sheet(spec), rng, tau, 1.7 * k)
         info.append("%s %d balls %d holes" % (spec["name"], n_sheet, n_holes))
@@ -292,9 +302,9 @@ def build_crown_elements(tau):
     return E.items
 
 
-def crown_mesh(frame, mat):
+def crown_mesh(frame, mat, base="SM_FX_Crown", sheets=SHEETS):
     tau = frame / FRAMES
-    fam = "MBCROWN%02d" % frame                  # unique metaball family per frame (no '.' suffix)
+    fam = "MB%s%02d" % (base.replace("SM_FX_", "").replace("_", "").upper(), frame)   # unique family per frame/asset
     mb = bpy.data.metaballs.new(fam)
     mb.resolution = RES
     mb.render_resolution = RES
@@ -302,7 +312,7 @@ def crown_mesh(frame, mat):
     ob = bpy.data.objects.new(fam, mb)
     bpy.context.scene.collection.objects.link(ob)
     X = Vector((1.0, 0.0, 0.0))
-    items = build_crown_elements(tau)
+    items = build_crown_elements(tau, sheets)
     for kind, a, b, r in items:
         if kind == "B":
             e = mb.elements.new(type='BALL')
@@ -318,7 +328,7 @@ def crown_mesh(frame, mat):
     bpy.context.view_layer.update()
     deps = bpy.context.evaluated_depsgraph_get()
     me = bpy.data.meshes.new_from_object(ob.evaluated_get(deps))
-    name = "SM_FX_Crown_%02d" % frame
+    name = "%s_%02d" % (base, frame)
     me.name = name
     obj = bpy.data.objects.new(name, me)
     bpy.context.scene.collection.objects.link(obj)
@@ -472,9 +482,9 @@ def hero_preview(crown_l, crown_r):
     scene.render.resolution_x, scene.render.resolution_y = 540, 960
     scene.render.resolution_percentage = 100
     scene.render.image_settings.file_format = 'PNG'
-    scene.render.filepath = C.preview_path("FX_SplashCrown_r3")
+    scene.render.filepath = C.preview_path("FX_SplashCrown_r4")
     bpy.ops.render.render(write_still=True)
-    print("PREVIEW", C.preview_path("FX_SplashCrown_r3"))
+    print("PREVIEW", C.preview_path("FX_SplashCrown_r4"))
 
 
 def main():
@@ -482,22 +492,23 @@ def main():
     milk = C.material("M_FX_Milk", "#F4F8FF", roughness=0.18, coat=0.4)
     bub = C.material("M_Bubble", "#FFFFFF", roughness=0.02, alpha=0.15)
     report = []
-    crowns = {}
+    crowns, crowns_r = {}, {}
     for f in ([0, 6] if QUICK else range(FRAMES)):
-        obj, raw = crown_mesh(f, milk)
-        crowns[f] = obj
-        obj.hide_render = True
-        report.append("%-16s %6d tris (raw %6d)  dims %s" % (obj.name, C.tri_count(obj), raw, tuple(round(d, 3) for d in obj.dimensions)))
-        if not QUICK:
-            C.export_fbx([obj], C.model_path(GROUP, obj.name))
+        for base, sheets, store in (("SM_FX_Crown", SHEETS, crowns), ("SM_FX_CrownR", SHEETS_R, crowns_r)):
+            obj, raw = crown_mesh(f, milk, base, sheets)
+            store[f] = obj
+            obj.hide_render = True
+            report.append("%-16s %6d tris (raw %6d)  dims %s" % (obj.name, C.tri_count(obj), raw, tuple(round(d, 3) for d in obj.dimensions)))
+            if not QUICK:
+                C.export_fbx([obj], C.model_path(GROUP, obj.name))
     if not QUICK:
         for o in (build_droplet(milk), build_bubble_low(bub)):
             report.append("%-16s %6d tris  dims %s" % (o.name, C.tri_count(o), tuple(round(d, 3) for d in o.dimensions)))
             C.export_fbx([o], C.model_path(GROUP, o.name))
             o.hide_render = True
     print("\n".join("CHECK " + r for r in report))
-    # Unity shows frame 0 on the left crown and frame FRAMES/2 (mirrored) on the right in still captures
-    hero_preview(crowns[0], crowns[6])
+    # Unity shows frame 0 on the left crown and frame FRAMES/2 of the skirt-less R asset (mirrored) on the right in stills
+    hero_preview(crowns[0], crowns_r[6])
     print("DONE build_fx_splash")
 
 

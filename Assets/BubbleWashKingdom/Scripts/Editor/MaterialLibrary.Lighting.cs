@@ -19,9 +19,14 @@ namespace BubbleWash.EditorTools
             // Round 3 (owner sheet 04 "polished bevelled gold"): the ring read pale tan because the untinted lavender probe and
             // the cream highlight colour dominated -> deeper orange-gold mids, probe almost fully gold-tinted, warmer highlight
             // colour and stronger, crisper streaks (bright white-gold lines on a rich amber-orange body, dark bevel lows).
-            GoldLook("M_Gold", high: "#FFEDBC", mid: "#F48C16", low: "#6A2418", rim: "#FFB860", band: "#FFDA90",
-                brightness: 1.32f, glow: 0.12f, contrast: 1.5f, viewGradient: 1f, env: 0.36f, envTint: 0.86f, envRough: 0.2f,
-                specPower: 170f, specStrength: 3.2f, glints: 2.6f, sparkle: 0f, fog: 0.45f, highlightSize: 9f, streak: 1.7f,
+            // Round 4 (sheet 04 "polished bevelled gold, not uniformly saturated yellow bands"): measured around the first
+            // visible ring, reference hottest 2/10/30 % = #fef9bb / #fbe7c2 / #f2d2c9 (pale cream cores, peach-rose band),
+            // ours #ffec5f / #f7d16a / #ecbd6f (saturated yellow). Band luminance already matched (L50 .69 vs .68), so the
+            // hue moves ~8 deg toward rose-peach: rosier mid / low / rim / band colours, more bevel contrast (bright rolled
+            // beads, deeper trough), softer streaks (they made the whole band read pale yellow), a little more violet probe.
+            GoldLook("M_Gold", high: "#FFE6C4", mid: "#EC8840", low: "#7A2C48", rim: "#FFA084", band: "#FFC8A0",
+                brightness: 1.24f, glow: 0.10f, contrast: 1.75f, viewGradient: 1f, env: 0.36f, envTint: 0.72f, envRough: 0.2f,
+                specPower: 170f, specStrength: 3.2f, glints: 2.6f, sparkle: 0f, fog: 0.4f, highlightSize: 9f, streak: 1.25f,
                 probeTint: "#8C4E8C");
             GoldLook("M_GoldDark", high: "#FFE0B0", mid: "#C8702A", low: "#4A1636", rim: "#FFB070", band: "#FFCF96",
                 brightness: 1.0f, glow: 0.03f, contrast: 1.6f, viewGradient: 1f, env: 0.5f, envTint: 0.55f, envRough: 0.3f,
@@ -43,8 +48,11 @@ namespace BubbleWash.EditorTools
             // Round 3 (owner: "excessively bright yellow bulbs -> small warm amber lights with a soft halo"): at x12 the green
             // channel (~2.1 linear) tonemapped to 0.9 -> pale lemon cores. x5.6 with a half-amber core keeps G ~1.0 linear:
             // core tonemaps to golden amber (~#FCC95E), the grazing edge to deep orange, the bloom halo stays orange.
-            EmissiveLook("M_Bulb", "#FF6A10", 5.6f, core: 0.5f, corePower: 1.3f, halo: 1.0f, edgeSat: 0.5f, chase: 1f, chaseMin: 0.75f,
-                pulse: 0.05f, fog: 0.08f, coreColor: "#FF9030", probeDim: 0.3f);
+            // Round 4: the R4 cores still measured saturated yellow (#ffec5f) because the whole bulb face was a 50 % orange /
+            // amber mix. Now a SMALL pale-cream hot centre (_CorePower 2.6, core #FFC878) inside a deep orange body
+            // (_EdgeSaturate 1: G/R ~.02) -> the reference's pale warm cores (#fef9bb) with an orange bloom halo.
+            EmissiveLook("M_Bulb", "#FF6A10", 6.0f, core: 0.85f, corePower: 2.6f, halo: 1.0f, edgeSat: 1.0f, chase: 1f, chaseMin: 0.75f,
+                pulse: 0.05f, fog: 0.08f, coreColor: "#FFC878", probeDim: 0.3f);
             // end-of-tunnel portal disc (BuildPortal core): radiant warm white-gold, bright but not a screen-filling flare
             EmissiveLook("M_PortalCore", "#FFC860", 3.4f, core: 0.55f, corePower: 2f, halo: 0.3f, edgeSat: 0.3f, pulse: 0.06f, fog: 0.05f);
             // Neon tubes (reference: thick tubes with PALE hot cores - yellow #fbe496, cyan #78eaf5 - inside saturated colour

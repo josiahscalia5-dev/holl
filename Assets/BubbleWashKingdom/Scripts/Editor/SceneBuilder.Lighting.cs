@@ -22,6 +22,7 @@ namespace BubbleWash.EditorTools
         // speculars reach the bloom threshold: no global milky veil.
         static void BuildLighting(GameObject root, float L, string profilePath = null)
         {
+            EnsurePerObjectLightLimit();
             var lights = Child(root, "Lighting");
             // Key light: near-vertical warm top light. Works for every track heading (the slide winds through all
             // directions), lights hat / pom-pom / coin tops, and drops the mascot's soft shadow right beneath him.
@@ -44,7 +45,9 @@ namespace BubbleWash.EditorTools
             var bounce = bounceGo.AddComponent<Light>();
             bounce.type = LightType.Directional;
             bounce.color = new Color(0.42f, 0.58f, 1f);
-            bounce.intensity = 0.5f;
+            // round 4: ceiling bays read light periwinkle (tunnel_ahead L50 .57 vs reference .49, reference bays deep blue
+            // #554fac): a little less up-light
+            bounce.intensity = 0.38f;
             bounce.shadows = LightShadows.None;
 
             // Ambient (HDR round m1): saturated BLUE-violet from above (reference ceiling bays #40509e..#515aad), violet around
@@ -52,7 +55,7 @@ namespace BubbleWash.EditorTools
             RenderSettings.ambientMode = AmbientMode.Trilight;
             RenderSettings.ambientSkyColor = new Color(0.40f, 0.38f, 1.0f);
             RenderSettings.ambientEquatorColor = new Color(0.56f, 0.34f, 0.96f);
-            RenderSettings.ambientGroundColor = new Color(0.36f, 0.50f, 1.0f);
+            RenderSettings.ambientGroundColor = new Color(0.32f, 0.44f, 0.98f);   // round 4: deeper blue on down-facing bays
             RenderSettings.ambientIntensity = 1.05f;
             // Aerial perspective: saturated lavender-violet (never pale grey): the near tunnel stays clear and rich, the far
             // tunnel melts into a lighter violet glow while the warm bulbs still punch through (emissives use little fog).
@@ -80,7 +83,9 @@ namespace BubbleWash.EditorTools
             // round 3: pink reflections on the near-left drum rims (reference / owner sheet 04: hot pink-magenta glints on the
             // big near ring at the upper left, from the pink rails and neon) - a pink light inside the upper-left wall ~6 m ahead
             // (the wall around the big yellow star), which also tints that wall lighter mauve like the reference (#a87ea0)
-            AddPoint(lights, HeroDistance + 6f, -2.5f, 4.1f, new Color(1f, 0.40f, 0.76f), 5f, 8f);
+            // round 4: this light was dropped by the 4-lights-per-object limit that the full build re-applied (upper-left wall
+            // L50 .40 vs reference .51): limit back to 8 (EnsurePerObjectLightLimit) and a little stronger / pinker
+            AddPoint(lights, HeroDistance + 6f, -2.5f, 4.1f, new Color(1f, 0.36f, 0.72f), 6f, 8f);
 
             // Reflection probes: hall probes + one per 30 m tunnel chunk, box = bounds of that bent tunnel segment.
             for (float d = 18f; d < tunnelStart; d += 30f)
@@ -114,7 +119,9 @@ namespace BubbleWash.EditorTools
             var bloom = profile.Add<Bloom>(true);
             // round 3: bulbs now ~1/3 as hot -> slightly lower threshold / wider scatter keeps a soft luminous halo on the
             // emissives and the brightest rim glints (controlled: lit foam / walls stay below it)
-            bloom.threshold.Override(1.0f); bloom.intensity.Override(1.15f); bloom.scatter.Override(0.7f);
+            // round 4 (lead gap 1 "controlled bloom halos", sheet 04): slightly lower threshold + wider scatter -> soft halos on
+            // the bulbs / stars / brightest rims (the reference's soft animated-film glow), still no veil on lit surfaces
+            bloom.threshold.Override(0.95f); bloom.intensity.Override(1.3f); bloom.scatter.Override(0.76f);
             bloom.tint.Override(Color.white); bloom.highQualityFiltering.Override(true);
             bloom.maxIterations.Override(8);
             // Neutral keeps saturated hues far better than ACES (which pushes bright yellow / cyan to white).
@@ -145,6 +152,30 @@ namespace BubbleWash.EditorTools
             dof.gaussianMaxRadius.Override(1.5f); dof.highQualitySampling.Override(true);
             foreach (var c in profile.components) AssetDatabase.AddObjectToAsset(c, profile);
             vol.sharedProfile = profile;
+        }
+
+        /// <summary>Round 4: URP per-object additional-light limit. The drum walls / rims are long combined section meshes that
+        /// several ring lights, the pink upper-left light, the water bounce and the runner's character lights all reach; with
+        /// 4 lights per object URP drops a different light on each section -> vertical light seams on the walls and a dead pink
+        /// light (round 3 v2/v3). ProjectSetup.Run (full build) writes 4, so the lighting build re-applies 8 afterwards.
+        /// HIGH TIER (PC / high-end phones); a low mobile tier should use 4 with fewer ring lights.</summary>
+        const int PerObjectLightLimit = 8;
+
+        static void EnsurePerObjectLightLimit()
+        {
+            foreach (var path in new[] { "Assets/Settings/Mobile_RPAsset.asset", "Assets/Settings/PC_RPAsset.asset" })
+            {
+                var asset = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(path);
+                if (asset == null) continue;
+                var so = new SerializedObject(asset);
+                var p = so.FindProperty("m_AdditionalLightsPerObjectLimit");
+                if (p == null || p.intValue == PerObjectLightLimit) continue;
+                p.intValue = PerObjectLightLimit;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(asset);
+                AssetDatabase.SaveAssetIfDirty(asset);
+                Debug.Log($"[BWK] lighting: {path} per-object light limit -> {PerObjectLightLimit} (high tier)");
+            }
         }
 
         static void AddProbe(GameObject parent, string name, Vector3 position, Bounds box)
@@ -180,7 +211,9 @@ namespace BubbleWash.EditorTools
                 var l = go.AddComponent<Light>();
                 l.type = LightType.Point;
                 // warm amber-rose: on the violet drum wall this reads as the reference's pink-peach glow around each ring
-                l.color = new Color(1f, 0.55f, 0.36f);
+                // round 4: rosier (reference ring surroundings p30 #f2d2c9 pale pink-peach, median pink-lavender; ours
+                // yellow-orange) -> rose-peach pools on the walls and peach glints on the gold
+                l.color = new Color(1f, 0.52f, 0.5f);
                 l.intensity = 2.6f;
                 l.range = 6.5f;
                 l.shadows = LightShadows.None;
@@ -449,12 +482,18 @@ namespace BubbleWash.EditorTools
             var group = Child(runnerGo, "CharacterLights");
             // warm bulb glow on the top of the hat / pom-pom (slightly ahead, so it grazes over the top toward the camera)
             // round 3: higher + a bit weaker -> no near-field hotspot on the pom-pom (ours p50 #c892e3 vs reference #8a41b9)
-            CharLight(group, "CharLight_WarmTop", new Vector3(0.35f, 2.75f, 0.55f), new Color(1f, 0.74f, 0.44f), 2.0f, 4.4f);
+            // round 4: weaker + warmer (reference pom-pom / crown are deep saturated purple #7b2eaa, ours read pale lilac #ba83e0)
+            CharLight(group, "CharLight_WarmTop", new Vector3(0.35f, 2.75f, 0.55f), new Color(1f, 0.68f, 0.42f), 1.4f, 4.4f);
             // soft pink fill on the fluffy back the rear camera sees
             // round 3: warmer coral-pink (reference back fur ~#e58c98 lit; ours read mauve under the violet ambient)
-            CharLight(group, "CharLight_PinkBack", new Vector3(-0.35f, 1.7f, -1.6f), new Color(1f, 0.72f, 0.6f), 3.0f, 3.6f);
+            // round 4 (lead gap 2): reference fur p50 #cc618c (L .48, S .53), ours #d887b3 (L .61, S .38) = too light, washed
+            // out, and the hat ribs / white stripe glared. The light moves DOWN to fur height (it was at hat height, 1.3 m
+            // from the hat, 1.7 m from the fur) and becomes a saturated rose-coral (no green -> the coral fur stays saturated),
+            // less energy overall: the fur gets the warm saturated key, the hat only grazing light (matte knit).
+            CharLight(group, "CharLight_PinkBack", new Vector3(-0.3f, 0.85f, -1.75f), new Color(1f, 0.5f, 0.55f), 2.0f, 3.4f);
             // cool lavender light from the bright tunnel ahead: wraps around the fur silhouette as a rim
-            CharLight(group, "CharLight_RimFront", new Vector3(0f, 1.15f, 2.2f), new Color(1f, 0.56f, 0.86f), 3.0f, 3.6f);
+            // round 4: pinker rim (reference: pink rim light around the fur and arms)
+            CharLight(group, "CharLight_RimFront", new Vector3(0f, 1.15f, 2.2f), new Color(1f, 0.48f, 0.82f), 3.2f, 3.6f);
 
             // soft violet contact shadow card on the water right under him (stays on the surface during jumps)
             var card = GameObject.CreatePrimitive(PrimitiveType.Quad);
