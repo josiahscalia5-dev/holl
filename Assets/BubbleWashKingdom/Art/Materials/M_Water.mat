@@ -27,7 +27,7 @@ Material:
     m_Floats:
     - _CausticAmount: 0.28
     - _CenterGlow: 0.06
-    - _ChevronEndX: 0.42
+    - _ChevronEndX: 0.38
     - _ChevronGlow: 0.5
     - _ChevronHalfLen: 0.25
     - _ChevronHalfWidth: 0.5
@@ -55,13 +55,13 @@ Material:
     - _VTile: 4
     - _WaveHeight: 0.025
     - _WeaveAmp: 0.5
-    - _WeaveLen: 22
-    - _WeaveZero: 102.87
+    - _WeaveLen: 17
+    - _WeaveZero: 103.09
     - _Width: 3.6
     m_Colors:
     - _CausticColor: {r: 0.49803922, g: 0.9137255, b: 1, a: 1}
     - _ChevronColor: {r: 0.14117648, g: 0.8784314, b: 0.85490197, a: 1}
-    - _DeepColor: {r: 0.043137256, g: 0.2901961, b: 0.65882355, a: 1}
+    - _DeepColor: {r: 0.078431375, g: 0.3764706, b: 0.72156864, a: 1}
     - _EdgeTint: {r: 0.9019608, g: 0.41568628, b: 0.78431374, a: 1}
     - _ReflectTint: {r: 0.54901963, g: 0.78431374, b: 1, a: 1}
     - _ShallowColor: {r: 0.101960786, g: 0.44705883, b: 0.7529412, a: 1}

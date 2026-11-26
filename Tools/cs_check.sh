@@ -22,6 +22,7 @@ DAG="Library/Bee/artifacts/1900b0aE.dag"
 OUT="Logs/cs_check"
 ASMS="BubbleWash.Runtime BubbleWash.Editor BubbleWash.Tests.PlayMode"   # dependency order
 export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*'                         # pass csc options through untouched
+export PATH="/usr/bin:$PATH"                                               # GNU find/sort, never Windows find.exe/sort.exe
 SHOWW=0; [ "$1" = "-w" ] && SHOWW=1
 cd "$ROOT" || exit 2
 mkdir -p "$OUT"

@@ -1,9 +1,14 @@
 """Export Claude Code chat history for this project as readable Markdown (text only).
 
-Reads every top-level session transcript in ~/.claude/projects/C--Users-josia-thanksgiving/*.jsonl and writes
-ChatHistory/<first-date>_<session8>.md containing the user's messages and Claude's replies, plus one line per tool action.
+Main sessions: every top-level transcript in ~/.claude/projects/C--Users-josia-thanksgiving/*.jsonl ->
+  ChatHistory/<first-date>_<session8>.md (the user's messages, Claude's replies, one line per tool action).
+Specialist agents (owner request 2026-11-26: "all agents chat history"): every subagent / workflow-agent transcript in
+  <session>/subagents/**/agent-*.jsonl -> ChatHistory/agents/<first-date>_<session8>/<HHMM>_<description>_<agent8>.md
+  (the agent's brief, its statements and one line per tool action) + ChatHistory/agents/README.md (index).
 Deliberately left out: screenshots / images, tool outputs (file contents, logs), hidden reasoning, and system context.
 Redacted: e-mail addresses and anything that looks like an access token.
+Incremental: a transcript is only re-exported when it changed since its Markdown was written (the 5-minute autosave
+calls this script every cycle).
 
 Run with any Python 3 (this PC has no system Python; Blender's bundled one works):
   "C:/Users/josia/Blender/blender-5.3.0-windows-x64/5.3/python/bin/python.exe" Tools/export_chat.py
@@ -16,6 +21,7 @@ import re
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 SRC = os.path.join(os.path.expanduser("~"), ".claude", "projects", "C--Users-josia-thanksgiving")
 OUT = os.path.join(ROOT, "ChatHistory")
+AGENTS_OUT = os.path.join(OUT, "agents")
 
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 TOKENS = re.compile(r"\b(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9-]{20,}|xox[abp]-[A-Za-z0-9-]{10,})\b")
@@ -39,8 +45,16 @@ def tool_line(block):
     return "> _tool: %s%s_" % (name, (" - " + clean(str(what))[:160]) if what else "")
 
 
+def up_to_date(src, pattern):
+    """True when an export matching `pattern` exists and is newer than the transcript `src`."""
+    hits = glob.glob(pattern)
+    return bool(hits) and min(os.path.getmtime(h) for h in hits) >= os.path.getmtime(src)
+
+
 def export(path):
     session = os.path.splitext(os.path.basename(path))[0]
+    if up_to_date(path, os.path.join(OUT, "*_%s.md" % session[:8])):
+        return None
     lines, first_ts = [], None
     with open(path, encoding="utf-8", errors="replace") as f:
         for raw in f:
@@ -88,6 +102,96 @@ def export(path):
     return name
 
 
+def agent_description(path):
+    meta = path[:-len(".jsonl")] + ".meta.json"
+    try:
+        with open(meta, encoding="utf-8") as f:
+            return json.load(f).get("description") or ""
+    except (OSError, ValueError):
+        return ""
+
+
+def export_agent(path, session):
+    """One specialist / workflow agent transcript -> Markdown. Returns (relative path, description, start) or None."""
+    agent = os.path.basename(path)[len("agent-"):-len(".jsonl")]
+    desc = agent_description(path)
+    entries, first_ts, first_user = [], None, True
+    with open(path, encoding="utf-8", errors="replace") as f:
+        for raw in f:
+            try:
+                e = json.loads(raw)
+            except ValueError:
+                continue
+            if e.get("type") not in ("user", "assistant"):
+                continue
+            ts = (e.get("timestamp") or "")[:16].replace("T", " ")
+            first_ts = first_ts or ts
+            content = (e.get("message") or {}).get("content")
+            if e["type"] == "user":
+                texts = [content] if isinstance(content, str) else [
+                    b.get("text", "") for b in (content or []) if isinstance(b, dict) and b.get("type") == "text"]
+                for t in texts:                                  # tool results are skipped on purpose (no tool outputs)
+                    t = clean(t)
+                    if not t or t.startswith("[Image"):
+                        continue
+                    entries.append("### %s (%s UTC)\n\n%s\n" % ("Brief from the lead" if first_user else "Message", ts, t))
+                    first_user = False
+                continue
+            parts = []
+            for b in content or []:
+                if not isinstance(b, dict):
+                    continue
+                if b.get("type") == "text":
+                    t = clean(b.get("text", ""))
+                    if t:
+                        parts.append(t)
+                elif b.get("type") == "tool_use":
+                    parts.append(tool_line(b))
+            if parts:
+                entries.append("**Agent (%s UTC):**\n\n%s\n" % (ts, "\n\n".join(parts)))
+    if not entries:
+        return None
+    day = (first_ts or "undated")[:10]
+    folder = os.path.join(AGENTS_OUT, "%s_%s" % (day, session[:8]))
+    slug = re.sub(r"[^A-Za-z0-9]+", "_", desc or "workflow_agent").strip("_")[:60]
+    rel = os.path.join(folder, "%s_%s_%s.md" % ((first_ts or "0000-00-00 00:00")[11:16].replace(":", ""), slug, agent[:8]))
+    os.makedirs(folder, exist_ok=True)
+    with open(rel, "w", encoding="utf-8", newline="\n") as f:
+        f.write("# Agent: %s\n\nAgent %s, lead session %s, started %s UTC.\n\n" % (desc or "workflow agent", agent, session, first_ts))
+        f.write("_Text-only export: the lead's brief, the agent's statements and one line per tool action "
+                "(no tool outputs, images, hidden reasoning or system context; e-mails and tokens redacted)._\n\n")
+        f.write("\n".join(entries))
+    return os.path.relpath(rel, OUT).replace("\\", "/"), desc, first_ts
+
+
+def export_agents():
+    done, index = [], []
+    for session_dir in sorted(d for d in glob.glob(os.path.join(SRC, "*")) if os.path.isdir(d)):
+        session = os.path.basename(session_dir)
+        for path in sorted(glob.glob(os.path.join(session_dir, "subagents", "**", "agent-*.jsonl"), recursive=True)):
+            agent8 = os.path.basename(path)[len("agent-"):len("agent-") + 8]
+            existing = glob.glob(os.path.join(AGENTS_OUT, "*_%s" % session[:8], "*_%s.md" % agent8))
+            if existing and os.path.getmtime(existing[0]) >= os.path.getmtime(path):
+                with open(existing[0], encoding="utf-8") as f:
+                    head = f.readline()[len("# Agent: "):].strip()
+                index.append((os.path.relpath(existing[0], OUT).replace("\\", "/"), head, ""))
+                continue
+            r = export_agent(path, session)
+            if r:
+                done.append(r[0])
+                index.append(r)
+    if index:
+        os.makedirs(AGENTS_OUT, exist_ok=True)
+        with open(os.path.join(AGENTS_OUT, "README.md"), "w", encoding="utf-8", newline="\n") as f:
+            f.write("# Specialist agent chat history\n\nOne file per agent (lead brief + agent statements + tool actions), "
+                    "grouped by lead session (`<date>_<session8>`). Text only; tool outputs, images and private reference "
+                    "material are never exported.\n\n")
+            for rel, desc, _ in sorted(index):
+                f.write("- [%s](%s)\n" % (desc or rel, rel.replace("agents/", "", 1)))
+    return done
+
+
 if __name__ == "__main__":
     done = [n for n in (export(p) for p in sorted(glob.glob(os.path.join(SRC, "*.jsonl")))) if n]
-    print("exported:", ", ".join(done) if done else "nothing")
+    agents = export_agents()
+    print("exported:", ", ".join(done) if done else "nothing", "| agents:", len(agents))
