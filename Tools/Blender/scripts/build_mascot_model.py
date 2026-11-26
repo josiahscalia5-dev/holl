@@ -88,8 +88,8 @@ BLUSH_X, BLUSH_Z, BLUSH_R = 0.235, 0.47 + FACE_DZ, 0.058
 # ------------------------------------------------------------------ arms: big stubby mitts raised up and out ("wheee")
 # Reference rear view: the arms leave the body sides just under the cuff and rise ~45 deg, so the paws sit at cuff
 # height OUTSIDE the hat silhouette. Seen from behind = back of the mitt (no palm pads), tips a little lighter.
-ARM_Z = 0.520                              # root height on the body side (rest; just under the cuff when seated)
-ARM_UP, ARM_BACK = 52.0, 0.10              # rest direction: 52 deg above horizontal, very slightly back
+ARM_Z = 0.500                              # root height on the body side (rest; just under the cuff when seated)
+ARM_UP, ARM_BACK = 50.0, 0.24              # rest direction: 50 deg up, angled back past the cuff
 ARM_SEG = 20
 ARM_PROFILE = [(-0.10, 0.072), (-0.05, 0.082), (0.0, 0.088), (0.06, 0.091), (0.12, 0.094), (0.18, 0.099),
                (0.235, 0.106), (0.275, 0.108), (0.307, 0.102), (0.332, 0.087), (0.350, 0.064), (0.362, 0.035),

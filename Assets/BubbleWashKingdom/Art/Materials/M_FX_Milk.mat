@@ -28,15 +28,15 @@ Material:
     - _BumpScale: 6
     - _BumpStrength: 0.5
     - _GlintAmount: 0.5
-    - _Glow: 0.38
+    - _Glow: 0.24
     - _HotBoost: 0.6
     - _HotFar: 3.5
     - _HotNear: 3
     - _Metallic: 0
     - _Mode: 6
     - _ReflectBoost: 0.3
-    - _RimPower: 2
-    - _RimStrength: 0.45
+    - _RimPower: 1.8
+    - _RimStrength: 0.6
     - _Smoothness: 0.35
     - _SpecStrength: 1
     - _StitchU: 64
@@ -47,11 +47,11 @@ Material:
     - _Stripes: 4
     - _Wobble: 0.01
     - _WobbleFreq: 7
-    - _Wrap: 0.6
+    - _Wrap: 0.55
     m_Colors:
     - _ColorA: {r: 1, g: 1, b: 1, a: 1}
-    - _ColorB: {r: 0.61960787, g: 0.84705883, b: 0.9607843, a: 1}
+    - _ColorB: {r: 0.54901963, g: 0.8117647, b: 0.9490196, a: 1}
     - _ColorC: {r: 0.54999995, g: 0.29999998, b: 0.85, a: 1}
-    - _ShadowColor: {r: 0.7137255, g: 0.76862746, b: 0.9254902, a: 1}
+    - _ShadowColor: {r: 0.62352943, g: 0.69803923, b: 0.9019608, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

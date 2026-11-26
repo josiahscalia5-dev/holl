@@ -31,8 +31,8 @@ Material:
     - _GlintAmount: 0.5
     - _Glow: 0.36
     - _HotBoost: 0.7
-    - _HotFar: 2.7
-    - _HotNear: 2.25
+    - _HotFar: 2.05
+    - _HotNear: 1.75
     - _Intensity: 1.9
     - _Metallic: 0
     - _Mode: 7

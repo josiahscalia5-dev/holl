@@ -68,8 +68,8 @@ namespace BubbleWash.EditorTools
                 // deeper violet yarn (reference ~#8741b3, dark centre, lighter radiating tips): straight radial fibres
                 C(m, "_RootColor", "#42205A"); C(m, "_BaseColor", "#7A3E8E"); C(m, "_TipColor", "#C08ED6");
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
-                F(m, "_Density", 240); F(m, "_FurLength", 0.026f); F(m, "_Gravity", 0.0f); F(m, "_Thinning", 0.45f); F(m, "_AO", 0.4f);
-                F(m, "_Curl", 0.5f); F(m, "_Underfur", 0.9f); F(m, "_ClumpAmount", 0.3f); F(m, "_EdgeSoft", 0.3f); F(m, "_SilhouetteFade", 0.75f);
+                F(m, "_Density", 210); F(m, "_FurLength", 0.030f); F(m, "_Gravity", 0.0f); F(m, "_Thinning", 0.6f); F(m, "_AO", 0.4f);
+                F(m, "_Curl", 0.25f); F(m, "_Underfur", 0.85f); F(m, "_ClumpAmount", 0.3f); F(m, "_EdgeSoft", 0.2f); F(m, "_SilhouetteFade", 0.55f);
                 C(m, "_RimColor", "#C8A8F0"); F(m, "_Glow", 0.03f); F(m, "_RimStrength", 0.4f);
             }, (int)RenderQueue.AlphaTest);
             // static (shell-less) preview variants: no clipping, no offset
