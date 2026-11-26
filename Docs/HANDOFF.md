@@ -27,6 +27,16 @@
   `~/.claude/projects/C--Users-josia-thanksgiving/cd43a82d-d354-43cf-9600-4a89cd571544/subagents/workflows/`.
 - After the wave: lead safe_build -> snapshot `Captures/stills_r7/` -> section_triptych -> scores in the checklist ->
   full-level Play Mode recording -> checkpoint-18 -> this file.
+- 12:55 OWNER (added after round 7, plan otherwise unchanged): a CINEMATIC LOOK pass for the whole level with the existing
+  URP features (reflection probes, post volume, our URP shaders; Shader Graph only if clearly easier; no Needle Engine, no
+  new packages, no purchases): polished gold, realistic glass pipes, rich metallic walls, glossy flowing water, iridescent
+  bubbles, warm light, controlled neon glow; show real before/after Unity comparisons. Prepared
+  `Tools/workflows/bwk-round8-cinematic.js` (agents light+metal / water+glass+bubbles; args {base, before}; before =
+  `Captures/stills_r7`). Launch after the round-7 integration (this 5-hour window will be used up -> after the 17:10 reset).
+- Plugins 12:58: Unity's OFFICIAL Claude Code plugin ("Unity", Unity Technologies, Anthropic Directory, skills incl.
+  urp-postprocessing, shader-graph-create-custom-node, validate-urp-render-graph-renderer-feature) is NOT enabled on this
+  account - install card shown to the owner (skills only, no Unity package). The project's own unity-graphics /
+  unity-lighting-vfx / unity-performance / unity-cinemachine skills (Claude Unity Game Studio copy) are enabled.
 
 ## (previous) lead handoff 2026-11-26 10:30, lead session 98d6de44
 

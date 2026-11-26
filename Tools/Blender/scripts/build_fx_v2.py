@@ -271,15 +271,95 @@ def foam_mesh(name, elems, mat, max_tris, zscale=1.0, stiff=2.0, k=0.86):
     return obj, raw
 
 
+def bake_foam_colors(obj, elems, seed, max_dist=0.13, n_dirs=26):
+    """Round 7 (Unity rendered foam v2 as smooth blobs: BWK/Soft Mode 5 shades crevices ONLY from vertex colour R and the
+    v2 meshes had no colour attribute -> AO 1 everywhere). Ray-traced self-AO against the mesh (BVH, cosine-weighted
+    hemisphere, max_dist ~ bubble size) -> R = crevice AO, G = per-bubble random tint (nearest bubble centre)."""
+    from mathutils.bvhtree import BVHTree
+    me = obj.data
+    me.update()
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    tree = BVHTree.FromBMesh(bm)
+    bm.free()
+    ga = math.pi * (3.0 - math.sqrt(5.0))
+    dirs = []
+    for i in range(n_dirs):                       # fibonacci hemisphere (z up), cosine weight applied below
+        z = 1.0 - (i + 0.5) / n_dirs
+        rr = math.sqrt(max(0.0, 1.0 - z * z))
+        dirs.append(Vector((math.cos(ga * i) * rr, math.sin(ga * i) * rr, z)))
+    ao = []
+    for v in me.vertices:
+        n = v.normal.normalized()
+        t = n.orthogonal().normalized()
+        b = n.cross(t)
+        o = v.co + n * 0.003
+        occ = 0.0
+        wsum = 0.0
+        for d in dirs:
+            w = d.z
+            wd = t * d.x + b * d.y + n * d.z
+            hit = tree.ray_cast(o, wd, max_dist)
+            if hit[0] is not None:
+                occ += w * (1.0 - 0.5 * hit[3] / max_dist)
+            elif wd.z < -0.05 and o.z / max(1e-4, -wd.z) < max_dist:   # the water surface under the foam
+                occ += w * 0.5
+            wsum += w
+        ao.append(1.0 - occ / max(wsum, 1e-6))
+    centres = [Vector(co) for co, _ in elems]
+    prng = random.Random(seed)
+    rnd = [prng.random() for _ in centres]
+    near = []
+    for v in me.vertices:
+        best, bi = 1e9, 0
+        for i, c in enumerate(centres):
+            dd = (v.co - c).length_squared
+            if dd < best:
+                best, bi = dd, i
+        near.append(rnd[bi])
+    ca = me.color_attributes.new(name="Col", type='BYTE_COLOR', domain='CORNER')
+    for poly in me.polygons:
+        for li in poly.loop_indices:
+            vi = me.loops[li].vertex_index
+            a = max(0.0, min(1.0, 0.18 + 0.82 * ao[vi] ** 1.35))     # visible crevices between the small bubbles
+            col = (a, near[vi], 0.0, 1.0)
+            try:
+                ca.data[li].color_srgb = col
+            except AttributeError:
+                ca.data[li].color = col
+    me.color_attributes.active_color = ca
+    lo = sorted(ao)
+    print("FOAM-AO %s: %d verts, ao p10 %.2f p50 %.2f p90 %.2f" % (obj.name, len(ao), lo[len(lo) // 10], lo[len(lo) // 2], lo[9 * len(lo) // 10]))
+
+
+def foam_lod1(obj, elems, seed, ratio=0.3):
+    """Mobile LOD1 twin (same pivot / footprint, ~30 % triangles), colours re-baked on the decimated mesh."""
+    lod = bpy.data.objects.new(obj.name + "_LOD1", obj.data.copy())
+    lod.data.name = obj.name + "_LOD1"
+    for a in list(lod.data.color_attributes):
+        lod.data.color_attributes.remove(a)
+    bpy.context.scene.collection.objects.link(lod)
+    C.select_only([lod])
+    mod = lod.modifiers.new("dec", 'DECIMATE')
+    mod.ratio = ratio
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    for p in lod.data.polygons:
+        p.use_smooth = True
+    bake_foam_colors(lod, elems, seed)
+    return lod
+
+
 def build_foam_v2(mat):
     rng = random.Random(20261126)
     objs = []
-    o, raw = foam_mesh("SM_Foam_v2_Bank", foam_bank_elems(rng, 1.6, 0.55, 0.30, 190, 0.035, 0.075), mat, 9000)
-    objs.append((o, raw))
-    o, raw = foam_mesh("SM_Foam_v2_Mound", foam_bank_elems(rng, 0.8, 0.45, 0.24, 90, 0.03, 0.065), mat, 5000)
-    objs.append((o, raw))
-    o, raw = foam_mesh("SM_Foam_v2_Puffs", foam_pillows_elems(rng, 4), mat, 3000, zscale=0.62, k=0.95)
-    objs.append((o, raw))
+    specs = (("SM_Foam_v2_Bank", lambda: foam_bank_elems(rng, 1.6, 0.55, 0.30, 190, 0.035, 0.075), 9000, {}),
+             ("SM_Foam_v2_Mound", lambda: foam_bank_elems(rng, 0.8, 0.45, 0.24, 90, 0.03, 0.065), 5000, {}),
+             ("SM_Foam_v2_Puffs", lambda: foam_pillows_elems(rng, 4), 3000, {"zscale": 0.62, "k": 0.95}))
+    for i, (name, make, tris, kw) in enumerate(specs):
+        elems = make()
+        o, raw = foam_mesh(name, elems, mat, tris, **kw)
+        bake_foam_colors(o, elems, 700 + i)
+        objs.append((o, raw, foam_lod1(o, elems, 700 + i)))
     return objs
 
 
@@ -411,11 +491,13 @@ def main_v2():
     if ONLY in ("", "foam"):
         foam = C.material("M_Foam_v2", "#F3F5FB", roughness=0.42, coat=0.15)
         sss(foam, 0.2, "#B8C4F0")
-        for o, raw in build_foam_v2(foam):
+        for o, raw, lod in build_foam_v2(foam):
             foams.append(o)
-            report.append("%-18s %6d tris (raw %6d) dims %s" % (o.name, C.tri_count(o), raw, tuple(round(d, 3) for d in o.dimensions)))
+            report.append("%-18s %6d tris (raw %6d) dims %s, LOD1 %d tris" % (o.name, C.tri_count(o), raw, tuple(round(d, 3) for d in o.dimensions), C.tri_count(lod)))
             if not QUICK:
                 C.export_fbx([o], C.model_path(GROUP, o.name))
+                C.export_fbx([lod], C.model_path(GROUP, lod.name))
+            lod.hide_render = True
     print("\n".join("CHECK " + r for r in report))
     setup_lights()
     water_plane()
