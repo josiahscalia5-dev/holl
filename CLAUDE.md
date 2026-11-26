@@ -4,6 +4,11 @@ A brand-new Unity mobile water-slide adventure: a fluffy hot-pink mascot slides 
 of one enormous magical washing machine. These instructions come only from the owner's brief
 (`Docs/ProjectBrief.md`) and the approved Google Flow video `25982.mp4`.
 
+## Current handoff (read first)
+- `Docs/HANDOFF.md` (2026-11-26 10:30): state, owner decisions, the measured asset-library + shot-matched set dressing
+  method, the 8.25 s reconstruction test (prepared workflow `Tools/workflows/bwk-round6-shot0825.js`), mascot export fixes
+  and the 7 section requirements (`Docs/VideoCoverageChecklist.md`). The opening cinematic is PAUSED (owner makes it).
+
 ## Independence (hard rule)
 - This project is new and independent. Never open, read, copy or modify any previous game project
   (for example `C:\RainbowUnity`, `C:\Whirlwash`) or reuse their scenes, models, scripts, shaders,
