@@ -57,6 +57,7 @@ namespace BubbleWash.EditorTools
                 ModelImportRules.RemapAllMaterials();
                 if (File.Exists(AnimatorBuilder.FbxPath)) AnimatorBuilder.Run();
                 Build();
+                SceneStats.Log();
                 CaptureTools.CaptureStills();
                 EditorApplication.Exit(0);
             }
@@ -151,6 +152,19 @@ namespace BubbleWash.EditorTools
                 animator.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(AnimatorBuilder.ControllerPath);
                 animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
                 foreach (var r in m.GetComponentsInChildren<Renderer>()) { r.shadowCastingMode = ShadowCastingMode.On; r.receiveShadows = true; }
+            }
+            else if (AssetDatabase.LoadAssetAtPath<GameObject>(StaticMascotPath) is GameObject staticModel)
+            {
+                // Until the rigged SK_Mascot.fbx exists: the finished static Blender model, posed seated and feet-first.
+                var m = Spawn(staticModel);
+                m.name = "SK_Mascot_SeatedPreview";
+                m.transform.SetParent(visual.transform, false);
+                PoseSeated(m.transform);
+                foreach (var r in m.GetComponentsInChildren<Renderer>())
+                    r.sharedMaterials = r.sharedMaterials.Select(mat => mat != null && (mat.name == "M_Fur" || mat.name == "M_PomPom") ? (Mat(mat.name + "_Static") ?? mat) : mat).ToArray();
+                foreach (var r in m.GetComponentsInChildren<Renderer>()) { r.shadowCastingMode = ShadowCastingMode.On; r.receiveShadows = true; }
+                mascotHolder = m.transform;
+                Debug.Log("[BWK] Using static seated mascot preview (rig pending).");
             }
             else
             {
@@ -258,6 +272,25 @@ namespace BubbleWash.EditorTools
             inst.transform.localPosition = Fix * inst.transform.localPosition;
             inst.transform.localRotation = Fix * inst.transform.localRotation;
             return holder;
+        }
+
+        const string StaticMascotPath = "Assets/BubbleWashKingdom/Art/Models/Characters/SK_Mascot_model.fbx";
+
+        /// <summary>Seated, feet-first riding pose for the static model: body on its bottom, feet forward with toes up, slight lean back.</summary>
+        static void PoseSeated(Transform holder)
+        {
+            var inst = holder.GetChild(0);
+            inst.localPosition += new Vector3(0f, -0.05f, 0f);
+            foreach (var t in holder.GetComponentsInChildren<Transform>(true))
+            {
+                if (!t.name.ToLowerInvariant().StartsWith("foot")) continue;
+                var r = t.GetComponent<Renderer>();
+                Vector3 offset = holder.forward * 0.3f + holder.up * 0.05f;
+                Vector3 pivot = (r != null ? r.bounds.center : t.position) + offset;
+                t.position += offset;
+                t.RotateAround(pivot, holder.right, -55f);
+            }
+            inst.RotateAround(holder.position, holder.right, -8f);
         }
 
         static GameObject ModelPrefab(string group, string name) => AssetDatabase.LoadAssetAtPath<GameObject>($"{ModelsDir}/{group}/{name}.fbx");
@@ -482,7 +515,7 @@ namespace BubbleWash.EditorTools
             if (coupler.Count == 0) return;
             var holder = Child(env, "PipeCouplers");
             var comb = new Combiner();
-            for (float d = tunnelStart + 3f; d < portalD - 3f; d += 6f)
+            for (float d = tunnelStart + 3f; d < portalD - 3f; d += 12f)
             {
                 var f = track.Evaluate(d);
                 foreach (float sx in new[] { -lat, lat })
@@ -504,7 +537,7 @@ namespace BubbleWash.EditorTools
             var holder = Child(env, "Foam");
             var comb = new Combiner();
             int chunk = 0; float chunkStart = 0f;
-            for (float d = 0f; d < L; d += 1.3f)
+            for (float d = 0f; d < L; d += (d < tunnelStart ? 2.0f : 2.4f))
             {
                 var f = track.Evaluate(d);
                 bool hall = d < tunnelStart;
@@ -546,13 +579,13 @@ namespace BubbleWash.EditorTools
                 }
             }
             // big fluffy brush rollers high on the left (reference top-left), spinning
-            Place("Machinery", "SM_BrushRoller", 22f, -5.6f, 5.2f, new Vector3(0, 35, 10), 1.25f, 45f, Vector3.right);
+            Place("Machinery", "SM_BrushRoller", 20f, -3.6f, 3.3f, new Vector3(0, 32, 12), 1.15f, 45f, Vector3.right);
             Place("Machinery", "SM_BrushRoller", 44f, -6.2f, 6.0f, new Vector3(0, 25, 8), 1.15f, -40f, Vector3.right);
             Place("Machinery", "SM_BrushRoller", 30f, 6.8f, 7.5f, new Vector3(0, -30, -6), 1.0f, 38f, Vector3.right);
             // control console on the left, facing the slide
-            Place("Machinery", "SM_ControlPanel", 16f, -5.4f, 1.6f, new Vector3(0, 125, 0), 1.2f);
+            Place("Machinery", "SM_ControlPanel", 24f, -5.0f, 1.4f, new Vector3(0, 120, 0), 1.2f);
             // lavender pillars with gold bands on the right
-            Place("Machinery", "SM_Pillar", 19f, 4.6f, -1.5f, new Vector3(0, -90, 0), 1.0f);
+            Place("Machinery", "SM_Pillar", 19f, 3.7f, -1.0f, new Vector3(0, -90, 0), 1.0f);
             Place("Machinery", "SM_Pillar", 38f, 5.0f, -2.0f, new Vector3(0, -90, 0), 1.0f);
             Place("Machinery", "SM_Pillar", 56f, 5.4f, -2.5f, new Vector3(0, -90, 0), 1.0f);
             Place("Machinery", "SM_Pillar", 50f, -6.5f, -2.5f, new Vector3(0, 90, 0), 1.0f);
@@ -560,10 +593,10 @@ namespace BubbleWash.EditorTools
             Place("Machinery", "SM_Agitator", 34f, -11f, -4f, Vector3.zero, 1.6f, 25f, Vector3.up);
             for (int i = 0; i < 5; i++)
             {
-                Place("Machinery", "SM_GoldPipe_Straight", 10f + i * 2.05f, -6.8f, 3.4f, new Vector3(0, 180, 0), 1f);
+                Place("Machinery", "SM_GoldPipe_Straight", 12f + i * 2.05f, -4.4f, 2.5f, new Vector3(0, 180, 0), 1f);
                 Place("Machinery", "SM_GoldPipe_Straight", 28f + i * 2.05f, 7.4f, 4.2f, new Vector3(0, 180, 0), 1f);
             }
-            Place("Machinery", "SM_ValveWheel", 14f, -6.5f, 3.4f, new Vector3(0, 90, 0), 1f, 30f, Vector3.forward);
+            Place("Machinery", "SM_ValveWheel", 17f, -4.1f, 2.5f, new Vector3(0, 90, 0), 1f, 30f, Vector3.forward);
             Place("Machinery", "SM_Porthole", 40f, -9.5f, 3.5f, new Vector3(0, 70, 0), 1.6f);
         }
 
@@ -924,7 +957,7 @@ namespace BubbleWash.EditorTools
             camGo.tag = "MainCamera";
             var cam = camGo.AddComponent<Camera>();
             cam.nearClipPlane = 0.12f;
-            cam.farClipPlane = 260f;
+            cam.farClipPlane = 120f;
             cam.fieldOfView = 52f;
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.32f, 0.2f, 0.55f);
@@ -941,7 +974,7 @@ namespace BubbleWash.EditorTools
                 var go = Child(root, name);
                 var vc = go.AddComponent<CinemachineCamera>();
                 var lens = LensSettings.Default;
-                lens.FieldOfView = fov; lens.NearClipPlane = 0.12f; lens.FarClipPlane = 260f;
+                lens.FieldOfView = fov; lens.NearClipPlane = 0.12f; lens.FarClipPlane = 120f;
                 vc.Lens = lens;
                 return vc;
             }

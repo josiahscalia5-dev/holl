@@ -33,6 +33,12 @@ namespace BubbleWash.Tests
             var runner = gm.runner;
             gm.autopilot.enabled = true;
             var cam = Camera.main;
+            foreach (var canvas in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+            {
+                canvas.renderMode = RenderMode.ScreenSpaceCamera; // so the HUD appears in captured frames
+                canvas.worldCamera = cam;
+                canvas.planeDistance = 0.5f;
+            }
 
             const int w = 540, h = 960;
             var rt = new RenderTexture(w, h, 24, RenderTextureFormat.ARGB32) { antiAliasing = 2 };

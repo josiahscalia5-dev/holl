@@ -143,6 +143,14 @@ namespace BubbleWash.EditorTools
                 C(m, "_RimColor", "#E2CCFF"); F(m, "_Glow", 0.1f);
             }, (int)RenderQueue.AlphaTest);
 
+            // static (shell-less) preview variants: no clipping, no offset
+            foreach (var n in new[] { "M_Fur", "M_PomPom" })
+            {
+                var src = Get(n);
+                if (src == null) continue;
+                Mat(n + "_Static", "BWK/Fur", m => { m.CopyPropertiesFromMaterial(src); F(m, "_Thinning", 0f); F(m, "_FurLength", 0f); F(m, "_Gravity", 0f); F(m, "_StaticMode", 1f); }, (int)RenderQueue.AlphaTest);
+            }
+
             // ---------------- particles
             Particle("M_FX_Splash", $"{Tex}/T_Splash.png", additive: false, "#FFFFFF");
             Particle("M_FX_Soft", $"{Tex}/T_SoftCircle.png", additive: false, "#FFFFFF");

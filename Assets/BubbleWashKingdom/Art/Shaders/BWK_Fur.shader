@@ -22,6 +22,7 @@ Shader "BWK/Fur"
         _AO ("Root Occlusion", Range(0,1)) = 0.5
         _Glow ("Self Glow", Range(0,1)) = 0.12
         _UseVertexTint ("Use Vertex Colour Tint", Range(0,1)) = 1
+        _StaticMode ("Ignore Shell UV (static meshes)", Range(0,1)) = 0
     }
     SubShader
     {
@@ -33,7 +34,7 @@ Shader "BWK/Fur"
             half4 _RootColor, _BaseColor, _TipColor, _RimColor;
             float4 _NoiseTex_ST;
             float _Density, _FurLength, _Gravity, _Thinning, _ClumpScale, _RimPower;
-            half _ClumpAmount, _Wrap, _RimStrength, _AO, _Glow, _UseVertexTint;
+            half _ClumpAmount, _Wrap, _RimStrength, _AO, _Glow, _UseVertexTint, _StaticMode;
         CBUFFER_END
         ENDHLSL
 
@@ -77,8 +78,8 @@ Shader "BWK/Fur"
                 Varyings o = (Varyings)0;
                 UNITY_SETUP_INSTANCE_ID(i);
                 UNITY_TRANSFER_INSTANCE_ID(i, o);
-                float h = i.shell.x;
-                float mask = i.shell.y > 0.001 ? i.shell.y : 1.0;
+                float h = i.shell.x * (1.0 - _StaticMode);
+                float mask = (i.shell.y > 0.001 && _StaticMode < 0.5) ? i.shell.y : 1.0;
                 float3 nWS = TransformObjectToWorldNormal(i.normalOS);
                 float3 posWS = TransformObjectToWorld(i.positionOS.xyz);
                 posWS += nWS * (h * _FurLength * mask);
@@ -103,7 +104,7 @@ Shader "BWK/Fur"
                 if (h > 0.001) clip(strand - pow(h, 0.8) * _Thinning);
 
                 half3 tint = lerp(half3(1, 1, 1), i.color.rgb, _UseVertexTint * step(0.001, i.color.a));
-                half3 col = h < 0.5 ? lerp(_RootColor.rgb, _BaseColor.rgb, h * 2.0) : lerp(_BaseColor.rgb, _TipColor.rgb, h * 2.0 - 1.0);
+                half3 col = h < 0.5 ? lerp(_RootColor.rgb, _BaseColor.rgb, saturate(h * 2.0 + 0.55)) : lerp(_BaseColor.rgb, _TipColor.rgb, h * 2.0 - 1.0);
                 col *= tint * lerp(0.85, 1.12, strand);
 
                 half3 n = normalize(i.normalWS);

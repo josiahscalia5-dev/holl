@@ -3,12 +3,14 @@
 Builds, exports (FBX -> Assets/BubbleWashKingdom/Art/Models/Machinery/) and previews:
 
   SM_Porthole           side washing chamber set into the tunnel wall, like a washing-machine door: gold frame
-                        r 1.25-1.55 x 0.25 (chunky double bead, 12 domed bolts), hinge block (-X), handle (+X),
-                        domed glass, drum r 1.22 x 0.9 (normals inward, 3 lifters, door seal) closed by a swirl disc
+                        r 1.25-1.55 x 0.25 (chunky double bead, 12 domed bolts, 4 baroque C-scrolls), hinge block
+                        (-X), handle (+X), domed glass, drum r 1.22 x 0.9 (normals inward, 3 lifters, door seal)
+                        closed by a swirl disc (planar UVs, centre 0.5, 0.5)
                         M_Gold, M_GoldDark, M_Glass, M_DrumWall, M_ChamberSwirl       origin frame centre, faces -Y
-  SM_BrushRoller        purple core r 0.25 x 3.2 along X with end flanges + 9 tufted bristle discs r ~1.15
-                        (pink / blue / white), colour attribute Col = root shade      origin centre, rotation axis X
-                        M_MetalPurple, M_BrushPink, M_BrushBlue, M_BrushWhite
+  SM_BrushRoller        purple core r 0.25 x 3.2 along X, gold hub caps with a raised boss, purple flanges, 9 plush
+                        bristle discs r ~1.15 (pink / blue / white): lumpy round body + ~200 soft swept bristle locks
+                        each, radiating strands on the end faces, Col = purple root -> white tip
+                        M_MetalPurple, M_BrushPink, M_BrushBlue, M_BrushWhite, M_Gold   origin centre, rotation axis X
   SM_ControlPanel       rounded pink console 2.4 x 1.4 x 0.8: gold-framed screen with a raised glowing t-shirt icon,
                         3 domed buttons, gold dial, 2 status lights, lavender plinth / lid / trim
                         M_MachinePink, M_MachineLavender, M_Screen, M_ButtonCyan, M_ButtonYellow, M_ButtonPink, M_Gold
@@ -18,11 +20,12 @@ Builds, exports (FBX -> Assets/BubbleWashKingdom/Art/Models/Machinery/) and prev
   SM_GoldPipe_Elbow     90 deg, r 0.14, bend r 0.42: starts at (0,0,0) heading -Y, ends at (0,-0.5,0.5) heading +Z
                         flanges at both ends                                          M_Gold
   SM_ValveWheel         gold hand wheel r 0.3, 5 spokes, axis Y (faces -Y), stem along +Y   M_Gold, M_GoldDark
-  SM_Pillar             lavender column r 0.55 x 6.0, 3 gold bands, gold medallion with a raised paw print on -Y
-                        M_MachineLavender, M_Gold, M_GoldDark                         origin base
+  SM_Pillar             orchid column r 0.55 x 6.0, 3 gold bands, gold medallion r 0.42 with a raised paw print on -Y
+                        (wrapped onto the column)  M_MachineLavender, M_Gold, M_GoldDark   origin base
 
 Every surface is revolved or swept from analytic profiles (deterministic, seeded tufts); smooth shading with
-sharp edges above 40 degrees. Conventions (Docs/AssetSpec.md): meters, Z up, front = -Y, right side = -X.
+sharp edges above 40 degrees (the brush roller is fully smooth except its metal parts).
+Conventions (Docs/AssetSpec.md): meters, Z up, front = -Y, right side = -X.
 
 Run from the project root:
   blender --background --factory-startup --python Tools/Blender/scripts/build_machinery.py
@@ -67,13 +70,26 @@ class MB:
     """Mesh builder: shared vertices, per-corner UVs, per-face material index, optional per-vertex colour."""
 
     def __init__(self):
-        self.co, self.vc = [], []
+        self.co, self.vc, self.vn = [], [], []
         self.faces, self.fmat, self.fuv = [], [], []
 
-    def v(self, co, col=None):
+    def v(self, co, col=None, n=None):
         self.co.append(Vector(co))
         self.vc.append(col)
+        self.vn.append(n)
         return len(self.co) - 1
+
+    def apply_normals(self, obj):
+        """Write per-vertex shading normals (self.vn) as custom split normals; None keeps the automatic normal
+        (including sharp edges). Call after any edge-sharpness changes; not valid after weld."""
+        if not any(n is not None for n in self.vn):
+            return
+        me = obj.data
+        vi = [0] * len(me.loops)
+        me.loops.foreach_get("vertex_index", vi)
+        me.normals_split_custom_set([tuple(self.vn[i]) if self.vn[i] is not None else (0.0, 0.0, 0.0)
+                                     for i in vi])
+        me.update()
 
     def f(self, idx, mat, uvs, ref=None):
         """Add a face; repeated corners (poles) collapse; `ref` orients the face to agree with that direction."""
@@ -389,17 +405,17 @@ def make_materials():
         "M_Glass": mk("M_Glass", "#D9F6FF", roughness=0.04, alpha=0.22),
         "M_DrumWall": mk("M_DrumWall", "#8E5CC4", metallic=0.55, roughness=0.32),
         "M_ChamberSwirl": mk("M_ChamberSwirl", "#8FD8FF", roughness=0.2, emission="#8FD8FF", emission_strength=0.8),
-        "M_BrushPink": mk("M_BrushPink", "#E162B1", roughness=0.9),
-        "M_BrushBlue": mk("M_BrushBlue", "#6CB2D7", roughness=0.9),
+        "M_BrushPink": mk("M_BrushPink", "#E463B1", roughness=0.9),
+        "M_BrushBlue": mk("M_BrushBlue", "#79C2DF", roughness=0.9),
         "M_BrushWhite": mk("M_BrushWhite", "#F1EAF6", roughness=0.9),
         "M_MetalPurple": mk("M_MetalPurple", "#7E4FA6", metallic=0.65, roughness=0.3),
-        "M_MachinePink": mk("M_MachinePink", "#E86FB3", roughness=0.32, coat=0.6),
-        "M_MachineLavender": mk("M_MachineLavender", "#D894D8", roughness=0.35, coat=0.4),
+        "M_MachinePink": mk("M_MachinePink", "#E84AA3", roughness=0.32, coat=0.6),
+        "M_MachineLavender": mk("M_MachineLavender", "#E189C8", roughness=0.35, coat=0.4),
         "M_PlasticWhite": mk("M_PlasticWhite", "#F5EFF8", roughness=0.3, coat=0.4),
-        "M_Screen": mk("M_Screen", "#5F86B6", roughness=0.15, emission="#4F82C8", emission_strength=0.5),
-        "M_ButtonCyan": mk("M_ButtonCyan", "#63C6F0", roughness=0.15, emission="#4FD6FF", emission_strength=1.2,
+        "M_Screen": mk("M_Screen", "#5E8FC7", roughness=0.15, emission="#4F82C8", emission_strength=0.5),
+        "M_ButtonCyan": mk("M_ButtonCyan", "#5DD5E5", roughness=0.15, emission="#4FD6FF", emission_strength=1.2,
                            coat=1.0),
-        "M_ButtonYellow": mk("M_ButtonYellow", "#F5DC33", roughness=0.15, emission="#FFD21F",
+        "M_ButtonYellow": mk("M_ButtonYellow", "#F4D82B", roughness=0.15, emission="#FFD21F",
                              emission_strength=0.7, coat=1.0),
         "M_ButtonPink": mk("M_ButtonPink", "#FF62AE", roughness=0.15, emission="#FF4FA6", emission_strength=0.7,
                            coat=1.0),
@@ -482,6 +498,20 @@ def build_porthole(M):
     grip = [(0.0, -0.27), (0.03, -0.262), (0.048, -0.24), (0.055, -0.21), (0.055, 0.21), (0.048, 0.24),
             (0.03, 0.262), (0.0, 0.27)]
     lathe(mb, grip, G, 12, (1.82, 0.0, 0.0), Z_AXIS, X_AXIS)
+    # baroque C-scrolls on the frame's outer band (reference f_010.00s / f_012.50s): a pair curling away from the
+    # bottom and a crest pair at the top. Local (a = radius from the frame centre, b = along the rim * sgn).
+    scroll = [(1.47, 0.00), (1.60, 0.02), (1.72, 0.10), (1.80, 0.22), (1.80, 0.34), (1.73, 0.42), (1.64, 0.42),
+              (1.59, 0.36), (1.60, 0.29), (1.66, 0.27), (1.70, 0.31)]
+    ball = [(0.0, -0.036), (0.026, -0.026), (0.037, 0.0), (0.026, 0.026), (0.0, 0.036)]
+    for th_deg, sgn in ((-108.0, -1.0), (-72.0, 1.0), (72.0, -1.0), (108.0, 1.0)):
+        th = math.radians(th_deg)
+        er = Vector((math.cos(th), 0.0, math.sin(th)))
+        et = Vector((-math.sin(th), 0.0, math.cos(th))) * sgn
+        pts = catmull_rom([er * a + et * b + Vector((0.0, 0.06, 0.0)) for a, b in scroll], 2)
+        n = len(pts)
+        profs = [circle2(0.046 - 0.022 * i / (n - 1), 6) for i in range(n)]
+        sweep(mb, path_frames(pts, lambda i: Y_AXIS), None, G, closed_prof=True, profs=profs, swap_uv=True)
+        lathe(mb, ball, G, 8, pts[-1], (pts[-1] - pts[-2]).normalized())
     obj = mb.build("SM_Porthole", slots(M, ["M_Gold", "M_GoldDark", "M_Glass", "M_DrumWall", "M_ChamberSwirl"]))
     return obj
 
@@ -498,74 +528,167 @@ def brush_uv(p, phi_ref=None):
 
 
 def brush_col(p):
-    """Root shade (purple-grey at the core -> white at the tips) for the Col attribute."""
+    """Root shade (purple at the core, like the reference's bristle roots -> white at the tips) for Col."""
     v = min(max((math.hypot(p.y, p.z) - 0.25) / 0.95, 0.0), 1.0)
     s = v * v * (3.0 - 2.0 * v)
-    return (0.56 + 0.44 * s, 0.50 + 0.50 * s, 0.64 + 0.36 * s, 1.0)
+    return (0.55 + 0.45 * s, 0.48 + 0.52 * s, 0.72 + 0.28 * s, 1.0)
 
 
-def add_tuft(mb, base, d, side, length, w, t, curl, mat, phi_ref):
-    """Soft 4-sided bristle clump: base ring (embedded), bulging mid ring, curled tip. 12 triangles."""
+def add_tuft(mb, base, d, length, w, twist, curl, mat, phi_ref, tint=1.0, nfn=None):
+    """Soft bristle lock: 3-sided pyramid whose open base triangle is buried in the plush body; the tip is swept by
+    `curl`. `tint` varies the clump shade; `nfn(p)` gives the proxy (disc volume) shading normal, blended 80/20 with
+    the lock direction, so the fringe shades as one plush mass instead of individual spikes. 3 triangles."""
     d = d.normalized()
-    ax = d.cross(side).normalized()
-    side = ax.cross(d).normalized()
-    rings = []
-    for f, s in ((0.0, 1.0), (0.52, 0.80)):
-        c = base + d * (length * f) + curl * (f * f)
-        ring = [c + side * (w * s), c + ax * (t * s), c - side * (w * s), c - ax * (t * s)]
-        rings.append([mb.v(p, brush_col(p)) for p in ring])
+    a = d.orthogonal().normalized()
+    b = d.cross(a)
+
+    def col(p):
+        c = brush_col(p)
+        return (min(c[0] * tint, 1.0), min(c[1] * tint, 1.0), min(c[2] * tint, 1.0), 1.0)
+
+    def nrm(p):
+        return (nfn(p) * 0.8 + d * 0.2).normalized() if nfn else None
+    ring = []
+    for k in range(3):
+        ang = twist + TAU * k / 3.0
+        p = base + (a * math.cos(ang) + b * math.sin(ang)) * w
+        ring.append(mb.v(p, col(p), nrm(p)))
     tip = base + d * length + curl
-    tip_id = mb.v(tip, brush_col(tip))
-    for k in range(4):
-        k1 = (k + 1) % 4
-        q = [rings[0][k], rings[0][k1], rings[1][k1], rings[1][k]]
-        mb.f(q, mat, [brush_uv(mb.co[i], phi_ref) for i in q])
-        tri = [rings[1][k], rings[1][k1], tip_id]
-        mb.f(tri, mat, [brush_uv(mb.co[i], phi_ref) for i in tri])
+    t = mb.v(tip, col(tip), nrm(tip))
+    for k in range(3):
+        k1 = (k + 1) % 3
+        tri = [ring[k], ring[k1], t]
+        out = (mb.co[ring[k]] + mb.co[ring[k1]]) * 0.5 - base
+        mb.f(tri, mat, [brush_uv(mb.co[i], phi_ref) for i in tri], ref=out)
+
+
+BR_PITCH = 0.30
+# plush disc body (r, h along X from the disc centre): thin core, round rim r 0.965 (half width 0.13) so that
+# neighbouring discs keep a visible V notch between them, as in the reference
+BR_BODY = [(0.245, -0.08), (0.62, -0.11), (0.86, -0.13), (0.965, -0.055), (0.965, 0.055), (0.86, 0.13),
+           (0.62, 0.11), (0.245, 0.08)]
+BR_RIM_C, BR_RIM_A, BR_RIM_B = 0.80, 0.165, 0.13     # rim cross-section ellipse: centre radius, radial / axial axes
+# rim tuft rows: (angle across the rim cross-section in degrees, count, min length, max length)
+BR_ROWS = ((0.0, 44, 0.20, 0.28), (30.0, 40, 0.19, 0.26), (-30.0, 40, 0.19, 0.26), (58.0, 34, 0.15, 0.22),
+           (-58.0, 34, 0.15, 0.22))
+# radiating face strands on the two exposed end faces: (root radius, count)
+BR_FACE_RINGS = ((0.42, 22), (0.58, 30), (0.74, 38))
+
+
+def br_proxy_normal(p, xc):
+    """Shading normal of the idealised plush disc around centre xc: flat faces (+-X) inside r 0.8, a slightly
+    inflated round rim outside (ellipse 0.20 x 0.15)."""
+    x = p.x - xc
+    r = math.hypot(p.y, p.z)
+    R = Vector((0.0, p.y / r, p.z / r)) if r > 1e-6 else Y_AXIS
+    n = R * (max(r - 0.80, 0.0) / 0.04) + X_AXIS * (x / 0.0225)
+    return n.normalized() if n.length > 1e-6 else R
+
+
+def br_face_h(r):
+    """Half width of the disc body at radius r (positive side of BR_BODY)."""
+    pts = [(0.245, 0.08), (0.62, 0.11), (0.86, 0.13), (0.965, 0.055)]
+    for (r0, h0), (r1, h1) in zip(pts, pts[1:]):
+        if r <= r1:
+            t = (r - r0) / (r1 - r0)
+            return h0 + (h1 - h0) * min(max(t, 0.0), 1.0)
+    return pts[-1][1]
+
+
+def mark_sharp(obj, mat_ids, angle_deg=35.0):
+    """Hard edges only between faces of the given slots (metal parts of an otherwise fully smooth mesh)."""
+    me = obj.data
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    lim = math.radians(angle_deg)
+    for e in bm.edges:
+        fs = e.link_faces
+        if len(fs) == 2 and fs[0].material_index in mat_ids and fs[1].material_index in mat_ids:
+            if fs[0].normal.angle(fs[1].normal, 0.0) > lim:
+                e.smooth = False
+    bm.to_mesh(me)
+    bm.free()
+    me.update()
 
 
 def build_brush_roller(M):
+    """Car-wash style roller as in f_000.00s-f_002.00s: gold hub caps with a raised boss, purple metal flanges, and
+    9 plush bristle discs (pink / blue / white) whose purple roots fade to bright tips (Col)."""
     mb = MB()
     rng = random.Random(20261125)
-    MP, PINK, BLUE, WHITE = range(4)
-    # core (h = x): axle stubs, end flanges r 0.455 (the lavender-purple ring of the reference), shaft r 0.25
-    half = [(0.0, -1.6), (0.15, -1.6), (0.18, -1.575), (0.18, -1.55), (0.43, -1.545), (0.455, -1.52),
-            (0.455, -1.49), (0.43, -1.465), (0.25, -1.46)]
+    MP, PINK, BLUE, WHITE, GO = range(5)
+    # core (h = x), mirrored: gold cap (boss, face ring, rounded edge, side) -> purple flange r 0.47 -> shaft r 0.25
+    cap = [(0.0, -1.600), (0.13, -1.596), (0.16, -1.572), (0.245, -1.565), (0.288, -1.535), (0.292, -1.432)]
+    flange = [(0.43, -1.426), (0.468, -1.404), (0.452, -1.362), (0.25, -1.352)]
+    half = cap + flange
     core = half + [(r, -h) for r, h in reversed(half)]
-    lathe(mb, core, MP, 20, (0.0, 0.0, 0.0), X_AXIS, Y_AXIS, v_vals=[s / V_TILE for s in arclen(core)])
-    # 9 discs: plush lens body + 34 rim tufts (alternating splay) + 2 x 12 shoulder tufts
-    body = [(0.245, -0.12), (0.55, -0.155), (0.80, -0.12), (0.93, 0.0), (0.80, 0.12), (0.55, 0.155), (0.245, 0.12)]
-    pitch = 2.6 / 8.0
+    n_cap = len(cap) - 1
+    mats = [GO] * n_cap + [MP] * (len(core) - 1 - 2 * n_cap) + [GO] * n_cap
+    lathe(mb, core, MP, 18, (0.0, 0.0, 0.0), X_AXIS, Y_AXIS, mats=mats, v_vals=[s / V_TILE for s in arclen(core)])
+
+    def lump(phi, ph):
+        return (0.025 * math.sin(3.0 * phi + ph[0]) + 0.020 * math.sin(5.0 * phi + ph[1])
+                + 0.012 * math.sin(8.0 * phi + ph[2]))
+
+    def wgt(r):
+        return min(max((r - 0.6) / 0.3, 0.0), 1.0)
+
     for k in range(9):
-        xc = -1.3 + pitch * k
+        xc = -1.2 + BR_PITCH * k
         mat = (PINK, BLUE, WHITE)[k % 3]
         phase = rng.uniform(0.0, TAU)
-        lathe(mb, body, mat, 24, (xc, 0.0, 0.0), X_AXIS, Y_AXIS, phi0=phase, uv_fn=brush_uv, col_fn=brush_col)
-        n_rim = 34
-        for i in range(n_rim):
-            phi = phase + TAU * (i + rng.uniform(-0.3, 0.3)) / n_rim
-            Rv = Vector((0.0, math.cos(phi), math.sin(phi)))
-            Tv = Vector((0.0, -math.sin(phi), math.cos(phi)))
-            a = (0.055 if i % 2 == 0 else -0.055) + rng.uniform(-0.015, 0.015)
-            r0 = rng.uniform(0.64, 0.70)
-            tilt = (a / 0.055) * 0.10 + rng.uniform(-0.06, 0.06)
-            d = (Rv + X_AXIS * tilt + Tv * (0.10 + rng.uniform(-0.05, 0.05))).normalized()
-            length = (rng.uniform(1.05, 1.20) - r0) / d.dot(Rv)
-            curl = Tv * rng.uniform(0.03, 0.07) + X_AXIS * (a * 0.4)
-            add_tuft(mb, Vector((xc + a, 0.0, 0.0)) + Rv * r0, d, Tv, length, rng.uniform(0.085, 0.10),
-                     rng.uniform(0.058, 0.07), curl, mat, phi)
-        for sgn in (-1.0, 1.0):
-            for i in range(12):
-                phi = phase + TAU * (i + 0.5 + rng.uniform(-0.25, 0.25)) / 12
+        ph = (rng.uniform(0.0, TAU), rng.uniform(0.0, TAU), rng.uniform(0.0, TAU))
+
+        def nfn(p, xc=xc):
+            return br_proxy_normal(p, xc)
+        i0 = len(mb.co)
+        lathe(mb, BR_BODY, mat, 24, (xc, 0.0, 0.0), X_AXIS, Y_AXIS, phi0=phase, uv_fn=brush_uv, col_fn=brush_col,
+              r_mod=lambda phi, pi, ph=ph: 1.0 + lump(phi, ph) * wgt(BR_BODY[pi][0]))
+        for i in range(i0, len(mb.co)):
+            mb.vn[i] = nfn(mb.co[i])
+        # rim: 5 staggered rows of soft locks, roots buried 7 cm, fanning gently over the round rim; every lock
+        # trails in the spin direction (combed, like a turning car-wash brush) instead of standing up like a spike
+        for beta_deg, n, lmin, lmax in BR_ROWS:
+            off = rng.uniform(0.0, 1.0)
+            for i in range(n):
+                phi = phase + TAU * (i + off + rng.uniform(-0.3, 0.3)) / n
+                beta = math.radians(beta_deg + rng.uniform(-7.0, 7.0))
                 Rv = Vector((0.0, math.cos(phi), math.sin(phi)))
                 Tv = Vector((0.0, -math.sin(phi), math.cos(phi)))
-                tilt = math.radians(rng.uniform(16.0, 26.0))
-                d = (Rv * math.cos(tilt) + X_AXIS * (sgn * math.sin(tilt))
-                     + Tv * (0.08 + rng.uniform(-0.04, 0.04))).normalized()
-                add_tuft(mb, Vector((xc + sgn * 0.08, 0.0, 0.0)) + Rv * rng.uniform(0.48, 0.58), d, Tv,
-                         rng.uniform(0.27, 0.34), 0.09, 0.062, Tv * 0.04 + X_AXIS * (sgn * 0.02), mat, phi)
-    return mb.build("SM_BrushRoller", slots(M, ["M_MetalPurple", "M_BrushPink", "M_BrushBlue", "M_BrushWhite"]),
-                    with_col=True)
+                rs = BR_RIM_C + BR_RIM_A * math.cos(beta)
+                hs = BR_RIM_B * math.sin(beta)
+                rs *= 1.0 + lump(phi, ph) * wgt(rs)
+                nr, nh = math.cos(beta) / BR_RIM_A, math.sin(beta) / BR_RIM_B
+                ln = math.hypot(nr, nh)
+                nr, nh = nr / ln, nh / ln
+                emb = 0.07
+                base = Vector((xc + hs - nh * emb, 0.0, 0.0)) + Rv * (rs - nr * emb)
+                d = (Rv * (0.6 * nr + 0.4) + X_AXIS * (0.35 * nh)).normalized()
+                d = (d + Tv * rng.uniform(0.22, 0.42) + X_AXIS * rng.uniform(-0.05, 0.05)).normalized()
+                curl = Tv * rng.uniform(0.04, 0.09) + X_AXIS * (nh * 0.025)
+                add_tuft(mb, base, d, rng.uniform(lmin, lmax), rng.uniform(0.055, 0.07), rng.uniform(0.0, TAU),
+                         curl, mat, phi, tint=rng.uniform(0.84, 1.04), nfn=nfn)
+        if k not in (0, 8):
+            continue
+        # exposed end face: strands radiate from the hub and lie over the face like shingles (reference look)
+        sgn = -1.0 if k == 0 else 1.0
+        for rb, n in BR_FACE_RINGS:
+            off = rng.uniform(0.0, 1.0)
+            hf = br_face_h(rb)
+            for i in range(n):
+                phi = phase + TAU * (i + off + rng.uniform(-0.3, 0.3)) / n
+                Rv = Vector((0.0, math.cos(phi), math.sin(phi)))
+                Tv = Vector((0.0, -math.sin(phi), math.cos(phi)))
+                base = Vector((xc + sgn * (hf - 0.05), 0.0, 0.0)) + Rv * rb
+                d = (Rv + X_AXIS * (sgn * 0.35) + Tv * rng.uniform(0.0, 0.16)).normalized()
+                add_tuft(mb, base, d, rng.uniform(0.26, 0.36), 0.042, rng.uniform(0.0, TAU),
+                         Tv * rng.uniform(0.02, 0.05) + X_AXIS * (sgn * 0.02), mat, phi,
+                         tint=rng.uniform(0.80, 1.02), nfn=nfn)
+    obj = mb.build("SM_BrushRoller", slots(M, ["M_MetalPurple", "M_BrushPink", "M_BrushBlue", "M_BrushWhite",
+                                               "M_Gold"]), sharp_deg=None, with_col=True)
+    mark_sharp(obj, {MP, GO})
+    mb.apply_normals(obj)                         # metal keeps its auto normals + sharp edges, bristles get proxies
+    return obj
 
 
 # ================================================================== 3. control panel
@@ -597,9 +720,11 @@ def build_control_panel(M):
     for i in range(len(ids)):
         tri = [c, ids[i], ids[(i + 1) % len(ids)]]
         mb.f(tri, SCR, [scr_uv(mb.co[q]) for q in tri], ref=FRONT)
-    shirt = [(0.0, 0.30), (0.13, 0.42), (0.30, 0.42), (0.52, 0.20), (0.40, 0.06), (0.28, 0.16), (0.28, -0.45),
-             (-0.28, -0.45), (-0.28, 0.16), (-0.40, 0.06), (-0.52, 0.20), (-0.30, 0.42), (-0.13, 0.42)]
-    pts2 = chaikin([Vector(p) for p in shirt], 2)
+    # classic tee outline (neck scoop, angled sleeves, straight body, near-square hem) like the reference icon
+    shirt = [(0.0, 0.30), (0.11, 0.41), (0.25, 0.45), (0.56, 0.25), (0.44, 0.03), (0.31, 0.12), (0.31, -0.40),
+             (0.31, -0.46), (0.25, -0.46), (-0.25, -0.46), (-0.31, -0.46), (-0.31, -0.40), (-0.31, 0.12),
+             (-0.44, 0.03), (-0.56, 0.25), (-0.25, 0.45), (-0.11, 0.41)]
+    pts2 = chaikin([Vector(p) for p in shirt], 1)
     pts3 = [Vector((sx + p.x * 0.42, yf - 0.016, sz + 0.005 + p.y * 0.42)) for p in pts2]
     sweep(mb, path_frames(pts3, lambda i: FRONT, closed=True), circle2(0.016, 6), CY, closed_path=True,
           closed_prof=True, swap_uv=True)
@@ -613,10 +738,10 @@ def build_control_panel(M):
     # gold dial: lavender base plate, knurled knob (12 grip flutes), pointer bar
     cc = (0.55, yf, 0.98)
     lathe(mb, [(0.20, -0.01), (0.20, 0.008), (0.19, 0.016), (0.0, 0.016)], LAV, 32, cc, FRONT, X_AXIS)
-    knob = [(0.135, 0.01), (0.135, 0.075), (0.128, 0.092), (0.11, 0.10), (0.0, 0.10)]
+    knob = [(0.135, 0.01), (0.135, 0.07), (0.125, 0.09), (0.10, 0.105), (0.05, 0.115), (0.0, 0.118)]
     lathe(mb, knob, GO, 48, cc, FRONT, X_AXIS,
           r_mod=lambda phi, i: (1.0 - 0.05 * (0.5 + 0.5 * math.cos(12.0 * phi))) if i < 3 else 1.0)
-    rounded_box(mb, (0.55, yf - 0.112, 0.98 + 0.055), (0.035, 0.03, 0.10), 0.012, 2, GO)
+    rounded_box(mb, (0.55, yf - 0.12, 0.98 + 0.055), (0.035, 0.03, 0.10), 0.012, 2, GO)
     # two little status lights beside the dial
     led_bez = [(0.055, -0.01), (0.055, 0.008), (0.048, 0.016), (0.04, 0.012), (0.038, -0.005)]
     led = [(0.04, -0.005), (0.04, 0.012), (0.03, 0.03), (0.015, 0.038), (0.0, 0.04)]
@@ -639,7 +764,8 @@ def build_agitator(M):
     picks = [0, 24, 36, 48, 60, 72, 84, 96, 120, 144, 168, 192, 216, 240]
     prof = [(0.0, 0.0), (0.92, 0.0), (0.95, 0.022)] + [(fine[i].x, fine[i].y) for i in picks] + [(0.27, 2.672),
                                                                                                  (0.0, 2.68)]
-    mats = [LAV if 0.5 * (a[1] + b[1]) < 0.47 else WH for a, b in zip(prof, prof[1:])]
+    # lavender flared skirt and a lavender collar under the gold cap, white column between
+    mats = [LAV if (0.5 * (a[1] + b[1]) < 0.47 or 0.5 * (a[1] + b[1]) > 2.45) else WH for a, b in zip(prof, prof[1:])]
     lathe(mb, prof, WH, 32, (0.0, 0.0, 0.0), Z_AXIS, X_AXIS, mats=mats)
     # fins follow the smooth body surface: meridian arc length table
     acc = [0.0]
@@ -657,7 +783,7 @@ def build_agitator(M):
     def m_at_z(z):
         i = next(k for k, p in enumerate(fine) if p.y >= z)
         return acc[i]
-    m0, m1 = m_at_z(0.10), m_at_z(2.36)
+    m0, m1 = m_at_z(0.34), m_at_z(2.30)
     nseg = 22
     for k in range(4):
         th0 = math.radians(45.0 + 90.0 * k)
@@ -668,14 +794,17 @@ def build_agitator(M):
             th = th0 + math.radians(80.0) * s
             Ps.append(Vector((R * math.cos(th), R * math.sin(th), z)))
             Ns.append(Vector((tz * math.cos(th), tz * math.sin(th), -tr)).normalized())
-            if s < 0.12:
-                p = 0.12 + 0.08 * (s / 0.12)
+            # chunky toy-like vane hugging the column: rounded D section that rises from the skirt top with a
+            # sloped leading edge, is tallest just above the skirt, then tapers into the column
+            if s < 0.15:
+                t = s / 0.15
+                p = 0.07 + 0.15 * t * t * (3.0 - 2.0 * t)
             else:
-                q = (s - 0.12) / 0.88
-                p = 0.20 * (1.0 - q) ** 1.25 - 0.012 * q ** 4
-            w = 0.05 - 0.022 * s
-            profs.append([(w, -0.02), (w, 0.55 * p), (0.6 * w, 0.92 * p), (0.0, p), (-0.6 * w, 0.92 * p),
-                          (-w, 0.55 * p), (-w, -0.02)])
+                q = min((s - 0.15) / 0.85, 1.0)
+                p = 0.22 * max(1.0 - q, 0.0) ** 1.25 + 0.012 * (1.0 - q) - 0.02 * q ** 4
+            w = 0.10 - 0.05 * s
+            profs.append([(w, -0.03), (w, 0.40 * p), (0.92 * w, 0.68 * p), (0.70 * w, 0.88 * p), (0.0, p),
+                          (-0.70 * w, 0.88 * p), (-0.92 * w, 0.68 * p), (-w, 0.40 * p), (-w, -0.03)])
         frames = []
         for i in range(nseg + 1):
             T = (Ps[min(i + 1, nseg)] - Ps[max(i - 1, 0)]).normalized()
@@ -689,10 +818,9 @@ def build_agitator(M):
 
 
 # ================================================================== 5. golden plumbing
-FLANGE_CAP = [(0.0, 0.0), (0.20, 0.0), (0.22, 0.012), (0.22, 0.046), (0.205, 0.058), (0.16, 0.062), (0.146, 0.068),
-              (0.14, 0.08)]
-PIPE_R, PIPE_SIDES = 0.14, 16
-FLANGE_BOLT = [(0.024, -0.004), (0.024, 0.010), (0.018, 0.019), (0.0, 0.022)]
+FLANGE_CAP = [(0.0, 0.0), (0.205, 0.0), (0.22, 0.015), (0.22, 0.045), (0.20, 0.06), (0.15, 0.064), (0.14, 0.08)]
+PIPE_R, PIPE_SIDES = 0.14, 14                       # pipe pieces stay <= 800 tris (spec pipe module budget)
+FLANGE_BOLT = [(0.024, -0.004), (0.024, 0.012), (0.0, 0.021)]
 
 
 def flange_bolts(mb, origin, axis, e1, mat):
@@ -707,7 +835,7 @@ def flange_bolts(mb, origin, axis, e1, mat):
 def build_pipe_straight(M):
     mb = MB()
     length = 2.0
-    mid = [(PIPE_R, 0.08 + (length - 0.16) * k / 8) for k in range(1, 8)]
+    mid = [(PIPE_R, 0.08 + (length - 0.16) * k / 6) for k in range(1, 6)]
     prof = FLANGE_CAP + mid + [(r, length - h) for r, h in reversed(FLANGE_CAP)]
     lathe(mb, prof, 0, PIPE_SIDES, (0.0, 0.0, 0.0), FRONT, X_AXIS, v_vals=[s / V_TILE for s in arclen(prof)])
     flange_bolts(mb, (0.0, 0.0, 0.0), FRONT, X_AXIS, 0)
@@ -715,7 +843,7 @@ def build_pipe_straight(M):
     return mb.build("SM_GoldPipe_Straight", slots(M, ["M_Gold"]))
 
 
-ELBOW_RB, ELBOW_LS, ELBOW_SEGS = 0.42, 0.08, 12
+ELBOW_RB, ELBOW_LS, ELBOW_SEGS = 0.42, 0.08, 9
 
 
 def build_pipe_elbow(M):
@@ -740,18 +868,18 @@ def build_pipe_elbow(M):
 def build_valve_wheel(M):
     mb = MB()
     G, GD = 0, 1
-    rim = [(0.265 + 0.036 * math.cos(TAU * k / 10), 0.036 * math.sin(TAU * k / 10)) for k in range(10)]
-    lathe(mb, rim, G, 36, (0.0, 0.0, 0.0), FRONT, X_AXIS, closed=True)
+    rim = [(0.265 + 0.036 * math.cos(TAU * k / 8), 0.036 * math.sin(TAU * k / 8)) for k in range(8)]
+    lathe(mb, rim, G, 28, (0.0, 0.0, 0.0), FRONT, X_AXIS, closed=True)
     hub = [(0.0, -0.055), (0.06, -0.055), (0.072, -0.043), (0.072, 0.04), (0.06, 0.055), (0.0, 0.055)]
-    lathe(mb, hub, G, 24, (0.0, 0.0, 0.0), FRONT, X_AXIS)
+    lathe(mb, hub, G, 16, (0.0, 0.0, 0.0), FRONT, X_AXIS)
     lathe(mb, [(0.04, 0.045), (0.042, 0.072), (0.034, 0.083), (0.0, 0.086)], GD, 6, (0.0, 0.0, 0.0), FRONT, X_AXIS,
           phi0=math.radians(30.0))
-    lathe(mb, [(0.034, 0.03), (0.034, 0.27), (0.03, 0.285), (0.0, 0.29)], GD, 12, (0.0, 0.0, 0.0), Y_AXIS, X_AXIS)
+    lathe(mb, [(0.034, 0.03), (0.034, 0.27), (0.03, 0.285), (0.0, 0.29)], GD, 8, (0.0, 0.0, 0.0), Y_AXIS, X_AXIS)
     for k in range(5):
         ang = math.radians(90.0 + 72.0 * k)
         d = Vector((math.cos(ang), 0.0, math.sin(ang)))
         pts = [d * 0.05, d * 0.16, d * 0.25]
-        profs = [circle2(r, 8) for r in (0.026, 0.020, 0.024)]
+        profs = [circle2(r, 6) for r in (0.026, 0.020, 0.024)]
         sweep(mb, path_frames(pts, lambda i: Y_AXIS), None, G, closed_prof=True, profs=profs, swap_uv=True)
     return mb.build("SM_ValveWheel", slots(M, ["M_Gold", "M_GoldDark"]))
 
@@ -761,29 +889,38 @@ def build_pillar(M):
     mb = MB()
     LAV, G, GD = range(3)
     shaft = [(0.0, 0.0), (0.53, 0.0), (0.55, 0.02), (0.55, 5.98), (0.53, 6.0), (0.0, 6.0)]
-    lathe(mb, shaft, LAV, 40, (0.0, 0.0, 0.0), Z_AXIS, X_AXIS, v_vals=[s / V_TILE for s in arclen(shaft)])
-    band = [(0.53, -0.13), (0.605, -0.13), (0.632, -0.105), (0.64, -0.06), (0.62, -0.025), (0.62, 0.025),
-            (0.64, 0.06), (0.632, 0.105), (0.605, 0.13), (0.53, 0.13)]
+    lathe(mb, shaft, LAV, 32, (0.0, 0.0, 0.0), Z_AXIS, X_AXIS, v_vals=[s / V_TILE for s in arclen(shaft)])
+    band = [(0.53, -0.13), (0.61, -0.13), (0.638, -0.095), (0.62, -0.035), (0.62, 0.035), (0.638, 0.095),
+            (0.61, 0.13), (0.53, 0.13)]
     for zc in (0.135, 4.0, 5.62):
-        lathe(mb, [(r, zc + h) for r, h in band], G, 40, (0.0, 0.0, 0.0), Z_AXIS, X_AXIS)
-    # medallion on the front (-Y): gold rim, recessed dark-gold field, raised gold paw print
-    mo = Vector((0.0, -0.60, 4.81))
-    med = [(0.0, -0.16), (0.30, -0.16), (0.30, 0.0), (0.296, 0.024), (0.278, 0.041), (0.252, 0.046), (0.232, 0.036),
-           (0.226, 0.014), (0.214, 0.006), (0.0, 0.006)]
-    lathe(mb, med, G, 40, mo, FRONT, X_AXIS, mats=[G, G, G, G, G, G, G, GD, GD])
-    pad = chaikin([Vector(p) for p in ((0.0, 0.062), (0.068, 0.042), (0.104, -0.008), (0.092, -0.052),
-                                        (0.045, -0.072), (0.0, -0.062), (-0.045, -0.072), (-0.092, -0.052),
-                                        (-0.104, -0.008), (-0.068, 0.042))], 2)
-    pad = [(p.x, p.y - 0.040) for p in pad]
-    raised_shape(mb, pad, mo, FRONT, X_AXIS, G, 0.0, 0.024, 0.034, 0.037, 0.009)
+        lathe(mb, [(r, zc + h) for r, h in band], G, 32, (0.0, 0.0, 0.0), Z_AXIS, X_AXIS)
+    # medallion on the front (-Y), as big as in the reference (r 0.42): gold rim, recessed dark-gold field, raised
+    # gold paw print. Built flat on the plane y = -R0, then wrapped onto a cylinder of radius R0 so it hugs the column.
+    R0, S, SH = 0.585, 1.4, 1.25
+    i0 = len(mb.co)
+    mo = Vector((0.0, -R0, 4.81))
+    med = [(0.0, -0.20), (0.30 * S, -0.20)] + [(r * S, h * SH) for r, h in (
+        (0.30, 0.0), (0.296, 0.024), (0.278, 0.041), (0.252, 0.046), (0.232, 0.036), (0.226, 0.014), (0.214, 0.006),
+        (0.16, 0.006), (0.105, 0.006), (0.05, 0.006))] + [(0.0, 0.006 * SH)]
+    lathe(mb, med, G, 40, mo, FRONT, X_AXIS, mats=[G] * 8 + [GD] * 4)
+    pad = chaikin([Vector(p) * S for p in ((0.0, 0.062), (0.068, 0.042), (0.104, -0.008), (0.092, -0.052),
+                                            (0.045, -0.072), (0.0, -0.062), (-0.045, -0.072), (-0.092, -0.052),
+                                            (-0.104, -0.008), (-0.068, 0.042))], 2)
+    pad = [(p.x, p.y - 0.040 * S) for p in pad]
+    raised_shape(mb, pad, mo, FRONT, X_AXIS, G, 0.0, 0.03, 0.042, 0.046, 0.012)
     for (tx, tz, rot) in ((-0.118, 0.045, 25.0), (-0.044, 0.095, 8.0), (0.044, 0.095, -8.0), (0.118, 0.045, -25.0)):
         cr, sr = math.cos(math.radians(rot)), math.sin(math.radians(rot))
         toe = []
         for k in range(16):
             a = TAU * k / 16
-            ex, ez = 0.032 * math.cos(a), 0.041 * math.sin(a)
-            toe.append((tx + ex * cr - ez * sr, tz + ex * sr + ez * cr))
-        raised_shape(mb, toe, mo, FRONT, X_AXIS, G, 0.0, 0.024, 0.034, 0.037, 0.008)
+            ex, ez = 0.032 * S * math.cos(a), 0.041 * S * math.sin(a)
+            toe.append((tx * S + ex * cr - ez * sr, tz * S + ex * sr + ez * cr))
+        raised_shape(mb, toe, mo, FRONT, X_AXIS, G, 0.0, 0.03, 0.042, 0.046, 0.011)
+    for i in range(i0, len(mb.co)):
+        p = mb.co[i]
+        rr = R0 + (mo.y - p.y)                     # distance in front of the medallion plane -> radius
+        ang = p.x / R0
+        mb.co[i] = Vector((rr * math.sin(ang), -rr * math.cos(ang), p.z))
     return mb.build("SM_Pillar", slots(M, ["M_MachineLavender", "M_Gold", "M_GoldDark"]))
 
 
@@ -876,6 +1013,7 @@ def preview_materials(M):
     for attr, val in (("use_transparent_shadow", True), ("use_transparency_overlap", False)):
         if hasattr(glass, attr):
             setattr(glass, attr, val)
+    bsdf(glass).inputs["Alpha"].default_value = 0.12          # the chamber behind the domed glass must read
     # drum wall: staggered perforation grid (56 per u, 9 per v unit, the Track group's tunnel density)
     nt = M["M_DrumWall"].node_tree
     u, v = uv_xy(nt)
@@ -894,8 +1032,8 @@ def preview_materials(M):
     theta = node_math(nt, 'ARCTAN2', y, x)
     phase = node_math(nt, 'ADD', node_math(nt, 'MULTIPLY', theta, 1.0 / TAU), node_math(nt, 'MULTIPLY', rho, 1.5))
     fac = node_math(nt, 'FRACT', node_math(nt, 'MULTIPLY', phase, 2.0))
-    col = ramp(nt, fac, [(0.0, "#FF5C8A"), (0.14, "#FF9E45"), (0.28, "#FFE45C"), (0.42, "#7EE87A"),
-                         (0.57, "#4FD6FF"), (0.71, "#5B7CFF"), (0.85, "#B26BFF"), (1.0, "#FF5C8A")])
+    col = ramp(nt, fac, [(0.0, "#FF4F8B"), (0.14, "#FF9A3C"), (0.28, "#FFE24D"), (0.42, "#63E070"),
+                         (0.57, "#38C6FF"), (0.71, "#5A6BFF"), (0.85, "#B05CFF"), (1.0, "#FF4F8B")])
     foam = ramp(nt, rho, [(0.82, "#000000"), (0.97, "#FFFFFF")])
     sep = nt.nodes.new("ShaderNodeSeparateColor")
     nt.links.new(foam, sep.inputs[0])
@@ -912,9 +1050,13 @@ def preview_materials(M):
     nt.links.new(col, add.inputs[0])
     nt.links.new(sc.outputs[0], add.inputs[1])
     b = bsdf(M["M_ChamberSwirl"])
-    nt.links.new(add.outputs[0], b.inputs["Base Color"])
+    dim = nt.nodes.new("ShaderNodeVectorMath")             # mostly self-lit so the rainbow stays saturated
+    dim.operation = 'SCALE'
+    dim.inputs["Scale"].default_value = 0.25
+    nt.links.new(add.outputs[0], dim.inputs[0])
+    nt.links.new(dim.outputs[0], b.inputs["Base Color"])
     nt.links.new(add.outputs[0], b.inputs["Emission Color"])
-    b.inputs["Emission Strength"].default_value = 1.1
+    b.inputs["Emission Strength"].default_value = 0.95
     # brushes: base colour x Col root shade, plus sheen for a fuzzy rim
     for name in ("M_BrushPink", "M_BrushBlue", "M_BrushWhite"):
         nt = M[name].node_tree
@@ -927,8 +1069,10 @@ def preview_materials(M):
         nt.links.new(attr.outputs["Color"], mul.inputs[0])
         nt.links.new(mul.outputs[0], b.inputs["Base Color"])
         if "Sheen Weight" in b.inputs:
-            b.inputs["Sheen Weight"].default_value = 0.8
-            b.inputs["Sheen Roughness"].default_value = 0.6
+            b.inputs["Sheen Weight"].default_value = 0.35
+            b.inputs["Sheen Roughness"].default_value = 0.5
+            if "Sheen Tint" in b.inputs:
+                b.inputs["Sheen Tint"].default_value = tuple(b.inputs["Base Color"].default_value)
 
 
 def preview_world():
@@ -1067,31 +1211,31 @@ def render_previews(A):
     # (a) set: control panel + plumbing, brush roller, porthole, agitator, pillar
     ps = new_collection("PV_Set")
     make_floor(ps)
-    inst(A["SM_ControlPanel"], ps, (-6.15, -0.5, 0.0), (0.0, 0.0, math.radians(12.0)))
-    px, py = -7.65, 0.55
+    inst(A["SM_ControlPanel"], ps, (-5.55, -0.6, 0.0), (0.0, 0.0, math.radians(14.0)))
+    px, py = -6.95, 0.6
     inst(A["SM_GoldPipe_Straight"], ps, matrix=rot_matrix(((1, 0, 0), (0, 0, 1), (0, -1, 0)), (px, py, 0.0)))
     inst(A["SM_GoldPipe_Elbow"], ps, matrix=rot_matrix(((0, -1, 0), (0, 0, -1), (1, 0, 0)), (px, py, 2.0)))
     inst(A["SM_GoldPipe_Straight"], ps, (px + 0.5, py, 2.5), (0.0, 0.0, math.radians(90.0)))
     inst(A["SM_ValveWheel"], ps, (px, py - 0.40, 1.7))
-    inst(A["SM_BrushRoller"], ps, (-3.35, 1.3, 4.45), (0.0, 0.0, math.radians(28.0)))
-    inst(A["SM_Porthole"], ps, (0.05, 0.0, 1.75))
-    inst(A["SM_Agitator"], ps, (3.35, 0.4, 0.0), (0.0, 0.0, math.radians(20.0)))
-    inst(A["SM_Pillar"], ps, (6.05, 1.0, 0.0), (0.0, 0.0, math.radians(-20.0)))
-    add_light(ps, "PV_ChamberGlow", 'POINT', 60.0, "#CFE6FF", (0.05, 0.55, 1.75), size=0.3, shadow=False, spec=0.2)
-    env.inputs["Strength"].default_value = 0.8
+    inst(A["SM_BrushRoller"], ps, (-2.75, 1.2, 4.15), (0.0, 0.0, math.radians(30.0)))
+    inst(A["SM_Porthole"], ps, (0.55, 0.2, 1.95))
+    inst(A["SM_Agitator"], ps, (3.45, 0.0, 0.0), (0.0, 0.0, math.radians(20.0)))
+    inst(A["SM_Pillar"], ps, (5.75, 0.9, 0.0), (0.0, 0.0, math.radians(-20.0)))
+    add_light(ps, "PV_ChamberGlow", 'POINT', 25.0, "#CFE6FF", (0.55, 0.35, 1.95), size=0.5, shadow=False, spec=0.1)
+    env.inputs["Strength"].default_value = 0.7
     show_only(ps)
-    render_view(C.preview_path("Machinery_set"), (-0.75, -16.8, 3.6), (-0.75, 0.6, 2.75), 34.0, (1280, 720),
-                light_target=(-0.75, 0.6, 2.5), light_scale=3.2)
+    render_view(C.preview_path("Machinery_set"), (-0.55, -14.4, 3.5), (-0.55, 0.6, 2.75), 34.0, (1280, 720),
+                light_target=(-0.55, 0.6, 2.5), light_scale=3.0, energy=0.72)
 
     # (b) porthole close-up in a wall section, seen slightly from the right so the chamber depth shows
     pp = new_collection("PV_Porthole")
     inst(A["SM_Porthole"], pp)
     make_wall(pp)
-    add_light(pp, "PV_ChamberGlow", 'POINT', 30.0, "#CFE6FF", (0.0, 0.5, 0.0), size=0.3, shadow=False, spec=0.2)
-    env.inputs["Strength"].default_value = 0.9
+    add_light(pp, "PV_ChamberGlow", 'POINT', 10.0, "#CFE6FF", (0.0, 0.2, 0.0), size=0.5, shadow=False, spec=0.1)
+    env.inputs["Strength"].default_value = 0.8
     show_only(pp)
-    render_view(C.preview_path("Machinery_porthole"), (1.45, -5.3, 0.85), (-0.05, 0.1, 0.0), 45.0, (1000, 1000),
-                light_scale=1.3)
+    render_view(C.preview_path("Machinery_porthole"), (1.6, -6.0, 0.9), (-0.05, 0.1, 0.0), 45.0, (1000, 1000),
+                light_scale=1.3, energy=0.8)
 
     if not REVIEW_DIR:
         return
@@ -1100,19 +1244,21 @@ def render_previews(A):
     inst(A["SM_BrushRoller"], pr, (0.0, 0.0, 0.0), (0.0, 0.0, math.radians(28.0)))
     show_only(pr)
     render_view(os.path.join(REVIEW_DIR, "rv_roller.png"), (-1.4, -5.2, -1.2), (0.0, 0.0, 0.0), 40.0, (1000, 1000),
-                light_scale=1.4)
+                light_scale=1.4, energy=0.75)
+    render_view(os.path.join(REVIEW_DIR, "rv_roller_side.png"), (0.3, -6.5, 0.4), (0.3, 0.0, 0.0), 40.0,
+                (1000, 1000), light_scale=1.4, energy=0.75)
     pc = new_collection("PV_Review_Panel")
     inst(A["SM_ControlPanel"], pc)
     show_only(pc)
     render_view(os.path.join(REVIEW_DIR, "rv_panel.png"), (1.1, -4.2, 1.7), (0.0, 0.0, 0.75), 40.0, (1000, 1000),
-                light_scale=1.3)
+                light_scale=1.3, energy=0.75)
     pa = new_collection("PV_Review_AgPi")
     make_floor(pa)
     inst(A["SM_Agitator"], pa, (-1.0, 0.0, 0.0), (0.0, 0.0, math.radians(20.0)))
     inst(A["SM_Pillar"], pa, (1.2, 0.3, 0.0))
     show_only(pa)
     render_view(os.path.join(REVIEW_DIR, "rv_agitator_pillar.png"), (0.3, -8.5, 3.2), (0.1, 0.0, 2.6), 40.0,
-                (1000, 1000), light_scale=2.2)
+                (1000, 1000), light_scale=2.2, energy=0.72)
     pm = new_collection("PV_Review_Med")
     inst(A["SM_Pillar"], pm)
     show_only(pm)
@@ -1147,6 +1293,10 @@ def verify_fbx(names):
                 [a.name for a in me.color_attributes], bb))
         for o in new:
             bpy.data.objects.remove(o, do_unlink=True)
+        # purge the imported meshes / materials so the next file's slot names are not suffixed (.001)
+        for coll in (bpy.data.meshes, bpy.data.materials):
+            for blk in [b for b in coll if b.users == 0]:
+                coll.remove(blk)
 
 
 # ================================================================== main

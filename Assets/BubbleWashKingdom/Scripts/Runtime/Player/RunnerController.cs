@@ -246,7 +246,7 @@ namespace BubbleWash
                 float dt = Application.isPlaying ? Time.deltaTime : 1f;
                 float targetLean = -Steer * maxLean - CurveSteer * curveLean;
                 lean = Mathf.Lerp(lean, targetLean, 1f - Mathf.Exp(-leanResponse * dt));
-                float targetPitch = Boosting ? 10f : Mathf.Clamp(-f.slope * 0.35f, -6f, 10f);
+                float targetPitch = Boosting ? -6f : Mathf.Clamp(f.slope * 0.4f, -10f, 6f); // seated rider leans back downhill
                 pitch = Mathf.Lerp(pitch, targetPitch, 1f - Mathf.Exp(-5f * dt));
                 visual.localRotation = Quaternion.Euler(pitch, 0f, lean);
             }

@@ -38,6 +38,7 @@ Material:
     - _Gravity: 0.006
     - _RimPower: 2.6
     - _RimStrength: 0.7
+    - _StaticMode: 0
     - _Thinning: 0.95
     - _UseVertexTint: 1
     - _Wrap: 0.6

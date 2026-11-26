@@ -3,11 +3,66 @@ guid: b863ecbf4d1fa9c4e95dd19c5ea0cf24
 ModelImporter:
   serializedVersion: 24300
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_EyeHighlight
+    second: {fileID: 2100000, guid: 217c1c46d5533cf45b11d056cbabddff, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_EyeIris
+    second: {fileID: 2100000, guid: 2ab3abef043ebd84bb11d681915301f1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Fur
+    second: {fileID: 2100000, guid: 6955273355457c24d841d88d986374d0, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_HatCuff
+    second: {fileID: 2100000, guid: 01e30b800f78e82458ec10244f31b1d7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_HatKnit
+    second: {fileID: 2100000, guid: 20f33dba4bf5a44469e7da63dafe0c40, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_HatStripe
+    second: {fileID: 2100000, guid: 28466e5cc71c7f146bc371ccf1a6d6d9, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Mouth
+    second: {fileID: 2100000, guid: 11b0d88e3c855f34091db315e3f548ed, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_PawPad
+    second: {fileID: 2100000, guid: da4caf6a508b8c5478868295c809c6eb, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_PomPom
+    second: {fileID: 2100000, guid: f90b507a8323b3941a9e43211575be09, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_StarBadge
+    second: {fileID: 2100000, guid: e58da3569d3c2f542a3f6921b9fd1a17, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Tongue
+    second: {fileID: 2100000, guid: 443576445ed1970429c908e3c9c60d18, type: 2}
   materials:
     materialImportMode: 2
-    materialName: 0
-    materialSearch: 1
+    materialName: 1
+    materialSearch: 2
     materialLocation: 1
     searchTexturesGlobally: 0
   animations:

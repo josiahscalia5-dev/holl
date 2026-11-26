@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_Fur_Static
+  m_Shader: {fileID: 4800000, guid: 8b7e1a7b5720fdb4ea8c002122ac334b, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 2450
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _NoiseTex:
+        m_Texture: {fileID: 2800000, guid: a5eec142a29ea634da61b9a61a9692c2, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AO: 0.5
+    - _ClumpAmount: 0.35
+    - _ClumpScale: 7
+    - _Density: 42
+    - _FurLength: 0
+    - _Glow: 0.12
+    - _Gravity: 0
+    - _RimPower: 2.6
+    - _RimStrength: 0.7
+    - _StaticMode: 1
+    - _Thinning: 0
+    - _UseVertexTint: 1
+    - _Wrap: 0.6
+    m_Colors:
+    - _BaseColor: {r: 0.8235294, g: 0.40392157, b: 0.56078434, a: 1}
+    - _RimColor: {r: 1, g: 0.8156863, b: 0.8862745, a: 1}
+    - _RootColor: {r: 0.5529412, g: 0.28235295, b: 0.42352942, a: 1}
+    - _TipColor: {r: 0.9254902, g: 0.62352943, b: 0.7254902, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

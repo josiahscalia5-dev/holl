@@ -28,9 +28,9 @@ Material:
     - _EdgeFoam: 0.8
     - _EdgeTintAmount: 0.3
     - _FlowSpeed: 7.5
-    - _Glow: 0.34
+    - _Glow: 0.1
     - _RippleStrength: 0.6
-    - _Smoothness: 0.82
+    - _Smoothness: 0.85
     - _StreakAmount: 0.45
     - _StreakDensity: 1.6
     - _VTile: 4

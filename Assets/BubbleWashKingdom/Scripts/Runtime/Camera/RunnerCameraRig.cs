@@ -16,8 +16,8 @@ namespace BubbleWash
         public CinemachineCamera vcam;
 
         [Header("Landscape 16:9 framing (matches the reference rear view)")]
-        public float distanceBack = 2.7f;
-        public float height = 1.1f;
+        public float distanceBack = 2.85f;
+        public float height = 1.3f;
         public float fovLandscape = 52f;
 
         [Header("Portrait 9:16 framing")]
@@ -28,7 +28,7 @@ namespace BubbleWash
         [Header("Aim")]
         public float lookAhead = 10f;
         [Tooltip("Downward pitch from the track direction (reference: about 8.5 degrees at 16:9).")]
-        public float pitchDown = 8.5f;
+        public float pitchDown = 11f;
         public float pitchDownPortrait = 12f;
         public float lookHeight = 0.6f;
         [Range(0f, 1f)] public float lookAtRunnerWeight = 0.08f;

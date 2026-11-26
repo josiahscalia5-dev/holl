@@ -32,7 +32,7 @@ GROUP = "Track"
 
 # ------------------------------------------------------------------ module rules
 LENGTH = 4.0      # modules run from y = 0 to y = -4 (front / travel = -Y)
-SEGS = 23         # 23 segments = 24 evenly spaced edge loops along the length
+SEGS = 7          # 7 segments = 8 evenly spaced edge loops (0.57 m) - mobile budget, smooth on r >= 15 m curves
 V_TILE = 4.0      # v = distance along / 4 m
 
 # ------------------------------------------------------------------ slide cross-section (RunnerController contract)
@@ -56,7 +56,7 @@ ELBOW_R, ELBOW_SEGS = 0.8, 12
 
 # ------------------------------------------------------------------ ring + bulb
 RING_RI, RING_RO, RING_DEPTH = 3.75, 4.30, 0.45
-RING_SEGS = 84                  # 3 segments per bulb pitch, sockets sit on vertex columns
+RING_SEGS = 56                  # 2 segments per bulb pitch, sockets sit on vertex columns (mobile)
 LIP_R, OUTER_FILLET = 0.055, 0.06
 LIP_END_DEG = 240.0             # lip arc ends where the channel wall starts (tangent)
 CHANNEL_RHO = 3.83              # channel floor radius (lip tops at 3.75 -> 8 cm recess)
@@ -64,7 +64,7 @@ SOCKETS = 28
 SOCKET_R, SOCKET_SIDES = 0.055, 8
 SOCKET_BASE_RHO, SOCKET_CAP_RHO = CHANNEL_RHO + 0.015, 3.79
 BULB_RX, BULB_HALF_H = 0.085, 0.10          # slightly elongated sphere (1.18 : 1)
-BULB_SIDES, BULB_BANDS = 10, 6                 # even band count -> equator ring at r 0.085; 100 tris
+BULB_SIDES, BULB_BANDS = 6, 4                  # even band count -> equator ring at r 0.085; ~36 tris (mobile)
 BULB_CENTRE_RHO = 3.70
 BULB_BASE_RHO = BULB_CENTRE_RHO + BULB_HALF_H  # 3.80 = socket seat = bulb origin
 
