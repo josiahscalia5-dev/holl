@@ -17,7 +17,7 @@ Unity track: 14 m (start) -> ~351 m (portal), one continuous ride, no cuts. Stil
 | S2 | 1.25-3.25 s | Rainbow slide into the gold tunnel mouth (HERO 3.0 s) | 40-110 m (hero 105.5 m, rear) | hero 9:16 ~6/10 (16:9 view 5/10) | all |
 | S3 | 3.25-5.75 s | Tunnel of gold bulb rings and neon stars | 110-170 m (C1 100 m, front) | 3.5/10 | env, light |
 | S4 | 6.00-7.00 s | Tunnel bend, first sock-chamber window, coin line | 170-205 m (C4 190 m, front) | 3/10 | env, water |
-| S5 | 7.00-9.00 s | Sock chambers and pink glass pipes | 205-240 m (C2 220 m, front) | 3/10 | env, water, light |
+| S5 | 7.00-9.00 s | Sock chambers and pink glass pipes | 205-240 m (C2 220 m, front) | 3/10; r6 8.25 s shot test (front, shot-matched) v1 2.5 -> v5 ~4/10, test scene Test_S5_Shot0825 + real-time recording | env, water, light |
 | S6 | 9.00-12.75 s | Chamber tunnel 2: windows both sides, cyan water pipe, dense stars | 240-310 m (C5 280 m, front) | 3/10 | env, water, light |
 | S7 | 12.75-15.00 s | Golden light portal finale | 310-351 m (09_portal L-34, rear) | 3.5/10 | env, light, water |
 | ALL | 0-15 s | The mascot (same character everywhere) | every frame | in game 4/10 (old model; its front face reads badly in C1/C4/C2/C5). v4 Blender master f14 ~6.5/10 (hero/rear 7, front 6.5, side 5.5, face 6), NOT approved. v4 mobile FBX in-game candidate ~4/10: pom-pom renders as a bare dark ball, arms as dark spikes, hat too large - not ready for approval | character |

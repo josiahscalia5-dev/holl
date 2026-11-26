@@ -5,6 +5,26 @@ project. Newest local checkpoint: tag `checkpoint-15b-handoff` on local `main` (
 Nothing is running: no workflows, no Unity / Blender, the 14:02 auto-restart timer was cancelled, the autosave loop was
 stopped after a final snapshot (restart it, see step 3).
 
+## Round 6 status (2026-11-26 11:25, lead session 4e740a08, new Pro account) - read this first
+- Wave 1 (environment + water) DONE 10:42-11:15 (5-hour window 2 -> 60 %). Lead integration: shot renders v4/v5, test
+  scene re-saved, real-time recording. Checkpoint `checkpoint-16-r6w1`. Autosave loop restarted 10:42 (one instance).
+- 8.25 s shot (front, `Captures/milestones/m6_shot0825_front_ref_v1_v3_v5.png`): v1 2.5 -> v3 3.9 -> v5 ~4/10. Placement
+  works (mascot exact 385 px, window / pipe / 12 neon stars / gem / coins / bubbles in the reference regions); blockers:
+  (1) S5 track is a banked left U-turn (~13 deg bank, 1-2.3 deg/m) while the reference slide is straight + level, so the
+  rail covers the window and pipe -> OWNER DECISION (straighten S5 vs accept a rolled camera); (2) old in-game mascot;
+  (3) lighting: walls too bright/blue (0.77-0.84 vs 0.63-0.71), weak neon halos; (4) foam v2 renders in Unity as giant smooth
+  translucent blobs although the Blender preview shows small-bubble clusters (Unity material/import bug, M_Foam_v2);
+  (5) crown v2 sits too low in the front shot; (6) window scrolls thin, plain socks, small pale arch, no curvy pink-cyan pipe.
+- New: `ShotMatchTool.cs` (RenderBatch, args -bwkTag -bwkCamH 1.3 -bwkRollBank 0.6 -bwkSaveTest -bwkNoWater; hides the old
+  SplashCrowns when the v2 crowns are used), `Test_S5_Shot0825.unity` (modules 194-245 m, Level01 untouched), Blender
+  `build_shot0825_assets.py` (SM_ChamberWindow_v2, SM_GlassPipe_Pink_v2, SM_NeonStarTube_v2), `build_fx_v2.py` +
+  `Tools/fx_splash_trace.py` (SM_FX_Crown_v2_L/R traced from the frame, overlap 0.924; SM_Foam_v2_*).
+- Real-time recording: `Captures/playmode/s5_shot0825_r6_9x16.mp4` (4.7 s, 192 -> 248 m, 17 coins, 1 gem, 0 rear-camera
+  violations; Play Mode test `C_RecordSegmentFromEnv` with BWK_PLAY_SCENE / _START / _END / _NAME, ignored without them).
+- NEXT: wave 2 = `args: ["character", "lighting"]` after the window reset (15:40 local); then wave 3 env + water fixes
+  (items 4-6 above + the owner's S5 decision). Owner asked (11:12) whether a free image-to-3D website may be tried for the
+  mascot (upload of one crop) - no answer yet; do not upload without a yes.
+
 ## Start here (next session)
 1. Read (CLAUDE.md and the memory index load automatically): this file, `Docs/VideoCoverageChecklist.md`,
    `Captures/agents/LEAD_DIRECTIVES.md`, the specialists' `Captures/agents/<domain>/NOTES.md`. This conversation as text:
