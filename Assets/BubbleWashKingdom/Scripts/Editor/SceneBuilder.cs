@@ -221,6 +221,16 @@ namespace BubbleWash.EditorTools
 
         static UnityEngine.SceneManagement.Scene SceneManagerActive() => UnityEngine.SceneManagement.SceneManager.GetActiveScene();
 
+        /// <summary>Agent 3 (environment) may implement this in SceneBuilder.Environment.cs: rebuild rings / rims / pipes /
+        /// portholes / chambers / bulkheads (and, if needed, re-bend tunnel chunks via BendChunks) inside the open scene,
+        /// in memory only. Must be fast and exception-safe because it runs in every agent's preview; gate experiments on
+        /// PreviewOutArg() containing "agents/environment".</summary>
+        static partial void PreviewEnvironmentDomain(GameObject root, float L);
+
+        /// <summary>Agent 4 (lighting) may implement this in SceneBuilder.Lighting.cs: rebuild neon stars and other
+        /// lighting-owned placed props in memory (same rules as PreviewEnvironmentDomain).</summary>
+        static partial void PreviewLightingProps(GameObject root, float L);
+
         /// <summary>
         /// Agent previews (CaptureTools.AgentPreviewBatch): rebuilds the lighting / post-processing (Agent 4) and the runner
         /// splash FX + character lights (Agents 2 and 4) inside the OPEN scene, in memory only. The scene is never saved
@@ -236,6 +246,10 @@ namespace BubbleWash.EditorTools
             rng = new System.Random(20261125);
             tunnelStart = 62f;
             portalD = track.Length - 12f;
+            // Domain geometry hooks (lead-owned call sites, bodies live in the domain's own partial file and are compiled
+            // away while absent): rebuild that domain's placed pieces in memory so they can be judged without a full build.
+            PreviewEnvironmentDomain(root, track.Length);
+            PreviewLightingProps(root, track.Length);
             foreach (var n in new[] { "Lighting", "PostFX Volume" })
             {
                 var t = root.transform.Find(n);
