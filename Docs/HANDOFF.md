@@ -27,6 +27,17 @@
   `~/.claude/projects/C--Users-josia-thanksgiving/cd43a82d-d354-43cf-9600-4a89cd571544/subagents/workflows/`.
 - After the wave: lead safe_build -> snapshot `Captures/stills_r7/` -> section_triptych -> scores in the checklist ->
   full-level Play Mode recording -> checkpoint-18 -> this file.
+- 13:05 tunnel + hall agents DONE (reports in the run journal), water agent PAUSED at 67 % usage at a safe point (foam v2
+  rebuilt in Blender with AO vertex colours + LOD1, nothing of it in Unity yet). 13:06 lead build `lead_r7_final` OK ->
+  `Captures/stills_r7/` (+bg), sheets `Captures/sections/S1..S7_triptych_r7.png`, recording `lead_play_r7` ->
+  `Captures/playmode/gameplay_autopilot_9x16.mp4`, scoring `Tools/workflows/bwk-round7-verify.js` (args {tag: "r7"}).
+- AFTER THE 17:10 RESET (owner 13:20, order fixed): (1) finish round-7 water/foam/splash:
+  `Workflow({scriptPath: "C:/Users/josia/thanksgiving/Tools/workflows/bwk-round7-wholelevel.js", args: ["water"]})`
+  (its prompt has a RESUME note) -> lead `bash Tools/safe_build.sh lead_r7w` -> copy stills to `Captures/stills_r7w/` ->
+  `bash Tools/section_triptych.sh r7w Captures/stills_r7 Captures/stills_r7w` -> send; (2) then round 8:
+  `Workflow({scriptPath: ".../bwk-round8-cinematic.js", args: {base: "<newest checkpoint>", before: "Captures/stills_r7w"}})`
+  -> lead build -> triptych r8 (before r7w) -> verify workflow {tag: "r8"} -> send. Owner: match the reference's premium
+  animated-movie look; never just brighter or more objects; 9/10 per section. The lead session set a wake timer for 17:12.
 - 12:55 OWNER (added after round 7, plan otherwise unchanged): a CINEMATIC LOOK pass for the whole level with the existing
   URP features (reflection probes, post volume, our URP shaders; Shader Graph only if clearly easier; no Needle Engine, no
   new packages, no purchases): polished gold, realistic glass pipes, rich metallic walls, glossy flowing water, iridescent
@@ -34,8 +45,9 @@
   `Tools/workflows/bwk-round8-cinematic.js` (agents light+metal / water+glass+bubbles; args {base, before}; before =
   `Captures/stills_r7`). Launch after the round-7 integration (this 5-hour window will be used up -> after the 17:10 reset).
 - Plugins 12:58: Unity's OFFICIAL Claude Code plugin ("Unity", Unity Technologies, Anthropic Directory, skills incl.
-  urp-postprocessing, shader-graph-create-custom-node, validate-urp-render-graph-renderer-feature) is NOT enabled on this
-  account - install card shown to the owner (skills only, no Unity package). The project's own unity-graphics /
+  urp-postprocessing, shader-graph-create-custom-node, validate-urp-render-graph-renderer-feature) was not enabled at
+  12:58; 13:15 the OWNER INSTALLED IT (ListPlugins: enabled; skills only, no Unity package) - use its graphics skills
+  alongside the Unity Game Studio specialists (owner 13:05). The project's own unity-graphics /
   unity-lighting-vfx / unity-performance / unity-cinemachine skills (Claude Unity Game Studio copy) are enabled.
 
 ## (previous) lead handoff 2026-11-26 10:30, lead session 98d6de44
