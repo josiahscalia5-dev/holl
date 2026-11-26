@@ -28,10 +28,10 @@ Material:
     - _CausticAmount: 0.28
     - _CenterGlow: 0.06
     - _ChevronEndX: 0.42
-    - _ChevronGlow: 0.75
+    - _ChevronGlow: 0.5
     - _ChevronHalfLen: 0.25
     - _ChevronHalfWidth: 0.5
-    - _ChevronOffset: 0.3
+    - _ChevronOffset: 0
     - _ChevronScale: 1.35
     - _ChevronSpacing: 1.1
     - _ChevronStart: 5.9
@@ -54,6 +54,9 @@ Material:
     - _StreakDensity: 1.25
     - _VTile: 4
     - _WaveHeight: 0.025
+    - _WeaveAmp: 0.5
+    - _WeaveLen: 22
+    - _WeaveZero: 102.87
     - _Width: 3.6
     m_Colors:
     - _CausticColor: {r: 0.49803922, g: 0.9137255, b: 1, a: 1}

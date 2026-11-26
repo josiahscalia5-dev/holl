@@ -62,9 +62,9 @@ BODY_ELEMS = [  # (centre, semi-axes x/y/z, stiffness): lower belly + upper head
 ]
 # arm = upper arm leaving the body side just under the cuff almost level (clears the cuff bottom roll), then a forearm
 # rising ~60 deg outside the cuff radius, ending in a mitt at cuff height (rear hero: paws outside the hat silhouette)
-ARM_A, ARM_E, ARM_B, ARM_RAD, ARM_S = (Vector((0.30, -0.005, 0.460)), Vector((0.520, -0.020, 0.585)),
-                                       Vector((0.628, -0.030, 0.690)), 0.094, 5.0)
-MITT_C, MITT_AX, MITT_S = Vector((0.676, -0.040, 0.756)), (0.110, 0.088, 0.116), 5.0   # along, palm-normal, across
+ARM_A, ARM_E, ARM_B, ARM_RAD, ARM_S = (Vector((0.30, -0.005, 0.450)), Vector((0.530, -0.020, 0.560)),
+                                       Vector((0.648, -0.030, 0.648)), 0.094, 5.0)
+MITT_C, MITT_AX, MITT_S = Vector((0.702, -0.040, 0.708)), (0.112, 0.090, 0.118), 5.0   # along, palm-normal, across
 PALM_N = Vector((-0.10, -0.80, 0.45)).normalized()     # palm faces front / up (pads visible from the front)
 HIP, ANKLE, LEG_RAD = Vector((0.205, 0.080, 0.200)), Vector((0.285, 0.245, 0.165)), 0.078
 PAW_C = Vector((0.318, 0.312, 0.178))
@@ -88,11 +88,11 @@ ROW_H = 0.024                          # knit row height (m) along the profile
 CUFF_PROF = [(h * 0.93, r * 0.935) for h, r in (
     (0.000, 0.500), (0.010, 0.518), (0.032, 0.528), (0.075, 0.532), (0.125, 0.533), (0.172, 0.530),
     (0.205, 0.523), (0.226, 0.511), (0.238, 0.494), (0.236, 0.478))]
-STRIPE_PROF = [(0.212, 0.432), (0.226, 0.450), (0.250, 0.458), (0.272, 0.457), (0.288, 0.451)]
-DOME_H0, DOME_R0, DOME_H, DOME_E = 0.288, 0.451, 0.245, 2.00
+STRIPE_PROF = [(0.212, 0.432), (0.228, 0.452), (0.256, 0.460), (0.284, 0.458), (0.302, 0.451)]
+DOME_H0, DOME_R0, DOME_H, DOME_E = 0.302, 0.451, 0.240, 2.00
 TOP_BAND = (9.0, 9.0)                  # (disabled: the reference has ONE pale stripe)              # extra pale band on the crown FRONT (h range), fades out toward the sides
 TOP_BAND_PSI = 70.0                    # +- deg from the front where the band is full width
-POM_H, POM_CORE, POM_R = 0.602, 0.150, 0.258   # pom-pom centre (h), dark core radius, yarn tip radius
+POM_H, POM_CORE, POM_R = 0.610, 0.150, 0.258   # pom-pom centre (h), dark core radius, yarn tip radius
 STAR_H, STAR_PSI, STAR_ROT, STAR_RO, STAR_RI = 0.262, 30.0, -12.0, 0.100, 0.045
 
 # ------------------------------------------------------------------ face (placed on the body surface)
@@ -117,6 +117,7 @@ COL_PAW = "#FFF6F4"
 COL_PAD = "#F48FAA"
 COL_HAT = "#5D2094"
 COL_HAT_DARK = "#2C0B58"
+COL_HAT_CROWN = "#4F1A84"
 COL_STRIPE = "#D6A2CA"
 COL_STRIPE_DARK = "#9A6A9A"
 COL_POM = "#7B2FB2"
@@ -432,7 +433,7 @@ def build_materials():
     M["Mouth"], _b = principled("M_Mouth", "#3A0C1A", rough=0.5)
     M["Tongue"], _b = principled("M_Tongue", "#F47C98", rough=0.35, coat=0.25)
     M["Lash"], _b = principled("M_EyeLash", "#1E0E12", rough=0.4)
-    M["HatKnit"] = knit_material("M_HatKnit", COL_HAT, COL_HAT_DARK, tile)
+    M["HatKnit"] = knit_material("M_HatKnit", COL_HAT_CROWN, COL_HAT_DARK, tile)
     M["HatCuff"] = knit_material("M_HatCuff", COL_HAT, COL_HAT_DARK, tile)
     M["HatStripe"] = knit_material("M_HatStripe", COL_STRIPE, COL_STRIPE_DARK, tile, bump=0.30)
     M["StarBadge"], _b = principled("M_StarBadge", "#FFCF1F", rough=0.35, coat=0.5, sheen=0.2)
@@ -681,7 +682,7 @@ def build_mouth(surf, z_top):
     S, n = surf.front_point(0.0, zc)
     f, ex, ey = face_frame(n, 0.3)
     outline = mouth_outline(36, MOUTH_W, MOUTH_H)
-    ring_sh = [(1.20, -0.004), (1.08, 0.001), (1.0, -0.003), (0.92, -0.010), (0.70, -0.018), (0.35, -0.024)]
+    ring_sh = [(1.20, -0.004), (1.08, 0.0035), (1.0, 0.0045), (0.92, 0.0035), (0.70, 0.0015), (0.35, -0.001)]
 
     def place(x, y, h):
         hit = surf.ray(S + ex * x + ey * y + f * 0.3, -f)
@@ -690,12 +691,12 @@ def build_mouth(surf, z_top):
     md, rings = MD(), []
     for s, h in ring_sh:
         rings.append([md.vert(place(x * s, y * s, h)) for (x, y) in outline])
-    centre = md.vert(place(0.0, -0.01, -0.022))
+    centre = md.vert(place(0.0, -0.01, -0.003))
     for k, mat in enumerate((1, 0, 0, 0, 0)):
         bridge(md, rings[k], rings[k + 1], mat)
     for j in range(len(outline)):
         md.face((rings[-1][j], rings[-1][(j + 1) % len(outline)], centre), 0)
-    tongue = ellipsoid(place(0.0, -MOUTH_H / 2 + 0.036, -0.006), ex, ey, f, 0.056, 0.034, 0.015, seg=16, rings=8)
+    tongue = ellipsoid(place(0.0, -MOUTH_H / 2 + 0.036, 0.001), ex, ey, f, 0.056, 0.034, 0.012, seg=16, rings=8)
     return md, tongue, S, dict(S=S, f=f, ex=ex, ey=ey, zc=zc)
 
 

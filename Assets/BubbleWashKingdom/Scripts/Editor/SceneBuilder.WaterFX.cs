@@ -34,11 +34,13 @@ namespace BubbleWash.EditorTools
         // ~0.36 m across): HalfLen / HalfWidth now only set the arm slope (2 HL / HW = 1 -> 45 deg) and the apex offset;
         // every arm edge ends at |x| = ChevronEndX (the old constant-z cut drew a long thin left spike to screen x .14)
         public const float ChevronLateral = 0.30f, ChevronHalfLen = 0.25f, ChevronHalfWidth = 0.50f, ChevronThick = 0.36f;
-        public const float ChevronEndX = 0.42f;
+        public const float ChevronEndX = 0.38f;
         // the runway WEAVES gently across the slide (reference f_03.00s: near apex at runner x .34, the next arrow's apex 1.14 m
         // closer at x .20 -> the arrow line runs diagonally toward the right bend, arrows turned ~7 deg to follow it):
         // lateral(d) = WeaveAmp sin(2 pi (d - WeaveZero) / WeaveLen), each arrow yawed along that line (BWK_Water does the same)
-        public const float ChevronWeaveAmp = 0.5f, ChevronWeaveLen = 22f, ChevronWeaveZero = 102.87f;
+        // (v3: 22 m / zero 102.87 centred the bottom arrow but swung the near arrow's left arm out to x .28 (ref .36-.41):
+        // v4 = steeper line - near origin lateral .31, bottom .13, ~8 deg yaw; arm ends .38)
+        public const float ChevronWeaveAmp = 0.5f, ChevronWeaveLen = 17f, ChevronWeaveZero = 103.09f;
         public static float ChevronLateralAt(float d) => ChevronWeaveAmp * Mathf.Sin(2f * Mathf.PI * (d - ChevronWeaveZero) / ChevronWeaveLen);
         public static float ChevronYawAt(float d) =>
             Mathf.Atan(ChevronWeaveAmp * 2f * Mathf.PI / ChevronWeaveLen * Mathf.Cos(2f * Mathf.PI * (d - ChevronWeaveZero) / ChevronWeaveLen)) * Mathf.Rad2Deg;
@@ -528,14 +530,13 @@ namespace BubbleWash.EditorTools
                 framesR.Add(PersistCopy(parts[0].mesh, save));
             }
             if (framesR.Count != frames.Count) framesR.Clear();
-            // round 4 continuation (v2: the left crown's low skirt read as a flat white puff on the water at screen x 0-.14,
-            // y .80-.87; lead: "left flatter than the right"): BOTH crowns use the skirt-less family (left unmirrored)
-            if (framesR.Count > 0) frames = framesR;
+            // (round 4 continuation v3 tried the skirt-less family on BOTH sides: the lower-left turned into open dark water
+            // where the reference has milky lace (#B6DAE9) -> reverted; the left keeps its skirt)
             var holder = Child(fxRoot, "Crowns");
             var sc = holder.AddComponent<SplashCrowns>();
             sc.runner = runner;
             sc.frames = frames.ToArray();
-            sc.framesRight = null;
+            sc.framesRight = framesR.Count > 0 ? framesR.ToArray() : null;
             var milk = Mat("M_FX_Milk");
             int[] phase = { 0, frames.Count / 2 };
             var crowns = new List<MeshFilter>();

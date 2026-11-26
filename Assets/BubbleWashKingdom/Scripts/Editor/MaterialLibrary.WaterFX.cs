@@ -21,7 +21,8 @@ namespace BubbleWash.EditorTools
                 // turquoise patches, a deeper shallow colour, less near-camera brightening
                 // round 4 continuation (v1 measured: arrow notch #43A7E2 vs reference #3386CC, lower-left #8CC6EC vs #4999D0):
                 // deeper shallow colour, fewer turquoise patches, a tighter TURQUOISE halo around the arrows (seam fixed)
-                C(m, "_DeepColor", "#0B4AA8"); C(m, "_ShallowColor", "#1A72C0"); C(m, "_StreakColor", "#B8F6FF");
+                // (v3: lower corners #2355CC / #376DCE violet-dark vs reference #65A2D7 / #8DC8E0: lighter, less violet deep colour)
+                C(m, "_DeepColor", "#1460B8"); C(m, "_ShallowColor", "#1A72C0"); C(m, "_StreakColor", "#B8F6FF");
                 C(m, "_TurquoiseColor", "#2CC0DC"); F(m, "_PatchAmount", 0.22f); F(m, "_DetailStrength", 0.7f); C(m, "_ReflectTint", "#8CC8FF");
                 C(m, "_CausticColor", "#7FE9FF"); C(m, "_ChevronColor", "#24E0DA"); C(m, "_EdgeTint", "#E66AC8");
                 F(m, "_FlowSpeed", 7.5f); F(m, "_Width", 3.6f); F(m, "_Glow", 0.1f); F(m, "_Smoothness", 0.6f);   // PBR gloss low: at 0.95 the pink CharLight_RimFront drew a wavy streak behind him; the glossy look comes from _ReflectBoost
