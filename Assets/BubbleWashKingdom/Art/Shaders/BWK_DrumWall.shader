@@ -4,7 +4,9 @@
 //              (SceneBuilder.BuildRings): plain metal with two pressed grooves next to every rim, rows of capsule slots
 //              elongated around the drum (length varies per row, staggered), countersunk lips, deep hole interiors with a
 //              few holes lit from behind, panel seams, twinkling metal sparkles and a lavender grazing sheen that brightens
-//              the far tunnel (reference f_003.00s / key 5.0 s).
+//              the far tunnel (reference f_003.00s / key 5.0 s). m1: slots have real-looking depth (_HoleDepth: the view
+//              ray is followed into the slot, its far inner wall shows lit near the lip and fades to a black bottom) and
+//              the ceiling bays shift toward periwinkle blue (_CeilingColor / _CeilingTint) while the side walls stay violet.
 // UV0.x wraps around the circumference (0..1, 0 = floor, 0.5 = ceiling), UV0.y = distance along the tunnel / _VTile.
 Shader "BWK/DrumWall"
 {
@@ -49,6 +51,12 @@ Shader "BWK/DrumWall"
         _EdgeAOWidth ("Section edge occlusion width (m)", Float) = 0.45
         _HoleAO ("Darkening halo around holes", Range(0,1)) = 0
         _HoleAOWidth ("Hole halo width (m)", Float) = 0.07
+        [Header(Hole depth and tint (m1))]
+        _HoleDepth ("Slot depth (m, parallax inner wall)", Float) = 0
+        _InnerWall ("Slot inner wall brightness", Range(0,1)) = 0.5
+        _CeilingColor ("Ceiling metal color", Color) = (0.42, 0.45, 0.85, 1)
+        _CeilingTint ("Ceiling color amount", Range(0,1)) = 0
+        _CeilingWidth ("Ceiling tint width (0..1 around)", Range(0.05,1)) = 0.45
     }
     SubShader
     {
@@ -63,7 +71,36 @@ Shader "BWK/DrumWall"
             float _SlotVariation, _LipWidth;
             half _GlowChance, _SheenStrength, _Sparkle, _CeilingLight, _EdgeAO, _HoleAO;
             float _EdgeAOWidth, _HoleAOWidth;
+            float _HoleDepth;
+            half _InnerWall, _CeilingTint, _CeilingWidth;
+            half4 _CeilingColor;
         CBUFFER_END
+
+        // Drum-section slot pattern (_Pattern 1) at m = (around, along) in metres: signed capsule distance (< 0 inside a
+        // slot) plus the cell ids. Shared by the surface and the parallax lookup at the slot bottom.
+        float BWK_SlotSdf(float2 m, out float rowIdx, out float slotIdx, out float bandIdx, out float local, out float2 q)
+        {
+            float L = max(_BandLength, 0.5);
+            float bandF = (m.y - _BandOffset) / L;
+            bandIdx = floor(bandF);
+            local = (bandF - bandIdx) * L;                                     // metres after the last rim
+            float z0 = _PlainBack;
+            float zoneLen = max(L - _PlainFront - z0, 0.2);
+            float rows = max(1.0, _Rows);
+            float rowPitch = zoneLen / rows;
+            rowIdx = clamp(floor((local - z0) / rowPitch), 0.0, rows - 1.0);
+            float rowLocal = local - z0 - (rowIdx + 0.5) * rowPitch;           // metres from the nearest row centre
+            float rowHash = BWK_Hash21(float2(rowIdx + 0.5, bandIdx + 0.25));
+            float slotLen = _SlotLength * lerp(1.0 - _SlotVariation, 1.0 + _SlotVariation * 0.5, rowHash);
+            float stagger = frac((rowIdx + bandIdx) * 0.5);                    // 0 / 0.5 alternating rows
+            float ac = m.x / _SlotPitch + stagger;
+            slotIdx = floor(ac);
+            float aLocal = (ac - slotIdx - 0.5) * _SlotPitch;
+            float hw = _SlotWidth * 0.5;
+            float hx = max(abs(aLocal) - max(slotLen * 0.5 - hw, 0.0), 0.0);
+            q = float2(hx * sign(aLocal), rowLocal);
+            return length(q) - hw;
+        }
         ENDHLSL
 
         Pass
@@ -117,8 +154,10 @@ Shader "BWK/DrumWall"
                 half3 bitangent = cross(i.normalWS, i.tangentWS.xyz) * i.tangentWS.w;
 
                 float hole = 0.0, lip = 0.0, inner = 0.0, glowSel = 0.0, groove = 0.0, detail = 1.0, ao = 1.0;
+                float wallHit = 0.0, wallDepth = 1.0;                              // slot inner wall seen through the hole
                 float2 dir = float2(0.0, 0.0);
                 half3 glowCol = half3(0.0, 0.0, 0.0);
+                half3 viewDir = GetWorldSpaceNormalizeViewDir(i.positionWS);
 
                 if (_Pattern < 0.5)
                 {
@@ -139,27 +178,27 @@ Shader "BWK/DrumWall"
                 else
                 {
                     float L = max(_BandLength, 0.5);
-                    float bandF = (m.y - _BandOffset) / L;
-                    float bandIdx = floor(bandF);
-                    float local = (bandF - bandIdx) * L;                           // meters after the last rim
+                    float rowIdx, slotIdx, bandIdx, local;
+                    float2 q;
+                    float sdf = BWK_SlotSdf(m, rowIdx, slotIdx, bandIdx, local, q);   // capsule distance (m), < 0 inside
                     float z0 = _PlainBack;
-                    float zoneLen = max(L - _PlainFront - z0, 0.2);
-                    float rows = max(1.0, _Rows);
-                    float rowPitch = zoneLen / rows;
-                    float rowIdx = clamp(floor((local - z0) / rowPitch), 0.0, rows - 1.0);
-                    float rowLocal = local - z0 - (rowIdx + 0.5) * rowPitch;       // meters from the nearest row centre
-                    float rowHash = BWK_Hash21(float2(rowIdx + 0.5, bandIdx + 0.25));
-                    float slotLen = _SlotLength * lerp(1.0 - _SlotVariation, 1.0 + _SlotVariation * 0.5, rowHash);
-                    float stagger = frac((rowIdx + bandIdx) * 0.5);                  // 0 / 0.5 alternating rows
-                    float ac = m.x / _SlotPitch + stagger;
-                    float slotIdx = floor(ac);
-                    float aLocal = (ac - slotIdx - 0.5) * _SlotPitch;
                     float hw = _SlotWidth * 0.5;
-                    float hx = max(abs(aLocal) - max(slotLen * 0.5 - hw, 0.0), 0.0);
-                    float2 q = float2(hx * sign(aLocal), rowLocal);
                     float ql = length(q);
-                    float sdf = ql - hw;                                            // capsule distance (m), < 0 inside
                     float aa = fwidth(sdf) * 1.2 + 1e-4;
+                    // slot depth (m1): follow the view ray down _HoleDepth into the drum; where it leaves the slot outline
+                    // before reaching the bottom it hits the slot's far inner wall (faces the camera: lit, darker deeper),
+                    // otherwise it sees the dark bottom -> holes with visible thickness / depth like the reference
+                    if (_HoleDepth > 1e-4 && sdf < 0.0)
+                    {
+                        float3 vts = float3(dot(viewDir, i.tangentWS.xyz), dot(viewDir, bitangent), dot(viewDir, i.normalWS));
+                        float2 shift = -vts.xy / max(vts.z, 0.1) * _HoleDepth;
+                        float r2, s2, b2, l2;
+                        float2 q2;
+                        float sdfB = BWK_SlotSdf(m + shift, r2, s2, b2, l2, q2);
+                        float tExit = saturate(-sdf / max(-sdf + max(sdfB, 0.0), 1e-4));
+                        wallHit = smoothstep(-0.01, 0.01, sdfB);
+                        wallDepth = tExit;
+                    }
                     // fade the perforation out where a slot gets thinner than ~1.5 px (no shimmer far down the tunnel)
                     float px = max(fwidth(m.x), fwidth(m.y));
                     detail = saturate((hw / max(px, 1e-5) - 0.75) * 0.8);
@@ -190,21 +229,28 @@ Shader "BWK/DrumWall"
                 half3 n = normalize(i.normalWS - (i.tangentWS.xyz * dir.x + bitangent * dir.y) * lip * _Bevel);
 
                 float variation = BWK_Fbm(m * 0.35);
-                half3 metal = lerp(_BaseColor.rgb, _HighlightColor.rgb, saturate(variation * 0.55 + lip * 0.45));
+                // m1: periwinkle-blue ceiling bays, violet side walls (reference f_003.00s)
+                half ceilW = _CeilingTint * smoothstep(_CeilingWidth, 0.0, around);
+                half3 baseCol = lerp(_BaseColor.rgb, _CeilingColor.rgb, ceilW);
+                half3 metal = lerp(baseCol, _HighlightColor.rgb, saturate(variation * 0.55 + lip * 0.45));
                 metal *= 1.0 + _CeilingLight * (1.0 - around);
                 metal *= 1.0 - (1.0 - detail) * 0.12 * band * step(0.5, _Pattern);   // far: average in the hole darkness
                 metal = lerp(metal, _SeamColor.rgb, saturate(groove) * 0.75);
                 metal *= ao;
                 half depthT = smoothstep(0.0, 0.7, inner);
                 half3 holeCol = lerp(_HoleColor.rgb * 1.8 + _HoleGlow.rgb * 0.12, _HoleColor.rgb * 0.35, depthT);
+                // slot depth: the far inner wall (metal in shadow, darker the deeper the ray hits it) over a black bottom
+                half useDepth = step(1e-4, _HoleDepth) * step(0.5, _Pattern);
+                half3 bottomCol = _HoleColor.rgb * 0.3 + _HoleGlow.rgb * 0.06;
+                half3 wallCol = baseCol * _InnerWall * lerp(1.0, 0.12, smoothstep(0.0, 1.0, wallDepth));
+                holeCol = lerp(holeCol, lerp(bottomCol, wallCol, wallHit), useDepth);
                 half3 albedo = lerp(metal, holeCol, hole);
                 half metallic = lerp(_Metallic, 0.0, hole);
                 half smooth = lerp(_Smoothness, 0.25, hole);
 
-                half3 viewDir = GetWorldSpaceNormalizeViewDir(i.positionWS);
                 half fres = BWK_Fresnel(n, viewDir, 3.0);
                 half3 emission = metal * _Glow * (1.0 - hole)
-                               + _HoleGlow.rgb * hole * (1.0 - depthT) * 0.5
+                               + _HoleGlow.rgb * hole * (1.0 - depthT) * 0.5 * (1.0 - useDepth * 0.7)
                                + _SheenColor.rgb * fres * _SheenStrength * (1.0 - hole);
                 // a few holes lit from behind (light leaking through the drum)
                 half flicker = 0.8 + 0.2 * sin(_Time.y * 2.3 + m.x * 1.7 + m.y * 0.9);
@@ -219,7 +265,7 @@ Shader "BWK/DrumWall"
                 half spark = step(0.94, sh) * smoothstep(0.16, 0.0, sd) * twinkle * saturate(1.0 - fwidth(sc.x) * 3.0);
                 emission += _SheenColor.rgb * spark * _Sparkle * (1.0 - hole);
 
-                return BWK_PBR(i.positionWS, i.positionCS, n, viewDir, albedo, metallic, smooth, lerp(ao, 0.4, hole), emission, 1.0, i.fog);
+                return BWK_PBR(i.positionWS, i.positionCS, n, viewDir, albedo, metallic, smooth, lerp(ao, lerp(0.4, 0.25, useDepth), hole), emission, 1.0, i.fog);
             }
             ENDHLSL
         }

@@ -33,6 +33,7 @@ Shader "BWK/Gold"
         _SparkleScale ("Sparkle Cells per Unit", Float) = 18
         _StreakStrength ("Studio Streak Strength", Range(0, 3)) = 0
         _StreakHeight ("Studio Streak Height (view-space y)", Range(-1, 1)) = 0.6
+        _ProbeBakeTint ("Tint inside reflection-probe bakes", Color) = (1, 1, 1, 1)
     }
     SubShader
     {
@@ -40,11 +41,14 @@ Shader "BWK/Gold"
         HLSLINCLUDE
         #include "BWKCommon.hlsl"
         CBUFFER_START(UnityPerMaterial)
-            half4 _HighColor, _MidColor, _LowColor, _RimColor, _BandColor;
+            half4 _HighColor, _MidColor, _LowColor, _RimColor, _BandColor, _ProbeBakeTint;
             half _HighlightSize, _BandSharpness, _SpecPower, _SpecStrength, _Brightness, _LightInfluence, _Emission, _FogAmount;
             half _Contrast, _ViewGradient, _EnvReflect, _EnvTint, _EnvRoughness, _GlintStrength, _Sparkle, _SparkleScale;
             half _StreakStrength, _StreakHeight;
         CBUFFER_END
+        // 1 only while SceneBuilder.BakeProbes renders the reflection cubemaps (lighting agent): gold seen by the probes is
+        // tinted by _ProbeBakeTint (rose / dimmer) so the drum walls do not reflect a yellow haze (yellow + violet = grey).
+        float _BWK_ProbeBake;
         ENDHLSL
         Pass
         {
@@ -153,6 +157,7 @@ Shader "BWK/Gold"
                     col += _HighColor.rgb * flash * _Sparkle;
                 }
                 col += _MidColor.rgb * _Emission;
+                col *= lerp(half3(1, 1, 1), _ProbeBakeTint.rgb, (half)saturate(_BWK_ProbeBake));
                 half3 fogged = MixFog(col, i.fog);
                 col = lerp(col, fogged, _FogAmount);
                 return half4(col, 1);

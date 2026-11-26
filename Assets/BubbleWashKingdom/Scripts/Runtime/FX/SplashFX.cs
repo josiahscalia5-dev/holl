@@ -24,6 +24,11 @@ namespace BubbleWash
         [Tooltip("Extra speed-scaled emitters (3D milk droplets, splash bubbles, speed lines); rate at base speed per entry.")]
         public ParticleSystem[] extra;
         public float[] extraRates;
+        [Tooltip("Hand-placed glassy bubbles around the mascot (hero composition, reference f_003.00s). In play they bob, drift " +
+                 "back toward the camera, pop and re-form at their spot; edit-mode still captures keep the authored layout.")]
+        public Transform[] heroBubbles;
+        Vector3[] hbBase, hbScale;
+        float[] hbPhase;
 
         void OnEnable()
         {
@@ -34,6 +39,36 @@ namespace BubbleWash
                 runner.Bumped += OnLand;
             }
             if (items != null) items.OnCollected += OnPickup;
+            if (heroBubbles != null && hbBase == null)
+            {
+                int n = heroBubbles.Length;
+                hbBase = new Vector3[n]; hbScale = new Vector3[n]; hbPhase = new float[n];
+                for (int i = 0; i < n; i++)
+                {
+                    if (heroBubbles[i] == null) continue;
+                    hbBase[i] = heroBubbles[i].localPosition;
+                    hbScale[i] = heroBubbles[i].localScale;
+                    hbPhase[i] = Mathf.Repeat(i * 0.618f, 1f);
+                }
+            }
+        }
+
+        void AnimateHeroBubbles(bool sliding)
+        {
+            if (heroBubbles == null || hbBase == null) return;
+            float t = Time.time;
+            for (int i = 0; i < heroBubbles.Length; i++)
+            {
+                var b = heroBubbles[i];
+                if (b == null) continue;
+                float ph = hbPhase[i];
+                float cyc = Mathf.Repeat(t * 0.2f + ph, 1f);                       // 5 s life: form, drift back, pop
+                float grow = Mathf.SmoothStep(0f, 1f, cyc / 0.12f) * (1f - Mathf.SmoothStep(0f, 1f, (cyc - 0.9f) / 0.1f));
+                var wobble = new Vector3(Mathf.Sin(t * 1.3f + ph * 6.2f) * 0.03f, Mathf.Sin(t * 1.7f + ph * 9.1f) * 0.035f + cyc * 0.1f,
+                                         sliding ? -cyc * 0.3f : 0f);
+                b.localPosition = hbBase[i] + wobble;
+                b.localScale = hbScale[i] * Mathf.Max(0.001f, grow);
+            }
         }
 
         void OnDisable()
@@ -102,6 +137,7 @@ namespace BubbleWash
                     em.rateOverTime = sliding ? baseRate * speedK : 0f;
                 }
             if (speedStreaks && !runner.Boosting && speedStreaks.isPlaying) speedStreaks.Stop();
+            AnimateHeroBubbles(sliding);
         }
     }
 }

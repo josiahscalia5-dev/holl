@@ -212,8 +212,8 @@ def build_crown_elements(tau):
             continue
         mid_s = max(0.0, min(1.0, 0.5 * (S0 + S1) / SLEN))
         vf = min(1.0, 0.5 * (V0 + V1) / max(0.05, Hm(0.5 * (S0 + S1))))
-        r = (0.024 - 0.008 * vf) * (0.55 + 0.45 * taper(mid_s)) * edge_rng.uniform(0.8, 1.25)
-        n = max(1, int(math.ceil(L / 0.035)))
+        r = (0.040 - 0.012 * vf) * (0.6 + 0.4 * taper(mid_s)) * edge_rng.uniform(0.85, 1.2)
+        n = max(1, int(math.ceil(L / 0.045)))
         sway = 0.02 * math.sin(tw + mid_s * 6.0)
         pts = [to3d(S0 + (S1 - S0) * k / n, V0 + (V1 - V0) * k / n, sway) for k in range(n + 1)]
         E.chain(pts, [r] * (n + 1))
@@ -222,30 +222,30 @@ def build_crown_elements(tau):
             key = (round(Sj, 3), round(Vj, 3))
             if key not in joints and 0.003 < Vj < Hm(Sj) - 0.003:
                 joints.add(key)
-                E.ball(pj, r * edge_rng.uniform(1.25, 1.6))
+                E.ball(pj, r * edge_rng.uniform(1.2, 1.45))
 
     # --- thick solid root where the sheet leaves the water + rim with beads
     nb = 36
-    root_pts = [wall(k / nb, 0.0) + Vector((0, 0, 0.012)) for k in range(nb + 1)]
-    E.chain(root_pts, [0.016 * taper(k / nb) + 0.012 for k in range(nb + 1)])
+    root_pts = [wall(k / nb, 0.0) + Vector((0, 0, 0.02)) for k in range(nb + 1)]
+    E.chain(root_pts, [0.03 * taper(k / nb) + 0.02 for k in range(nb + 1)])
     low_pts = [wall(k / nb, 0.12) for k in range(nb + 1)]
-    E.chain(low_pts, [0.012 * taper(k / nb) + 0.006 for k in range(nb + 1)])
+    E.chain(low_pts, [0.024 * taper(k / nb) + 0.012 for k in range(nb + 1)])
     nr = 44
-    rim_on = [edge_rng.random() > 0.18 for _ in range(nr)]
+    rim_on = [edge_rng.random() > 0.22 for _ in range(nr)]
     for k in range(nr):
         if not rim_on[k]:
             continue
         s0, s1 = k / nr, (k + 1) / nr
         a = wall(s0, top(s0), 0.02 * math.sin(tw + s0 * 6.0))
         b = wall(s1, top(s1), 0.02 * math.sin(tw + s1 * 6.0))
-        E.cap(a, b, 0.016 * (0.5 + 0.5 * taper(0.5 * (s0 + s1))))
-    for k in range(13):                              # beads sitting on the rim
-        s = (k + edge_rng.uniform(0.2, 0.8)) / 13
-        E.ball(wall(s, top(s), 0.02 * math.sin(tw + s * 6.0)), edge_rng.uniform(0.02, 0.03) * (0.6 + 0.4 * taper(s)))
+        E.cap(a, b, 0.026 * (0.5 + 0.5 * taper(0.5 * (s0 + s1))))
+    for k in range(14):                              # beads sitting on the rim
+        s = (k + edge_rng.uniform(0.2, 0.8)) / 14
+        E.ball(wall(s, top(s), 0.02 * math.sin(tw + s * 6.0)), edge_rng.uniform(0.03, 0.045) * (0.6 + 0.4 * taper(s)))
 
     # --- lace skirt lying on the water: spreads outward and back toward the camera from the root
     def W(s):
-        return 0.10 + 0.42 * s
+        return 0.12 + 0.36 * s
 
     def skirt_xy(s, d):
         b = base(s)
@@ -277,21 +277,21 @@ def build_crown_elements(tau):
         L = math.hypot(q[0] - p[0], d1 - d0)
         if L < 0.004:
             continue
-        r = 0.016 * edge_rng.uniform(0.8, 1.3) * (1.0 - 0.35 * (0.5 * (d0 + d1)) / max(0.1, W(0.5 * (s0 + s1))))
+        r = 0.022 * edge_rng.uniform(0.8, 1.3) * (1.0 - 0.35 * (0.5 * (d0 + d1)) / max(0.1, W(0.5 * (s0 + s1))))
         n = max(1, int(math.ceil(L / 0.05)))
         pts = [skirt_xy(s0 + (s1 - s0) * k / n, d0 + (d1 - d0) * k / n) for k in range(n + 1)]
         E.chain(pts, [r] * (n + 1))
 
     # --- tendrils from the rim: grow, pinch off a droplet, retract (periodic life cycle per tendril)
-    nt = 11
+    nt = 16
     for j in range(nt):
         s0 = 0.04 + 0.86 * (j + rng.uniform(0.2, 0.8)) / nt
         phase = rng.uniform(0, 1)
-        lmax = rng.uniform(0.1, 0.24) * (0.6 + 0.8 * math.exp(-((s0 - 0.28) / 0.35) ** 2))
+        lmax = rng.uniform(0.12, 0.30) * (0.6 + 0.8 * math.exp(-((s0 - 0.4) / 0.35) ** 2))
         out = Vector((rng.uniform(0.2, 0.9), rng.uniform(-0.1, 0.5), 1.0)).normalized()
         out = (out + LEAN * 0.6).normalized()
-        r_root = rng.uniform(0.014, 0.02)
-        r_tip = rng.uniform(0.022, 0.032)
+        r_root = rng.uniform(0.022, 0.03)
+        r_tip = rng.uniform(0.032, 0.046)
         age = (tau + phase) % 1.0
         grow = smoothstep(0.0, 0.5, age) * (1.0 - smoothstep(0.62, 1.0, age))
         root = wall(s0, top(s0) * 0.98, 0.0)
@@ -314,10 +314,10 @@ def build_crown_elements(tau):
             E.ball(p, r_tip * 0.95 * (1.0 - a) ** 0.5)
 
     # --- loose droplets on ballistic arcs (periodic)
-    for j in range(20):
+    for j in range(24):
         s0 = rng.uniform(0.03, 0.9)
         phase = rng.uniform(0, 1)
-        r0 = rng.uniform(0.012, 0.026)
+        r0 = rng.uniform(0.014, 0.032)
         vel = Vector((rng.uniform(0.3, 1.0), rng.uniform(0.0, 0.8), rng.uniform(0.5, 1.1)))
         age = (tau + phase) % 1.0
         start = wall(s0, rng.uniform(0.6, 1.0), 0.0)

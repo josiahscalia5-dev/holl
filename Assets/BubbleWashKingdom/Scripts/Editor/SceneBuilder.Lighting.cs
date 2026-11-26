@@ -38,28 +38,28 @@ namespace BubbleWash.EditorTools
             RenderSettings.sun = sun;
 
             // Water bounce: a weak cool directional light shining UP from the bright slide water. It lifts the ceiling and the
-            // upper walls (which face away from the key) to the reference's mid-violet, with a cyan cast like light from the water.
+            // upper walls (which face away from the key) to the reference's blue-violet, with a cyan cast like light from the water.
             var bounceGo = Child(lights, "Water Bounce");
             bounceGo.transform.rotation = Quaternion.Euler(-78f, 0f, 0f);
             var bounce = bounceGo.AddComponent<Light>();
             bounce.type = LightType.Directional;
-            bounce.color = new Color(0.55f, 0.66f, 1f);
-            bounce.intensity = 0.4f;
+            bounce.color = new Color(0.42f, 0.58f, 1f);
+            bounce.intensity = 0.5f;
             bounce.shadows = LightShadows.None;
 
-            // Ambient: deep violet from above, magenta-violet around the horizon, cool blue bounce from the water
-            // (the "ground" colour is what the tunnel ceiling receives). Kept dim so the walls keep their depth.
+            // Ambient (HDR round m1): saturated BLUE-violet from above (reference ceiling bays #40509e..#515aad), violet around
+            // the horizon (walls #7250ad..#865aaf), cyan-blue bounce from the water. Saturated, never grey-lavender.
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.5f, 0.33f, 0.9f);
-            RenderSettings.ambientEquatorColor = new Color(0.62f, 0.38f, 0.88f);
-            RenderSettings.ambientGroundColor = new Color(0.5f, 0.4f, 0.98f);
-            RenderSettings.ambientIntensity = 0.8f;
-            // Aerial perspective: saturated mid-violet (never pale), light density: near tunnel clear, far tunnel melts
-            // into violet while the warm bulbs / portal still punch through (emissives use little fog).
+            RenderSettings.ambientSkyColor = new Color(0.40f, 0.38f, 1.0f);
+            RenderSettings.ambientEquatorColor = new Color(0.56f, 0.34f, 0.96f);
+            RenderSettings.ambientGroundColor = new Color(0.36f, 0.50f, 1.0f);
+            RenderSettings.ambientIntensity = 0.9f;
+            // Aerial perspective: saturated lavender-violet (never pale grey): the near tunnel stays clear and rich, the far
+            // tunnel melts into a lighter violet glow while the warm bulbs still punch through (emissives use little fog).
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = new Color(0.84f, 0.72f, 1.0f);
-            RenderSettings.fogDensity = 0.0105f;
+            RenderSettings.fogColor = new Color(0.76f, 0.60f, 1.0f);
+            RenderSettings.fogDensity = 0.0112f;
             RenderSettings.skybox = null;
             RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
             RenderSettings.reflectionIntensity = 0.9f;
@@ -98,27 +98,33 @@ namespace BubbleWash.EditorTools
             vol.isGlobal = true;
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
             AssetDatabase.CreateAsset(profile, profilePath ?? $"{GenDir}/PostFX_Level01.asset");
-            // Bloom: CONTROLLED glow. Emissives are moderately hot (neon ~3, bulbs ~5) and fully saturated, so the
-            // tonemapper keeps their hue and the bloom (untinted, so it carries each source's own colour) makes yellow /
-            // cyan / pink / amber halos. Threshold above lit white foam so lit surfaces never veil the frame.
+            // Bloom (HDR captures, round m1): LOCAL glow from the emissives only - threshold above lit foam / gold body so lit
+            // surfaces never bloom, moderate scatter so dozens of ring bulbs give soft amber halos instead of one milky veil
+            // over the tunnel. Untinted: every halo carries its source's own colour (amber bulbs, yellow / cyan / pink stars).
             var bloom = profile.Add<Bloom>(true);
-            bloom.threshold.Override(1.15f); bloom.intensity.Override(1.25f); bloom.scatter.Override(0.7f);
+            bloom.threshold.Override(1.3f); bloom.intensity.Override(0.95f); bloom.scatter.Override(0.62f);
             bloom.tint.Override(Color.white); bloom.highQualityFiltering.Override(true);
             bloom.maxIterations.Override(8);
             // Neutral keeps saturated hues far better than ACES (which pushes bright yellow / cyan to white).
             var tm = profile.Add<Tonemapping>(true); tm.mode.Override(TonemappingMode.Neutral);
             var ca = profile.Add<ColorAdjustments>(true);
-            ca.saturation.Override(14f); ca.contrast.Override(16f); ca.postExposure.Override(-0.1f);
-            // violet, slightly darker shadows / low mids (depth, dark holes) - highlights untouched
+            // richer, darker mids than the washed-out HDR baseline (frame L50 .63 -> reference .55)
+            ca.saturation.Override(16f); ca.contrast.Override(12f); ca.postExposure.Override(-0.35f);
+            // blue-violet shadows / low mids (depth, dark holes); warm highlights keep gold and bulbs warm
             var smh = profile.Add<ShadowsMidtonesHighlights>(true);
-            smh.shadows.Override(new Vector4(0.96f, 0.88f, 1.12f, -0.03f));
-            smh.midtones.Override(new Vector4(1f, 0.98f, 1.03f, 0f));
+            smh.shadows.Override(new Vector4(0.92f, 0.88f, 1.14f, -0.03f));
+            smh.midtones.Override(new Vector4(0.98f, 0.97f, 1.05f, 0f));
             smh.highlights.Override(new Vector4(1.04f, 1f, 0.96f, 0f));
             smh.shadowsStart.Override(0f); smh.shadowsEnd.Override(0.35f); smh.highlightsStart.Override(0.55f); smh.highlightsEnd.Override(1f);
             // gentle warm-highlight / violet-shadow split (neutral grey = 0.5)
             var st = profile.Add<SplitToning>(true);
             st.shadows.Override(new Color(0.45f, 0.38f, 0.64f)); st.highlights.Override(new Color(0.56f, 0.52f, 0.48f)); st.balance.Override(-15f);
-            var vg = profile.Add<Vignette>(true); vg.intensity.Override(0.3f); vg.smoothness.Override(0.48f); vg.color.Override(new Color(0.12f, 0.03f, 0.26f));
+            // Hue-selective saturation: only the blue-violet range (drum walls, ceiling bays, far tunnel ~225-268 deg) gets
+            // richer (x1.28); the purple hat (~280), pink fur, cyan water and gold are untouched.
+            var curves = profile.Add<ColorCurves>(true);
+            curves.hueVsSat.Override(new TextureCurve(new[] { new Keyframe(0.57f, 0.5f), new Keyframe(0.63f, 0.64f), new Keyframe(0.72f, 0.64f),
+                new Keyframe(0.765f, 0.5f) }, 0.5f, true, new Vector2(0f, 1f)));
+            var vg = profile.Add<Vignette>(true); vg.intensity.Override(0.28f); vg.smoothness.Override(0.48f); vg.color.Override(new Color(0.12f, 0.03f, 0.26f));
             var wb = profile.Add<WhiteBalance>(true); wb.temperature.Override(0f); wb.tint.Override(0f);
             // soft far tunnel (premium film depth): mascot, coins and near rings stay crisp
             var dof = profile.Add<DepthOfField>(true);
@@ -139,6 +145,9 @@ namespace BubbleWash.EditorTools
             probe.center = box.center - position;
             probe.blendDistance = 3f;
             probe.importance = 1;
+            // the metallic drum walls are near-mirrors at the grazing angles the rear camera sees: a slightly weaker probe
+            // keeps their own violet albedo / ambient in the mix (less pale reflected haze)
+            probe.intensity = 0.9f;
             probe.hdr = true;
             probe.boxProjection = false;
             probe.nearClipPlane = 0.1f;
@@ -157,8 +166,9 @@ namespace BubbleWash.EditorTools
                 go.transform.position = f.FlatPoint(0f, TunnelCenter + 1.1f) - f.forward * 0.35f;
                 var l = go.AddComponent<Light>();
                 l.type = LightType.Point;
-                l.color = new Color(1f, 0.6f, 0.24f);
-                l.intensity = 2.4f;
+                // warm amber-rose: on the violet drum wall this reads as the reference's pink-peach glow around each ring
+                l.color = new Color(1f, 0.55f, 0.36f);
+                l.intensity = 2.6f;
                 l.range = 6.5f;
                 l.shadows = LightShadows.None;
             }
@@ -179,6 +189,10 @@ namespace BubbleWash.EditorTools
             // rings and warm bulbs, not a cubemap filled with pale fog colour (that washed the whole frame out).
             bool fog = RenderSettings.fog;
             RenderSettings.fog = false;
+            // Gold (BWK_Gold _ProbeBakeTint) and bulbs / neon (BWK_Emissive _ProbeBakeDim) are dimmed and rose-tinted while
+            // the cubemaps render: the near-mirror drum walls then reflect a violet tunnel with rose glints near the rings
+            // instead of a yellow haze (yellow + violet = the grey-lavender wash of the HDR baseline).
+            Shader.SetGlobalFloat("_BWK_ProbeBake", 1f);
             try
             {
                 // two passes: the second bake sees the first pass's reflections on the metal (richer inter-reflections)
@@ -197,7 +211,7 @@ namespace BubbleWash.EditorTools
                         catch (System.Exception e) { Debug.LogWarning($"[BWK] probe bake failed for {probe.name}: {e.Message}"); }
                     }
             }
-            finally { RenderSettings.fog = fog; }
+            finally { RenderSettings.fog = fog; Shader.SetGlobalFloat("_BWK_ProbeBake", 0f); }
         }
 
         /// <summary>

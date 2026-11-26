@@ -7,10 +7,10 @@ Builds, exports (FBX -> Assets/BubbleWashKingdom/Art/Models/Track/) and previews
   SM_GlassPipe_Module  glass tube r 0.28 around a glowing core r 0.20  M_Glass, M_PipeWater
   SM_Pipe_Coupler      gold band r 0.33 x 0.12 with 6 hex bolt heads   M_Gold
   SM_Pipe_Elbow        90 degree glass elbow, bend radius 0.8          M_Glass, M_PipeWater
-  SM_Ring              premium chunky gold ring r 3.60-4.26 x 0.44: rope bead, recessed dark-gold channel with 32
-                       large glass marquee bulbs in gold cups, 8 bolted clamp plates, 24 rivets   M_Gold, M_GoldDark, M_Bulb
-  SM_DrumRim           lavender drum lip r 3.82-4.26 (rope bead, front bevel, long back slope) with 48 LED studs
-                       placed between the gold rings (nested-drum depth)                           M_DrumRim, M_RimLight
+  SM_Ring              slim polished gold ring r 3.80-4.26 x 0.26: inner + outer rolled beads, shallow dark-gold
+                       trough with 28 warm marquee bulbs half sunk in gold cups (m1)              M_Gold, M_GoldDark, M_Bulb
+  SM_DrumRim           fat rolled lavender drum lip r 3.74-4.26 (short front bevel, long back slope) with 32 soft
+                       LED studs, 3 between two gold rings (nested-drum depth, m1)                 M_DrumRim, M_RimLight
   SM_Bulb              warm marquee bulb, origin at its base, +Z       M_Bulb (legacy, not placed by BuildRings)
 
 Every surface is swept or revolved from an analytic 2D profile with exact per-vertex normals (stored as
@@ -58,37 +58,40 @@ CORE_R, CORE_SIDES = 0.20, 12
 CPL_RO, CPL_RI, CPL_HW, CPL_FILLET, CPL_SEGS = 0.33, 0.272, 0.06, 0.018, 32
 ELBOW_R, ELBOW_SEGS = 0.8, 12
 
-# ------------------------------------------------------------------ premium gold ring (profile in (rho, y); +y faces
-# the approaching player, i.e. Unity -Z after the FBX axis fix)
-RING_SEGS = 64                  # 2 segments per bulb pitch: bulbs and plates sit on vertex columns
-RING_BULBS = 48                 # dense marquee row (reference f_003.00s / key 5.0 s: ~40-50 warm bulbs per ring, r2)
-RG_BACK_Y, RG_OUT = -0.20, 4.26           # back face; outer surface buried in the drum wall (r 4.2)
-RG_IN_FACE = 3.70                         # inner face (toward the axis) under the rope bead
-RG_IB_C, RG_IB_R = (3.72, 0.10), 0.12     # inner rope bead: apex rho 3.60, front y 0.22
-RG_CORNER_R = 0.10                        # rounded back-inner corner
-RG_FLOOR_Y = 0.05                         # recessed bulb channel rim height (polished gold trough, r2)
-RG_TROUGH = 0.035                         # trough depth below RG_FLOOR_Y at the channel centre
-RG_OB_C, RG_OB_R = (4.13, 0.10), 0.09     # outer bead against the wall: front y 0.19
-RG_BULB_RHO = 3.942                       # channel centre line
-BULB_R2, BULB_H2 = 0.102, 0.110           # glass bulb half-width / half-height (big warm marquee lamps, r2)
-BULB_Y = RG_FLOOR_Y + 0.118               # bulb centre: crown ~0.06 above the rope bead
+# ------------------------------------------------------------------ polished gold ring (profile in (rho, y); +y faces
+# the approaching player, i.e. Unity -Z after the FBX axis fix). m1 (reference f_003.00s at the hero camera): a slim
+# polished band ~0.40 m deep (r 3.80 -> wall) - two rolled beads with a shallow trough between them in which the warm
+# marquee bulbs sit, half sunk in gold cups, so the bulbs read as part of the band (no chunky rope / plates / rivets).
+RING_SEGS = 84                  # 3 segments per bulb pitch (smooth silhouette at the hero distance)
+RING_BULBS = 28                 # reference f_003.00s: ~24-28 warm bulbs per ring (measured at the first two gold rings)
+RG_BACK_Y, RG_OUT = -0.10, 4.26           # back face; outer surface buried in the drum wall (r 4.2)
+RG_IN_FACE = 3.815                        # inner face (toward the axis) under the inner bead
+RG_IB_C, RG_IB_R = (3.865, 0.015), 0.065  # inner polished bead: apex rho 3.80, front y 0.08
+RG_CORNER_R = 0.04                        # rounded back-inner corner
+RG_FLOOR_Y = 0.035                        # bulb trough rim height
+RG_TROUGH = 0.015                         # trough depth below RG_FLOOR_Y at the channel centre
+RG_OB_C, RG_OB_R = (4.13, 0.01), 0.06     # outer bead against the wall: front y 0.07
+RG_BULB_RHO = 4.001                       # trough centre line (CHECK printed by ring_parts)
+BULB_R2, BULB_H2 = 0.068, 0.072           # glass bulb half-width / half-height
+BULB_Y = RG_FLOOR_Y + 0.05                # bulb centre: lower half sunk in the cup, crown ~0.08 above the beads
 BULB_TILT = math.radians(10.0)            # bulbs lean toward the tunnel axis (gameplay camera)
-CUP_RO, CUP_RI, CUP_TOP = 0.118, 0.096, 0.064
-PLATES = 8                                # bolted clamp plates across the channel (segment joints)
+CUP_RO, CUP_RI, CUP_TOP = 0.082, 0.069, 0.040
+PLATES = 0                                # m1: no clamp plates / rivets (clutter at the hero distance)
 
 # ------------------------------------------------------------------ lavender drum rim (nested-drum lips between rings)
-RIM_SEGS, RIM_LEDS = 64, 48
-RIM_C, RIM_R = (3.97, 0.0), 0.15          # rope bead, apex rho 3.82
-RIM_FRONT, RIM_BACK = (4.26, 0.05), (4.26, -0.34)   # front bevel / long back slope meet the wall
-RIM_LED_DEG = 118.0                       # LED studs on the front-inner face of the bead
+# m1: a fat rolled lip (reference f_003.00s: broad glossy lavender bands ~0.45 m deep with soft pink-white glints)
+RIM_SEGS, RIM_LEDS = 84, 32
+RIM_C, RIM_R = (3.98, 0.0), 0.24          # rolled bead, apex rho 3.74, front y 0.24
+RIM_FRONT, RIM_BACK = (4.26, 0.12), (4.26, -0.50)   # short front bevel / long back slope meet the wall
+RIM_LED_DEG = 128.0                       # soft LED studs on the front-inner face of the bead
 
 # ------------------------------------------------------------------ legacy single bulb asset
 BULB_RX, BULB_HALF_H = 0.085, 0.10          # slightly elongated sphere (1.18 : 1)
 BULB_SIDES, BULB_BANDS = 6, 4                  # even band count -> equator ring at r 0.085; ~36 tris (mobile)
 
 # ------------------------------------------------------------------ gameplay layout mirrored from SceneBuilder (previews)
-RING_SPACING = 8.5                        # SceneBuilder.RingSpacing: gold rings
-RIMS_PER_GAP = 2                          # lavender rims between two gold rings (every 2.83 m)
+RING_SPACING = 12.75                      # SceneBuilder.GoldRingSpacing (Environment, m1): gold rings
+RIMS_PER_GAP = 3                          # lavender rims between two gold rings (every 3.19 m)
 
 X_AXIS, Y_AXIS, Z_AXIS = Vector((1.0, 0.0, 0.0)), Vector((0.0, 1.0, 0.0)), Vector((0.0, 0.0, 1.0))
 
@@ -516,8 +519,8 @@ def ring_parts():
         (chain(line_pts((ox + RG_OB_R, oy), (RG_OUT, oy), (0.0, 1.0)),
                line_pts((RG_OUT, oy), (RG_OUT, RG_BACK_Y), (1.0, 0.0))), 1),         # buried in the wall
     ]
-    print("CHECK ring rope bead %.1f..%.1f deg, channel floor rho %.3f..%.3f (width %.3f)" % (
-        a_in, a_fl, floor0, floor1, floor1 - floor0))
+    print("CHECK ring inner bead %.1f..%.1f deg, bulb trough rho %.3f..%.3f (width %.3f, centre %.3f vs RG_BULB_RHO %.3f)"
+          % (a_in, a_fl, floor0, floor1, floor1 - floor0, 0.5 * (floor0 + floor1), RG_BULB_RHO))
     return parts
 
 
@@ -542,7 +545,7 @@ def build_ring(mats):
         lathe_axis(mb, cup_floor, GD, 12, base, axis, t)
         lathe_axis(mb, bulb, BL, 10, base + axis * (BULB_Y - RG_FLOOR_Y), axis, t)
     rivet = dome_prof(0.021, 0.015)
-    for j in range(RING_BULBS):
+    for j in range(RING_BULBS if PLATES > 0 else 0):
         alpha = 2.0 * math.pi * (j + 0.5) / RING_BULBS
         er, t = ring_frame(alpha)
         if j % (RING_BULBS // PLATES) == 0:
@@ -565,12 +568,12 @@ def build_rim(mats):
     nb = (math.cos(math.radians(a_b)), math.sin(math.radians(a_b)))
     pf = (RIM_C[0] + RIM_R * nf[0], RIM_C[1] + RIM_R * nf[1])
     pb = (RIM_C[0] + RIM_R * nb[0], RIM_C[1] + RIM_R * nb[1])
-    prof = chain(line_pts(RIM_FRONT, pf, nf, 2), arc_pts(RIM_C, RIM_R, a_f, a_b, 18), line_pts(pb, RIM_BACK, nb, 3))
+    prof = chain(line_pts(RIM_FRONT, pf, nf, 2), arc_pts(RIM_C, RIM_R, a_f, a_b, 26), line_pts(pb, RIM_BACK, nb, 3))
     revolve(mb, with_u(prof), 0, RIM_SEGS)
     revolve(mb, with_u(line_pts(RIM_BACK, RIM_FRONT, (1.0, 0.0))), 0, RIM_SEGS)       # buried outer face
     a = math.radians(RIM_LED_DEG)
     n2 = (math.cos(a), math.sin(a))
-    led = dome_prof(0.024, 0.018, skirt=0.008, bands=2)
+    led = dome_prof(0.032, 0.020, skirt=0.008, bands=2)
     for j in range(RIM_LEDS):
         er, t = ring_frame(2.0 * math.pi * (j + 0.5) / RIM_LEDS)
         p = er * (RIM_C[0] + RIM_R * n2[0]) + Y_AXIS * (RIM_C[1] + RIM_R * n2[1])
@@ -736,7 +739,7 @@ def preview_materials(mats):
 
 
 HERO_D = 105.5                                   # track distance of the Unity hero shot (mascot); preview y = -(d - 105.5)
-FIRST_RING_D = 65.0                              # SceneBuilder: first gold ring at tunnelStart (62) + 3 m
+FIRST_RING_D = 71.5                              # SceneBuilder.FirstRingDistance (Environment, m1): tunnelStart + 9.5 m
 BAND_LEN = RING_SPACING / (RIMS_PER_GAP + 1)     # drum section length: one rim or ring every 2.83 m
 
 
@@ -957,7 +960,7 @@ def render_previews(a):
     env = preview_world()
 
     # (a) hero gameplay views: rings + rims exactly where BuildRings puts them around the Unity hero distance,
-    # through the RunnerCameraRig framings (portrait 2.55 m / 1.5 m / 10 deg / FOV 58, landscape 2.9 / 1.6 / 9 / 52)
+    # through the RunnerCameraRig framings (portrait 2.75 m / 1.3 m / 10 deg / FOV 58, landscape 2.9 / 1.6 / 9 / 52)
     pa = new_collection("PV_Assembly")
     for i in range(-2, 24):
         inst(a["slide"], pa, (0.0, -LENGTH * i, 0.0))
@@ -984,7 +987,7 @@ def render_previews(a):
                   spec=0.4)
     env.inputs["Strength"].default_value = 0.75
     show_only(pa)
-    cam9 = gameplay_camera(2.55, 1.5, 10.0, 58.0)
+    cam9 = gameplay_camera(2.75, 1.3, 10.0, 58.0)
     render_cam("Track_hero_9x16", cam9, (720, 1280))
     cam16 = gameplay_camera(2.9, 1.6, 9.0, 52.0)
     render_cam("Track_hero_16x9", cam16, (1280, 720))

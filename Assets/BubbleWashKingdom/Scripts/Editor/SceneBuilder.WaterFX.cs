@@ -18,10 +18,102 @@ namespace BubbleWash.EditorTools
     // shared `rng` as the original foam / bubble placement did, so the lead's item layout (BuildItems) never shifts.
     public static partial class SceneBuilder
     {
-        // decor chevrons down the middle of the water (also drive the light pools in M_Water / BWK_Water)
-        public const float ChevronStart = 6f, ChevronSpacing = 2.2f, ChevronScale = 1.45f;
-        // milk crown splashes beside the feet (Art/Models/FX/SM_FX_Crown_xx, left-side asset mirrored for the right)
-        const float CrownRootX = 0.42f, CrownRootZ = 0.25f, CrownScale = 0.95f;
+        // decor chevrons down the middle of the water (also drive the light pools in M_Water / BWK_Water). Reference
+        // f_002.00-f_003.25: a runway of glowing chevrons about one chevron length apart (SM_Chevron is 1.31 x 0.65 m).
+        public const float ChevronStart = 6f, ChevronSpacing = 1.1f, ChevronScale = 1.35f;
+        // milk crown splashes beside the feet (Art/Models/FX/SM_FX_Crown_xx, left-side asset mirrored for the right).
+        // Root anchored in SCREEN space of the hero frame (reference f_003.00s: crowns rise at x 0-.35 / .65-1, y .55-.87).
+        static readonly Vector2 CrownRootScreenL = new Vector2(0.31f, 0.80f);
+        const float CrownScale = 1.0f, CrownYaw = 0f;
+        // reference f_003.00s foreground bubbles: screen x, screen y (0..1 from the top-left of the 9:16 hero frame),
+        // diameter as a fraction of the frame width, w > 0 = height above the water (m), w < 0 = -camera depth (m)
+        static readonly Vector4[] HeroBubbleSpots =
+        {
+            new Vector4(0.315f, 0.849f, 0.075f, 0.30f), new Vector4(0.324f, 0.893f, 0.047f, 0.22f),
+            new Vector4(0.215f, 0.891f, 0.042f, 0.22f), new Vector4(0.178f, 0.923f, 0.047f, 0.18f),
+            new Vector4(0.136f, 0.916f, 0.030f, 0.18f), new Vector4(0.164f, 0.893f, 0.017f, 0.20f),
+            new Vector4(0.333f, 0.802f, 0.033f, 0.30f), new Vector4(0.899f, 0.904f, 0.076f, 0.25f),
+            // owner: "more bubbles in front and around the character" (beside the body, never over it)
+            new Vector4(0.085f, 0.640f, 0.034f, -2.1f), new Vector4(0.905f, 0.700f, 0.030f, -2.1f),
+            new Vector4(0.170f, 0.530f, 0.022f, -2.3f), new Vector4(0.845f, 0.560f, 0.024f, -2.3f),
+        };
+
+        // ==================================================================== hero camera (screen-space placement)
+        /// <summary>The owner-approved hero camera in the runner's local space (= FX root space) at the hero distance.</summary>
+        struct HeroCam
+        {
+            public Vector3 pos; public Quaternion rot; public float fov, aspect;
+            float Ty => Mathf.Tan(fov * 0.5f * Mathf.Deg2Rad);
+            /// <summary>Ray through screen point (sx, sy from the top-left, 0..1), scaled so its camera-space z is 1.</summary>
+            public Vector3 Ray(float sx, float sy) => rot * new Vector3((sx - 0.5f) * 2f * Ty * aspect, (0.5f - sy) * 2f * Ty, 1f);
+            /// <summary>Point on that ray at runner-local height h (w > 0) or at camera depth -w (w < 0).</summary>
+            public Vector3 At(float sx, float sy, float w, out float depth)
+            {
+                var d = Ray(sx, sy);
+                depth = w < 0f ? -w : (d.y < -0.02f ? Mathf.Clamp((w - pos.y) / d.y, 0.6f, 12f) : 3f);
+                return pos + d * depth;
+            }
+            public float WidthAt(float frac, float depth) => frac * 2f * depth * Ty * aspect;
+            public Vector2 Project(Vector3 p)
+            {
+                var v = Quaternion.Inverse(rot) * (p - pos);
+                return new Vector2(0.5f + 0.5f * v.x / (v.z * Ty * aspect), 0.5f - 0.5f * v.y / (v.z * Ty));
+            }
+        }
+
+        /// <summary>
+        /// Measures the hero camera with the real RunnerCameraRig code: the scene's rig in previews, a temporary rig in the
+        /// full build (BuildRunnerFX runs before BuildCameras). Runner and rig state are restored; only logs are written.
+        /// </summary>
+        static HeroCam MeasureHeroCam(RunnerController runner)
+        {
+            var cam = new HeroCam { pos = new Vector3(0f, 1.0f, -3.0f), rot = Quaternion.Euler(6f, 0f, 0f), fov = HeroCamFov, aspect = 9f / 16f };
+            if (runner == null || runner.track == null) return cam;
+            var rig = Object.FindFirstObjectByType<RunnerCameraRig>(FindObjectsInactive.Include);
+            GameObject temp = null;
+            if (rig == null)
+            {
+                temp = new GameObject("_HeroCamProbe") { hideFlags = HideFlags.HideAndDontSave };
+                rig = temp.AddComponent<RunnerCameraRig>();
+                rig.runner = runner;
+            }
+            float d0 = runner.Distance, lat0 = runner.Lateral, asp0 = rig.aspectOverride;
+            var saved = new[] { rig.distanceBackPortrait, rig.heightPortrait, rig.pitchDownPortrait, rig.fovPortrait };
+            try
+            {
+                ApplyHeroCamera(rig);
+                runner.TeleportTo(HeroDistance, 0f);
+                rig.aspectOverride = 9f / 16f;
+                rig.Snap();
+                var rt = runner.transform;
+                float dutch = rig.vcam != null ? rig.vcam.Lens.Dutch : Mathf.Clamp(-runner.Frame.roll * rig.bankFactor, -rig.maxDutch, rig.maxDutch);
+                cam.pos = rt.InverseTransformPoint(rig.transform.position);
+                cam.rot = Quaternion.Inverse(rt.rotation) * rig.transform.rotation * Quaternion.Euler(0f, 0f, dutch);
+                cam.fov = rig.vcam != null ? rig.vcam.Lens.FieldOfView : HeroCamFov;
+                var e = cam.rot.eulerAngles;
+                Debug.Log($"[BWK] waterfx herocam (runner-local) pos ({cam.pos.x:F3}, {cam.pos.y:F3}, {cam.pos.z:F3}) euler ({e.x:F2}, {e.y:F2}, {e.z:F2}) fov {cam.fov:F1} {(temp != null ? "temp rig" : "scene rig")}");
+                if (InWaterFxPreview)
+                {
+                    var sb = new System.Text.StringBuilder("[BWK] waterfx herotrack d=(local x,y,z)@screen:");
+                    for (float d = HeroDistance - 2.5f; d <= HeroDistance + 4.01f; d += 0.5f)
+                    {
+                        var p = rt.InverseTransformPoint(runner.track.Evaluate(d).Point(0f, 0f));
+                        var s = cam.Project(p);
+                        sb.Append($" {d:F1}=({p.x:F2},{p.y:F2},{p.z:F2})@({s.x:F2},{s.y:F2})");
+                    }
+                    Debug.Log(sb.ToString());
+                }
+            }
+            catch (System.Exception ex) { Debug.LogWarning("[BWK] waterfx hero camera measurement failed: " + ex.Message); }
+            finally
+            {
+                rig.distanceBackPortrait = saved[0]; rig.heightPortrait = saved[1]; rig.pitchDownPortrait = saved[2]; rig.fovPortrait = saved[3];
+                rig.aspectOverride = asp0;
+                runner.TeleportTo(d0, lat0);
+                if (temp != null) Object.DestroyImmediate(temp);
+            }
+            return cam;
+        }
 
         // ==================================================================== preview / persistence helpers
         static string PreviewOutArg()
@@ -210,6 +302,9 @@ namespace BubbleWash.EditorTools
         static SplashFX BuildRunnerFX(GameObject runnerGo, RunnerController runner, TrackItemRegistry registry)
         {
             bool save = !InAgentPreview;
+            var heroCam = MeasureHeroCam(runner);
+            var crownL = heroCam.At(CrownRootScreenL.x, CrownRootScreenL.y, 0f, out _);
+            crownL.x = Mathf.Min(crownL.x, -0.2f);
             var fxRoot = Child(runnerGo, "FX");
             var fx = fxRoot.AddComponent<SplashFX>();
             fx.runner = runner;
@@ -240,35 +335,21 @@ namespace BubbleWash.EditorTools
             ParticleSystem Drops(string n, float side, uint seed)
             {
                 var dir = Quaternion.LookRotation(new Vector3(side * 0.62f, 0.78f, -0.38f)).eulerAngles;
-                return Sub(fx.spray, n, "M_FX_Milk", new Vector3(side * 0.5f, 0.2f, 0.05f), dir, ps =>
+                return Sub(fx.spray, n, "M_FX_Milk", new Vector3(side * (Mathf.Abs(crownL.x) + 0.2f), 0.35f, crownL.z - 0.1f), dir, ps =>
                 {
                     var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.3f, 0.6f); m.startSpeed = new ParticleSystem.MinMaxCurve(1.3f, 2.8f);
-                    m.startSize = new ParticleSystem.MinMaxCurve(0.018f, 0.05f); m.gravityModifier = 1.3f; m.simulationSpace = ParticleSystemSimulationSpace.Local;
+                    m.startSize = new ParticleSystem.MinMaxCurve(0.02f, 0.055f); m.gravityModifier = 1.3f; m.simulationSpace = ParticleSystemSimulationSpace.Local;
                     m.maxParticles = 140; m.startColor = Color.white;
-                    var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Cone; sh.angle = 30f; sh.radius = 0.16f;
+                    var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Cone; sh.angle = 30f; sh.radius = 0.2f;
                     var sz = ps.sizeOverLifetime; sz.enabled = true;
                     sz.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, 0.7f), new Keyframe(0.15f, 1f), new Keyframe(0.75f, 1f), new Keyframe(1f, 0f)));
-                    var e = ps.emission; e.rateOverTime = 34f;
+                    var e = ps.emission; e.rateOverTime = 30f;
                     MeshParticles(ps, dropMesh, true);
                     Seed(ps, seed);
                 });
             }
             var dropsL = Drops("MilkDropsL", -1f, 21);
             var dropsR = Drops("MilkDropsR", 1f, 22);
-            // small soap bubbles around the splash (reference: clear little bubbles at the feet)
-            var splashBubbles = Sub(fx.spray, "SplashBubbles", "M_Bubble", new Vector3(0, 0.12f, 0.0f), new Vector3(-90, 0, 0), ps =>
-            {
-                var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.5f, 1.0f); m.startSpeed = new ParticleSystem.MinMaxCurve(0.2f, 0.7f);
-                m.startSize = new ParticleSystem.MinMaxCurve(0.03f, 0.085f); m.gravityModifier = -0.05f; m.simulationSpace = ParticleSystemSimulationSpace.Local;
-                m.maxParticles = 40;
-                var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Box; sh.scale = new Vector3(1.5f, 0.9f, 0.2f);
-                var vel = ps.velocityOverLifetime; vel.enabled = true; vel.space = ParticleSystemSimulationSpace.Local;
-                vel.z = new ParticleSystem.MinMaxCurve(-0.4f, 0.1f); vel.x = new ParticleSystem.MinMaxCurve(0f, 0f); vel.y = new ParticleSystem.MinMaxCurve(0f, 0f);
-                var sz = ps.sizeOverLifetime; sz.enabled = true; sz.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, 0.5f), new Keyframe(0.25f, 1f), new Keyframe(0.9f, 1f), new Keyframe(1f, 0f)));
-                var e = ps.emission; e.rateOverTime = 16f;
-                MeshParticles(ps, bubbleMesh, false);
-                Seed(ps, 23);
-            });
             // subtle speed lines streaming past the camera at the edges of the view (sense of speed)
             var speedLines = Sub(fx.spray, "SpeedLines", "M_FX_SpeedLine", new Vector3(0, 1.1f, 7.5f), new Vector3(0, 180, 0), ps =>
             {
@@ -280,32 +361,44 @@ namespace BubbleWash.EditorTools
                 var r = ps.GetComponent<ParticleSystemRenderer>(); r.renderMode = ParticleSystemRenderMode.Stretch; r.velocityScale = 0.06f; r.lengthScale = 3f;
                 Seed(ps, 24);
             });
-            // clear soap bubbles skimming the water in the lower foreground, between the two crowns (reference f_003.00s)
-            var frontBubbles = Sub(fx.spray, "FrontBubbles", "M_Bubble", new Vector3(0f, 0.16f, -0.75f), Vector3.zero, ps =>
-            {
-                var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(1.2f, 2.2f); m.startSpeed = 0f;
-                m.startSize = new ParticleSystem.MinMaxCurve(0.045f, 0.12f); m.gravityModifier = -0.01f; m.simulationSpace = ParticleSystemSimulationSpace.Local;
-                m.maxParticles = 24; m.prewarm = true;
-                var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Box; sh.scale = new Vector3(1.1f, 0.22f, 0.9f);
-                var vel = ps.velocityOverLifetime; vel.enabled = true; vel.space = ParticleSystemSimulationSpace.Local;
-                vel.x = new ParticleSystem.MinMaxCurve(-0.08f, 0.08f); vel.y = new ParticleSystem.MinMaxCurve(0.0f, 0.06f); vel.z = new ParticleSystem.MinMaxCurve(-0.35f, -0.1f);
-                var sz = ps.sizeOverLifetime; sz.enabled = true; sz.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, 0.3f), new Keyframe(0.15f, 1f), new Keyframe(0.9f, 1f), new Keyframe(1f, 0f)));
-                var e = ps.emission; e.rateOverTime = 9f;
-                MeshParticles(ps, bubbleMesh, false);
-                Seed(ps, 25);
-            });
-            fx.extra = new[] { dropsL, dropsR, splashBubbles, speedLines, frontBubbles };
-            fx.extraRates = new[] { 34f, 34f, 16f, 30f, 9f };
+            fx.extra = new[] { dropsL, dropsR, speedLines };
+            fx.extraRates = new[] { 30f, 30f, 30f };
             fx.sheets = new ParticleSystem[0];   // flat crown sprites replaced by the 3D crowns below
 
-            // lacy milk foam on the water around and behind the feet
-            fx.foamTrail = Particles(fxRoot, "FoamTrail", "M_FX_FoamLace", new Vector3(0, 0.05f, -0.15f), new Vector3(-90, 0, 0), ps =>
+            // glassy bubbles at the reference screen positions (lower-left cluster, a big one lower-right, a few beside
+            // the body); SplashFX makes them bob, drift back, pop and re-form in play, still captures keep this layout
+            var bubbleParts = ModelParts("Props", "SM_Bubble");
+            if (bubbleParts.Count > 0)
             {
-                var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.35f, 0.6f); m.startSpeed = 0.2f;
-                m.startSize = new ParticleSystem.MinMaxCurve(0.55f, 1.05f); m.simulationSpace = ParticleSystemSimulationSpace.Local; m.maxParticles = 60;
+                var hb = Child(fxRoot, "HeroBubbles");
+                var hbMesh = PersistCopy(bubbleParts[0].mesh, save);
+                var list = new List<Transform>();
+                for (int i = 0; i < HeroBubbleSpots.Length; i++)
+                {
+                    var s = HeroBubbleSpots[i];
+                    var p = heroCam.At(s.x, s.y, s.w, out float depth);
+                    var b = Child(hb, $"Bubble_{i:00}");
+                    b.transform.localPosition = p;
+                    b.transform.localRotation = Quaternion.Euler(0f, i * 47f, 0f);
+                    b.transform.localScale = Vector3.one * heroCam.WidthAt(s.z, depth);
+                    b.AddComponent<MeshFilter>().sharedMesh = hbMesh;
+                    var mr = b.AddComponent<MeshRenderer>();
+                    mr.sharedMaterial = Mat("M_Bubble");
+                    mr.shadowCastingMode = ShadowCastingMode.Off;
+                    mr.receiveShadows = false;
+                    list.Add(b.transform);
+                }
+                fx.heroBubbles = list.ToArray();
+            }
+
+            // lacy milk foam on the water around and behind the feet
+            fx.foamTrail = Particles(fxRoot, "FoamTrail", "M_FX_FoamLace", new Vector3(0, 0.05f, -0.1f), new Vector3(-90, 0, 0), ps =>
+            {
+                var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.3f, 0.5f); m.startSpeed = 0.2f;
+                m.startSize = new ParticleSystem.MinMaxCurve(0.4f, 0.75f); m.simulationSpace = ParticleSystemSimulationSpace.Local; m.maxParticles = 40;
                 m.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
-                m.startColor = new Color(1f, 1f, 1f, 0.9f);
-                var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Circle; sh.radius = 0.5f;
+                m.startColor = new Color(1f, 1f, 1f, 0.75f);
+                var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Circle; sh.radius = 0.4f;
                 var sz = ps.sizeOverLifetime; sz.enabled = true; sz.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0, 0.7f, 1, 1.35f));
                 var col = ps.colorOverLifetime; col.enabled = true;
                 var g = new Gradient(); g.SetKeys(new[] { new GradientColorKey(Color.white, 0), new GradientColorKey(Color.white, 1) }, new[] { new GradientAlphaKey(0.95f, 0), new GradientAlphaKey(0.8f, 0.5f), new GradientAlphaKey(0f, 1) });
@@ -314,7 +407,7 @@ namespace BubbleWash.EditorTools
                 var e = ps.emission; e.rateOverTime = 0f;
                 Seed(ps, 12);
             });
-            fx.trailRateAtBase = 20f;
+            fx.trailRateAtBase = 12f;
             // landing / boost burst: a ring of 3D milk drops
             fx.crown = Particles(fxRoot, "Crown", "M_FX_Milk", new Vector3(0, 0.1f, 0), new Vector3(-90, 0, 0), ps =>
             {
@@ -374,12 +467,12 @@ namespace BubbleWash.EditorTools
                 near.transform.SetParent(ambient.transform, true);
             }
 
-            BuildCrowns(fxRoot, runner, save);
+            BuildCrowns(fxRoot, runner, save, crownL);
             if (InWaterFxPreview) RebuildEnvironmentFxPreview();
             return fx;
         }
 
-        static void BuildCrowns(GameObject fxRoot, RunnerController runner, bool save)
+        static void BuildCrowns(GameObject fxRoot, RunnerController runner, bool save, Vector3 rootL)
         {
             var frames = new List<Mesh>();
             for (int k = 0; k < 32; k++)
@@ -401,7 +494,8 @@ namespace BubbleWash.EditorTools
             foreach (float side in new[] { -1f, 1f })
             {
                 var go = Child(holder, side < 0 ? "CrownL" : "CrownR");
-                go.transform.localPosition = new Vector3(side * CrownRootX, 0f, CrownRootZ);
+                go.transform.localPosition = new Vector3(side * Mathf.Abs(rootL.x), 0f, rootL.z);
+                go.transform.localRotation = Quaternion.Euler(0f, -side * CrownYaw, 0f);
                 // asset extends to -X (left); mirror for the right side
                 var s = new Vector3(-side * CrownScale, CrownScale, CrownScale);
                 go.transform.localScale = s;
@@ -416,7 +510,8 @@ namespace BubbleWash.EditorTools
             }
             sc.crowns = crowns.ToArray();
             sc.baseScale = scales.ToArray();
-            sc.baseRotation = new[] { Quaternion.identity, Quaternion.identity };
+            sc.baseRotation = new[] { Quaternion.Euler(0f, CrownYaw, 0f), Quaternion.Euler(0f, -CrownYaw, 0f) };
+            Debug.Log($"[BWK] waterfx crowns: root L ({-Mathf.Abs(rootL.x):F2}, 0, {rootL.z:F2}) scale {CrownScale} yaw {CrownYaw}, {frames.Count} frames");
             sc.phase = phase;
         }
 

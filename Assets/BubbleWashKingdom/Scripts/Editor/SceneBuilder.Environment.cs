@@ -157,23 +157,30 @@ namespace BubbleWash.EditorTools
         }
 
         // ---------------------------------------------------------------- tunnel ring layout (reference f_003.00s, key 5.0 s)
-        // A premium gold marquee ring (SM_Ring, 32 bulbs built in) every RingSpacing m and RimsPerGap lavender drum lips
-        // (SM_DrumRim) between them, so the tunnel reads as a long nest of drum sections receding to the portal.
+        // A slim polished gold marquee ring (SM_Ring, 28 bulbs built in) every GoldRingSpacing m and RimsPerGap fat
+        // lavender drum lips (SM_DrumRim) between them, so the tunnel reads as a long nest of drum sections receding to the
+        // portal. m1 (hero camera 2.75 back / 1.3 up / pitch 10 / FOV 58 at 105.5 m): the reference shows violet drum
+        // metal and lavender lips near the camera, the first gold ring at mid-distance (on-screen radius ~0.34 of the
+        // portrait width) and the next one at ~0.20 W. Gold every 12.75 m with the phase below puts gold rings ~6 m
+        // (out of frame), ~19.5 m and ~32 m ahead of the camera and three lips (0.69 / 0.51 / 0.41 W) in between - the
+        // same radii as the reference. The lighting ring lights / star spacing should follow FirstRingDistance and
+        // GoldRingSpacing (lead's RingSpacing 8.5 stays for code that has not moved yet).
         // BWK_DrumWall (_Pattern 1) lines its plain metal / slot rows up with these positions: BuildRings writes
-        // _BandOffset = FirstRingDistance and _BandLength = RingSpacing / (RimsPerGap + 1) into M_DrumWall.
+        // _BandOffset = FirstRingDistance and _BandLength = GoldRingSpacing / (RimsPerGap + 1) into M_DrumWall.
         // Chamber gaps (side porthole windows) skip their rims so the big windows fit between two gold rings.
-        const int RimsPerGap = 2;
+        const int RimsPerGap = 3;
+        internal const float GoldRingSpacing = 12.75f;
         const float ChamberStart = 190f, ChamberEnd = 262f;   // stills 07_chambers (215 m) / C2 (220 m)
         const float ChamberPlaneRadius = 3.62f;               // SM_Porthole fallback: window plane distance from the axis
         const float ChamberWindowPlaneRadius = 3.40f;         // SM_ChamberWindow (build_machinery CW_PLANE_R, 1.4x porthole)
-        static float FirstRingDistance => tunnelStart + 3f;
+        internal static float FirstRingDistance => tunnelStart + 9.5f;
 
-        /// <summary>Gold-ring gaps [d, d + RingSpacing) that hold a side chamber window (centre d + RingSpacing / 2).</summary>
+        /// <summary>Gold-ring gaps [d, d + GoldRingSpacing) that hold a side chamber window (centre d + GoldRingSpacing / 2).</summary>
         static List<float> ChamberGaps()
         {
             var gaps = new List<float>();
-            for (float d = FirstRingDistance; d < portalD - 5f; d += RingSpacing)
-                if (d >= ChamberStart && d + RingSpacing <= ChamberEnd) gaps.Add(d);
+            for (float d = FirstRingDistance; d < portalD - 5f; d += GoldRingSpacing)
+                if (d >= ChamberStart && d + GoldRingSpacing <= ChamberEnd) gaps.Add(d);
             return gaps;
         }
 
@@ -186,7 +193,7 @@ namespace BubbleWash.EditorTools
             // current SM_Ring carries its marquee bulbs (M_Bulb submesh); older exports need the separate SM_Bulb
             bool ringHasBulbs = ring.Any(p => p.mats != null && p.mats.Any(m => m != null && m.name == "M_Bulb"));
             var bulb = ringHasBulbs ? new List<Part>() : ModelParts("Track", "SM_Bulb");
-            float band = RingSpacing / (RimsPerGap + 1);
+            float band = GoldRingSpacing / (RimsPerGap + 1);
             var wall = Mat("M_DrumWall");
             if (wall != null)
             {
@@ -219,7 +226,14 @@ namespace BubbleWash.EditorTools
                 }
             }
             PlaceRing(tunnelStart - 0.3f, 1.18f); // entrance gate
-            for (float d = FirstRingDistance; d < portalD - 5f; d += RingSpacing)
+            // lips in the first gap too (between the entrance gate and the first gold ring)
+            if (rim.Count > 0)
+                for (float dr = FirstRingDistance - band; dr > tunnelStart + 0.8f; dr -= band)
+                {
+                    comb.Add(rim, World(dr, 1f));
+                    rims++;
+                }
+            for (float d = FirstRingDistance; d < portalD - 5f; d += GoldRingSpacing)
             {
                 PlaceRing(d, 1f);
                 if (rim.Count > 0 && !chamberGaps.Contains(d))
@@ -258,7 +272,7 @@ namespace BubbleWash.EditorTools
             int i = 0;
             foreach (float g in ChamberGaps())
             {
-                float d = g + RingSpacing * 0.5f;
+                float d = g + GoldRingSpacing * 0.5f;
                 int side = i % 2 == 0 ? -1 : 1;   // left wall first
                 var f = track.Evaluate(d);
                 float ang = side * ChamberAngle * Mathf.Deg2Rad;
@@ -324,7 +338,7 @@ namespace BubbleWash.EditorTools
             foreach (float g in ChamberGaps())
             {
                 int side = i % 2 == 0 ? -1 : 1;
-                var f = track.Evaluate(g + RingSpacing * 0.5f + ChamberPipeOffset);
+                var f = track.Evaluate(g + GoldRingSpacing * 0.5f + ChamberPipeOffset);
                 var rot = f.FlatRotation * (side < 0 ? Quaternion.identity : Quaternion.Euler(0f, 180f, 0f));
                 comb.Add(riser, Matrix4x4.TRS(f.FlatPoint(0, TunnelCenter), rot, Vector3.one));
                 i++;

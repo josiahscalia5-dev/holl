@@ -7,7 +7,7 @@ reference shows along the slide (Reference/key 02 + 04):
   SM_StarFilled    puffy bevelled filled star                                                     M_Neon
   SM_Coin          gold paw-print coin: rolled rim, recessed face, raised paw (pad + 4 toes) both faces  M_Coin, M_GoldDark
   SM_Gem           brilliant-cut purple gem (8-fold crown + pavilion, flat facets)                 M_Gem
-  SM_Chevron       glowing cyan speed-boost chevron lying on the water with a white rim, points -Y  M_Arrow, M_ArrowRim
+  SM_Chevron       glowing speed-boost chevron strip on the water (UV: across / along the V), points -Y  M_Arrow
   SM_Foam_A/B/C    cumulus foam clusters (metaball spheres -> mesh), flat underside                M_Foam
   SM_Sock_A/B/C    striped socks (vertex colour stripes in `Col`)                                  M_Fabric
   SM_Towel         folded striped towel                                                            M_Fabric
@@ -306,34 +306,69 @@ def build_gem(M):
 
 # ================================================================== 4. chevron
 def build_chevron(M):
-    """Flat 'V' arrow lying on the water (XY), apex toward travel (-Y); rim slightly raised and wider."""
-    def chevron_outline(w, depth, thick):
-        # points in (x, y) with apex at -y
-        return [Vector((0, -depth * 0.5)), Vector((w * 0.5, depth * 0.5 - thick * 0.2)),
-                Vector((w * 0.5 - thick, depth * 0.5)), Vector((0, -depth * 0.5 + thick * 1.25)),
-                Vector((-w * 0.5 + thick, depth * 0.5)), Vector((-w * 0.5, depth * 0.5 - thick * 0.2))]
-
+    """Glowing speed-boost chevron lying on the water (XY), apex toward travel (-Y), 45-degree arms, flat arm ends
+    (reference f_002.00-f_003.25: thick glowing turquoise / white-cyan arrows). Built as a STRIP so the shader gets
+    clean, symmetric UVs: U across the arm (0 outer edge, 0.5 arm centre line, 1 inner edge), V along the V (0 left arm
+    end, 0.5 apex, 1 right arm end). BWK/Soft Mode 7 shades only from abs(U-0.5) / abs(V-0.5), so any UV flip is safe.
+    A low wall all round gives the lit edge. Size 1.31 x 0.65 m (SceneBuilder scales it)."""
+    HD = 0.26                     # arm centre line: apex at y = -HD, arm ends at y = +HD
+    T = 0.19                      # arm thickness (perpendicular)
+    H = 0.03                      # top height above the water
+    COLS = [0.0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0]
+    ROWS = 8                      # rows per arm
+    s2 = math.sqrt(2.0)
     bm = bmesh.new()
+    uvs = []
 
-    def slab(outline, z0, z1, mat, rnd):
-        pts = resample_closed(rounded_polygon(outline, lambda i: rnd, 4), 48)
-        pts = list(reversed(pts)) if sum((pts[i].x * pts[(i + 1) % len(pts)].y - pts[(i + 1) % len(pts)].x * pts[i].y)
-                                         for i in range(len(pts))) < 0 else pts
-        top = [bm.verts.new(Vector((p.x, p.y, z1))) for p in pts]
-        bot = [bm.verts.new(Vector((p.x, p.y, z0))) for p in pts]
-        f = bm.faces.new(top)
-        f.material_index = mat
-        n = len(pts)
-        for i in range(n):
-            s = bm.faces.new((bot[i], bot[(i + 1) % n], top[(i + 1) % n], top[i]))
-            s.material_index = 1
-    slab(chevron_outline(1.25, 0.72, 0.36), 0.0, 0.025, 1, 0.05)
-    slab([p * 0.86 for p in chevron_outline(1.25, 0.72, 0.36)], 0.0, 0.032, 0, 0.04)
-    bmesh.ops.triangulate(bm, faces=[f for f in bm.faces if len(f.verts) > 4])
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    def vert(p, z, u, v):
+        bv = bm.verts.new(Vector((p.x, p.y, z)))
+        uvs.append((u, v))
+        return bv
+
+    def strip_point(r, c):
+        """Row r (0 = left arm end .. ROWS = apex .. 2*ROWS = right arm end), column fraction c (0 outer .. 1 inner)."""
+        o = T * 0.5 - c * T                           # offset toward the outer (front) edge
+        m = Vector((0.0, -HD - o * s2))               # where the two arms' offset lines meet (mitre)
+        side = -1.0 if r < ROWS else 1.0
+        f = abs(r - ROWS) / ROWS
+        d = Vector((side * 0.70710678, 0.70710678))
+        s_end = (HD - m.y) / d.y
+        return m + d * (s_end * f)
+
+    nr = 2 * ROWS + 1
+    top = [[vert(strip_point(r, c), H, c, r / (2 * ROWS)) for c in COLS] for r in range(nr)]
+    centre = [strip_point(r, 0.5) for r in range(nr)]
+
+    def face(vs, want):
+        f = bm.faces.new(vs)
+        f.normal_update()
+        if f.normal.dot(want) < 0:
+            f.normal_flip()
+        return f
+
+    for r in range(nr - 1):
+        for k in range(len(COLS) - 1):
+            face((top[r][k], top[r][k + 1], top[r + 1][k + 1], top[r + 1][k]), Vector((0, 0, 1)))
+    # walls: outer + inner edge along the whole V, and the two flat arm-end caps (duplicated verts: crisp edges)
+    for k, u in ((0, 0.0), (len(COLS) - 1, 1.0)):
+        for r in range(nr - 1):
+            a, b = strip_point(r, COLS[k]), strip_point(r + 1, COLS[k])
+            out = ((a + b) * 0.5 - (centre[r] + centre[r + 1]) * 0.5)
+            vs = (vert(a, H, u, r / (2 * ROWS)), vert(b, H, u, (r + 1) / (2 * ROWS)),
+                  vert(b, 0.0, u, (r + 1) / (2 * ROWS)), vert(a, 0.0, u, r / (2 * ROWS)))
+            face(vs, Vector((out.x, out.y, 0.0)))
+    for r, v in ((0, 0.0), (nr - 1, 1.0)):
+        for k in range(len(COLS) - 1):
+            a, b = strip_point(r, COLS[k]), strip_point(r, COLS[k + 1])
+            vs = (vert(a, H, COLS[k], v), vert(b, H, COLS[k + 1], v), vert(b, 0.0, COLS[k + 1], v), vert(a, 0.0, COLS[k], v))
+            face(vs, Vector((0.0, 1.0, 0.0)))
+    bm.verts.index_update()
+    uv_layer = bm.loops.layers.uv.new("UVMap")
+    for f in bm.faces:
+        for loop in f.loops:
+            loop[uv_layer].uv = uvs[loop.vert.index]
     obj = new_obj("SM_Chevron", bm)
-    planar_uv(obj, lambda co: (co.x / 1.25 + 0.5, -co.y / 0.72 + 0.5))
-    finish(obj, [M["M_Arrow"], M["M_ArrowRim"]])
+    finish(obj, [M["M_Arrow"]])
     return obj
 
 
@@ -469,22 +504,24 @@ def build_suds_meta(M, name, seed, spread, count, lod=0):
     import numpy as np
     rng = random.Random(seed)
     spheres = []
-    for i in range(int(count * 1.5)):
+    # round 3 (owner: "soft white cumulus puffs, not popcorn"): fewer, BIGGER round puffs, at most one soft bulge each,
+    # wide smooth metaball fillets, almost no micro-bubbles
+    for i in range(int(count * 0.9)):
         a = rng.uniform(0, 2 * math.pi)
         d = rng.uniform(0, 1) ** 0.75
         x = math.cos(a) * d * spread[0]
         y = math.sin(a) * d * spread[1]
-        r = rng.uniform(0.22, 0.40) * (1.2 - 0.45 * d)
-        z = r * rng.uniform(0.0, 0.35) + (1 - d) * 0.2
+        r = rng.uniform(0.30, 0.50) * (1.2 - 0.4 * d)
+        z = r * rng.uniform(0.05, 0.3) + (1 - d) * 0.18
         spheres.append((x, y, z, r))
     prim = list(spheres)
-    for (x, y, z, r) in prim:                       # smaller puffs bulging out of the big ones
-        for _ in range(rng.randint(1, 3)):
+    for (x, y, z, r) in prim:                       # one soft cloud bulge on most big puffs
+        if rng.random() < 0.65:
             th = rng.uniform(0, 2 * math.pi)
-            ph = rng.uniform(0.15, 1.25)
+            ph = rng.uniform(0.2, 1.0)
             dirv = Vector((math.cos(th) * math.sin(ph), math.sin(th) * math.sin(ph), math.cos(ph)))
-            rs = r * rng.uniform(0.42, 0.66)
-            c = Vector((x, y, z)) + dirv * (r - rs * 0.1)
+            rs = r * rng.uniform(0.5, 0.7)
+            c = Vector((x, y, z)) + dirv * (r - rs * 0.4)
             if c.z > 0.03:
                 spheres.append((c.x, c.y, c.z, rs))
     # --- fused puffs (metaballs)
@@ -498,8 +535,8 @@ def build_suds_meta(M, name, seed, spread, count, lod=0):
     for (x, y, z, r) in spheres:
         e = mb.elements.new(type='BALL')
         e.co = (x, y, z)
-        e.radius = r * 1.3                         # tight influence: distinct puffs, soft (not melted) crevices
-        e.stiffness = 8.8                          # visible radius ~ r
+        e.radius = r * 1.46                        # softer field: wide smooth fillets between puffs (cumulus)
+        e.stiffness = 4.0                          # visible radius ~ r
     bpy.context.view_layer.update()
     me = bpy.data.meshes.new_from_object(mbo.evaluated_get(bpy.context.evaluated_depsgraph_get()))
     bpy.data.objects.remove(mbo, do_unlink=True)
@@ -520,12 +557,12 @@ def build_suds_meta(M, name, seed, spread, count, lod=0):
     # --- tiny glossy micro-bubbles sitting on the surface (LOD0 only)
     if lod == 0:
         tb = bmesh.new()
-        for _ in range(int(count * 5)):
+        for _ in range(int(count * 1.2)):
             x, y, z, r = spheres[rng.randrange(len(spheres))]
             th = rng.uniform(0, 2 * math.pi)
             ph = rng.uniform(0.0, 1.3)
             dirv = Vector((math.cos(th) * math.sin(ph), math.sin(th) * math.sin(ph), math.cos(ph)))
-            rt = rng.uniform(0.012, 0.032)
+            rt = rng.uniform(0.012, 0.024)
             c = Vector((x, y, z)) + dirv * (r * 0.97 + rt * 0.3)
             if c.z < 0.03:
                 continue
@@ -548,7 +585,7 @@ def build_suds_meta(M, name, seed, spread, count, lod=0):
     nrm = [tuple(v.normal) for v in me.vertices]
     occl = [(x, y, z, r * 0.82) for (x, y, z, r) in spheres]
     ao = _bake_ao(pts, nrm, np.full(len(pts), -1), occl)
-    ao = np.clip(0.22 + 0.78 * ao ** 1.3, 0.0, 1.0)
+    ao = np.clip(0.4 + 0.6 * ao ** 1.1, 0.0, 1.0)     # soft cumulus crevices (no dark popcorn seams)
     S = np.array([s[:3] for s in spheres])
     P = np.array(pts)
     nearest = np.argmin(((P[:, None, :] - S[None, :, :]) ** 2).sum(2), axis=1)

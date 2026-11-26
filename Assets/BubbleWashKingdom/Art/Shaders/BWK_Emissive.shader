@@ -1,11 +1,15 @@
-// Unlit HDR emissive surface with a hot white core, gentle pulse and an optional marquee chase pattern.
+// Unlit HDR emissive surface with a hot core, gentle pulse and an optional marquee chase pattern.
 // Used for neon star tubes (_Chase = 0) and the warm ring bulbs (_Chase = 1). Bloom turns the HDR values into glow.
+// HDR captures (Neutral tonemapper): keep the source hue ratios moderate (e.g. bulbs ~ (6, 1.4, 0.3)) so the core
+// tonemaps to a pale warm colour and the bloom halo keeps the saturated hue; _CoreColor tints the hot core.
 Shader "BWK/Emissive"
 {
     Properties
     {
         [HDR] _Color ("Color", Color) = (0.2, 1.0, 1.0, 1)
         _Intensity ("Intensity", Float) = 3
+        _CoreColor ("Hot Core Colour", Color) = (1, 1, 1, 1)
+        _ProbeBakeDim ("Brightness inside reflection-probe bakes", Range(0,1)) = 1
         _CoreWhite ("Hot Core Whiteness", Range(0,1)) = 0.45
         _PulseSpeed ("Pulse Speed", Float) = 1.2
         _PulseAmount ("Pulse Amount", Range(0,1)) = 0.15
@@ -24,10 +28,13 @@ Shader "BWK/Emissive"
         HLSLINCLUDE
         #include "BWKCommon.hlsl"
         CBUFFER_START(UnityPerMaterial)
-            half4 _Color;
+            half4 _Color, _CoreColor;
             half _Intensity, _CoreWhite, _PulseSpeed, _PulseAmount, _Chase, _ChaseScale, _ChaseSpeed, _ChaseMin, _FogAmount, _HaloBoost;
-            half _CorePower, _EdgeSaturate;
+            half _CorePower, _EdgeSaturate, _ProbeBakeDim;
         CBUFFER_END
+        // 1 only while SceneBuilder.BakeProbes renders the reflection cubemaps (lighting agent): bulbs / neon are dimmed in
+        // the probes so the metallic drum walls reflect the violet tunnel instead of a yellow-grey haze.
+        float _BWK_ProbeBake;
         ENDHLSL
         Pass
         {
@@ -62,12 +69,13 @@ Shader "BWK/Emissive"
                 // deep saturated edge around the white-hot core after tonemapping (0 = previous look).
                 half3 hue = _Color.rgb * _Color.rgb / max(max(_Color.r, max(_Color.g, _Color.b)), 1e-3);
                 half3 edge = lerp(_Color.rgb, hue, _EdgeSaturate);
-                half3 col = lerp(edge * (1.0 + _HaloBoost * (1.0 - facing)), half3(1, 1, 1), pow(facing, _CorePower) * _CoreWhite);
+                half3 col = lerp(edge * (1.0 + _HaloBoost * (1.0 - facing)), _CoreColor.rgb, pow(facing, _CorePower) * _CoreWhite);
                 float seed = dot(floor(i.pivotWS * 2.0), float3(0.31, 0.17, 0.53));
                 half pulse = 1.0 + sin(_Time.y * _PulseSpeed * 6.2831 + seed * 6.2831) * _PulseAmount;
                 float chasePhase = frac(dot(i.positionWS, float3(0.57, 0.31, 0.77)) * _ChaseScale - _Time.y * _ChaseSpeed);
                 half chase = lerp(1.0, lerp(_ChaseMin, 1.0, smoothstep(0.35, 0.0, abs(chasePhase - 0.5) - 0.15)), _Chase);
                 half3 c = col * _Intensity * pulse * chase;
+                c *= lerp(1.0h, _ProbeBakeDim, (half)saturate(_BWK_ProbeBake));
                 c = lerp(c, MixFog(c, i.fog), _FogAmount);
                 return half4(c, 1);
             }
