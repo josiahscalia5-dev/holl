@@ -242,3 +242,51 @@ Now the foam master: switch the bank / mound from many small bubbles to a few bi
 **Agent (2026-11-27 02:50 UTC):**
 
 > _tool: Read - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/MaterialLibrary.WaterFX.cs_
+
+**Agent (2026-11-27 02:50 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/MaterialLibrary.WaterFX.cs_
+
+**Agent (2026-11-27 02:50 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.WaterFX.cs_
+
+**Agent (2026-11-27 02:50 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.WaterFX.cs_
+
+**Agent (2026-11-27 02:50 UTC):**
+
+> _tool: Bash - Compile-check the C# edits_
+
+**Agent (2026-11-27 02:51 UTC):**
+
+> _tool: Bash - Raise foam lobe stiffness and rebuild foam masters_
+
+**Agent (2026-11-27 02:53 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Docs/AssetPreviews/FX_Foam_v2.png_
+
+**Agent (2026-11-27 02:53 UTC):**
+
+> _tool: Bash - Log batch 1 in NOTES and run stills preview_
+
+**Agent (2026-11-27 02:55 UTC):**
+
+> _tool: Bash - Confirm V3 crowns and foam used in preview_
+
+**Agent (2026-11-27 02:55 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_ALL_p4/p1/stills/R4_front_S4_like_7s_16x9.png_
+
+**Agent (2026-11-27 02:55 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_ALL_p4/p1/R2_rear_S2_like_3s_16x9.png_
+
+**Agent (2026-11-27 02:55 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_ALL_p4/p1/hero_mouth_9x16.png_
+
+**Agent (2026-11-27 02:55 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_ALL_p4/p1/stills/R5_front_S5_like_8s_16x9.png_

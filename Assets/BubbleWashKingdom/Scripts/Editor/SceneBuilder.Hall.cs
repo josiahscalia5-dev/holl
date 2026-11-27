@@ -415,8 +415,11 @@ namespace BubbleWash.EditorTools
                 var go = door != null ? (GameObject)PrefabUtility.InstantiatePrefab(door) : Spawn(win);
                 go.name = door != null ? "PortalChamber_r8" : "PortalChamber_r7";
                 go.transform.SetParent(env.transform, false);
-                go.transform.SetPositionAndRotation(fwin.FlatPoint(-3.45f, TunnelCenter + 0.2f),
+                // v2 (preview v1: frame right edge x ~450 overlapped the portal ring's left side, ref edge x ~360):
+                // 0.3 m further out + 8 % smaller
+                go.transform.SetPositionAndRotation(fwin.FlatPoint(-3.75f, TunnelCenter + 0.2f),
                     Quaternion.LookRotation(Vector3.ProjectOnPlane(fwin.flatRight - fwin.forward * 0.75f, Vector3.up).normalized, Vector3.up));
+                go.transform.localScale = Vector3.one * 0.92f;
                 foreach (var r in go.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
             }
             var fp = track.Evaluate(portalD - PortalChamberBefore + 1.8f);

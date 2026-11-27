@@ -732,10 +732,22 @@ namespace BubbleWash.EditorTools
         // (p2 18:31 9:16 hero: the reference crowns rise above the sole tops, ours reach mid-sole -> lift 1.3)
         const float CrownRearScale = 0.95f, CrownRearFwd = 0f, CrownRearIn = 0.3f, CrownRearLift = 1.3f;
 
+        // Screen ALL pass 4 (owner 21:33, sheet 18, judge #1 "biggest gap in every section frame S2-S7"): ONE master pair for
+        // the rear gameplay rig AND the front comparison cameras - build_fx_crown_v3.py SM_FX_CrownV3_L/R, authored in
+        // runner-local metres (no offset / yaw / scale): a thick curved milk band lying on the water in a V that opens forward
+        // from the feet (the front frames f_04.50-14.25 s: crowns at the bottom of the frame reaching the corners), breaking
+        // into rounded fingers that lean outward and end in round bead bulbs + separate droplets, and a milk sheet climbing
+        // beside each sole (the rear frames f_01.25-3.25 s). The rear-traced crowns were flat sheets on the plane of the
+        // soles: from the front cameras only their thin backs showed (clear "wings" beside the body). Revert = delete
+        // SM_FX_CrownV3_* (the rear-traced pair takes over again).
         static bool BuildCrownsV2(GameObject fxRoot, RunnerController runner, bool save)
         {
-            var pl = ModelParts("FX", "SM_FX_CrownRear_L");
-            var pr = ModelParts("FX", "SM_FX_CrownRear_R");
+            var pl = ModelParts("FX", "SM_FX_CrownV3_L");
+            var pr = ModelParts("FX", "SM_FX_CrownV3_R");
+            bool v3 = pl.Count > 0 && pr.Count > 0 && Mat("M_FX_Milk_v3") != null;
+            if (v3) return BuildCrownsV3(fxRoot, runner, save, pl[0].mesh, pr[0].mesh);
+            pl = ModelParts("FX", "SM_FX_CrownRear_L");
+            pr = ModelParts("FX", "SM_FX_CrownRear_R");
             bool rear = pl.Count > 0 && pr.Count > 0;
             if (!rear)
             {
@@ -775,6 +787,40 @@ namespace BubbleWash.EditorTools
             sc.phase = new[] { 0, CrownV2Frames / 2 };
             Debug.Log(rear ? $"[BWK] waterfx crowns REAR-traced: SM_FX_CrownRear_L/R x{CrownV2Frames} frames, no yaw, scale {CrownRearScale} lift {CrownRearLift} in {CrownRearIn} fwd {CrownRearFwd}, M_FX_Milk_v2"
                            : $"[BWK] waterfx crowns v2: SM_FX_Crown_v2_L/R x{CrownV2Frames} frames, yaw 180, out L {CrownV2OutL} R {CrownV2OutR} fwd {CrownV2Fwd} scale {CrownV2Scale} lift {CrownV2Lift}, M_FX_Milk_v2");
+            return true;
+        }
+
+        static bool BuildCrownsV3(GameObject fxRoot, RunnerController runner, bool save, Mesh left, Mesh right)
+        {
+            var milk = Mat("M_FX_Milk_v3");
+            var framesL = CrownV2FrameMeshes(left, "SM_FX_CrownV3_L", save);
+            var framesR = CrownV2FrameMeshes(right, "SM_FX_CrownV3_R", save);
+            var holder = Child(fxRoot, "Crowns");
+            var sc = holder.AddComponent<SplashCrowns>();
+            sc.runner = runner;
+            sc.frames = framesL.ToArray();
+            sc.framesRight = framesR.ToArray();
+            sc.fps = 12f;
+            var crowns = new List<MeshFilter>();
+            foreach (float side in new[] { -1f, 1f })
+            {
+                var go = Child(holder, side < 0 ? "CrownL" : "CrownR");
+                go.transform.localPosition = Vector3.zero;
+                go.transform.localRotation = Quaternion.identity;
+                go.transform.localScale = Vector3.one;
+                var mf = go.AddComponent<MeshFilter>();
+                mf.sharedMesh = (side < 0 ? framesL : framesR)[side < 0 ? 0 : CrownV2Frames / 2];
+                var mr = go.AddComponent<MeshRenderer>();
+                mr.sharedMaterial = milk;
+                mr.shadowCastingMode = ShadowCastingMode.Off;
+                mr.receiveShadows = true;
+                crowns.Add(mf);
+            }
+            sc.crowns = crowns.ToArray();
+            sc.baseScale = new[] { Vector3.one, Vector3.one };
+            sc.baseRotation = new[] { Quaternion.identity, Quaternion.identity };
+            sc.phase = new[] { 0, CrownV2Frames / 2 };
+            Debug.Log($"[BWK] waterfx crowns V3 MASTER: SM_FX_CrownV3_L/R x{CrownV2Frames} frames ({left.triangles.Length / 3} + {right.triangles.Length / 3} tris), runner-local, M_FX_Milk_v3");
             return true;
         }
 

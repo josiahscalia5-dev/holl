@@ -378,10 +378,10 @@ def build_foam_v2(mat):
     # Screen ALL pass 4 (owner 21:33 sheet 17 "big puffy cumulus mounds of LARGE ROUND LOBES", judge #3: ours = a flat wall
     # of small bumps): a few big lobes (r .13-.24 m, 2x) piled on a taller core instead of 64 / 30 small bubbles; same
     # footprints + pivots, so every placed bank / mound in all sections picks it up without new placement
-    # (p4 v1 preview: lobes melted into one smooth cloud blob = sheet 17 "never huge opaque cloud blobs" -> stiffness 5 keeps
-    # every lobe a distinct sphere with a crease (visible radius .71 x field radius, k .8 keeps the visible size), more lobes)
-    specs = (("SM_Foam_v2_Bank", lambda: foam_bank_elems(rng, 1.6, 0.6, 0.40, 24, 0.09, 0.22), 3200, {"stiff": 5.0, "k": 0.8}),
-             ("SM_Foam_v2_Mound", lambda: foam_bank_elems(rng, 0.8, 0.5, 0.33, 13, 0.08, 0.18), 1900, {"stiff": 5.0, "k": 0.8}),
+    # (p4 v1 preview: lobes melted into one smooth cloud blob = sheet 17 "never huge opaque cloud blobs" -> stiffness 9 keeps
+    # every lobe a distinct sphere with a crease (visible radius .78 x field radius, k .73 keeps the visible size), more lobes)
+    specs = (("SM_Foam_v2_Bank", lambda: foam_bank_elems(rng, 1.6, 0.6, 0.40, 24, 0.09, 0.22), 3200, {"stiff": 9.0, "k": 0.73}),
+             ("SM_Foam_v2_Mound", lambda: foam_bank_elems(rng, 0.8, 0.5, 0.33, 13, 0.08, 0.18), 1900, {"stiff": 9.0, "k": 0.73}),
              ("SM_Foam_v2_Puffs", lambda: foam_pillows_elems(rng, 4), 1600, {"zscale": 0.62, "k": 0.95}))
     for i, (name, make, tris, kw) in enumerate(specs):
         elems = make()

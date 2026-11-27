@@ -334,10 +334,13 @@ namespace BubbleWash.EditorTools
         // oncoming REAR gameplay camera (as before), door B turned +26 deg toward the FRONT cameras, both with their latch edge
         // at the same 2.32 m clearance from the axis. CONVEX pair (A upstream of B): each camera sees the door facing it
         // first and the other door's back is hidden behind that face. Centre distance = 2 x 2.36 cos 26 + latch room.
-        const float DoorWedgeSpacing = 4.6f;
+        // v2 (preview v1: the front-facing doors read ~250 px tall, centred y ~100 in R4-R6 vs ref 370-390 px, y ~200): door B
+        // is 15 % bigger, 0.35 m lower and 0.25 m further out (latch edge 3.60 - 2.71 sin 26 = 2.41 m >= rail 2.38 m)
+        const float FrontDoorScale = 1.15f, FrontDoorDrop = 0.35f, FrontDoorOut = 0.25f;
+        const float DoorWedgeSpacing = 4.9f;   // A half-width 2.12 + B half-width 2.44 + latch room
         // pink glass riser just DOWNSTREAM of the front-facing door (ref 8.25 s: the pink column stands between the porthole
         // and the front camera, at the frame's far left); was 3 m upstream, where door A now stands
-        const float PinkRiserAfterDoor = 3.1f;
+        const float PinkRiserAfterDoor = 3.35f;
 
         /// <summary>Chamber door pairs (track distance of the FRONT-facing door B, of the REAR-facing door A, side +1 =
         /// travel-right). B is placed on the reference front frames: R4 / R5 / R6 see their near B 8.8-10.6 m away at the
@@ -349,13 +352,14 @@ namespace BubbleWash.EditorTools
             var list = new List<(float dB, float dA, int side)>();
             foreach (float g in ChamberGaps())
             {
-                float offB = 8.67f, offA = 8.67f - DoorWedgeSpacing;
-                if (Mathf.Abs(g - 173.5f) < 0.2f) { offB = 9.23f; offA = offB - DoorWedgeSpacing; }        // R4 (192.6 m cam)
+                // pair spans A - 2.52 (hinge) .. B + 2.90 (hinge) inside the 12.75 m ring gap with ~1 m to each ring
+                float offB = 8.65f, offA = 8.65f - DoorWedgeSpacing;
+                if (Mathf.Abs(g - 173.5f) < 0.2f) { offB = 8.85f; offA = offB - DoorWedgeSpacing; }        // R4 (192.6 m cam)
                 else if (Mathf.Abs(g - 211.75f) < 0.2f) { offB = 2.05f; offA = offB + 6.2f; }             // R5 (222.6 m cam), concave
-                else if (Mathf.Abs(g - 262.75f) < 0.2f) { offB = 9.23f; offA = offB - DoorWedgeSpacing; }  // R6 (282.6 m cam)
+                else if (Mathf.Abs(g - 262.75f) < 0.2f) { offB = 8.85f; offA = offB - DoorWedgeSpacing; }  // R6 (282.6 m cam)
                 list.Add((g + offB, g + offA, 1));
                 bool leftWall = g >= 236f && g < 300f && !(g > 260f && g < 280f);   // S6 both walls, not in the R6 frame
-                if (leftWall) list.Add((g + 8.67f, g + 8.67f - DoorWedgeSpacing, -1));
+                if (leftWall) list.Add((g + 8.65f, g + 8.65f - DoorWedgeSpacing, -1));
             }
             return list;
         }
@@ -399,8 +403,10 @@ namespace BubbleWash.EditorTools
                     var f = track.Evaluate(d);
                     float ang = side * WindowAngle * Mathf.Deg2Rad;
                     var radial = f.flatRight * Mathf.Sin(ang) + f.flatUp * Mathf.Cos(ang);
-                    var pos = f.FlatPoint(0, TunnelCenter) + radial * ChamberWindowPlaneRadius - Vector3.up * WindowDrop;
                     var inward = Vector3.ProjectOnPlane(-radial, Vector3.up).normalized;
+                    bool front = facing > 0;
+                    var pos = f.FlatPoint(0, TunnelCenter) + radial * ChamberWindowPlaneRadius - Vector3.up * WindowDrop
+                              - (front ? inward * FrontDoorOut + Vector3.up * FrontDoorDrop : Vector3.zero);
                     var rot = Quaternion.AngleAxis(-facing * side * WindowYaw, Vector3.up) * Quaternion.LookRotation(inward, Vector3.up);
                     var go = (GameObject)PrefabUtility.InstantiatePrefab(door);
                     go.name = $"WashDoor_{d:000}_{(side > 0 ? "R" : "L")}{(facing < 0 ? "_rear" : "_front")}";
@@ -408,7 +414,8 @@ namespace BubbleWash.EditorTools
                     go.transform.SetPositionAndRotation(pos, rot);
                     // the travel-right rear-facing door is mirrored (hinge on the camera side, as v2); front-facing = opposite
                     bool mirror = (side > 0) == (facing < 0);
-                    go.transform.localScale = new Vector3(mirror ? -WindowScale : WindowScale, WindowScale, WindowScale);
+                    float s = WindowScale * (front ? FrontDoorScale : 1f);
+                    go.transform.localScale = new Vector3(mirror ? -s : s, s, s);
                     nd++;
                 }
                 foreach (var (dB, dA, side) in ChamberDoors())
