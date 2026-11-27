@@ -1,5 +1,18 @@
 # Bubble Wash Kingdom - lead handoff (2026-11-26 12:30, lead session cd43a82d on the third Pro account)
 
+## STATUS 21:45 (lead 8670dda0, eighth account) - exact resume point (private details: Captures/handoff/NEXT_ACCOUNT_START.md)
+- Newest checkpoint: checkpoint-24-s2p3 (metal pass 3 on S2 + v4 mascot under test). The v4 FBX came with a test-only
+  180-degree armature yaw, so in-game the rear camera saw the mascot's face: fixed by AnimatorBuilder.ModelYaw (v3
+  SK_Mascot.fbx stays the fallback via AnimatorBuilder.UseMascotV4); Play Mode test A now asserts the facing.
+- RUNNING since 21:39: whole-level masters pass 4 (bwk-screen-focus.js screen "ALL", run wf_d2fffec7-06a): water/FX
+  (milky branching splash crowns, cumulus foam banks, iridescent bubbles) + 3D environment (sock chambers readable from
+  the gameplay AND comparison cameras, striped roller master, glossy gradient rails, S2 thin marquee rings); then
+  Tools/after_wave.sh p4 (build, stills, section sheets, recording).
+- New lead tools: GradePreview.Batch (in-Unity preview of a video-measured colour LUT + soft glow, nothing saved),
+  Tools/look_lut.py (32^3 URP Color Lookup strip), LeadViewsBatch -bwkCamDistances (portrait framing variants).
+- Next: judge p4 -> 24-asset checklist -> grade preview before / after -> checkpoint-25 -> metal pass (outline neon stars,
+  black oval drum holes S3-S6, S7 starburst).
+
 ## STATUS 20:35 (lead 46a804a0, seventh account) - exact resume point (private details: Captures/handoff/NEXT_ACCOUNT_START.md)
 - Newest checkpoint: checkpoint-22-s2p1 (S2 pass 1, metal; judged S2 scenery 5 -> 5.5, with mascot 5). 20:15 takeover: the
   previous lead's orphaned 22:41 wake timer was killed; one autosave loop; no other jobs.

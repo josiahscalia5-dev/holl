@@ -58,3 +58,91 @@ _Text-only export: the lead's brief, the agent's statements and one line per too
 **Agent (2026-11-27 02:39 UTC):**
 
 > _tool: Bash - Read newest NOTES.md sections_
+
+**Agent (2026-11-27 02:39 UTC):**
+
+> _tool: Bash - Inspect run script and FX source files_
+
+**Agent (2026-11-27 02:39 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Reference/asset_library/Individual_References/18_Milky_splash_crown.png_
+
+**Agent (2026-11-27 02:39 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Reference/frames4k_720/f_06.75s.png_
+
+**Agent (2026-11-27 02:39 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/stills_s2p3b/R4_front_S4_like_7s_16x9.png_
+
+**Agent (2026-11-27 02:40 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Reference/frames4k_720/f_03.00s.png_
+
+**Agent (2026-11-27 02:40 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/stills_s2p3b/R2_rear_S2_like_3s_16x9.png_
+
+**Agent (2026-11-27 02:40 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/stills_s2p3b/R5_front_S5_like_8s_16x9.png_
+
+**Agent (2026-11-27 02:40 UTC):**
+
+> _tool: Bash - List crown/foam functions in SceneBuilder.WaterFX.cs_
+
+**Agent (2026-11-27 02:40 UTC):**
+
+> _tool: Bash - Read crown builder code_
+
+**Agent (2026-11-27 02:40 UTC):**
+
+> _tool: Bash - Read preview batching script_
+
+**Agent (2026-11-27 02:40 UTC):**
+
+> _tool: Bash - Find comparison camera definitions and recent logs_
+
+**Agent (2026-11-27 02:41 UTC):**
+
+> _tool: Bash - Read R2 and front camera setups and lock state_
+
+**Agent (2026-11-27 02:42 UTC):**
+
+> _tool: Bash - Read SplashCrowns runtime component_
+
+**Agent (2026-11-27 02:42 UTC):**
+
+> _tool: Bash - Find milk material definitions_
+
+**Agent (2026-11-27 02:42 UTC):**
+
+> _tool: Bash - Read runner FX root setup_
+
+**Agent (2026-11-27 02:42 UTC):**
+
+> _tool: Bash - Read milk material settings and locate SplashCrowns_
+
+**Agent (2026-11-27 02:42 UTC):**
+
+> _tool: Bash - Inspect BWK_Soft milk shading and SplashCrowns_
+
+**Agent (2026-11-27 02:42 UTC):**
+
+> _tool: Bash - Check crop/triptych tool usage and Python libs_
+
+**Agent (2026-11-27 02:42 UTC):**
+
+> _tool: Bash - Create output folder and crop helper, crop crown region_
+
+**Agent (2026-11-27 02:42 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_ALL_p4/crown_ref675_R4_before.png_
+
+**Agent (2026-11-27 02:43 UTC):**
+
+> _tool: Bash - Check Blender export helpers and fx script structure_
+
+**Agent (2026-11-27 02:43 UTC):**
+
+> _tool: Bash - Read metaball meshing and export code_

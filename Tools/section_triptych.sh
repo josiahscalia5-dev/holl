@@ -16,13 +16,13 @@ mkdir -p Captures/sections
 # back to the C stills so before/after always uses the same camera)
 pick() { for f in "$@"; do [ -f "$NEW/$f" ] && [ -f "$PREV/$f" ] && { echo "$f"; return; }; done; }
 ROWS=(
-  "S1|f_00.50s|01_hall_start_16x9.png"
+  "S1|f_00.75s|01_hall_start_16x9.png"
   "S2|f_03.00s|R2_rear_S2_like_3s_16x9.png hero_16x9.png"
-  "S3|f_05.00s|R3_front_S3_like_5s_16x9.png C1_front_tunnel_like_5s_16x9.png"
+  "S3|f_04.50s|R3_front_S3_like_5s_16x9.png C1_front_tunnel_like_5s_16x9.png"
   "S4|f_06.75s|R4_front_S4_like_7s_16x9.png C4_front_window_like_7s_16x9.png 06_tunnel_lane_right_16x9.png"
   "S5|f_08.25s|R5_front_S5_like_8s_16x9.png C2_front_chambers_like_10s_16x9.png"
-  "S6|f_11.00s|R6_front_S6_like_11s_16x9.png C5_front_chambers2_like_11s_16x9.png 08_sweep_16x9.png"
-  "S7|f_14.50s|10_finale_16x9.png 09_portal_16x9.png C3_front_portal_like_14s_16x9.png"
+  "S6|f_11.25s|R6_front_S6_like_11s_16x9.png C5_front_chambers2_like_11s_16x9.png 08_sweep_16x9.png"
+  "S7|f_14.25s|10_finale_16x9.png 09_portal_16x9.png C3_front_portal_like_14s_16x9.png"
 )
 ALL=(); ALLBG=()
 for row in "${ROWS[@]}"; do

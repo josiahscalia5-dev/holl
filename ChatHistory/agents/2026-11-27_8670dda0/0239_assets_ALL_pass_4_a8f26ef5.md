@@ -59,3 +59,83 @@ _Text-only export: the lead's brief, the agent's statements and one line per too
 **Agent (2026-11-27 02:39 UTC):**
 
 > _tool: Read - C:\Users\josia\thanksgiving\Captures\agents\assets\NOTES.md_
+
+**Agent (2026-11-27 02:39 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Reference\frames4k_720\f_06.75s.png_
+
+**Agent (2026-11-27 02:39 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Captures\stills_s2p3b\R4_front_S4_like_7s_16x9.png_
+
+**Agent (2026-11-27 02:39 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Captures\stills_s2p3b\R5_front_S5_like_8s_16x9.png_
+
+**Agent (2026-11-27 02:39 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Reference\frames4k_720\f_08.25s.png_
+
+**Agent (2026-11-27 02:40 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Reference\frames4k_720\f_11.25s.png_
+
+**Agent (2026-11-27 02:40 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Captures\stills_s2p3b\R6_front_S6_like_11s_16x9.png_
+
+**Agent (2026-11-27 02:40 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Captures\stills_s2p3b\07_chambers_9x16.png_
+
+**Agent (2026-11-27 02:40 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Captures\stills_s2p3b\10_finale_16x9.png_
+
+**Agent (2026-11-27 02:40 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Reference\frames4k_720\f_14.25s.png_
+
+**Agent (2026-11-27 02:40 UTC):**
+
+> _tool: Grep - WindowYaw|WindowDrop|ChamberWindows|BuildPortholes|WashDoorMasterPrefab|PortalChamber_r8|WindowSide|WindowLateral|WindowHeight|WindowScale_
+
+**Agent (2026-11-27 02:40 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Environment.cs_
+
+**Agent (2026-11-27 02:40 UTC):**
+
+> _tool: Grep - R4_front|R5_front|R6_front|10_finale|07_chambers|R3_front_
+
+**Agent (2026-11-27 02:40 UTC):**
+
+> _tool: Bash - List agent folders, shared notes, door models, Blender scripts_
+
+**Agent (2026-11-27 02:40 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\CaptureTools.cs_
+
+**Agent (2026-11-27 02:41 UTC):**
+
+> _tool: Grep - static .*ChamberGaps\(|ChamberWindowPlaneRadius\s*=|TunnelCenter\s*=|ChamberStart\s*=|ChamberEnd\s*=|TunnelRadius\s*=_
+
+**Agent (2026-11-27 02:44 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Hall.cs_
+
+**Agent (2026-11-27 02:44 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Environment.cs_
+
+**Agent (2026-11-27 02:44 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Environment.cs_
+
+**Agent (2026-11-27 02:44 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Environment.cs_
+
+**Agent (2026-11-27 02:44 UTC):**
+
+> _tool: Bash - Check time and the master door Blender script header_
