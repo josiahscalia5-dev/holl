@@ -26,11 +26,14 @@ const resumeFor = k => (RESUME.all ? RESUME.all + '\n' : '') + (RESUME[k] ? RESU
 // preview = the fastest Unity run that shows this screen after an agent's change.
 const SCREENS = {
   S2: {
-    name: 'S2 HERO GAMEPLAY SCREEN: rear gameplay camera behind the mascot sliding down the blue water slide with glossy pink / rainbow rails into the gold tunnel mouth (video 3.0 s)',
+    // lead 2026-11-26 20:40 (owner takeover brief item 5): the reference 3.0 s frame is AT the washing-machine door (40 m);
+    // the old hero_* stills are 65 m past it (105.5 m). R2 = comparison-only camera solved on the reference landmarks
+    // (door rim + mascot, rms 8.4 px), hero_mouth = the unchanged gameplay rig at the same spot (35 m).
+    name: 'S2 HERO GAMEPLAY SCREEN AT THE WASHING-MACHINE DOOR: the mascot slides down the blue water slide with glossy pink / rainbow rails, about to pass through the huge gold hatch ring (40 m); outside the hatch: pink fluffy roller upper left, blue machinery + gold pipe left, big foam banks; inside: perforated violet drum, neon stars, receding gold bulb rings (video 3.0 s). Our matched camera = R2_rear_S2_like_3s_16x9.png (comparison only, mascot at 35 m); hero_mouth_* = the gameplay rig at the same spot',
     ref4k: ['Reference/frames4k/f_03.00s.png'],
     ref720: ['Reference/frames4k_720/f_02.75s.png', 'Reference/frames4k_720/f_03.00s.png', 'Reference/frames4k_720/f_03.25s.png'],
-    ours: ['hero_16x9.png', 'hero_9x16.png'],
-    preview: 'bash Tools/unity_run.sh BubbleWash.EditorTools.CaptureTools.AgentPreviewBatch <log> -bwkOut <dir> (~2 min: <dir>/hero_16x9.png, hero_9x16.png, bg/, hero_vs_reference_*.png)',
+    ours: ['R2_rear_S2_like_3s_16x9.png', 'hero_mouth_16x9.png', 'hero_mouth_9x16.png'],
+    preview: 'bash Tools/unity_run.sh BubbleWash.EditorTools.CaptureTools.AgentPreviewBatch <log> -bwkOut <dir> (~2.5 min: <dir>/R2_rear_S2_like_3s_16x9.png, hero_mouth_16x9.png, hero_mouth_9x16.png, bg/, R2_vs_reference_16x9.png; add -bwkEnvHall to rebuild the hall set HallExtras_r7 - door ring, mouth drum, rollers, machinery - in memory so new hall models / placements show)',
   },
   S7: {
     name: 'S7 GOLDEN PORTAL FINALE: the mascot rests ~5.5 m before the portal and turns to face the rear camera; thick gold bulb ring + warm golden starburst fill the frame (video 14.5 s)',
@@ -94,7 +97,7 @@ const REPORT = {
 
 const DOMAIN = {
   metal: 'You are GOLD + METAL + LIGHT (lighting owner, technical-artist; the environment agent is idle, so the drum-wall material is yours too). Output folder Captures/agents/lighting/',
-  assets: 'You are the ASSET ARTIST (Blender + Unity materials; MASTER-ASSET CONSTRUCTION - build new, better geometry where the existing model is inadequate instead of recolouring / resizing it; the owner\'s 24-asset library Reference/asset_library/ is the construction guide). Output folder Captures/agents/assets/',
+  assets: 'You are the 3D ENVIRONMENT RECONSTRUCTION SPECIALIST (the asset artist: Blender Python, bevel / circular-profile modelling, Geometry Nodes where useful, Unity prefabs + materials; MASTER-ASSET CONSTRUCTION - build new, properly detailed geometry where the existing model is inadequate instead of recolouring / resizing it; match the reference scene\'s geometry, sizes, proportions, placement and orientation; the owner\'s 24-asset library Reference/asset_library/ is the construction guide). Output folder Captures/agents/assets/',
   water: 'You are WATER + FOAM + BUBBLES + GLASS (water/FX owner, unity-shader-specialist). Output folder Captures/agents/waterfx/',
 }
 const FILES = 'FILE OWNERSHIP (CLAUDE.md "Parallel specialists"): metal = SceneBuilder.Lighting.cs, MaterialLibrary.Lighting.cs, MaterialLibrary.Environment.cs (material values), SceneBuilder.Hall.cs (material values), BWK_Gold, BWK_Emissive, BWK_DrumWall, BWKCommon.hlsl, Assets/Settings/*; assets = build_hall_assets.py, build_track.py, build_machinery.py, build_shot0825_assets.py, build_master_door.py, MaterialLibrary.Assets.cs, Prefabs/PF_*.prefab, SceneBuilder.Environment.cs + SceneBuilder.Hall.cs (model / material references and the placement fixes allowed below); water = BWK_Water, BWK_Glass, BWK_Soft, MaterialLibrary.WaterFX.cs, SceneBuilder.WaterFX.cs, TextureGenerator.cs, SplashFX.cs, build_fx_v2.py, build_props.py. Edit only your own files; ask through your NOTES.md for anything else.'
@@ -102,8 +105,10 @@ const FILES = 'FILE OWNERSHIP (CLAUDE.md "Parallel specialists"): metal = SceneB
 function fixBrief(k, gaps) {
   const mine = gaps.gaps.filter(g => g.owner === k)
   const rest = gaps.gaps.filter(g => g.owner !== k)
+  const directive = (A.directives && A.directives[k]) ? `OWNER DIRECTIVE FOR THIS PASS (highest priority, in this order): ${A.directives[k]}\n` : ''
   return `${resumeFor(k)}${DOMAIN[k]}screen_${SCREEN}_p${PASS}/ (create it). You work on Bubble Wash Kingdom (Unity 6.3 URP 17.3 + Blender 5.3) at ${ROOT} for the lead.
 OWNER 2026-11-26 18:05: "do a couple of screens, one at a time" (target about 8.5/10 per screen, honest numbers only). THIS RUN improves ONE screen only - ${S.name}.
+${directive}OWNER 2026-11-26 20:15: "substantial improvements in actual 3D geometry, materials, scenery composition, lighting and environmental depth - not numerous minor adjustments that barely improve the overall appearance". Spend the time on the few changes that visibly change the frame most.
 Approved reference (private, never in tracked files): ${REFS.join(', ')}. Our current render (build ${BASE}): ${OURS.join(', ')} (bg/ = mascot hidden). Independent score now: ${gaps.score_with_mascot} with mascot / ${gaps.score_scenery_only} scenery only.
 YOUR GAPS (independent judge, biggest first - fix them in this order):
 ${mine.map(g => `#${g.rank} ${g.what} [${g.where}] -> ${g.fix} | measure: ${g.measure}`).join('\n') || '(none assigned - take the highest-ranked gaps below that your files can fix)'}
@@ -115,7 +120,7 @@ PLACEMENT: allowed ONLY for objects this screen's camera sees, measured on the r
 DO NOT CHANGE: the camera rig (frozen 2.75 / 1.3 / 10 / 58 - owner approval needed), gameplay (RunnerController, input, coins / gems as TrackItems, colliders, track path), the mascot model and its materials (character work needs the owner's approval), the intro (paused).
 RULES: every Unity / Blender command through Tools/unity_run.sh or Tools/blender_run.sh in the FOREGROUND with the Bash timeout 600000 ms - they queue on Tools/heavy_lock.sh, so prepare your next batch while the other specialist's run goes; never kill Unity / Blender; bash Tools/cs_check.sh after EVERY C# edit and never leave code that does not compile; NO safe_build (the lead builds once after this run); no git commits; images with reference pixels only in Captures/ (the repo is PUBLIC); camera projection of the reference was rejected (14:55) - real geometry + materials only; downloads only Poly Haven CC0 1K maps (max 2, into a new empty folder, LICENSE.txt line), nothing else; no purchases; no new packages. MOBILE (Assets/Settings/Mobile_RPAsset): modest triangle counts (LODs where you add detail), no screen-space reflections, no extra realtime lights per object; say what is PC-only.
 ${FILES}
-Time box 30 minutes from your start, then return the report.`
+Time box ${A.minutes || 30} minutes from your start, then return the report.`
 }
 
 if (MODE === 'judge') {

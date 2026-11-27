@@ -29,6 +29,29 @@ namespace BubbleWash.EditorTools
         {
             // r8 masters (asset artist): -bwkEnvChambers = rebuild ONLY the side chambers in memory (master door check)
             bool chambersOnly = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-bwkEnvChambers") >= 0;
+            // lead 2026-11-26 20:45 (S2 at the door): -bwkEnvHall = rebuild ONLY the hall set HallExtras_r7 (door ring, mouth
+            // drum, rollers, machinery, console, towers) in memory, so hall placement / model changes show in a preview
+            bool hallOnly = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-bwkEnvHall") >= 0;
+            if (hallOnly && !PreviewRebuildsEnvironment)
+            {
+                var envH = root.transform.Find("Environment");
+                if (envH != null)
+                {
+                    var keepRng = rng;
+                    try
+                    {
+                        envSave = false;
+                        rng = new System.Random(4243);
+                        var oldHall = envH.Find("HallExtras_r7");
+                        if (oldHall != null) Object.DestroyImmediate(oldHall.gameObject);
+                        BuildHallExtras(envH.gameObject, L);
+                        Debug.Log("[BWK] preview: hall set HallExtras_r7 rebuilt in memory (-bwkEnvHall)");
+                    }
+                    catch (System.Exception e) { Debug.LogError("[BWK] preview: hall rebuild failed: " + e); }
+                    finally { rng = keepRng; envSave = true; }
+                }
+                if (!chambersOnly) return;
+            }
             if (!PreviewRebuildsEnvironment && !chambersOnly) { Debug.Log("[BWK] preview: environment = saved scene (r7 dressing needs a full build)"); return; }
             var savedRng = rng;
             try

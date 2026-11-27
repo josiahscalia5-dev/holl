@@ -92,6 +92,11 @@ namespace BubbleWash.EditorTools
         /// before/after comparison is like-for-like. Track distance of the hero shot (target frame f_003.00s).</summary>
         public const float HeroDistance = 105.5f;
 
+        /// <summary>Lead 2026-11-26 20:40 (owner takeover brief item 5): the reference hero frame f_03.00s is taken AT the
+        /// washing-machine door (SM_MouthRing_r7, 40 m), not 65 m past it like HeroDistance. S2 comparison stills
+        /// (R2_rear_S2_like_3s + hero_mouth, CaptureTools.CaptureHero) put the mascot here. Comparison only, never gameplay.</summary>
+        public const float HeroMouthDistance = 35f;
+
         /// <summary>Owner-approved portrait hero camera (2026-11-25, replaces 2.55 / 1.5): back, height, pitch, FOV.
         /// Frozen: change only with the owner's explicit approval. Applied in BuildCameras and (for previews, which load the
         /// saved scene) in PreviewRefreshDomains.</summary>
@@ -118,7 +123,9 @@ namespace BubbleWash.EditorTools
                 var m = System.Text.RegularExpressions.Regex.Match(p.name, @"_(\d+)$");
                 if (!m.Success) continue;
                 float d = float.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
-                if (d < HeroDistance - 20f || d > HeroDistance + 65f) { p.gameObject.SetActive(false); parked.Add(p.gameObject); }
+                bool heroWin = d >= HeroDistance - 20f && d <= HeroDistance + 65f;
+                bool mouthWin = d >= HeroMouthDistance - 20f && d <= HeroMouthDistance + 45f;   // S2 door comparison (20:40)
+                if (!heroWin && !mouthWin) { p.gameObject.SetActive(false); parked.Add(p.gameObject); }
             }
             try { BakeProbes(); }
             finally { foreach (var g in parked) g.SetActive(true); }

@@ -63,7 +63,12 @@ namespace BubbleWash.EditorTools
 
         public static void HeroBatch()
         {
-            try { CaptureHero(); EditorApplication.Exit(0); }
+            try
+            {
+                string dir = ArgValue("-bwkOut");   // lead 20:40: optional, e.g. a baseline of the saved scene
+                if (dir != null) CaptureHero(dir, dir + "/compare"); else CaptureHero();
+                EditorApplication.Exit(0);
+            }
             catch (System.Exception e) { Debug.LogError("[BWK] hero capture failed: " + e); EditorApplication.Exit(1); }
         }
 
@@ -565,11 +570,40 @@ namespace BubbleWash.EditorTools
                 cam.fieldOfView = lens.FieldOfView;
                 RenderWithBackground(cam, w, h, stillsDir, $"hero_{tag}.png", MascotRenderers(runner));
             }
+            // S2 at the washing-machine door (lead 2026-11-26 20:40, owner takeover brief item 5 "correct the comparison
+            // camera first"): the reference 3.0 s frame is taken at the door ring (40 m), hero_* above is 65 m past it.
+            // hero_mouth = the UNCHANGED gameplay rig with the mascot at 35 m (what the player sees at the door);
+            // R2_rear_S2_like_3s = comparison-only camera solved by S2CameraSolveBatch on the reference landmarks (door rim
+            // left / right, mascot top / bottom; rms 8.4 px): 2.75 back, 1.0 up, 0.3 right, yaw -9, pitch 6, vFOV 58 -
+            // the rig's own back / FOV, 0.3 m lower, 4 deg less pitch, turned 9 deg toward the door.
+            runner.TeleportTo(SceneBuilder.HeroMouthDistance, 0f);
+            if (slide != null) slide.SampleAnimation(animator.gameObject, 0.25f);
+            SimulateSlideFX(runner);
+            foreach (var (w, h, tag) in new[] { (1280, 720, "16x9"), (720, 1280, "9x16") })
+            {
+                rig.aspectOverride = w / (float)h;
+                rig.Snap();
+                var lens = rig.vcam.Lens;
+                cam.transform.SetPositionAndRotation(rig.transform.position, rig.transform.rotation * Quaternion.Euler(0f, 0f, lens.Dutch));
+                cam.fieldOfView = lens.FieldOfView;
+                RenderWithBackground(cam, w, h, stillsDir, $"hero_mouth_{tag}.png", MascotRenderers(runner));
+            }
+            {
+                var f = runner.Frame;
+                Vector3 fwd = Vector3.ProjectOnPlane(f.forward, Vector3.up).normalized, right = Vector3.Cross(Vector3.up, fwd);
+                Vector3 cp = runner.transform.position - fwd * 2.75f + Vector3.up * 1.0f + right * 0.3f;
+                cam.transform.SetPositionAndRotation(cp, Quaternion.LookRotation(fwd, Vector3.up) * Quaternion.Euler(6f, -9f, 0f));
+                cam.fieldOfView = 58f;
+                RenderWithBackground(cam, 1280, 720, stillsDir, "R2_rear_S2_like_3s_16x9.png", MascotRenderers(runner));
+            }
             rig.aspectOverride = 0f;
+            runner.TeleportTo(best, 0f);
+            rig.Snap();
             if (brain) brain.enabled = true;
 
             if (!File.Exists(RefRear)) { Debug.LogWarning("[BWK] reference frame missing - comparison skipped"); return; }
             var refTex = LoadPng(RefRear);
+            SaveSideBySide(new[] { Resize(refTex, 1280, 720), LoadPng($"{stillsDir}/R2_rear_S2_like_3s_16x9.png") }, $"{compareDir}/R2_vs_reference_16x9.png");
             var ours16 = LoadPng($"{stillsDir}/hero_16x9.png");
             var ours9 = LoadPng($"{stillsDir}/hero_9x16.png");
             // 16:9 pair: reference | Unity (both 1280x720)
