@@ -114,6 +114,13 @@ namespace BubbleWash
             introTime = 0f;
             finaleTime = -1f;
             initialized = false; // snap to the crane's start pose (new run / loop restart)
+            // lead 3c2b09a2 2026-11-27 (owner 13:25 "fix the camera startup pop"): the CinemachineBrain (execution order 0)
+            // reads this vcam's transform in its LateUpdate BEFORE this rig's LateUpdate (order 100), so the first rendered
+            // frame showed the vcam's stale SAVED pose (the edit-time landscape snap: 2.9 back / 1.6 up / FOV 52 on a
+            // portrait screen = the mascot ~2x large, low and close; s2p9 + s2p9r f_00.00s) until the rig caught up. Snap the
+            // crane's start pose right now (GameManager.Start -> CameraDirector.Show(Intro) runs before the first frame), so the
+            // brain's first LateUpdate already sees it. Framing values unchanged.
+            if (runner != null && runner.track != null) { Step(0f, true); initialized = true; }
         }
 
         /// <summary>Eases into (true) or clears (false, immediate) the finale framing.</summary>
