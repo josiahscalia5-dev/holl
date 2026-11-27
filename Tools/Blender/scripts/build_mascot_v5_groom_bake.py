@@ -52,7 +52,7 @@ def srgb(h):
     return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
 
 
-SKIN = srgb("#C8505E")
+SKIN = srgb("#D45A66")
 ROOTC = srgb("#E35C66")
 MIDC = srgb("#F7806C")
 TIPC = srgb("#FBB4A6")
@@ -199,7 +199,7 @@ L *= 1.0 - 0.45 * face                          # short velvet pile on the face 
 vpol = np.degrees(np.arccos(np.clip(normalize(P - BODY_C)[:, 2] * -1.0, -1, 1))) / 180.0   # 0 = seat pole
 seat = 1.0 - smoothstep(SEAT_V0, SEAT_V1, vpol)
 L *= 1.0 - 0.25 * seat
-lift0 = np.clip(0.50 + (vnoise3(P, 14.0, 11) - 0.5) * 0.35 + rng.normal(0, 0.06, n), 0.25, 0.78)
+lift0 = np.clip(0.42 + (vnoise3(P, 14.0, 11) - 0.5) * 0.30 + rng.normal(0, 0.06, n), 0.25, 0.78)
 S, T = strands(P, NR, L, lift0, 21)
 
 # gentle clumping: each strand's tip leans toward its clump guide (~2 cm clumps, strength 0.15-0.45, never closed locks)
@@ -229,12 +229,11 @@ ramp = [ROOTC, (ROOTC + MIDC) * 0.5, MIDC, TIPC]
 cols = np.zeros((n, 4, 4))
 for k in range(4):
     c = ramp[k][None, :] * tone[:, None]
-    c = c * (1 - seat[:, None] * 0.85) + SEATC[None, :] * (seat[:, None] * 0.85) * (0.94 + 0.08 * k / 3.0)
     cols[:, k, :3] = c
 cols[:, :, 3] = 1.0
 
 # ribbon mesh: V profile (left, raised middle, right) per ring, 2 quads per segment
-wid = np.array([0.0024, 0.0020, 0.0014, 0.0006])
+wid = np.array([0.0032, 0.0028, 0.0020, 0.0010])
 Vv = np.zeros((n, 4, 3, 3))
 for k in range(4):
     d = S[:, min(k + 1, 3)] - S[:, max(k - 1, 0)]
@@ -267,7 +266,7 @@ ca = gm.color_attributes.new("gcol", 'FLOAT_COLOR', 'POINT')
 ca.data.foreach_set("color", np.repeat(cols, 3, axis=1).reshape(-1, 4).ravel())
 # depth "AO": how deep in the pile the baked point lies (skin 0.30, strand root 0.48 -> tip 1.0) = soft partings between
 # clumps and darker roots; baked as a second colour pass (a Cycles AO bake would see the coincident low-poly as a lid)
-dep = 0.48 + 0.52 * (np.arange(4) / 3.0) ** 0.8
+dep = 0.64 + 0.36 * (np.arange(4) / 3.0) ** 0.8
 dcol = np.ones((n, 4, 4)); dcol[:, :, :3] = dep[None, :, None]
 da = gm.color_attributes.new("gdep", 'FLOAT_COLOR', 'POINT')
 da.data.foreach_set("color", np.repeat(dcol, 3, axis=1).reshape(-1, 4).ravel())
@@ -406,7 +405,7 @@ im_ao = new_img("bake_ao", True)
 gattr = next(nd for nd in groom.data.materials[0].node_tree.nodes if nd.type == "ATTRIBUTE")
 gattr.attribute_name = "gdep"
 sk_bsdf = next(nd for nd in skin.data.materials[0].node_tree.nodes if nd.type == "BSDF_PRINCIPLED")
-sk_bsdf.inputs["Base Color"].default_value = (0.30, 0.30, 0.30, 1.0)
+sk_bsdf.inputs["Base Color"].default_value = (0.52, 0.52, 0.52, 1.0)
 run_bake('DIFFUSE', 6, pass_filter={'COLOR'})
 AO = pixels(im_ao)
 gattr.attribute_name = "gcol"
@@ -427,6 +426,21 @@ def blur(x, r):
     return x
 
 
+def pushpull(img, valid):
+    """Fill invalid texels from the valid ones (mip pyramid of weighted sums, coarse to fine)."""
+    cs, ws = [img * valid[:, :, None]], [valid.astype(np.float64)]
+    while min(cs[-1].shape[:2]) > 2:
+        c, w = cs[-1], ws[-1]
+        cs.append(c[0::2, 0::2] + c[1::2, 0::2] + c[0::2, 1::2] + c[1::2, 1::2])
+        ws.append(w[0::2, 0::2] + w[1::2, 0::2] + w[0::2, 1::2] + w[1::2, 1::2])
+    est = cs[-1] / np.maximum(ws[-1], 1e-9)[:, :, None]
+    for c, w in zip(reversed(cs[:-1]), reversed(ws[:-1])):
+        up = np.repeat(np.repeat(est, 2, 0), 2, 1)
+        est = np.where((w > 0)[:, :, None], c / np.maximum(w, 1e-9)[:, :, None], up)
+    return np.where(valid[:, :, None], img, est)
+valid = COL[:, :, 3] > 0.5
+log("valid texels %.1f %%" % (100.0 * valid.mean()))
+COL = pushpull(COL, valid); NRM = pushpull(NRM, valid); AO = pushpull(AO, valid)
 nxy = NRM[:, :, :2] * 2.0 - 1.0
 nxy_hp = nxy - blur(nxy, 24)               # high-pass: keep the strand / clump relief, drop the global comb tilt
 nz = np.sqrt(np.clip(1.0 - np.sum(nxy_hp ** 2, axis=2), 0.05, 1.0))

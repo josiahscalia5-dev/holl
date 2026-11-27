@@ -66,6 +66,13 @@ of one enormous magical washing machine. These instructions come only from the o
   autosave with verified pushes, no force-push / history rewrite, chat history and recovery notes LOCAL only.
 
 ## Current handoff (read first)
+- 2026-11-27 18:05 (session 6d001969 = LEAD, opened in C:/Users/josia/thanksgiving): ready-to-paste prompt for the next account =
+  private `Captures/handoff/NEXT_ACCOUNT_PROMPT.md`. Running: S2 pass 10h run wf_48cc4b5b-713 (character = Blender groom + bake ->
+  smooth plush mascot, water = crowns + flow; then an independent judge + skeptic Accept phase), tunnel 2b lead lane run
+  wf_8d764f01-032 (one lever at a time, judged keep / revert), GATED watcher (GATE=1 after_wave s2p10h: no build, acceptance sheet
+  only). Owner 17:35: NO full build with a new mascot before the acceptance sheet (Tools/mascot_owner_sheet.py --accept); owner 17:45:
+  the original Google Flow pack Reference/google_flow_pack_1735/ is authoritative. Newest state block: top of
+  `Captures/handoff/NEXT_ACCOUNT_START.md`.
 - 2026-11-27 17:03 (session 15a68124 = LEAD): owner 16:55 = mascot FIRST (soft plush toy, no procedural fur), sent to the
   running pass 10g character agent; lead 2b redo step 1 (darker walls under the bloom knee) on disk, unreviewed; after_wave s2p10g
   armed. Newest state block: top of `Captures/handoff/NEXT_ACCOUNT_START.md`.

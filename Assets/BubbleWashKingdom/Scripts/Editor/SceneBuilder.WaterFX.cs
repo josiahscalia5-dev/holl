@@ -579,7 +579,11 @@ namespace BubbleWash.EditorTools
             ParticleSystem Drops(string n, float side, uint seed)
             {
                 var dir = Quaternion.LookRotation(new Vector3(side * 0.62f, 0.78f, -0.38f)).eulerAngles;
-                return Sub(fx.spray, n, "M_FX_Milk", new Vector3(side < 0 ? -(Mathf.Abs(crownL.x) + 0.2f) : Mathf.Abs(crownR.x) + 0.2f, 0.35f, crownL.z - 0.1f), dir, ps =>
+                // S2 pass 10h: the V6 crowns now stand 0.5 / 0.8 m toward the camera, outside the feet (CrownV6Pos*) -> the
+                // droplets leave from the crowns' outer fingers (original 3.00 s: round beads flying around both sprays)
+                var dropPos = CrownV6Swap ? new Vector3(side < 0 ? -0.85f : 0.75f, 0.3f, side < 0 ? -0.6f : -0.9f)
+                                          : new Vector3(side < 0 ? -(Mathf.Abs(crownL.x) + 0.2f) : Mathf.Abs(crownR.x) + 0.2f, 0.35f, crownL.z - 0.1f);
+                return Sub(fx.spray, n, "M_FX_Milk", dropPos, dir, ps =>
                 {
                     var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.3f, 0.6f); m.startSpeed = new ParticleSystem.MinMaxCurve(1.3f, 2.8f);
                     // S2 pass 10f (owner 15:55 "translucent splashes with flying droplets"; the approved frame throws many
@@ -888,8 +892,8 @@ namespace BubbleWash.EditorTools
             // S2 pass 10h: each side wears the OTHER side's V6 sheet shifted across (see CrownV6Swap below)
             bool swap = ver == "V6" && CrownV6Swap;
             Debug.Log($"[BWK] waterfx crowns V6 source bounds: L {left.bounds.min} .. {left.bounds.max} | R {right.bounds.min} .. {right.bounds.max} (swap {swap})");
-            var framesL = CrownV2FrameMeshes(swap ? ShiftedCrownMesh(right, -CrownV6Shift) : left, $"SM_FX_Crown{ver}_L", save);
-            var framesR = CrownV2FrameMeshes(swap ? ShiftedCrownMesh(left, CrownV6Shift) : right, $"SM_FX_Crown{ver}_R", save);
+            var framesL = CrownV2FrameMeshes(swap ? CrownSheet(right, -CrownV6Shift) : left, $"SM_FX_Crown{ver}_L", save);
+            var framesR = CrownV2FrameMeshes(swap ? CrownSheet(left, CrownV6Shift) : right, $"SM_FX_Crown{ver}_R", save);
             var holder = Child(fxRoot, "Crowns");
             var sc = holder.AddComponent<SplashCrowns>();
             sc.runner = runner;
@@ -935,15 +939,30 @@ namespace BubbleWash.EditorTools
             return true;
         }
 
-        /// <summary>S2 pass 10h: a copy of a V6 crown sheet moved across the runner axis by dx metres (vertices only), so the
-        /// crown pivot stays near the body and the runtime scale / yaw jitter (SplashCrowns) keeps the foot end in place.</summary>
-        static Mesh ShiftedCrownMesh(Mesh src, float dx)
+        /// <summary>S2 pass 10h: a V6 crown sheet in its INTENDED runner frame, moved across the runner axis by dx metres.
+        /// ModelPartsAt bakes Fix = Euler(0, 180, 0) into every model, but build_fx_crown_v6.py already authors the sheets in
+        /// runner space (measured 17:52: SM_FX_CrownV6_R arrives at x -1.29..-0.16, z -.22...03 = its build CHECK x .16..1.29,
+        /// z -.03...22 turned 180 deg) -> turn it back (x, z negated: a proper rotation, winding kept), then shift, so the pivot
+        /// stays near the body and the runtime scale / yaw jitter (SplashCrowns) keeps the foot end in place.</summary>
+        static Mesh CrownSheet(Mesh src, float dx)
         {
             var m = Object.Instantiate(src);
             m.name = src.name + (dx < 0 ? "_toL" : "_toR");
             var vs = src.vertices;
-            for (int i = 0; i < vs.Length; i++) vs[i].x += dx;
+            for (int i = 0; i < vs.Length; i++) vs[i] = new Vector3(-vs[i].x + dx, vs[i].y, -vs[i].z);
             m.vertices = vs;
+            var ns = src.normals;
+            if (ns != null && ns.Length == vs.Length)
+            {
+                for (int i = 0; i < ns.Length; i++) ns[i] = new Vector3(-ns[i].x, ns[i].y, -ns[i].z);
+                m.normals = ns;
+            }
+            var ts = src.tangents;
+            if (ts != null && ts.Length == vs.Length)
+            {
+                for (int i = 0; i < ts.Length; i++) ts[i] = new Vector4(-ts[i].x, ts[i].y, -ts[i].z, ts[i].w);
+                m.tangents = ts;
+            }
             m.RecalculateBounds();
             return m;
         }
@@ -962,16 +981,19 @@ namespace BubbleWash.EditorTools
         const float CrownV6Drop = 0f, CrownV6Back = 0f, CrownV6Lean = 0f, CrownV6ScaleX = 1f, CrownV6ScaleY = 1f, CrownV6ScaleZ = 1f;
         const float CrownV6Out = 0f;
         // S2 pass 10h (owner 17:45 ORIGINAL crops water_splashes_03s / splash_crown_04s: the milky crowns rise OUT of the water at
-        // BOTH feet and spill back toward the camera, beside the body - never over it). Placement solved offline in pass 10g
-        // (the projected V6 sheet vs the reference spray masks through the R2 + portrait cameras: IoU_R2 L .377 / R .228, crown
-        // pixels over the mascot silhouette R2 0 / 0, portrait 1 / 0): each side wears the OTHER side's sheet shifted across
-        // (tall fingers outward, the low bent end at the foot), ~0.65-0.8 m toward the camera from the runner origin (the feet),
-        // taller (y x1.5). Revert = CrownV6Swap false (identity frame = the s2p10e / s2p10g crowns beside the arms).
+        // BOTH feet and spill back toward the camera, beside the body - never over it). Placement solved offline with the REAL
+        // sheet (build_fx_crown_v6.py as built 14:04: X0 .15 X1 1.30 BEND .15 LEAN 12 THICK 1.8; the 10g solve had assumed the
+        // script defaults AND missed the 180 deg Fix turn - its p1 frame put both crowns 1.3 m out on the rails) through the R2
+        // camera (runner-local, from the waterfx S2 cam log) and the portrait rig (fitted on the s2p10g identity crowns): the
+        // projected sheet vs the original's milky spray masks, IoU_R2 L .314 / R .302, crown pixels over the body (above the
+        // feet) R2 5 / 2, portrait 107 / 0. Each side wears the OTHER side's sheet shifted across (tall fingers outward, the
+        // low bent end at the foot), 0.5 / 0.8 m toward the camera from the runner origin.
+        // Revert = CrownV6Swap false (identity frame = the s2p10e / s2p10g crowns beside the arms).
         static readonly bool CrownV6Swap = true;
-        const float CrownV6Shift = 1.26f;   // x0 + x1 of the V6 sheet (.18 .. 1.08 m): maps one side's span onto the other
-        static readonly Vector3 CrownV6PosL = new Vector3(-0.16f, -0.02f, -0.65f), CrownV6PosR = new Vector3(0.24f, -0.02f, -0.80f);
-        static readonly Vector3 CrownV6RotL = new Vector3(0f, 0f, 0f), CrownV6RotR = new Vector3(0f, -10f, 0f);   // Euler (lean, yaw, 0)
-        static readonly Vector3 CrownV6SclL = new Vector3(0.9f, 1.35f, 0.9f), CrownV6SclR = new Vector3(0.9f, 1.35f, 0.9f);
+        const float CrownV6Shift = 1.45f;   // X0 + X1 of the built V6 sheet (.15 .. 1.30 m): maps one side's span onto the other
+        static readonly Vector3 CrownV6PosL = new Vector3(-0.30f, -0.02f, -0.50f), CrownV6PosR = new Vector3(0.30f, -0.02f, -0.80f);
+        static readonly Vector3 CrownV6RotL = new Vector3(0f, 20f, 0f), CrownV6RotR = new Vector3(0f, 10f, 0f);   // Euler (lean, yaw, 0)
+        static readonly Vector3 CrownV6SclL = new Vector3(0.9f, 0.9f, 0.9f), CrownV6SclR = new Vector3(0.6f, 0.75f, 0.6f);
 
         static void BuildCrowns(GameObject fxRoot, RunnerController runner, bool save, Vector3 rootL, Vector3 rootR)
         {

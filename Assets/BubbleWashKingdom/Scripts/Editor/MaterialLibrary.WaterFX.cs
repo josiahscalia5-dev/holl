@@ -93,6 +93,10 @@ namespace BubbleWash.EditorTools
                 F(m, "_FlowLines", 0.14f); F(m, "_FoamStreaks", 0.9f); F(m, "_FoamStreakDensity", 0.9f); C(m, "_FoamStreakColor", "#E2F2FF");
                 C(m, "_ReflectTint", "#80CCFF"); C(m, "_CausticColor", "#84D0FF"); F(m, "_HueLockLow", 0.8f); F(m, "_HueLowStart", 172f);
                 F(m, "_NearBrighten", 0.08f);
+                // p2 (p1: hue unchanged 191-194 - the lock works on LINEAR colour, where the original's lane #4FA7DD (sRGB hue
+                // 203) sits at hue ~211; our output #46C3DB = linear ~195): target the linear hue of the original, full low lock,
+                // no near-camera brightening (lowL V .87 vs .78)
+                F(m, "_HueTarget", 212f); F(m, "_HueLockLow", 1f); F(m, "_HueLowStart", 168f); F(m, "_NearBrighten", 0f);
                 // light halos around the decor chevrons: same period / geometry / runway offset as SceneBuilder.BuildDecorChevrons
                 F(m, "_ChevronStart", SceneBuilder.ChevronStart); F(m, "_ChevronSpacing", SceneBuilder.ChevronSpacing);
                 // (v2 notch measured #55B8E5 vs reference deep #3386CC: the arrows now bloom on their own -> fainter, tighter pool)
@@ -243,6 +247,11 @@ namespace BubbleWash.EditorTools
                 F(m, "_MilkWet", 1f); F(m, "_SpecStrength", 0.9f);
                 // p2 (p1: still a chalky white antler lying on the water): more see-through core and edges
                 F(m, "_MilkAlpha", 0.78f); F(m, "_MilkEdgeAlpha", 0.22f); F(m, "_BumpStrength", 0.9f);
+                // S2 pass 10h (lead 16:50: "so translucent they are nearly INVISIBLE (ghostly film) - restore body opacity /
+                // brightness, keep only the thin edges translucent"; owner 17:35 10C "neither invisible nor plaster"; ORIGINAL
+                // crops water_splashes_03s / splash_crown_04s: bright milky cores #D1E3EE-#D5EEF3, light-blue shading, see-through
+                // thin edges): milkier body, a little more edge, a touch of self light so the cores stay milky on the blue water
+                F(m, "_MilkAlpha", 0.93f); F(m, "_MilkEdgeAlpha", 0.36f); C(m, "_ColorA", "#EEF6FB"); F(m, "_Glow", 0.05f);
             }, (int)RenderQueue.Transparent);
             Mat("M_Foam_v2", "BWK/Soft", m =>
             {
