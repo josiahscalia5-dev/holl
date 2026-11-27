@@ -55,6 +55,9 @@ namespace BubbleWash.Tests
         {
             Directory.CreateDirectory(OutDir);
             GameManager.CaptureMode = true;
+            // Lead 5190fd9a 2026-11-27: portrait from the FIRST frame (the opening snap in GameManager.Start reads it), so the
+            // recording no longer starts with one landscape-framed frame (mascot ~2x large) - see RunnerCameraRig.ForcedAspect.
+            RunnerCameraRig.ForcedAspect = 720f / 1280f;
             yield return SceneManager.LoadSceneAsync(Scene);
             yield return null;
             var gm = Object.FindFirstObjectByType<GameManager>();
@@ -178,6 +181,7 @@ namespace BubbleWash.Tests
             encoder.Dispose();
 #endif
             Time.captureFramerate = 0;
+            RunnerCameraRig.ForcedAspect = 0f;
             File.WriteAllText(Path.Combine(OutDir, "run_summary.txt"),
                 $"frames={frames}\nstart={startDistance:F1}\nend={runner.Distance:F1}\ntrack={runner.track.Length:F1}\n" +
                 $"coins={gm.items.Coins}\ngems={gm.items.Gems}\nrearChecks={rearChecks}\nrearViolations={rearViolations}\nfinished={gm.Celebrating}\n" +

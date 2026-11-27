@@ -179,18 +179,36 @@ def frame(d):
     return e1, d.cross(e1).normalized()
 
 
-def strand(m, root, d, bend, length, w0, key, sides):
-    """curved strand: root ring -> mid ring (bent by `bend`) -> tip point. sides 3 (LOD0) / 4 (LOD1)."""
-    mid = root + d * (length * 0.66)
-    tip = mid + (d + bend).normalized() * (length * 0.34)
+def strand(m, root, d, bend, length, w0, key, sides, blunt=False):
+    """curved strand: root ring -> mid ring (bent by `bend`) -> tip point. sides 3 (LOD0) / 4 (LOD1).
+    pass 10 v3 (blunt=True, s2p10 R2: the pointed 3-sided spikes read as a dark spiky starburst with the violet wall
+    between them; crop 02 = soft THICK locks with rounded pale tips): root -> mid (.86 w) -> blunt tip ring (.5 w) + cap."""
+    mid = root + d * (length * 0.62)
+    tip = mid + (d + bend).normalized() * (length * 0.38)
     dm = (tip - root).normalized()
+    root_mat = {"p": PINK, "w": WHITE, "c": CYAN}[key]
+    tip_mat = {"p": PTIP, "w": WHITE, "c": CYAN}[key]
+    if blunt:
+        dt = (tip - mid).normalized()
+        rings = []
+        for c, w, dd in ((root, w0, d), (mid, w0 * 0.86, dm), (tip, w0 * 0.5, dt)):
+            e1, e2 = frame(dd)
+            rings.append([m.v(c + (e1 * math.cos(TAU * k / sides) + e2 * math.sin(TAU * k / sides)) * w) for k in range(sides)])
+        r0, r1, r2 = rings
+        for k in range(sides):
+            k1 = (k + 1) % sides
+            m.faces.append([r0[k], r0[k1], r1[k1], r1[k]])
+            m.fmat.append(root_mat)
+            m.faces.append([r1[k], r1[k1], r2[k1], r2[k]])
+            m.fmat.append(tip_mat)
+        m.faces.append(list(r2))
+        m.fmat.append(tip_mat)
+        return
     rings = []
     for c, w, dd in ((root, w0, d), (mid, w0 * 0.72, dm)):
         e1, e2 = frame(dd)
         rings.append([m.v(c + (e1 * math.cos(TAU * k / sides) + e2 * math.sin(TAU * k / sides)) * w) for k in range(sides)])
     t = m.v(tip)
-    root_mat = {"p": PINK, "w": WHITE, "c": CYAN}[key]
-    tip_mat = {"p": PTIP, "w": WHITE, "c": CYAN}[key]
     r0, r1 = rings
     for k in range(sides):
         k1 = (k + 1) % sides
@@ -218,7 +236,7 @@ def sample_surface(rnd):
     return root, n, tang, s * (CORE_X + 0.1)
 
 
-def build_roller(n_clumps, per, seed, seg, sides):
+def build_roller(n_clumps, per, seed, seg, sides, wscale=1.0, blunt=False):
     rnd = random.Random(seed)
     m = Mesh()
     core(m, seg)
@@ -233,8 +251,8 @@ def build_roller(n_clumps, per, seed, seg, sides):
             jit = Vector((rnd.uniform(-0.06, 0.06), rnd.uniform(-0.06, 0.06), rnd.uniform(-0.06, 0.06)))
             d = (base + Vector((rnd.uniform(-0.12, 0.12), rnd.uniform(-0.12, 0.12), rnd.uniform(-0.12, 0.12)))).normalized()
             bend = sweep + Vector((rnd.uniform(-0.25, 0.25), rnd.uniform(-0.25, 0.25), rnd.uniform(-0.25, 0.25)))
-            w0 = rnd.uniform(0.034, 0.052) * (1.6 if per == 1 else 1.0)
-            strand(m, root + jit, d, bend, length * rnd.uniform(0.8, 1.15), w0, key, sides)
+            w0 = rnd.uniform(0.034, 0.052) * (1.6 if per == 1 else 1.0) * wscale
+            strand(m, root + jit, d, bend, length * rnd.uniform(0.8, 1.15), w0, key, sides, blunt)
     return m
 
 
@@ -256,8 +274,10 @@ def export_roller():
             C.material("M_BristlePinkTip_s2", "#FF8CC8", 0.0, 0.5),
             C.material("M_BristleWhite_s2", "#FFF0FA", 0.0, 0.5),
             C.material("M_BristleCyan_s2", "#7CD0F4", 0.0, 0.5)]
-    lod0 = make("RollerDrum_LOD0", build_roller(1350, 6, 31, 40, 3), mats)
-    lod1 = make("RollerDrum_LOD1", build_roller(1700, 1, 37, 16, 4), mats)
+    # v3 (pass 10 resume 13:50, lead "thicker clumps"): 1200 clumps x 5 THICK blunt locks (1.45x wider, rounded pale
+    # tips) = ~78k tris LOD0 instead of 1350 x 6 thin pointed spikes (the violet wall showed between them)
+    lod0 = make("RollerDrum_LOD0", build_roller(1200, 5, 31, 40, 3, wscale=1.45, blunt=True), mats)
+    lod1 = make("RollerDrum_LOD1", build_roller(1700, 1, 37, 16, 4, wscale=1.2), mats)
     t0, t1 = C.tri_count(lod0), C.tri_count(lod1)
     d = lod0.dimensions
     print("CHECK SM_RollerDrum_s2 v2 tris LOD0 %d LOD1 %d verts LOD0 %d dims %.2f x %.2f x %.2f"

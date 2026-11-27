@@ -142,6 +142,27 @@ namespace BubbleWash.EditorTools
                 m.SetColor("_DoorDeepTint", new Color(0.62f, 0.66f, 0.92f)); F(m, "_DoorDeepNear", 14f); F(m, "_DoorDeepFar", 30f);
                 // crop 07: near ovals bigger and ~2:1 (ours 1.35:1)
                 F(m, "_DoorSlotNear", 1.25f); F(m, "_DoorSlotAspect", 1.3f);
+                // Screen S2 pass 10 v3 (lead 13:50 #1 defect: PALE lavender arc in the upper third of the portrait frame, s2p10
+                // ceiling (170,90)-(640,250) L 148 / chroma 50 vs s2p9r 102 / 78, R2 ceiling L 169 vs reference 98 / chroma
+                // 96; owner 13:25 (4) washed-out deep tunnel L 167 vs 121). Cause: v1/v2 mirror term - the ceiling mirrors the
+                // FLOOR (cyan water .25/.62/.85) + a pale far core, added to violet = pale grey-lavender. METHOD CHANGE: the
+                // lit door metal is gradient-mapped onto a neon-metal ramp (deep indigo -> saturated blue-violet -> lavender-
+                // pink gloss below the bloom threshold; deeper drum darker), and the mirror keeps only the warm gold / pink
+                // LED-rim reflections over deep blue (no cyan floor, no pale core)
+                F(m, "_DoorRampAmount", 1f);
+                m.SetColor("_DoorRampDark", new Color(0.13f, 0.10f, 0.36f));    // display ~ deep indigo between the rims
+                m.SetColor("_DoorRampMid", new Color(0.46f, 0.34f, 0.80f));     // display ~ ref ceiling 110/86/178, wall 132/96/178
+                m.SetColor("_DoorRampHigh", new Color(0.88f, 0.70f, 1.0f));     // glossy lavender-pink band (lum < .9 bloom threshold)
+                F(m, "_DoorRampScale", 3.5f); F(m, "_DoorRampFar", 0.72f); F(m, "_DoorRampNear", 12f); F(m, "_DoorRampFarDist", 40f);
+                m.SetColor("_MirrorFloor", new Color(0.05f, 0.05f, 0.20f));     // v2 .25/.62/.85 cyan = the pale ceiling
+                m.SetColor("_MirrorWall", new Color(0.04f, 0.035f, 0.15f));
+                m.SetColor("_MirrorCore", new Color(0.16f, 0.09f, 0.42f));      // v2 .30/.27/.62
+                F(m, "_MirrorF0", 0.45f);
+                // owner 13:25 (5) insufficient perforations: MANY rows of small dark pill slots per band (smaller deeper), big
+                // ovals only on the near walls -> far slot scale .72 -> .5 (from the first gold ring), near rows no longer
+                // spread (1.45 -> 1.0), fewer dropped dashes, blacker recesses
+                F(m, "_DoorSlotFar", 0.5f); F(m, "_DoorSlotStart", 48f); F(m, "_DoorSlotEnd", 60f); F(m, "_DoorRowSpread", 1.0f);
+                F(m, "_SlotDropout", 0.05f); F(m, "_DoorHole", 0.14f);
             });
             // polished lavender drum lips between the gold rings (SM_DrumRim, m1: fat rolled lip): the stylised BWK/Gold
             // environment shading with a lavender palette - violet body, magenta-pink fresnel edge, soft pink-lavender

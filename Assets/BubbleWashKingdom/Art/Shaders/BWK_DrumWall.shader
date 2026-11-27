@@ -146,6 +146,16 @@ Shader "BWK/DrumWall"
         _DoorDeepTint ("Door grade multiplier on the lit metal far from the camera (deep blue drum)", Color) = (1, 1, 1, 1)
         _DoorDeepNear ("Door deep tint from camera distance (m)", Float) = 14
         _DoorDeepFar ("Door deep tint full at camera distance (m)", Float) = 30
+        // Screen S2 pass 10 v3 (lead 13:50: pale lavender arc in the portrait frame; owner 13:25 (4) washed-out tunnel): the
+        // door drum's lit metal is gradient-mapped by its lit luminance onto an art-directed neon-metal ramp (0 = off)
+        _DoorRampAmount ("Door ramp: amount (0 = off)", Range(0, 1)) = 0
+        [HDR] _DoorRampDark ("Door ramp: shadow (deep indigo)", Color) = (0.03, 0.02, 0.14, 1)
+        [HDR] _DoorRampMid ("Door ramp: body (blue-violet)", Color) = (0.20, 0.12, 0.54, 1)
+        [HDR] _DoorRampHigh ("Door ramp: gloss (lavender-pink, below the bloom threshold)", Color) = (0.80, 0.50, 1.10, 1)
+        _DoorRampScale ("Door ramp: lit luminance scale (x = 1 - exp(-lum * scale))", Float) = 3.5
+        _DoorRampFar ("Door ramp: multiplier on x for the deeper drum", Range(0, 1)) = 1
+        _DoorRampNear ("Door ramp: deeper from camera distance (m)", Float) = 12
+        _DoorRampFarDist ("Door ramp: deepest at camera distance (m)", Float) = 40
     }
     SubShader
     {
@@ -190,6 +200,9 @@ Shader "BWK/DrumWall"
             float _MirrorRingA, _MirrorRingB, _MirrorRingWidth, _MirrorCoreStart, _MirrorCoreEnd, _DoorSlotAspect;
             half4 _DoorDeepTint;
             float _DoorDeepNear, _DoorDeepFar;
+            half _DoorRampAmount, _DoorRampFar;
+            half4 _DoorRampDark, _DoorRampMid, _DoorRampHigh;
+            float _DoorRampScale, _DoorRampNear, _DoorRampFarDist;
         CBUFFER_END
 
         // Screen S2 pass 7: weight of the S2 door-drum grade at a distance along the tunnel (1 at the door, 0 beyond
@@ -519,6 +532,22 @@ Shader "BWK/DrumWall"
                 // Screen S2 pass 10 v2: the deeper drum seen through the door is deep blue metal (reference) - value contrast
                 // against the gold rings / bulbs / neon instead of an evenly pale lavender tunnel
                 lit.rgb *= lerp(half3(1, 1, 1), _DoorDeepTint.rgb, doorW * smoothstep(_DoorDeepNear, _DoorDeepFar, camDist));
+                // Screen S2 pass 10 v3 (method change after p7-p10 tint tweaks: the probes / key light push the lit lilac toward
+                // pale grey-lavender, s2p10 portrait ceiling L 148 / chroma 50 vs reference 98 / 96): the door drum's lit metal
+                // is GRADIENT-MAPPED by its lit luminance onto an art-directed neon-metal ramp - deep indigo shadow -> saturated
+                // blue-violet body -> lavender-pink gloss (capped below the bloom threshold, so the walls never feed the bloom
+                // veil). Lighting still shapes it (panel sheen bands, key falloff, probe streaks = glossy highlight bands), but
+                // the colours stay saturated and the deeper drum slides down the ramp (value contrast against bulbs / neon).
+                // Holes keep their own near-black recess shading.
+                if (_DoorRampAmount > 0.001)
+                {
+                    half lumL = dot(lit.rgb, half3(0.2126, 0.7152, 0.0722));
+                    half deepK = lerp(1.0, _DoorRampFar, smoothstep(_DoorRampNear, _DoorRampFarDist, camDist));
+                    half x = (1.0 - exp(-lumL * _DoorRampScale)) * deepK;
+                    half3 rampC = x < 0.5 ? lerp(_DoorRampDark.rgb, _DoorRampMid.rgb, x * 2.0)
+                                          : lerp(_DoorRampMid.rgb, _DoorRampHigh.rgb, x * 2.0 - 1.0);
+                    lit.rgb = lerp(lit.rgb, rampC, _DoorRampAmount * doorW * (1.0 - hole));
+                }
                 // Screen ALL pass 5 (judge gap #5): S3-S6 walls read as flat light lilac plates; the video's deep tunnel is
                 // darker slate blue-violet metal with black oval recesses and glowing panel edges. Graded by the distance
                 // along the tunnel (m.y) so the S2 door drum (40-62 m) keeps its look.

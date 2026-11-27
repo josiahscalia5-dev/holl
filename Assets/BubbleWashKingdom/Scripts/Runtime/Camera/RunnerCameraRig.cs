@@ -64,6 +64,16 @@ namespace BubbleWash
         [Tooltip("> 0 forces an aspect (used by capture tools); otherwise the output camera aspect is used.")]
         public float aspectOverride = 0f;
 
+        /// <summary>
+        /// Lead 5190fd9a 2026-11-27 (owner: "camera starts too close to the mascot before pulling back"): capture / test hook.
+        /// > 0 forces this aspect on EVERY rig from the very first frame. Set it BEFORE the scene loads, so the opening snap in
+        /// GameManager.Start (PlayIntro) already uses the portrait framing. The Play Mode recorder used to set aspectOverride one
+        /// frame after Start, so its first recorded frame showed the batchmode screen's LANDSCAPE framing (FOV 52 / 2.9 back =
+        /// the mascot ~2x large) before the rig switched to portrait. 0 = off (phones use the real screen aspect).
+        /// </summary>
+        public static float ForcedAspect = 0f;
+        float lastAspect = -1f;
+
         // Owner 2026-11-26 (review of the round-7 recording): the old front-facing intro orbit crowded the mascot and its hat
         // and its blend to this rig passed through the hat; the celebration orbit flew past the portal into empty space.
         // Both are now offsets on THIS rear rig (no camera switch, no blend through the mascot). They are zero in gameplay and
@@ -134,7 +144,12 @@ namespace BubbleWash
             float dt = Time.deltaTime;
             if (introTime >= 0f) { introTime += dt; if (introTime >= introDuration) introTime = -1f; }
             if (finaleTime >= 0f) finaleTime += dt;
-            Step(dt, !initialized);
+            // An aspect change (resolution switch, rotation, recorder start) re-snaps the smoothed offsets at once instead of
+            // easing from the old screen shape's framing for a few frames. Timers (opening crane / finale) keep running.
+            float aspect = CurrentAspect();
+            bool aspectJump = lastAspect > 0f && Mathf.Abs(aspect - lastAspect) > 0.01f;
+            lastAspect = aspect;
+            Step(dt, !initialized || aspectJump);
             initialized = true;
         }
 
@@ -172,6 +187,7 @@ namespace BubbleWash
         public float CurrentAspect()
         {
             if (aspectOverride > 0f) return aspectOverride;
+            if (ForcedAspect > 0f) return ForcedAspect;
             if (outputCamera == null) outputCamera = Camera.main;
             return outputCamera != null ? outputCamera.aspect : (float)Screen.width / Mathf.Max(1, Screen.height);
         }
