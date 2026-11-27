@@ -1,5 +1,20 @@
 # Bubble Wash Kingdom - lead handoff (2026-11-26 12:30, lead session cd43a82d on the third Pro account)
 
+## STATUS 20:35 (lead 46a804a0, seventh account) - exact resume point (private details: Captures/handoff/NEXT_ACCOUNT_START.md)
+- Newest checkpoint: checkpoint-22-s2p1 (S2 pass 1, metal; judged S2 scenery 5 -> 5.5, with mascot 5). 20:15 takeover: the
+  previous lead's orphaned 22:41 wake timer was killed; one autosave loop; no other jobs.
+- S2 COMPARISON CAMERA CORRECTED (owner): the approved 3.0 s frame is taken at the washing-machine door (door ring 40 m);
+  the old hero comparison was 65 m inside the tunnel (105.5 m). New comparison-only camera R2_rear_S2_like_3s (solved on the
+  door rim + mascot landmarks, rms 8.4 px; mascot at 35 m) + hero_mouth_* (the unchanged gameplay rig 2.75/1.3/10/58 at the
+  same spot) are written by every capture (CaptureTools.CaptureHero). Tools: CaptureTools.MouthSearchBatch,
+  S2CameraSolveBatch; preview flag -bwkEnvHall (rebuilds the hall set in memory). Left-lane paw coins 33-42 m at the door.
+- RUNNING since 20:31: S2 pass 2 (Tools/workflows/bwk-screen-focus.js, run wf_dfd5770d-a4e): water/VFX (turquoise water,
+  translucent splash crowns, big foam banks, iridescent bubbles, one cyan chevron) + 3D environment reconstruction
+  (pink/white fluffy roller upper left, gold entrance hatch framing, blue machinery + gold pipes, hot-pink rails).
+  Tools/after_wave.sh s2p2 then builds, captures, makes section sheets and records Play Mode.
+- Next: judge s2p2 -> metal pass 3 (big ovals on the near drum section, smaller deeper, blue-violet/lavender sheen,
+  receding rings not hazed, star placement) -> S7 golden destination -> all-section sheets + 24-asset checklist.
+
 ## STATUS 17:58 (lead c8eeab8b, sixth account) - exact resume point (private details: Captures/handoff/NEXT_ACCOUNT_START.md)
 - Newest checkpoint: checkpoint-20-r8 (lead_r8 build 17:34, stills Captures/stills_r8/). 17:48 takeover: the previous
   lead's process had ended with the account switch; its masters run A (asset artist, master door) died while still reading

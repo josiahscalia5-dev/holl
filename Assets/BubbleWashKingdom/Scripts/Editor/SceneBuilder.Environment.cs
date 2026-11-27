@@ -29,7 +29,7 @@ namespace BubbleWash.EditorTools
         {
             // r8 masters (asset artist): -bwkEnvChambers = rebuild ONLY the side chambers in memory (master door check)
             bool chambersOnly = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-bwkEnvChambers") >= 0;
-            // lead 2026-11-26 20:45 (S2 at the door): -bwkEnvHall = rebuild ONLY the hall set HallExtras_r7 (door ring, mouth
+            // lead 2026-11-26 20:28 (S2 at the door): -bwkEnvHall = rebuild ONLY the hall set HallExtras_r7 (door ring, mouth
             // drum, rollers, machinery, console, towers) in memory, so hall placement / model changes show in a preview
             bool hallOnly = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-bwkEnvHall") >= 0;
             if (hallOnly && !PreviewRebuildsEnvironment)

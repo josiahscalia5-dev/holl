@@ -124,7 +124,7 @@ namespace BubbleWash.EditorTools
                 if (!m.Success) continue;
                 float d = float.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
                 bool heroWin = d >= HeroDistance - 20f && d <= HeroDistance + 65f;
-                bool mouthWin = d >= HeroMouthDistance - 20f && d <= HeroMouthDistance + 45f;   // S2 door comparison (20:40)
+                bool mouthWin = d >= HeroMouthDistance - 20f && d <= HeroMouthDistance + 45f;   // S2 door comparison (20:25)
                 if (!heroWin && !mouthWin) { p.gameObject.SetActive(false); parked.Add(p.gameObject); }
             }
             try { BakeProbes(); }
@@ -614,6 +614,16 @@ namespace BubbleWash.EditorTools
                 }
                 dd += 4f + (float)rng.NextDouble() * 3f;
                 pattern++;
+            }
+            // lead 2026-11-26 20:33 (S2 at the washing-machine door, reference 3.0 s): big gold paw coins right beside the
+            // camera as the mascot reaches the door - a left-lane line 33-42 m (the reference shows one at the lower left
+            // next to the camera and more ahead). Placed after the seeded patterns (their rng sequence is unchanged) and
+            // skipped wherever a pattern item already sits within 1 m in that lane.
+            for (float d = 33.2f; d < 42f; d += 1.7f)
+            {
+                float dc = d;
+                if (!registry.items.Any(it => Mathf.Abs(it.distance - dc) < 1f && Mathf.Abs(it.lateral + lane) < 0.6f))
+                    Make(coin, PrimitiveType.Cylinder, "M_Coin", TrackItemKind.Coin, dc, -lane, 0.55f, 1f);
             }
             foreach (var it in registry.items)
                 if (it.kind == TrackItemKind.Boost || it.kind == TrackItemKind.Obstacle) { it.spinSpeed = 0f; it.bobAmplitude = 0f; }

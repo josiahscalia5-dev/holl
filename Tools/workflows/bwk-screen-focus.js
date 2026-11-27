@@ -26,7 +26,7 @@ const resumeFor = k => (RESUME.all ? RESUME.all + '\n' : '') + (RESUME[k] ? RESU
 // preview = the fastest Unity run that shows this screen after an agent's change.
 const SCREENS = {
   S2: {
-    // lead 2026-11-26 20:40 (owner takeover brief item 5): the reference 3.0 s frame is AT the washing-machine door (40 m);
+    // lead 2026-11-26 20:25 (owner takeover brief item 5): the reference 3.0 s frame is AT the washing-machine door (40 m);
     // the old hero_* stills are 65 m past it (105.5 m). R2 = comparison-only camera solved on the reference landmarks
     // (door rim + mascot, rms 8.4 px), hero_mouth = the unchanged gameplay rig at the same spot (35 m).
     name: 'S2 HERO GAMEPLAY SCREEN AT THE WASHING-MACHINE DOOR: the mascot slides down the blue water slide with glossy pink / rainbow rails, about to pass through the huge gold hatch ring (40 m); outside the hatch: pink fluffy roller upper left, blue machinery + gold pipe left, big foam banks; inside: perforated violet drum, neon stars, receding gold bulb rings (video 3.0 s). Our matched camera = R2_rear_S2_like_3s_16x9.png (comparison only, mascot at 35 m); hero_mouth_* = the gameplay rig at the same spot',

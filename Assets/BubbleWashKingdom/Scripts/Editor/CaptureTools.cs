@@ -570,7 +570,7 @@ namespace BubbleWash.EditorTools
                 cam.fieldOfView = lens.FieldOfView;
                 RenderWithBackground(cam, w, h, stillsDir, $"hero_{tag}.png", MascotRenderers(runner));
             }
-            // S2 at the washing-machine door (lead 2026-11-26 20:40, owner takeover brief item 5 "correct the comparison
+            // S2 at the washing-machine door (lead 2026-11-26 20:25, owner takeover brief item 5 "correct the comparison
             // camera first"): the reference 3.0 s frame is taken at the door ring (40 m), hero_* above is 65 m past it.
             // hero_mouth = the UNCHANGED gameplay rig with the mascot at 35 m (what the player sees at the door);
             // R2_rear_S2_like_3s = comparison-only camera solved by S2CameraSolveBatch on the reference landmarks (door rim

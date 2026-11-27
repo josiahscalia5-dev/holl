@@ -82,5 +82,7 @@ One file per agent (lead brief + agent statements + tool actions), grouped by le
 - [Environment specialist: Round 3 tunnel and gold](2026-11-26_ee36a165/1052_Environment_specialist_Round_3_tunnel_and_gold_a008192b.md)
 - [Lighting specialist: Round 3 cinematic lighting](2026-11-26_ee36a165/1052_Lighting_specialist_Round_3_cinematic_lighting_ad09a194.md)
 - [Water/FX specialist: Round 3 splash and water](2026-11-26_ee36a165/1052_Water_FX_specialist_Round_3_splash_and_water_a862e553.md)
+- [assets S2 pass 2](2026-11-27_46a804a0/0132_assets_S2_pass_2_a8e686c4.md)
+- [water S2 pass 2](2026-11-27_46a804a0/0132_water_S2_pass_2_aec4cab7.md)
 - [judge S2 s2p1](2026-11-27_c8eeab8b/0006_judge_S2_s2p1_ab0c67df.md)
 - [skeptic S2 s2p1](2026-11-27_c8eeab8b/0006_skeptic_S2_s2p1_a4dda9d4.md)
