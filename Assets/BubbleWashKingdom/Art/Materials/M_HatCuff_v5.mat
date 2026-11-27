@@ -32,13 +32,14 @@ Material:
     - _Mode: 2
     - _PurlDepth: 1.8
     - _RimPower: 3
-    - _RimStrength: 0.35
+    - _RimStrength: 0.6
     - _Smoothness: 0.05
     - _StitchU: 66
     - _StitchV: 52
     - _StripeWidth: 0
     - _Stripes: 4
     - _VioletLift: 1
+    - _WoolAbsorb: 0.72
     - _Wrap: 0.5
     - _YarnRelief: 1
     m_Colors:

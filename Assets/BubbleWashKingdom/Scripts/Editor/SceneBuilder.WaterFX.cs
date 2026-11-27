@@ -929,8 +929,11 @@ namespace BubbleWash.EditorTools
         // (p1 -0.16 / -0.3 / -24 / 1.0 x 1.3 x 1.2: lay flat on the water like antlers, the left one hidden by the body + coin)
         // (p2 -0.1 / -0.44 / -8 / 1.0 x 1.42 x 1.2: rising translucent sprays, but the tall inner fingers covered both sides of
         // his body up to the arms -> p3 pushed 0.17 m outward per side, a little lower)
-        const float CrownV6Drop = -0.1f, CrownV6Back = -0.44f, CrownV6Lean = -8f, CrownV6ScaleX = 1.0f, CrownV6ScaleY = 1.3f, CrownV6ScaleZ = 1.2f;
-        const float CrownV6Out = 0.17f;
+        // (p3 +0.17 out: the inner finger of the right spray still leaned over his right half (it stood 0.44 m behind him, in
+        // FRONT of his back) and the right spray read too wide, R2 x 680-1020 vs ref 740-960 -> p4 narrower, closer to his
+        // back so the inner fingers tuck behind the body, a small outward step)
+        const float CrownV6Drop = -0.1f, CrownV6Back = -0.36f, CrownV6Lean = -8f, CrownV6ScaleX = 0.85f, CrownV6ScaleY = 1.3f, CrownV6ScaleZ = 1.2f;
+        const float CrownV6Out = 0.08f;
 
         static void BuildCrowns(GameObject fxRoot, RunnerController runner, bool save, Vector3 rootL, Vector3 rootR)
         {

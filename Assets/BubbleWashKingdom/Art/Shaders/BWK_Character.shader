@@ -29,6 +29,7 @@ Shader "BWK/Character"
         _PurlDepth ("Knit Purl Depth (0 = v4 look)", Range(0,1)) = 0
         _YarnRelief ("Yarn Relief Knit (0 = previous knit)", Range(0,1.5)) = 0
         _VioletLift ("Fabric: lift violet vertex colours (pom-pom yarn; 1 = off)", Range(0.5, 2.5)) = 1
+        _WoolAbsorb ("Yarn relief: indirect light kept (wool scatters little env reflection; 1 = all)", Range(0.3, 1)) = 1
     }
     SubShader
     {
@@ -38,7 +39,7 @@ Shader "BWK/Character"
         CBUFFER_START(UnityPerMaterial)
             half4 _ColorA, _ColorB, _ColorC, _ShadowColor;
             half _Mode, _Smoothness, _Metallic, _Wrap, _BumpScale, _BumpStrength, _Stripes, _StripeWidth;
-            half _StitchU, _StitchV, _Glow, _RimPower, _RimStrength, _PurlDepth, _YarnRelief, _VioletLift;
+            half _StitchU, _StitchV, _Glow, _RimPower, _RimStrength, _PurlDepth, _YarnRelief, _VioletLift, _WoolAbsorb;
         CBUFFER_END
         ENDHLSL
         Pass
@@ -152,7 +153,7 @@ Shader "BWK/Character"
                         // wool reads by its relief: rib flanks turned away from the viewer fall off (soft round tubes)
                         half facing = saturate(dot(n, v));
                         albedo *= lerp(0.5, 1.1, h0) * lerp(0.92, 1.05, ply) * lerp(0.6, 1.08, facing * facing);
-                        occlusion = lerp(0.45, 1.0, h0);
+                        occlusion = lerp(0.45, 1.0, h0) * _WoolAbsorb;   // prev3: env reflection greyed the crown (G 83 vs ref 54)
                         half sheen = pow(1.0 - saturate(dot(n, v)), 3.0) * 0.45 + 0.06;
                         emission = albedo * (_Glow + sheen * h0 * 0.35);   // prev2: a white sheen greyed the crown (G 81 vs ref 54)
                         half rimK = BWK_Fresnel(n, v, _RimPower) * _RimStrength;

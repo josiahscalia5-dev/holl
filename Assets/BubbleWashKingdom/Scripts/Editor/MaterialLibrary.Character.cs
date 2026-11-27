@@ -107,6 +107,7 @@ namespace BubbleWash.EditorTools
                 // 146/84/167 vs reference 120/54/156 -> deeper, more saturated purple
                 C(m, "_ColorA", "#7A2098"); F(m, "_StitchU", 88); F(m, "_StitchV", 60); F(m, "_BumpStrength", 1.0f);
                 F(m, "_Smoothness", 0.05f); F(m, "_YarnRelief", 1.0f);
+                F(m, "_WoolAbsorb", 0.68f); F(m, "_RimStrength", 0.6f);   // prev3 crown 131/83/158 L43.8 vs ref 120/54/156 L36.2: env grey + flat flanks
             });
             Mat("M_HatCuff_v5", "BWK/Character", m =>
             {
@@ -119,6 +120,7 @@ namespace BubbleWash.EditorTools
                 // p10f: yarn relief knit (s2p10e R2 cuff Lstd 3.5 vs reference 13.0 = flat pleats)
                 C(m, "_ColorA", "#B456C2"); C(m, "_ColorB", "#B456C2"); F(m, "_StitchU", 66); F(m, "_StitchV", 52);   // prev2: ref cuff ribs 1.7x wider -> 72 ribs
                 F(m, "_BumpStrength", 1.2f); F(m, "_Smoothness", 0.05f); F(m, "_Glow", 0.08f); F(m, "_YarnRelief", 1.0f);
+                F(m, "_WoolAbsorb", 0.72f); F(m, "_RimStrength", 0.6f);   // prev3 cuff centre L39.6 vs ref 32.2, reference flanks lighter
             });
             Mat("M_HatStripe_v5", "BWK/Character", m =>
             {
@@ -136,7 +138,7 @@ namespace BubbleWash.EditorTools
                 // root -> lilac tip vertex colours). Less self-glow than v4 (.65) so the locks keep their light / shade.
                 F(m, "_Mode", 4); C(m, "_ColorA", "#FFFFFF"); F(m, "_BumpScale", 0.6f); F(m, "_Smoothness", 0.3f); F(m, "_Glow", 0.5f);
                 F(m, "_RimStrength", 0.3f);
-                F(m, "_VioletLift", 1.8f);   // p10f: pom-pom yarn L42 vs reference 49 (pink toe beans unaffected); prev2 1.35 -> L43
+                F(m, "_VioletLift", 1.45f);   // prev3: 1.8 -> L45.8 (ref 48.8) but white lock-tip specks; 1.45   // p10f: pom-pom yarn L42 vs reference 49 (pink toe beans unaffected); prev2 1.35 -> L43
             });
             var furNoise = AssetDatabase.LoadAssetAtPath<Texture2D>($"{Tex}/T_FurNoise.png");
             Mat("M_Fur_v5", "BWK/Fur", m =>
@@ -165,11 +167,13 @@ namespace BubbleWash.EditorTools
                 // prev1: body 179/104/150 L54.2 (too dark), regular 'pinecone scale' pattern -> softer, irregular depth, lighter
                 // prev2: body 186/112/151 L56.8 a34.6 b-8 (ref 59.8 / 39.1 / -5.2) + still scale-like in the 9x16 view ->
                 // depth only in the frayed partings (fading toward the tips), smaller irregular locks, redder lighter coat
-                C(m, "_RootColor", "#FA6A5A"); C(m, "_BaseColor", "#FFA272"); C(m, "_TipColor", "#FFE2C2");
+                // prev3 (central box 600-690 x 405-495): 183/98/131 L52.7 b-2.3 vs ref 198/106/148 L56.9 b-5.8 -> pinker, lighter,
+                // softer lock depth (the partings read blotchy in 9x16)
+                C(m, "_RootColor", "#F46A66"); C(m, "_BaseColor", "#FFA47E"); C(m, "_TipColor", "#FFE2CA");
                 F(m, "_FurLength", 0.078f); F(m, "_Gravity", 0.035f); F(m, "_Thinning", 0.75f); F(m, "_Curl", 0.8f);
-                F(m, "_TuftScale", 18f); F(m, "_TuftAmount", 0.55f); F(m, "_StrandContrast", 0.45f); F(m, "_AO", 0.42f);
-                F(m, "_TuftDepth", 0.6f); F(m, "_LenNoise", 0.6f); F(m, "_LenNoiseScale", 0.5f); F(m, "_SilhouetteFade", 0.3f);
-                C(m, "_RimColor", "#FFD6D6"); F(m, "_Glow", 0.18f); F(m, "_RimStrength", 0.55f); F(m, "_RimSelf", 0.25f);
+                F(m, "_TuftScale", 18f); F(m, "_TuftAmount", 0.55f); F(m, "_StrandContrast", 0.45f); F(m, "_AO", 0.34f);
+                F(m, "_TuftDepth", 0.45f); F(m, "_LenNoise", 0.6f); F(m, "_LenNoiseScale", 0.5f); F(m, "_SilhouetteFade", 0.3f);
+                C(m, "_RimColor", "#FFD6D6"); F(m, "_Glow", 0.2f); F(m, "_RimStrength", 0.55f); F(m, "_RimSelf", 0.25f);
             }, (int)RenderQueue.AlphaTest);
             Mat("M_PomPom_v5", "BWK/Fur", m =>
             {
