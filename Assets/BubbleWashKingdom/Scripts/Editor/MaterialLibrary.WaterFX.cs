@@ -229,10 +229,13 @@ namespace BubbleWash.EditorTools
                 // p1 (left box p5 / p25 / p50 #AE99BD / #C4B1C9 / #DDC4D7 vs ref #CBA3C8 / #D4C3D7 / #E1D1E1): shade side a little
                 // lighter and less magenta (green up), body stays cool
                 C(m, "_ShadowColor", "#AFA7DD");
+                // p2 (left p5 / p25 / p50 #B39DBF / #C5ACC8 / #CFBDD0 vs ref #CBA3C8 / #D4C3D7 / #E1D1E1 = grey clay): lighter shade
+                // side (shader form floor .18) + a soft white studio highlight on every puff (crop 17)
+                C(m, "_ShadowColor", "#B9AEDD"); F(m, "_SpecStrength", 0.65f);
             });
             // S2 pass 9: the door's right bank sits in the hatch's shadow in the reference (R2 box p50 #ADA1CF, p75 #DBC0DB):
             // same foam, shaded body (placed only there by SceneBuilder.WaterFX MouthBank)
-            WaterVariant("M_Foam_v2_Shade", "M_Foam_v2", m => { C(m, "_ColorA", "#D9D3F2"); C(m, "_ShadowColor", "#9289C8"); F(m, "_Glow", 0.03f); }, -1);
+            WaterVariant("M_Foam_v2_Shade", "M_Foam_v2", m => { C(m, "_ColorA", "#CDC5EC"); C(m, "_ShadowColor", "#8C82C2"); F(m, "_Glow", 0.03f); }, -1);   // p2 right p50 #EDCFD7 vs ref #ADA1CF
             // round 8 masters: the old hall / fallback foam material is now a VARIANT of M_Foam_v2 (no overrides: one foam look)
             WaterVariant("M_Foam", "M_Foam_v2", null, -1);
             Particle("M_FX_Splash", $"{Tex}/T_Splash.png", additive: false, "#FFFFFF");

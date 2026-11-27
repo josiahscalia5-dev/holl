@@ -248,9 +248,9 @@ Shader "BWK/Soft"
                         half3 fnv = mul((float3x3)UNITY_MATRIX_V, n);
                         half keyF = saturate(dot(fnv, half3(-0.5, 0.62, 0.6)) * 0.62 + 0.42);
                         half hemi = saturate(n.y * 0.5 + 0.5);
-                        half form = saturate(keyF * 0.8 + hemi * 0.38 - 0.18);
+                        half form = saturate(keyF * 0.75 + hemi * 0.42 - 0.06);           // p2: mids too dark (p50 #CFBDD0 vs ref #E1D1E1)
                         form = form * form * (3.0 - 2.0 * form);
-                        half formT = form * lerp(0.25, 1.0, ao * ao);
+                        half formT = lerp(0.18, 1.0, form) * lerp(0.4, 1.0, ao * ao);
                         tone = lerp(tone, min(tone, formT), _FormShade);
                     }
                     half3 col = lerp(_ShadowColor.rgb, _ColorA.rgb, tone);
