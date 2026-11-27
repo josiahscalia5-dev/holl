@@ -23,7 +23,10 @@ namespace BubbleWash.EditorTools
         // materials untouched (v5 uses its own *_v5 materials via ModelImportRules.RemapVersionedMaterials). v5 is a correct
         // export (no BWK_RIG_TEST_YAW) -> ModelYaw 0. true + full build = show v5 to the owner in gameplay (NOT an approval:
         // the owner decides); false + full build = v4 exactly as before.
-        public const bool UseMascotV5 = false;
+        // Lead cd16e551 2026-11-27 07:40: ON for the owner's requested "V5 inside actual Unity gameplay" previews and for the
+        // motion specialist (E) to tune the seated motion on v5. TEST version only - v4 (SK_Mascot_v4.fbx + its materials)
+        // stays untouched; set false + full build to return to v4 exactly.
+        public const bool UseMascotV5 = true;
         public const string FbxPathV3 = "Assets/BubbleWashKingdom/Art/Models/Characters/SK_Mascot.fbx";
         public const string FbxPathV4 = "Assets/BubbleWashKingdom/Art/Models/Characters/SK_Mascot_v4.fbx";
         public const string FbxPathV5 = "Assets/BubbleWashKingdom/Art/Models/Characters/SK_Mascot_v5.fbx";

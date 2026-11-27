@@ -85,9 +85,18 @@ namespace BubbleWash.EditorTools
         /// run nearly level with a ~1 deg rise into the tunnel (y -3.0 / -2.9 / -2.7 / -2.6, was -4.3 / -5.6 / -6.6 / -7.8),
         /// every later knot is lifted by the same +5.2 m (the 82 -> 96 m drop and everything after keep their shape). The
         /// runner loses a little downhill acceleration there (RunnerController slopeFactor) - Play Mode test checks the run.
-        /// false = the bend without the rise.</summary>
+        /// false = the bend without the rise.
+        /// Lead cd16e551 2026-11-27 07:40 (owner 07:20, S2 priority 1 "stronger rightward bend and RISING tunnel perspective"):
+        /// the R2 re-solve on lead_s2p6 still put the vanishing point ~67 px (~5 deg) BELOW the reference's while the door
+        /// ring edges matched within ~20 px (VP (793,272) vs (760,205); ring L (245,213) / R (1249,201) vs (248,230) /
+        /// (1270,230)) -> the tunnel itself must climb relative to the door. The slide now CLIMBS after the door: knots 4-7
+        /// y -2.3 / -1.1 / 0.4 / 2.0 (~3 / 6 / 8 / 8 deg, +4.6 m at knot 7; was -3.0 / -2.9 / -2.7 / -2.6), and the
+        /// knot 7 -> 8 drop is softened from 2.7 m to S2Drop78 (a gentle crest into S3); every later knot is lifted by the
+        /// same amount, so the downstream shapes are kept. VP x already sits right of the reference (793 vs 760), so the
+        /// sideways bend (S2BentX) is unchanged.</summary>
         public static readonly bool S2TunnelRise = true;
-        static readonly float[] S2RiseY = { -3.0f, -2.9f, -2.7f, -2.6f };   // knots 4-7 y
+        static readonly float[] S2RiseY = { -2.3f, -1.1f, 0.4f, 2.0f };   // knots 4-7 y (07:40; 06:20 was -3.0 / -2.9 / -2.7 / -2.6)
+        const float S2Drop78 = -0.9f;   // knot 7 -> 8 height step after the climb (original -2.7 m)
 
         static Vector3[] LayoutKnots()
         {
@@ -113,6 +122,8 @@ namespace BubbleWash.EditorTools
                 float rise = S2RiseY[3] - k[7].y;                  // the 7 -> 8 drop and everything after keep their shape
                 for (int i = 4; i <= 7; i++) k[i].y = S2RiseY[i - 4];
                 for (int i = 8; i < k.Length; i++) k[i].y += rise;
+                float crest = (k[7].y + S2Drop78) - k[8].y;        // 07:40: soften the 7 -> 8 drop after the climb
+                for (int i = 8; i < k.Length; i++) k[i].y += crest;
             }
             return k;
         }
