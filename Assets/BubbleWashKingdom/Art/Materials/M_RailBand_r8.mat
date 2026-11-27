@@ -31,7 +31,7 @@ Material:
     - _BumpStrength: 0.5
     - _DstBlend: 0
     - _GlintAmount: 0.5
-    - _Glow: 0.34
+    - _Glow: 0.27
     - _HotBoost: 0.6
     - _HotFar: 3.5
     - _HotNear: 3
@@ -41,15 +41,15 @@ Material:
     - _MilkGlass: 0
     - _MilkSoft: 0
     - _Mode: 1
-    - _ReflectBoost: 1
+    - _ReflectBoost: 1.3
     - _RimPower: 3
-    - _RimStrength: 0.35
-    - _Smoothness: 0.96
+    - _RimStrength: 0.4
+    - _Smoothness: 0.97
     - _SpecStrength: 1
     - _SrcBlend: 1
     - _StitchU: 64
     - _StitchV: 26
-    - _StreakAmount: 1.25
+    - _StreakAmount: 1.4
     - _StreakSpeed: 7
     - _StripeWidth: 0.35
     - _Stripes: 4
@@ -59,9 +59,9 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _ColorA: {r: 1, g: 0.36078432, b: 0.54901963, a: 1}
-    - _ColorB: {r: 1, g: 0.84705883, b: 0.2901961, a: 1}
-    - _ColorC: {r: 1, g: 0.2901961, b: 0.5254902, a: 1}
+    - _ColorB: {r: 1, g: 0.7607843, b: 0.23529412, a: 1}
+    - _ColorC: {r: 0.9490196, g: 0.15686275, b: 0.5568628, a: 1}
     - _MilkThin: {r: 0.49, g: 0.75, b: 0.91, a: 1}
     - _ShadowColor: {r: 0.62, g: 0.62, b: 0.95, a: 1}
   m_BuildTextureStacks: []
-  m_AllowLocking: 1
+  m_AllowLo

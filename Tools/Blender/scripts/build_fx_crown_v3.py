@@ -30,7 +30,7 @@ GROUP = "FX"
 QUICK = os.environ.get("BWK_FX_QUICK", "") == "1"
 K_VIS = 0.575          # visible radius / metaball radius (isolated element, stiffness 2, threshold 0.6)
 RES = 0.0095           # polygonizer cell (m): fingers ~4 cm across get ~5 cells
-MAX_TRIS = 7200
+MAX_TRIS = 8000
 
 
 def U(x, y, z):
@@ -70,18 +70,13 @@ class Elems:
         self.items.append(("CAPSULE", c, r, hl, norm(d)))
 
 
-def crown_side(s, seed):
-    """One V arm of the bow-wave crown (s = +1 travel-right, -1 travel-left) + the riser beside that foot."""
-    rng = random.Random(seed)
-    E = Elems()
-    # arm path on the water from beside the foot outward-forward (front frames: the V opens toward the camera and
-    # reaches the bottom corners; rear frames: the inner end rises beside the sole)
-    p0, p1, p2, p3 = (s * 0.17, 0.0, -0.06), (s * 0.40, 0.0, 0.30), (s * 0.78, 0.0, 0.86), (s * 1.18, 0.0, 1.52)
-    n_band = 64
-    pts = [bez(p0, p1, p2, p3, i / (n_band - 1)) for i in range(n_band)]
-    # finger roots along the arm (every ~0.15 m, jittered), longer + taller near the foot
-    n_f = 12
-    roots = sorted(min(0.97, max(0.02, (k + 0.5) / n_f + rng.uniform(-0.02, 0.02))) for k in range(n_f))
+def crown_arm(E, rng, s, P, n_f, h0, h1, L0, L1, rad0, rad1, band_r, back_lean=0.0):
+    """One crown arm: a low curved milk band on the water along the Bezier P (Unity runner-local), its rim breaking into
+    n_f rounded fingers that lean outward (away from the lane centre) and end in bead bulbs; forks + droplets.
+    h / L / rad interpolate from the start (0, at the foot) to the end (1) of the arm."""
+    p0, p1, p2, p3 = P
+    n_band = 56
+    roots = sorted(min(0.97, max(0.03, (k + 0.5) / n_f + rng.uniform(-0.025, 0.025))) for k in range(n_f))
 
     def tangent(t):
         a = bez(p0, p1, p2, p3, max(0.0, t - 0.01))
@@ -90,43 +85,38 @@ def crown_side(s, seed):
 
     def outward(t):
         d = tangent(t)
-        o = norm((d[2] * s, 0.0, -d[0] * s))    # perpendicular in the water plane, away from the V centre line
-        return o
+        o = (d[2], 0.0, -d[0])                    # perpendicular in the water plane ...
+        if o[0] * s < 0:
+            o = (-o[0], 0.0, -o[2])               # ... pointing away from the lane centre line
+        return norm(add(o, (0.0, 0.0, -1.0), back_lean))
 
     def band_h(t):
-        base = 0.085 + 0.05 * math.sin(math.pi * min(1.0, t * 1.1)) + 0.08 * max(0.0, 1.0 - t / 0.25)
-        bump = max(math.exp(-((t - r) / 0.03) ** 2) for r in roots)   # band rises into each finger root (scallops)
-        return base + 0.06 * bump
+        base = h0 + (h1 - h0) * t
+        bump = max(math.exp(-((t - r) / 0.03) ** 2) for r in roots)   # the band rises into each finger root (U gaps)
+        return base * (0.55 + 0.45 * bump)
 
-    # band: leaning capsule columns fused into a curved sheet (outer lip a little thicker = rounded rim)
-    for i, p in enumerate(pts):
+    for i in range(n_band):
         t = i / (n_band - 1)
+        p = bez(p0, p1, p2, p3, t)
         h = band_h(t)
         o = outward(t)
-        lean = 0.42
-        top = add(add(p, (0, h, 0)), o, lean * h)
-        bot = add(p, (0, 0.012, 0))
-        r = 0.026 + 0.006 * math.sin(math.pi * t)
-        E.capsule(bot, top, r)
-        E.ball(top, r * 1.2)                                   # rounded rim bead along the top edge
-    # fingers: 3-segment curved chains from the rim, leaning outward, ending in a bulb; some fork; some throw droplets
+        top = add(add(p, (0, h, 0)), o, 0.42 * h)
+        E.capsule(add(p, (0, 0.012, 0)), top, band_r)
+        E.ball(top, band_r * 1.2)                              # rounded rim along the top edge
     for k, r0 in enumerate(roots):
         p = bez(p0, p1, p2, p3, r0)
         h = band_h(r0)
         o = outward(r0)
         d = tangent(r0)
-        base = add(add(p, (0, h, 0)), o, 0.42 * h)
-        near = 1.0 - r0
-        L = (0.12 + 0.12 * near ** 1.3) * rng.uniform(0.8, 1.2)
-        fan = rng.uniform(-0.45, 0.45) + (0.25 if k == 0 else 0.0)
-        rad = 0.024 + 0.005 * near
-        a = base
+        a = add(add(p, (0, h, 0)), o, 0.42 * h)
+        L = (L0 + (L1 - L0) * r0) * rng.uniform(0.8, 1.2)
+        rad = rad0 + (rad1 - rad0) * r0
+        fan = rng.uniform(-1.0, 1.0)            # p2: parallel posts read as a fence -> fingers fan out along the arm
         for seg in range(3):
-            w_out = 0.95 - seg * 0.28
-            dirv = norm(add(add((0, 1.0, 0), o, w_out), d, fan * 0.6))
-            b = add(a, dirv, L / 3.0)
-            E.capsule(a, b, rad * (1.0 - 0.08 * seg))
-            a = b
+            dirv = norm(add(add((0, 1.0, 0), o, 1.25 - seg * 0.4), d, fan * (0.9 - 0.2 * seg)))
+            nb = add(a, dirv, L / 3.0)
+            E.capsule(a, nb, rad * (1.45 - 0.3 * seg))
+            a = nb
             if seg == 1 and rng.random() < 0.38:              # fork: a short side finger with its own bead
                 fd = norm(add(add((0, 0.8, 0), o, 0.9), d, rng.choice((-1, 1)) * 0.9))
                 fb = add(a, fd, L * 0.42)
@@ -136,37 +126,47 @@ def crown_side(s, seed):
         E.ball(add(a, tipd, 0.016), rad * 1.65)               # round bead bulb on the finger tip
         if rng.random() < 0.55:                               # separated droplet beyond the tip
             E.ball(add(a, tipd, 0.085 + rng.uniform(0.0, 0.05)), rad * rng.uniform(0.8, 1.2))
-    # loose round droplets thrown outward beside the arm
-    for _ in range(9):
+    for _ in range(max(3, n_f * 3 // 4)):                     # loose round droplets thrown outward beside the arm
         t = rng.uniform(0.05, 0.95)
         p = bez(p0, p1, p2, p3, t)
-        o = outward(t)
-        c = add(add(p, (0, band_h(t) + rng.uniform(0.12, 0.32), 0)), o, rng.uniform(0.08, 0.28))
+        c = add(add(p, (0, band_h(t) + rng.uniform(0.12, 0.3), 0)), outward(t), rng.uniform(0.08, 0.26))
         E.ball(c, rng.uniform(0.018, 0.032))
-    # riser beside the foot (rear frames f_01.25-3.25 s: a milk sheet climbing beside the sole, opening outward, its rim
-    # breaking into 4 thick fingers with bulbs up to the hands): leaning capsule columns on an arc around the outer side
-    # of the foot (z -0.2 .. +0.15) fused into a sheet, then fingers from its rim
+
+
+def crown_side(s, seed):
+    """Master crown of one side (s = +1 travel-right, -1 travel-left), runner-local metres."""
+    rng = random.Random(seed)
+    E = Elems()
+    # BOW arm (front frames f_04.50-14.25 s): from beside the foot outward-forward, the V opening toward the front camera
+    # and reaching the bottom corners; low lacy band (p1: a solid wall crossed 2-3 scan lines vs the reference 7-9)
+    crown_arm(E, rng, s, ((s * 0.17, 0.0, -0.06), (s * 0.40, 0.0, 0.30), (s * 0.78, 0.0, 0.86), (s * 1.18, 0.0, 1.52)),
+              9, 0.13, 0.085, 0.24, 0.15, 0.027, 0.023, 0.025)
+    # WAKE arm (rear frames f_01.25-3.25 s, p1: R2 milk coverage 4 % vs reference 10 % - the bow arm hides behind the
+    # body): from beside the sole backward-outward toward the gameplay camera, tall fingers at the foot, lower behind
+    crown_arm(E, rng, s, ((s * 0.24, 0.0, 0.02), (s * 0.34, 0.0, -0.22), (s * 0.47, 0.0, -0.48), (s * 0.60, 0.0, -0.80)),
+              6, 0.17, 0.07, 0.30, 0.14, 0.027, 0.022, 0.024, back_lean=0.35)
+    # riser beside the foot: a milk sheet climbing beside the sole, opening outward, 4 thick fingers up to the hands
     n_r = 14
     rim = []
     for j in range(n_r):
         u = j / (n_r - 1)
-        ang = -0.9 + 1.5 * u                                   # arc around the outside of the foot
+        ang = -0.9 + 1.5 * u
         cx, cz = s * (0.30 + 0.07 * math.cos(ang)), -0.02 + 0.17 * math.sin(ang)
-        h = 0.13 + 0.09 * math.sin(math.pi * u)
+        h = 0.15 + 0.10 * math.sin(math.pi * u)
         o = norm((s * math.cos(ang), 0.0, 0.45 * math.sin(ang)))
         top = add((cx, h, cz), o, 0.55 * h)
-        E.capsule((cx, 0.015, cz), top, 0.024)
-        E.ball(top, 0.03)
+        E.capsule((cx, 0.015, cz), top, 0.023)
+        E.ball(top, 0.029)
         rim.append((top, o))
     for j in (1, 4, 8, 11):
         top, o = rim[j]
-        L = rng.uniform(0.15, 0.24)
+        L = rng.uniform(0.2, 0.3)
         a = top
         for seg in range(3):
             dv = norm(add((0, 1.0, 0), o, 0.85 - 0.25 * seg))
-            b = add(a, dv, L / 3.0)
-            E.capsule(a, b, 0.025 - 0.002 * seg)
-            a = b
+            nb = add(a, dv, L / 3.0)
+            E.capsule(a, nb, 0.025 - 0.002 * seg)
+            a = nb
         E.ball(add(a, dv, 0.016), 0.04)
         if rng.random() < 0.6:
             E.ball(add(a, dv, 0.09 + rng.uniform(0, 0.05)), rng.uniform(0.018, 0.03))
@@ -285,9 +285,4 @@ def main():
     for cam, tag in ((front, "front"), (rear, "rear")):
         scene.camera = cam
         scene.render.filepath = C.preview_path("FX_CrownV3_" + tag)
-        bpy.ops.render.render(write_still=True)
-        print("PREVIEW", scene.render.filepath)
-    print("DONE crown v3")
-
-
-main()
+        bpy.ops.render.render(write_still=True

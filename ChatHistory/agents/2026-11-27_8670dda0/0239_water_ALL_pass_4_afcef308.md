@@ -290,3 +290,35 @@ Now the foam master: switch the bank / mound from many small bubbles to a few bi
 **Agent (2026-11-27 02:55 UTC):**
 
 > _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_ALL_p4/p1/stills/R5_front_S5_like_8s_16x9.png_
+
+**Agent (2026-11-27 02:56 UTC):**
+
+> _tool: Bash - Measure milky coverage reference vs before vs p1_
+
+**Agent (2026-11-27 02:56 UTC):**
+
+> _tool: Bash - Add wake arms and lacier band to crown master, rebuild_
+
+**Agent (2026-11-27 02:58 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Docs/AssetPreviews/FX_CrownV3_rear.png_
+
+**Agent (2026-11-27 02:58 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Docs/AssetPreviews/FX_CrownV3_front.png_
+
+**Agent (2026-11-27 02:58 UTC):**
+
+> _tool: Bash - Tweak milk shading, log, run preview p2 with stills_
+
+**Agent (2026-11-27 03:01 UTC):**
+
+> _tool: Bash - Measure p2 crowns and build S2 comparison stack_
+
+**Agent (2026-11-27 03:01 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_ALL_p4/S2_crowns_ref_before_p2.png_
+
+**Agent (2026-11-27 03:01 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_ALL_p4/p2/stills/R4_front_S4_like_7s_16x9.png_

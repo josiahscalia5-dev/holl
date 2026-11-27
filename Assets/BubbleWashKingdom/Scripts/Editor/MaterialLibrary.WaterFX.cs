@@ -187,8 +187,8 @@ namespace BubbleWash.EditorTools
             // wet glints from the key + sun
             Mat("M_FX_Milk_v3", "BWK/Soft", m =>
             {
-                F(m, "_Mode", 6); C(m, "_ColorA", "#EEFAFC"); C(m, "_ShadowColor", "#A8BED8"); C(m, "_ColorB", "#86C8EC");
-                F(m, "_Wrap", 0.5f); F(m, "_RimPower", 2.6f); F(m, "_RimStrength", 0.3f); F(m, "_SpecStrength", 1.25f);
+                F(m, "_Mode", 6); C(m, "_ColorA", "#EEFAFC"); C(m, "_ShadowColor", "#A2B8D6"); C(m, "_ColorB", "#86C8EC");
+                F(m, "_Wrap", 0.44f); F(m, "_RimPower", 2.6f); F(m, "_RimStrength", 0.3f); F(m, "_SpecStrength", 1.25f);
                 F(m, "_ReflectBoost", 0.35f); F(m, "_Glow", 0.07f); F(m, "_Wobble", 0.004f); F(m, "_WobbleFreq", 6f);
                 F(m, "_MilkSoft", 1f); F(m, "_MilkGlass", 0f); C(m, "_MilkThin", "#B4DCF0");
                 F(m, "_BumpScale", 8f); F(m, "_BumpStrength", 0.25f);

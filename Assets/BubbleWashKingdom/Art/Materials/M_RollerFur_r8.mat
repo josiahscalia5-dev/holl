@@ -30,23 +30,23 @@ Material:
     m_Ints: []
     m_Floats:
     - _AO: 0.35
-    - _ClumpAmount: 0.5
+    - _ClumpAmount: 0.6
     - _ClumpScale: 4
     - _Curl: 0.45
     - _Density: 30
-    - _EdgeSoft: 0.22
+    - _EdgeSoft: 0.26
     - _FurLength: 0.3
     - _Glow: 0.6
     - _Gravity: 0
     - _PawGlow: 0
     - _RimPower: 2.4
     - _RimStrength: 0.3
-    - _SilhouetteFade: 0.5
+    - _SilhouetteFade: 0.12
     - _StaticMode: 0
-    - _Thinning: 0.85
-    - _TuftAmount: 0.55
+    - _Thinning: 0.45
+    - _TuftAmount: 0.7
     - _TuftScale: 7
-    - _Underfur: 0.85
+    - _Underfur: 1
     - _UseVertexTint: 1
     - _Wrap: 0.65
     m_Colors:

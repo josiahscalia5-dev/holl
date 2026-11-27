@@ -319,3 +319,43 @@ Now factor the S7 chamber placement into its own function (moved to the measured
 **Agent (2026-11-27 02:55 UTC):**
 
 > _tool: Bash - Compile check then run preview v2_
+
+**Agent (2026-11-27 02:58 UTC):**
+
+> _tool: Bash - Measure before, v1, v2 crops_
+
+**Agent (2026-11-27 02:58 UTC):**
+
+> _tool: Bash - Build ref/before/after comparison sheets_
+
+**Agent (2026-11-27 02:58 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Captures\agents\assets\screen_ALL_p4\chambers_ref_before_after.png_
+
+**Agent (2026-11-27 02:58 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Captures\agents\assets\screen_ALL_p4\v2\stills\bg\R4_front_S4_like_7s_16x9.png_
+
+**Agent (2026-11-27 02:58 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Captures\agents\assets\screen_ALL_p4\S2_roller_ref_before_after.png_
+
+**Agent (2026-11-27 02:59 UTC):**
+
+> _tool: Bash - Measure S2 roller corner before/v1/v2_
+
+**Agent (2026-11-27 02:59 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Environment.cs_
+
+**Agent (2026-11-27 02:59 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Environment.cs_
+
+**Agent (2026-11-27 02:59 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\MaterialLibrary.Assets.cs_
+
+**Agent (2026-11-27 02:59 UTC):**
+
+> _tool: Bash - Compile check then run final preview v3_
