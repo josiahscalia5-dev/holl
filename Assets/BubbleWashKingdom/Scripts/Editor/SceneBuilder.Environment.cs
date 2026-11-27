@@ -365,6 +365,40 @@ namespace BubbleWash.EditorTools
             return list;
         }
 
+        /// <summary>Screen ALL pass 5 (asset artist): the comparison-only front camera of CaptureTools "R*_front_*" (mascot at d,
+        /// 2.6 m ahead / 1.3 m up / 0.3 m travel-right, aimed at the mascot + 0.6 m, then 2.9 deg up / 9.1 deg right, vFOV 52,
+        /// 16:9) for shot-matched placement of what the reference front frames show at the screen-left. The rig is unchanged.</summary>
+        static HallCam RFrontCam(float d)
+        {
+            var f = track.Evaluate(d);
+            Vector3 pos = f.position + f.forward * 2.6f + f.flatUp * 1.3f + f.flatRight * 0.3f;
+            Vector3 centre = f.position + f.flatUp * 0.6f;
+            var rot = Quaternion.LookRotation(centre - pos, f.flatUp) * Quaternion.Euler(-2.9f, 9.1f, 0f);
+            return new HallCam { pos = pos, rot = rot, tanHalf = Mathf.Tan(26f * Mathf.Deg2Rad), aspect = 16f / 9f };
+        }
+
+        /// <summary>Frame position (u, v from the top-left, 0..1) and view depth of a world point in a HallCam.</summary>
+        static Vector3 HallViewport(HallCam c, Vector3 p)
+        {
+            var l = Quaternion.Inverse(c.rot) * (p - c.pos);
+            if (l.z < 0.05f) return new Vector3(-9f, -9f, l.z);
+            return new Vector3(0.5f + 0.5f * l.x / (l.z * c.tanHalf * c.aspect), 0.5f - 0.5f * l.y / (l.z * c.tanHalf), l.z);
+        }
+
+        /// <summary>Track distance in [d0, d1] whose wall point (lateral, h) lands closest to frame column u (in front of the lens).</summary>
+        static float ShotMatchDistance(HallCam c, float d0, float d1, float lateral, float h, float u)
+        {
+            float best = d0, err = float.MaxValue;
+            for (float d = d0; d <= d1; d += 0.05f)
+            {
+                var vp = HallViewport(c, track.Evaluate(d).FlatPoint(lateral, h));
+                if (vp.z < 0.5f) continue;
+                float e = Mathf.Abs(vp.x - u);
+                if (e < err) { err = e; best = d; }
+            }
+            return best;
+        }
+
         /// <summary>Front-facing chamber doors (track distance, side): anchors for the pink risers.</summary>
         static List<(float d, int side)> ChamberWindows() => ChamberDoors().Select(c => (c.dB, c.side)).ToList();
 
@@ -725,6 +759,48 @@ namespace BubbleWash.EditorTools
                     foreach (var r in go.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
                     np++;
                 }
+            // Screen ALL pass 5 (asset artist, judge gap #4 = p4 regression): the S5 landmark is a tall glass column with glowing
+            // PINK liquid at the screen-left edge of the 8.25 s front frame (ref f_08.25s: x 0-120, gold collar y 80-220); the
+            // door-pair risers (B + 3.1 m) fall left of the R5 frame. One extra column, shot-matched on the R5 camera: the track
+            // distance whose wall point lands at screen column u 0.05, just outside the rail (collar inner edge 2.43 > rail 2.38 m),
+            // base raised so the liquid stands above the foam bank (the R5 camera looks back up the slope: foam line y ~250-370).
+            if (pink != null)
+            {
+                var c5 = RFrontCam(220f);
+                const float latP = 2.98f, baseP = 0.35f, sP = 0.85f;
+                float dp = ShotMatchDistance(c5, 214f, 223f, latP, 1.8f, 0.05f);
+                var f = track.Evaluate(dp);
+                var go = Spawn(pink);
+                go.name = $"PinkPipe_R5_{dp:000.0}";
+                go.transform.SetParent(holder.transform, false);
+                go.transform.SetPositionAndRotation(f.FlatPoint(latP, baseP), Quaternion.LookRotation(Vector3.ProjectOnPlane(-f.flatRight, Vector3.up).normalized, Vector3.up));
+                go.transform.localScale = Vector3.one * sP;
+                foreach (var r in go.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
+                var top = HallViewport(c5, f.FlatPoint(latP, baseP + 2.54f * sP));
+                var bot = HallViewport(c5, f.FlatPoint(latP, baseP + 0.2f * sP));
+                Debug.Log($"[BWK] pass-5 R5 pink column at {dp:F2} m: liquid top px ({top.x * 1280f:F0},{top.y * 720f:F0}) bottom ({bot.x * 1280f:F0},{bot.y * 720f:F0}) depth {top.z:F1} m");
+                np++;
+            }
+            // Screen ALL pass 5 (gap #4, S6): transparent CYAN glass pipe curving down the screen-left side of the 11.25 s front
+            // frame (ref f_11.25s x 0-120, y 120-580) = the S7 SM_CyanPipeCurve_r7 master mirrored onto the travel-right wall,
+            // shot-matched on the R6 camera (same 3.7 m lateral / 0.5 m base as its portal copy, outside the slide corridor).
+            var curve = ModelPrefab("Machinery", "SM_CyanPipeCurve_r7");
+            if (curve != null)
+            {
+                var c6 = RFrontCam(280f);
+                const float latC = 3.7f;
+                float dc = ShotMatchDistance(c6, 268f, 283f, latC, 2.0f, 0.05f);
+                var f = track.Evaluate(dc);
+                var go = Spawn(curve);
+                go.name = $"CyanPipeCurve_R6_{dc:000.0}";
+                go.transform.SetParent(holder.transform, false);
+                go.transform.SetPositionAndRotation(f.FlatPoint(latC, 0.5f), f.FlatRotation);
+                go.transform.localScale = new Vector3(-1f, 1f, 1f);
+                HallOwnMaterials(go);
+                foreach (var r in go.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
+                var vp = HallViewport(c6, f.FlatPoint(latC, 2.0f));
+                Debug.Log($"[BWK] pass-5 R6 cyan curve pipe at {dc:F2} m: anchor px ({vp.x * 1280f:F0},{vp.y * 720f:F0}) depth {vp.z:F1} m");
+            }
             var glass = ModelParts("Track", "SM_GlassPipe_Module");
             int nc = 0;
             float pipeEnd = Mathf.Min(CyanPipeEnd, portalD - 3f);

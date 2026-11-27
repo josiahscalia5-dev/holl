@@ -103,11 +103,23 @@ namespace BubbleWash.EditorTools
                 F(m, "_Mode", 0f); F(m, "_SrcBlend", (float)BlendMode.DstColor); F(m, "_DstBlend", (float)BlendMode.Zero);
                 F(m, "_NearFade", 0f);
             }, (int)RenderQueue.Transparent - 10);
-            DestGlow("M_DestRays", "#FFBE45", 2.6f, 1.1f, -9);     // golden-yellow rays fading toward the ring
+            // Screen ALL pass 5 (judge gap #6 "plain white-yellow sun"; under the approved video grade the 10_finale portal crop
+            // measured hot 19.5 % vs ref 10.6, the cream centre clipped to a white-yellow disc): rays / cream weaker and more
+            // golden; the gold + pink STARS of the reference burst come from new filled-star cards (M_DestStar*, placed by
+            // SceneBuilder.TunePortalDestination inside the bulb ring)
+            DestGlow("M_DestRays", "#FFAE30", 2.3f, 1.1f, -9);     // golden-yellow rays fading toward the ring (p5: 2.6 #FFBE45)
             // p1 (18:06): the multiply halo left a dark brown hole inside the ray roots (r < .44 m has no rays) -> p2 stronger,
             // broader cream centre (peak ~ (3.4, 2.2, .8) linear: tonemaps cream #f3e4ac-ish, B stays low = never white)
-            DestGlow("M_DestCream", "#FFD487", 3.4f, 1.0f, -8);    // cream centre (not white: B/R .25) inside the ray roots
+            DestGlow("M_DestCream", "#FFC870", 2.2f, 1.25f, -8);   // cream centre (p5: 3.4 #FFD487 -> clipped white under the grade)
             DestGlow("M_DestSparkle", "#FFBA3E", 2.0f, 1.3f, -7);  // small golden 4-point sparkles
+            void DestStar(string name, string hex, float strength) => Mat(name, "BWK/LightBlob", m =>
+            {
+                C(m, "_Color", hex); F(m, "_Strength", strength); F(m, "_Softness", 1f); F(m, "_Core", 1f);
+                F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
+                F(m, "_NearFade", 0f); F(m, "_Shape", 2f); F(m, "_StarR", 0.62f); F(m, "_StarInner", 0.46f); F(m, "_StarGlowW", 0.09f);
+            }, (int)RenderQueue.Transparent - 6);
+            DestStar("M_DestStarGold", "#FFA228", 1.7f);   // filled golden stars (reference f_14.25s: gold stars all over the burst)
+            DestStar("M_DestStarPink", "#FF3C9C", 1.5f);   // a few pink stars
             // Neon tubes (reference: thick tubes with PALE hot cores - yellow #fbe496, cyan #78eaf5 - inside saturated colour
             // edges and soft tinted halos): saturated edge hue, tinted core across most of the tube face (broad _CorePower),
             // moderate intensity so the tonemapper keeps the colour and the bloom carries the hue.
@@ -179,6 +191,12 @@ namespace BubbleWash.EditorTools
                 // S2 pass 3 (judge gap #3: pale pink / lavender haze disk over the receding rings): the far tunnel stars'
                 // halos stacked on the axis; halos fade from 22 m (gone at 44 m), the neon tubes stay as crisp small stars
                 F(m, "_FarFade", 22f);
+                // Screen ALL pass 5 (judge gap #1 "ours are FILLED glowing shapes"): the radial card was brightest at the star's
+                // centre. Outline mode: the halo follows the star contour (cards now co-planar with the tube star, outer radius
+                // .625 of the card half = SM_NeonStarTube r .5 on a 1.6x card and SM_NeonStarTube_v2 r 1.0 on its 3.2x card),
+                // dark wall inside with a faint spill. Peak at the tube = strength -> ~0.55x the old centre value.
+                F(m, "_Shape", 1f); F(m, "_StarR", 0.625f); F(m, "_StarInner", 0.45f); F(m, "_StarTube", 0.045f);
+                F(m, "_StarGlowW", 0.055f); F(m, "_StarFill", 0.08f); F(m, "_Strength", strength * 0.6f);
             }, (int)RenderQueue.Transparent - 10);
         }
 

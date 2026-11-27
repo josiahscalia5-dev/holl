@@ -146,7 +146,10 @@ namespace BubbleWash.EditorTools
             // OWNER 2026-11-27 05:28 "Yes, apply it" (the video-measured grade + controlled soft glow previewed 2026-11-26 22:30,
             // Captures/look/GRADE_preview_p4_16x9.png / _9x16.png, lead tool GradePreview.Batch -bwkGlow 0.5): 1.0 / 1.38 / 0.78
             // -> threshold 0.90 / intensity 1.93 / scatter 0.82 (softer, wider halos on the bulbs and neon stars).
-            bloom.threshold.Override(0.90f); bloom.intensity.Override(1.93f); bloom.scatter.Override(0.82f);
+            // Reversible (owner 05:5x "preserve the previous rendering settings"): VideoLookGrade = false restores the exact
+            // pre-grade look of checkpoint-25-p4 (bloom 1.0 / 1.38 / 0.78, no Color Lookup) on the next full build.
+            if (VideoLookGrade) { bloom.threshold.Override(0.90f); bloom.intensity.Override(1.93f); bloom.scatter.Override(0.82f); }
+            else { bloom.threshold.Override(1.0f); bloom.intensity.Override(1.38f); bloom.scatter.Override(0.78f); }
             bloom.tint.Override(Color.white); bloom.highQualityFiltering.Override(true);
             bloom.maxIterations.Override(8);
             // Neutral keeps saturated hues far better than ACES (which pushes bright yellow / cyan to white).
@@ -193,8 +196,9 @@ namespace BubbleWash.EditorTools
             // 0.85; judged on the other sections: palette dE R2 12.0 -> 10.1, R5 11.3 -> 6.1, finale 5.7 -> 2.9). URP applies it
             // after tonemapping (sRGB in -> sRGB out), cheap on mobile (part of the uber post pass). Refit = run look_lut.py on
             // new stills and copy its lut_video_look.png over this file; remove = contribution 0.
-            var videoLut = LoadVideoLookLut();
-            if (videoLut != null)
+            var videoLut = VideoLookGrade ? LoadVideoLookLut() : null;
+            if (!VideoLookGrade) Debug.Log("[BWK] video look grade OFF (SceneBuilder.VideoLookGrade = false): pre-grade post settings");
+            else if (videoLut != null)
             {
                 var lookup = profile.Add<ColorLookup>(true);
                 lookup.texture.Override(videoLut);
@@ -396,6 +400,7 @@ namespace BubbleWash.EditorTools
 
         const float StarMeshWidth = 1.07f;   // SM_NeonStarTube tip-to-tip incl. tube at scale 1 (outer radius 0.5 + tube 0.085)
         const float StarMeshRadius = 0.585f;
+        const float StarGlowCard = 1.6f;     // pass 5: outline-glow card size per unit star scale (star outer radius .625 of the card half)
 
         /// <summary>Hero camera pose exactly as RunnerCameraRig.Step computes it on a snap (lane 0, no jump, portrait aspect)
         /// with the owner-approved HeroCam* values, so lighting props can be placed in screen space even during the full
@@ -508,7 +513,8 @@ namespace BubbleWash.EditorTools
                 // S2 p1 v2: the right-wall stars (u > 1, 16:9 only) are clean outline tubes in the reference (purple wall
                 // inside, tight glow): no orange fill card and a tighter glow (v1: hot filled blobs, star coverage 6.3 % vs 1.8 %)
                 bool outlineOnly = s.x > 1f;
-                AddGlow(s.color, pos - toCam * (0.06f * scale), Quaternion.LookRotation(-toCam, upHint), StarMeshWidth * (outlineOnly ? 1.55f : 2.2f) * scale);
+                // Screen ALL pass 5: outline-glow card CO-PLANAR with the tube star (same rotation, 1.6x = star r .625 of the card)
+                AddGlow(s.color, pos, rot, StarGlowCard * scale);
                 if (s.color == 0 && !outlineOnly) AddCard(Mat("M_StarFill_Yellow"), pos - toCam * (0.04f * scale), Quaternion.LookRotation(-toCam, upHint), StarMeshWidth * 1.15f * scale);
                 heroCount++;
                 Debug.Log($"[BWK] hero star c{s.color} screen ({s.x:F2},{s.y:F2}) track {wf.distance:F1} m depth {Vector3.Dot(pos - camPos, camFwd):F1} m scale {scale:F2}");
@@ -552,7 +558,7 @@ namespace BubbleWash.EditorTools
                     var rot = Quaternion.LookRotation(facing, upHint);
                     comb.Add(Recolor(mats[s.color]), Matrix4x4.TRS(pos, rot, Vector3.one * scale));
                     // clean outline tubes with a tight halo (reference: purple wall visible inside every star, no filled blob)
-                    AddGlow(s.color, pos - toCam * (0.06f * scale), Quaternion.LookRotation(-toCam, upHint), StarMeshWidth * 1.5f * scale);
+                    AddGlow(s.color, pos, rot, StarGlowCard * scale);   // pass 5: co-planar outline glow
                     doorCount++;
                     Debug.Log($"[BWK] door star c{s.color} screen ({s.x:F3},{s.y:F3}) -> ({u:F3},{v:F3}) track {wf.distance:F1} m " +
                               $"depth {Vector3.Dot(pos - r2.pos, r2Fwd):F1} m scale {scale:F2}");
@@ -644,7 +650,7 @@ namespace BubbleWash.EditorTools
                 Vector3 gFacing = (-radial * 0.8f - f.forward * tilt * 0.45f).normalized;
                 Vector3 gUp = Vector3.ProjectOnPlane(rot * Vector3.up, gFacing);
                 if (gUp.sqrMagnitude < 1e-4f) gUp = Vector3.ProjectOnPlane(f.forward, gFacing);
-                AddGlow(ci, pos - gFacing * 0.12f, Quaternion.LookRotation(gFacing, gUp.normalized), 2.0f * scale);
+                AddGlow(ci, pos, rot, StarGlowCard * scale);   // pass 5: co-planar outline glow (was a tilted radial card)
                 count++;
                 if (d - chunkStart > ChunkLength)
                 {
@@ -814,6 +820,10 @@ namespace BubbleWash.EditorTools
             var l = go.AddComponent<Light>();
             l.type = LightType.Point; l.color = c; l.intensity = intensity; l.range = range; l.shadows = LightShadows.None;
         }
+
+        /// <summary>Owner 2026-11-27: the approved video look grade (Color Lookup + softer bloom) is ON; set false and run a
+        /// full build to get the previous rendering settings back exactly (they stay in code next to the new ones).</summary>
+        public static readonly bool VideoLookGrade = true;   // readonly (not const): both branches stay compiled, no warnings
 
         /// <summary>Owner-approved video look LUT (2026-11-27 05:28): 1024 x 32 URP strip from Tools/look_lut.py. No reference
         /// pixels, only a colour mapping, so it is tracked like any other texture.</summary>

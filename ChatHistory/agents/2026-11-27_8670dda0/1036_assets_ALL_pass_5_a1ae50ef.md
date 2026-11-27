@@ -102,3 +102,59 @@ Let me build a quick comparison sheet of ref vs current for S4, S5, S6 to see th
 **Agent (2026-11-27 10:39 UTC):**
 
 > _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/assets/screen_ALL_p5/r4bg_left.png_
+
+**Agent (2026-11-27 10:40 UTC):**
+
+> _tool: Bash - Read pink riser and chamber gap code_
+
+**Agent (2026-11-27 10:40 UTC):**
+
+> _tool: Bash - Make R5 left ref vs current crop pair_
+
+**Agent (2026-11-27 10:40 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/assets/screen_ALL_p5/r5_left_pair.png_
+
+**Agent (2026-11-27 10:40 UTC):**
+
+> _tool: Bash - Find shot-matched placement helpers_
+
+**Agent (2026-11-27 10:40 UTC):**
+
+> _tool: Bash - Read Hall camera helpers_
+
+**Agent (2026-11-27 10:40 UTC):**
+
+> _tool: Bash - Check runner teleport and position_
+
+**Agent (2026-11-27 10:40 UTC):**
+
+> _tool: Bash - Locate RunnerController teleport logic_
+
+**Agent (2026-11-27 10:41 UTC):**
+
+> _tool: Bash - Read teleport and position update_
+
+**Agent (2026-11-27 10:41 UTC):**
+
+> _tool: Bash - Check pipe models and liquid level_
+
+**Agent (2026-11-27 10:41 UTC):**
+
+> _tool: Bash - Read pink pipe builder and cyan curve placement_
+
+**Agent (2026-11-27 10:43 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.Environment.cs_
+
+**Agent (2026-11-27 10:43 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.Environment.cs_
+
+**Agent (2026-11-27 10:43 UTC):**
+
+> _tool: Bash - Compile-check the C# edits_
+
+**Agent (2026-11-27 10:43 UTC):**
+
+> _tool: Bash - Run agent preview with chambers rebuild and stills_

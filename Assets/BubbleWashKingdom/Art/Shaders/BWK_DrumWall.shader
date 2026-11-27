@@ -93,6 +93,14 @@ Shader "BWK/DrumWall"
         [Header(Screen S2 pass 3 big ovals and curved panels)]
         _SlotVarPerSlot ("Length variation per slot (0 = per row, 1 = every slot)", Range(0, 1)) = 0
         _PanelCurve ("Curved panels: normal tilt across each of the 8 panels", Range(0, 0.6)) = 0
+        [Header(Screen ALL pass 5 deep tunnel grade S3 S6)]
+        _DeepAmount ("Deep tunnel grade amount (0 = off)", Range(0, 1)) = 0
+        _DeepStart ("Deep grade starts at (m along)", Float) = 68
+        _DeepEnd ("Deep grade full at (m along)", Float) = 92
+        _DeepTint ("Deep grade multiplier on the lit metal (darker, slate blue)", Color) = (1, 1, 1, 1)
+        _DeepHole ("Deep grade hole brightness", Range(0, 1)) = 1
+        _DeepEmit ("Deep grade emission (spill / sheen) multiplier", Range(0, 1)) = 1
+        _DeepEdgeGlow ("Deep grade glowing panel edge light", Color) = (0, 0, 0, 1)
     }
     SubShader
     {
@@ -124,6 +132,9 @@ Shader "BWK/DrumWall"
             half _LitDesat, _HoleDarken;
             half4 _LitTint;
             half _SlotVarPerSlot, _PanelCurve;
+            half _DeepAmount, _DeepHole, _DeepEmit;
+            float _DeepStart, _DeepEnd;
+            half4 _DeepTint, _DeepEdgeGlow;
         CBUFFER_END
 
         // Round 3: sections between gold rings (_BandLength = gold spacing) split by one lavender rim at _RimPhase
@@ -424,6 +435,19 @@ Shader "BWK/DrumWall"
                 half vmax = max(lit.r, max(lit.g, lit.b));
                 lit.rgb = lerp(lit.rgb, vmax * _LitTint.rgb, _LitDesat);
                 lit.rgb *= lerp(1.0, _HoleDarken, hole);
+                // Screen ALL pass 5 (judge gap #5): S3-S6 walls read as flat light lilac plates; the video's deep tunnel is
+                // darker slate blue-violet metal with black oval recesses and glowing panel edges. Graded by the distance
+                // along the tunnel (m.y) so the S2 door drum (40-62 m) keeps its look.
+                half deepW = _DeepAmount * smoothstep(_DeepStart, _DeepEnd, m.y) * step(0.5, _Pattern);
+                lit.rgb = lerp(lit.rgb, lit.rgb * _DeepTint.rgb * lerp(1.0, _DeepHole, hole), deepW);
+                emission *= lerp(1.0, _DeepEmit, deepW);
+                if (secLocal >= 0.0)
+                {
+                    // thin light line along both edges of every flange (where a bay meets its rim / gold ring)
+                    float fe = min(secLocal, secLen - secLocal) - _FlangeWidth;
+                    float few = fwidth(secLocal) * 1.5 + 0.015;
+                    emission += _DeepEdgeGlow.rgb * deepW * exp(-abs(fe) / few) * (1.0 - hole);
+                }
                 lit.rgb = MixFog(lit.rgb + emission, i.fog);
                 return lit;
             }

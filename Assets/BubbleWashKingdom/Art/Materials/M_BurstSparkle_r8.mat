@@ -30,8 +30,14 @@ Material:
     - _FarFade: 0
     - _Mode: 1
     - _NearFade: 0
+    - _Shape: 0
     - _Softness: 1
     - _SrcBlend: 1
+    - _StarFill: 0.1
+    - _StarGlowW: 0.06
+    - _StarInner: 0.45
+    - _StarR: 0.625
+    - _StarTube: 0.05
     - _Strength: 2
     m_Colors:
     - _Color: {r: 1, g: 0.78431374, b: 0.3764706, a: 1}

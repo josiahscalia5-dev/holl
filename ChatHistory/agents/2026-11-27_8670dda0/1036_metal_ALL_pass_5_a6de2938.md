@@ -139,3 +139,115 @@ _Text-only export: the lead's brief, the agent's statements and one line per too
 **Agent (2026-11-27 10:39 UTC):**
 
 > _tool: Bash - Locate RunnerController teleport and pose code_
+
+**Agent (2026-11-27 10:40 UTC):**
+
+> _tool: Bash - Read runner snap position formula_
+
+**Agent (2026-11-27 10:40 UTC):**
+
+> _tool: Write - C:\Users\josia\thanksgiving\Captures\agents\lighting\screen_ALL_p5\measure_p5.py_
+
+**Agent (2026-11-27 10:40 UTC):**
+
+> _tool: Bash - Measure baseline star, bulb, wall metrics_
+
+**Agent (2026-11-27 10:40 UTC):**
+
+> _tool: Bash - Build 2x2 reference grid for star measurement_
+
+**Agent (2026-11-27 10:40 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Captures\agents\lighting\screen_ALL_p5\ref_grid.png_
+
+**Agent (2026-11-27 10:41 UTC):**
+
+> _tool: Bash - Inspect drum wall shader distance coordinate_
+
+**Agent (2026-11-27 10:41 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Art\Shaders\BWK_DrumWall.shader_
+
+**Agent (2026-11-27 10:41 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Art\Shaders\BWK_DrumWall.shader_
+
+**Agent (2026-11-27 10:42 UTC):**
+
+> _tool: Bash - Find how the light portal is built_
+
+**Agent (2026-11-27 10:42 UTC):**
+
+> _tool: Bash - Read portal construction code_
+
+**Agent (2026-11-27 10:43 UTC):**
+
+> _tool: Bash - Check drum wall along coordinate usage_
+
+**Agent (2026-11-27 10:43 UTC):**
+
+Now the shader edits: star shapes in BWK_LightBlob, deep-section grade in BWK_DrumWall.
+
+**Agent (2026-11-27 10:43 UTC):**
+
+> _tool: Bash - Back up files before pass 5 edits_
+
+**Agent (2026-11-27 10:43 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Art\Shaders\BWK_LightBlob.shader_
+
+**Agent (2026-11-27 10:43 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Art\Shaders\BWK_LightBlob.shader_
+
+**Agent (2026-11-27 10:43 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Art\Shaders\BWK_LightBlob.shader_
+
+**Agent (2026-11-27 10:43 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Art\Shaders\BWK_DrumWall.shader_
+
+**Agent (2026-11-27 10:43 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Art\Shaders\BWK_DrumWall.shader_
+
+**Agent (2026-11-27 10:43 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Art\Shaders\BWK_DrumWall.shader_
+
+**Agent (2026-11-27 10:43 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\MaterialLibrary.Lighting.cs_
+
+**Agent (2026-11-27 10:43 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\MaterialLibrary.Lighting.cs_
+
+**Agent (2026-11-27 10:44 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\MaterialLibrary.Environment.cs_
+
+**Agent (2026-11-27 10:44 UTC):**
+
+> _tool: Bash - Correct deep tint values for linear conversion_
+
+**Agent (2026-11-27 10:44 UTC):**
+
+> _tool: Bash - Fix commented-out calls on deep tint line_
+
+**Agent (2026-11-27 10:44 UTC):**
+
+> _tool: Bash - Locate glow card lines to edit_
+
+**Agent (2026-11-27 10:44 UTC):**
+
+> _tool: Bash - Make hero and door glow cards co-planar_
+
+**Agent (2026-11-27 10:44 UTC):**
+
+> _tool: Bash - Make tunnel glow co-planar and add card constant_
+
+**Agent (2026-11-27 10:45 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Lighting.cs_

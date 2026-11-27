@@ -84,6 +84,14 @@ namespace BubbleWash.EditorTools
                 // curved pressed panels (normal +-14 deg across each panel) and a little more polish so the key light and
                 // the box-projected probes draw soft lavender bands per panel (judge gap #2: wall reads flat purple)
                 F(m, "_PanelCurve", 0.25f); F(m, "_Smoothness", 0.66f); F(m, "_Metallic", 0.64f);
+                // Screen ALL pass 5 (lighting owns the drum wall now; judge gap #5): measured wall crops under the approved grade,
+                // Lab ref vs ours: R3 (34.6, 25.6, -34.2) vs (53.5, 19.9, -15.0), R4 (44.6, 15.8, -15.1) vs (64.4, 17.8, -2.9),
+                // R5 (38.9, 15.7, -26.6) vs (64.3, 14.7, 1.4) = ours ~20 L lighter and far less blue. Beyond the S2 door drum
+                // (graded from 68 m, full at 92 m) the lit metal goes darker slate blue-violet, the recesses blacker, the pink
+                // spill weaker, plus a thin cool light line along every flange edge (reference: glowing panel edges).
+                F(m, "_DeepAmount", 1f); F(m, "_DeepStart", 68f); F(m, "_DeepEnd", 92f);
+                m.SetColor("_DeepTint", new Color(0.66f, 0.67f, 0.82f)); F(m, "_DeepHole", 0.45f); F(m, "_DeepEmit", 0.6f);   // sRGB -> linear x(.39, .41, .64): luminance x.42, bluer
+                m.SetColor("_DeepEdgeGlow", new Color(0.45f, 0.6f, 1.0f));
             });
             // polished lavender drum lips between the gold rings (SM_DrumRim, m1: fat rolled lip): the stylised BWK/Gold
             // environment shading with a lavender palette - violet body, magenta-pink fresnel edge, soft pink-lavender

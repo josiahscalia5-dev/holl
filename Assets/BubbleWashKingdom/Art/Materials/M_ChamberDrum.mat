@@ -35,6 +35,11 @@ Material:
     - _CeilingTint: 0
     - _CeilingWidth: 0.45
     - _Circumference: 26.4
+    - _DeepAmount: 0
+    - _DeepEmit: 1
+    - _DeepEnd: 92
+    - _DeepHole: 1
+    - _DeepStart: 68
     - _DepthTint: 0
     - _DepthTintEnd: 16
     - _DepthTintStart: 9
@@ -87,6 +92,8 @@ Material:
     - _BaseColor: {r: 0.7137255, g: 0.6509804, b: 0.91764706, a: 1}
     - _BaySheenColor: {r: 0.5, g: 0.65999997, b: 0.92, a: 1}
     - _CeilingColor: {r: 0.41999996, g: 0.45, b: 0.85, a: 1}
+    - _DeepEdgeGlow: {r: 0, g: 0, b: 0, a: 1}
+    - _DeepTint: {r: 1, g: 1, b: 1, a: 1}
     - _DepthTintColor: {r: 0.29999998, g: 0.39999998, b: 0.7, a: 1}
     - _FlangeColor: {r: 0.72, g: 0.56, b: 0.95, a: 1}
     - _GlowColorA: {r: 1.6, g: 0.8, b: 1.5, a: 1}
