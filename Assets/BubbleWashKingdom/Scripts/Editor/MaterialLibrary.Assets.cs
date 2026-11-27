@@ -80,19 +80,19 @@ namespace BubbleWash.EditorTools
             // root, light pink tip, white and cyan bands like SM_BrushRoller_s2.
             void Bristle(string name, string albedo, string glow)
             {
-                Mat(name, "Universal Render Pipeline/Lit", m =>
+                // Screen S2 pass 9 FINDING: on URP/Lit these bristles never rendered their emission in the S2 corner
+                // (v2 preview: every spike = the dark albedo #8A2458 under the blue hall light = the "navy spikes" of
+                // passes 6-8, which is why material edits never changed them). -> BWK/Soft fabric mode (albedo = colour,
+                // colour-true self glow in the shader itself, soft rim) like the rails / fur that do render pink there.
+                Mat(name, "BWK/Soft", m =>
                 {
-                    // pass 7 v3: v1 / v2 (smoothness .22 / .3, glow 90 %) still rendered every spike half pink / half
-                    // blue-violet: the violet drum mirrored in the spike faces (environment reflection + the blue hall
-                    // light's specular). Matte bristles: no specular highlights, no environment reflections, a darker
-                    // albedo for the soft diffuse form and the colour-true glow carrying the hue (corner ref #C35FA2)
-                    C(m, "_BaseColor", albedo); F(m, "_Metallic", 0f); F(m, "_Smoothness", 0.1f);
-                    F(m, "_SpecularHighlights", 0f); m.EnableKeyword("_SPECULARHIGHLIGHTS_OFF");
-                    F(m, "_EnvironmentReflections", 0f); m.EnableKeyword("_ENVIRONMENTREFLECTIONS_OFF");
-                    m.EnableKeyword("_EMISSION"); m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
-                    C(m, "_EmissionColor", glow);
+                    F(m, "_Mode", 4); C(m, "_ColorA", glow); C(m, "_ColorB", glow); C(m, "_ColorC", albedo);
+                    F(m, "_Smoothness", 0.25f); F(m, "_Metallic", 0f); F(m, "_Glow", 0.62f);
+                    F(m, "_RimPower", 2.2f); F(m, "_RimStrength", 0.35f); F(m, "_BumpScale", 1f);
+                    F(m, "_ReflectBoost", 0f); F(m, "_StreakAmount", 0f);
                 });
             }
+            // (pass 7 v3 URP/Lit version: matte albedo + _EMISSION keyword + _EmissionColor = glow, no specular / env)
             // v3 albedo ~55 % of the colour, glow ~ the colour (pink / light tip / white / cyan of the reference roller)
             Bristle("M_BristlePink_s2", "#8A2458", "#C83A88");
             Bristle("M_BristlePinkTip_s2", "#9A5078", "#EC80BC");
