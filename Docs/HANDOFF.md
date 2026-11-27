@@ -1,6 +1,14 @@
 # Bubble Wash Kingdom - lead handoff (2026-11-26 12:30, lead session cd43a82d on the third Pro account)
 
-## STATUS 21:45 (lead 8670dda0, eighth account) - exact resume point (private details: Captures/handoff/NEXT_ACCOUNT_START.md)
+## STATUS 22:35 (lead 8670dda0, eighth account) - exact resume point (private details: Captures/handoff/NEXT_ACCOUNT_START.md)
+- Newest checkpoint: checkpoint-25-p4 (whole-level masters pass 4 + wider portrait camera 3.1/1.45/7/70). Independent
+  judges: whole game 4.1 -> 4.4 with mascot, 4.5 -> 4.7 scenery only (table in Docs/VideoCoverageChecklist.md); Play Mode
+  passed. Grade + glow preview rendered in Unity (not applied; owner decides).
+- Next (prepared, starts after the 02:20 usage reset): pass 5 = metal (outline neon stars, marquee bulb rings, darker
+  walls, S7 starburst) + assets (restore the S5 pink glass pipe, S6 cyan pipe, bigger mid-left portholes); pass 6 = water
+  (organic translucent crowns, iridescent bubbles, foam puffs).
+
+## STATUS 21:45 (lead 8670dda0, eighth account)
 - Newest checkpoint: checkpoint-24-s2p3 (metal pass 3 on S2 + v4 mascot under test). The v4 FBX came with a test-only
   180-degree armature yaw, so in-game the rear camera saw the mascot's face: fixed by AnimatorBuilder.ModelYaw (v3
   SK_Mascot.fbx stays the fallback via AnimatorBuilder.UseMascotV4); Play Mode test A now asserts the facing.

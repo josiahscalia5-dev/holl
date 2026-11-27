@@ -22,6 +22,23 @@ Unity track: 14 m (start) -> ~351 m (portal), one continuous ride, no cuts. Stil
 | S7 | 12.75-15.00 s | Golden light portal finale | 310-351 m (09_portal L-34, rear) | 3.5/10 | env, light, water |
 | ALL | 0-15 s | The mascot (same character everywhere) | every frame | in game 4/10 (old model; its front face reads badly in C1/C4/C2/C5). v4 Blender master f14 ~6.5/10 (hero/rear 7, front 6.5, side 5.5, face 6), NOT approved. v4 mobile FBX in-game candidate ~4/10: pom-pom renders as a bare dark ball, arms as dark spikes, hat too large - not ready for approval | character |
 
+## Pass 4 scores (2026-11-26 22:30, build lead_p4 22:21 = checkpoint-25-p4) - 3 judges + 1 skeptic (bwk-round7-verify {tag: "p4"})
+Owner 21:33: his 7 authoritative section frames are 0.75 / 3.00 / 4.50 / 6.75 / 8.25 / 11.25 / 14.25 s (sheets now use them).
+Previous = s2p3b (v4 mascot, export yaw fixed); newest = p4 (whole-level masters pass: milky crown masters, cumulus foam,
+two-way sock chambers, S7 rainbow chamber + cyan pipe, wider portrait gameplay camera). Format: with mascot / scenery only.
+
+| # | s2p3b | p4 | Biggest remaining gaps (skeptic) |
+|---|-------|----|----------------------------------|
+| S1 | 5 / 5 | 5 / 5 | close gold bulb-ring tunnel mouth missing; straight slide (video curves right); chevrons fainter |
+| S2 | 5.5 / 6 | 5.5 / 6 | one big near bulb ring framing the mouth (ours a telescope stack); neon stars too few / small |
+| S3 | 3.5 / 4 | 4 / 4.5 | no close bulb-lined ring; no big near cyan outline stars; flat light walls |
+| S4 | 3 / 3.5 | 3.5 / 4 | porthole only a cut-off sliver at the top (video: big mid-left); no glass pipe |
+| S5 | 3 / 3.5 | 3 / 3.5 | pink liquid glass pipe gone (regression); porthole small and high |
+| S6 | 4 / 4.5 | 4 / 4.5 | cyan glass pipe missing; stars sparse (left cyan star lost); porthole small |
+| S7 | 5 / 5 | 5.5 / 5.5 | portal far / small; starburst a plain sun without star shapes and sparkles |
+Whole game: 4.1 -> 4.4 with mascot, 4.5 -> 4.7 scenery only. Crowns now milky but read as rigid "picket fences" (pass 6).
+Next: pass 5 = metal (outline neon stars, bulb rings, darker walls, S7 starburst) + assets (pipes, bigger mid-left portholes).
+
 ## Round 8 masters scores (2026-11-26 18:45, build lead_r8m 18:40 = checkpoint-21-r8m) - 3 judges + 1 skeptic (bwk-round7-verify {tag: "r8m"})
 Sheets `Captures/sections/S<n>_triptych_r8m.png` (video | r8 17:34 | r8m 18:40). Format: with mascot / scenery only.
 
