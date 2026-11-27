@@ -353,7 +353,9 @@ namespace BubbleWash.EditorTools
             // pass 6: the 2.6 m clearance is checked within 4.5 m of the centre line (lanes + 2.38 m rails + 2 m margin)
             // instead of 12 m: this roller hangs >= 4 m to the side of the slide, and the 12 m literal lifted it out of the
             // corner (lead build: bottom edge y ~100 vs reference ~160); with the bristle sleeve its centre sits at v -0.10
-            HallRoller(holder, HallRollerClear(HallScreenPoint(r2, 0.0f, -0.10f, 6.3f), dRot, 1.6f, 2.6f, "door/S2", 4.5f), dRot, 1.6f, -36f,
+            // v3: v2 (u 0, corridor 4.5) still lifted 0.62 m (its right end reached 3.5 m from the centre line) -> u -0.08
+            // (whole roller >= 4.3 m to the side, the corner coverage comes from the body + bristles), corridor 4.0
+            HallRoller(holder, HallRollerClear(HallScreenPoint(r2, -0.08f, -0.12f, 6.3f), dRot, 1.6f, 2.6f, "door/S2", 4.0f), dRot, 1.6f, -36f,
                        "SM_BrushRoller_s2");
             // blue machine housing + gold pipe (SM_DoorMachine_s2, build_door_machinery_s2.py): front parallel to the door
             // wall, flange end (asset -X) at the rim; centre at R2 (u .06, v .32), 7 m deep = in front of the wall (40.35 m)
@@ -361,8 +363,12 @@ namespace BubbleWash.EditorTools
             // pass 6: (u .06, v .32) put the pipe at y ~215-230 = the reference height, but our left foam bank tops out at
             // y ~165-190 (water agent gap #6) and hid it, and the housing covered the hatch's widened gold band -> u .045,
             // v .27 (pipe just above today's foam line, housing left of the gold); back to v .32 once the foam is lowered
-            var mp = HallScreenPoint(r2, 0.045f, 0.27f, 7.0f);
-            var mach = HallPlace(holder, "Machinery", "SM_DoorMachine_s2", mp, fm.FlatRotation, 1.0f);
+            // v3: at 7 m deep (4 m in front of the door) the housing covered the hatch's gold band (door_L gold 43 -> 12 %);
+            // the reference housing stands beside the hatch against the wall -> 8.8 m deep (~0.5 m in front of the wall),
+            // u 0 (centre ~8 m to the side, outside the gold band), scale 1.3 keeps its screen size; the pipe end reaches
+            // into the band like the reference pipe running into the rim
+            var mp = HallScreenPoint(r2, 0.0f, 0.27f, 8.8f);
+            var mach = HallPlace(holder, "Machinery", "SM_DoorMachine_s2", mp, fm.FlatRotation, 1.3f);
             if (mach != null)
             {
                 HallOwnMaterials(mach);

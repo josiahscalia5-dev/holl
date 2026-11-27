@@ -1943,8 +1943,8 @@ def export_game_model():
 # untouched. Rig: BWK_RIG_MODEL_BLEND/JSON = the v5 files, BWK_RIG_FBX = SK_Mascot_v5.fbx.
 V5_POM_TIP_R = 0.222      # yarn tip radius (reference rear: pom-pom diameter ~0.42-0.45 x brim width 0.98 m)
 V5_POM_CORE_R = 0.150     # core sphere (v4 0.148): its shells fill between the locks
-V5_POM_SINK = 0.36        # fraction of the tip radius sunk into the crown (reference: ball sits ON the crown)
-V5_YARN_N = 300           # Fibonacci directions; locks pointing into the crown are skipped (never seen)
+V5_POM_SINK = 0.50        # fraction of the tip radius sunk into the crown (reference: ball sits ON the crown, no neck)
+V5_YARN_N = 560           # Fibonacci directions; locks pointing into the crown are skipped (never seen)
 V5_ARM_UPPER = 18.0       # deg elevation of the upper arm (runs out under the brim; v4 straight arm 40.5)
 V5_ARM_FORE = 70.0        # deg elevation of the forearm + mitt beside the brim (reference rear: paws at brim/stripe height)
 V5_ARM_EXTRA = 0.110      # m added to the shoulder->mitt segment only (v4 0.13 m stub): mitts clear the brim edge
@@ -1970,10 +1970,11 @@ def _yarn_locks(c, ax, n, r_tip, seed=11):
     rng = random.Random(seed)
     V, F, UV, CO = [], [], [], []
     golden = math.pi * (3.0 - math.sqrt(5.0))
-    rings = ((0.50, 0.70), (0.72, 1.00), (0.88, 0.92), (0.97, 0.55))   # (fraction of the lock length, radius scale)
-    cols = ((0.050, 0.014, 0.115), (0.205, 0.062, 0.430), (0.370, 0.170, 0.700), (0.560, 0.380, 0.900))
-    tip_col = (0.660, 0.500, 0.960)
-    sides = 5
+    # thin pointed yarn locks (first try: 5 cm wide bulbs read as popcorn in the rear preview)
+    rings = ((0.60, 0.90), (0.85, 1.00), (0.97, 0.45))   # (fraction of the lock length, radius scale)
+    cols = ((0.050, 0.014, 0.115), (0.250, 0.085, 0.540), (0.500, 0.320, 0.860))
+    tip_col = (0.620, 0.460, 0.940)
+    sides = 4
     for k in range(n):
         z = 1.0 - 2.0 * (k + 0.5) / n
         rr = math.sqrt(max(0.0, 1.0 - z * z))
@@ -1981,12 +1982,12 @@ def _yarn_locks(c, ax, n, r_tip, seed=11):
         d = (d + Vector((rng.gauss(0, 0.07), rng.gauss(0, 0.07), rng.gauss(0, 0.07)))).normalized()
         if d.dot(ax) < -0.30:
             continue
-        L = r_tip * rng.uniform(0.90, 1.05)
-        w = rng.uniform(0.021, 0.028)
+        L = r_tip * rng.uniform(0.88, 1.06)
+        w = rng.uniform(0.010, 0.015)
         t1 = d.cross(Vector((0.31, 0.57, 0.76))).normalized()
         t2 = d.cross(t1).normalized()
         ph = rng.uniform(0.0, 2.0 * math.pi)
-        bend = (t1 * math.cos(ph) + t2 * math.sin(ph)) * rng.uniform(0.0, 0.035)
+        bend = (t1 * math.cos(ph) + t2 * math.sin(ph)) * rng.uniform(0.0, 0.03)
         tone = rng.uniform(0.86, 1.12)
         twist = rng.uniform(0.0, 2.0 * math.pi)
         base = len(V)

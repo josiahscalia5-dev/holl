@@ -48,9 +48,11 @@ namespace BubbleWash
             hintGo = new GameObject("Hint", typeof(RectTransform));
             hintGo.transform.SetParent(canvasGo.transform, false);
             var hr = (RectTransform)hintGo.transform;
-            hr.anchorMin = hr.anchorMax = new Vector2(0.5f, 0.18f);
-            hr.sizeDelta = new Vector2(1000f, 160f);
-            hintText = MakeText(hintGo.transform, font, 52, TextAnchor.MiddleCenter, "Swipe  ◀ ▶  to steer\nSwipe  ▲  to jump");
+            // OWNER 2026-11-27 06:58 (s19 + his S2 sheet 08): the hint covered the seated mascot's feet / splash at 18 % height
+            // in portrait gameplay -> smaller, at the very bottom edge (below his feet, over the near water only)
+            hr.anchorMin = hr.anchorMax = new Vector2(0.5f, 0.055f);
+            hr.sizeDelta = new Vector2(1000f, 120f);
+            hintText = MakeText(hintGo.transform, font, 40, TextAnchor.MiddleCenter, "Swipe  ◀ ▶  to steer\nSwipe  ▲  to jump");
 
             completeGo = new GameObject("Complete", typeof(RectTransform));
             completeGo.transform.SetParent(canvasGo.transform, false);

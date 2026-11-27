@@ -79,10 +79,12 @@ namespace BubbleWash.EditorTools
                     C(m, "_EmissionColor", glow);
                 });
             }
-            Bristle("M_BristlePink_s2", "#E2368C", "#6A1240");
-            Bristle("M_BristlePinkTip_s2", "#FF8CC8", "#8A3A68");
-            Bristle("M_BristleWhite_s2", "#FFF0FA", "#6E6278");
-            Bristle("M_BristleCyan_s2", "#7CD0F4", "#1E5470");
+            // v3: v2 glow (~40 % of the albedo) rendered the unlit bristle sides blue-violet under the hall light (corner
+            // pink 45 -> 20 %) -> ~75 % colour-true self light, like the fur body's glow .6
+            Bristle("M_BristlePink_s2", "#E2368C", "#B42A6E");
+            Bristle("M_BristlePinkTip_s2", "#FF8CC8", "#D2649E");
+            Bristle("M_BristleWhite_s2", "#FFF0FA", "#BEB0C4");
+            Bristle("M_BristleCyan_s2", "#7CD0F4", "#3C8EB4");
 
             // ---------------------------------------------------------------- S2 door hatch + LED rim (pass 6)
             // Violet torus rims of the new masters SM_DoorHatch_s2 / SM_LedRim_s2 (build_s2_door_p6.py). Reference f_03.00s

@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_Fur_v5_Static
+  m_Shader: {fileID: 4800000, guid: 8b7e1a7b5720fdb4ea8c002122ac334b, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 2450
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _NoiseTex:
+        m_Texture: {fileID: 2800000, guid: a5eec142a29ea634da61b9a61a9692c2, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AO: 0.2
+    - _ClumpAmount: 0.8
+    - _ClumpScale: 5
+    - _Curl: 1.1
+    - _Density: 200
+    - _EdgeSoft: 0.16
+    - _FurLength: 0
+    - _Glow: 0.2
+    - _Gravity: 0
+    - _PawGlow: 0.45
+    - _RimPower: 2.6
+    - _RimStrength: 0.5
+    - _SilhouetteFade: 0.45
+    - _StaticMode: 1
+    - _Thinning: 0
+    - _TuftAmount: 0.45
+    - _TuftScale: 15
+    - _Underfur: 0.8
+    - _UseVertexTint: 1
+    - _Wrap: 0.6
+    m_Colors:
+    - _BaseColor: {r: 0.972549, g: 0.54509807, b: 0.45882353, a: 1}
+    - _PawRootColor: {r: 1, g: 0.9411765, b: 0.8862745, a: 1}
+    - _PawTipColor: {r: 1, g: 0.9764706, b: 0.93333334, a: 1}
+    - _RimColor: {r: 1, g: 0.8156863, b: 0.78431374, a: 1}
+    - _RootColor: {r: 0.8235294, g: 0.41568628, b: 0.36078432, a: 1}
+    - _TipColor: {r: 1, g: 0.7764706, b: 0.69803923, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
