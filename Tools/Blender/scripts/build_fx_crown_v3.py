@@ -143,8 +143,10 @@ def crown_side(s, seed):
               9, 0.13, 0.085, 0.24, 0.15, 0.027, 0.023, 0.025)
     # WAKE arm (rear frames f_01.25-3.25 s, p1: R2 milk coverage 4 % vs reference 10 % - the bow arm hides behind the
     # body): from beside the sole backward-outward toward the gameplay camera, tall fingers at the foot, lower behind
-    crown_arm(E, rng, s, ((s * 0.24, 0.0, 0.02), (s * 0.34, 0.0, -0.22), (s * 0.47, 0.0, -0.48), (s * 0.60, 0.0, -0.80)),
-              6, 0.17, 0.07, 0.30, 0.14, 0.027, 0.022, 0.024, back_lean=0.35)
+    # (p3 hero_mouth 9:16: fingers leaning back toward the camera read as antler combs + the arm crowded the chevron tip ->
+    #  no back lean (fingers rise up / outward like the reference), arm 0.8 -> 0.62 m long)
+    crown_arm(E, rng, s, ((s * 0.24, 0.0, 0.02), (s * 0.34, 0.0, -0.18), (s * 0.45, 0.0, -0.38), (s * 0.56, 0.0, -0.62)),
+              6, 0.17, 0.07, 0.30, 0.15, 0.027, 0.022, 0.024, back_lean=0.0)
     # riser beside the foot: a milk sheet climbing beside the sole, opening outward, 4 thick fingers up to the hands
     n_r = 14
     rim = []
@@ -285,4 +287,9 @@ def main():
     for cam, tag in ((front, "front"), (rear, "rear")):
         scene.camera = cam
         scene.render.filepath = C.preview_path("FX_CrownV3_" + tag)
-        bpy.ops.render.render(write_still=True
+        bpy.ops.render.render(write_still=True)
+        print("PREVIEW", scene.render.filepath)
+    print("DONE crown v3")
+
+
+main()

@@ -359,3 +359,43 @@ Now factor the S7 chamber placement into its own function (moved to the measured
 **Agent (2026-11-27 02:59 UTC):**
 
 > _tool: Bash - Compile check then run final preview v3_
+
+**Agent (2026-11-27 03:02 UTC):**
+
+> _tool: Bash - Measure final v3 crops and rail hue_
+
+**Agent (2026-11-27 03:03 UTC):**
+
+> _tool: Bash - Make rails ref/before/v3 comparison sheet_
+
+**Agent (2026-11-27 03:03 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Captures\agents\assets\screen_ALL_p4\rails_ref_before_v3.png_
+
+**Agent (2026-11-27 03:03 UTC):**
+
+> _tool: Bash - Build final comparison sheets from v3_
+
+**Agent (2026-11-27 03:03 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Captures\agents\assets\screen_ALL_p4\FINAL_07_chambers_before_v3.png_
+
+**Agent (2026-11-27 03:03 UTC):**
+
+> _tool: Bash - Append final pass 4 notes_
+
+**Agent (2026-11-27 03:04 UTC):**
+
+> _tool: Bash - Show the S2 roller placement lines_
+
+**Agent (2026-11-27 03:04 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Hall.cs_
+
+**Agent (2026-11-27 03:04 UTC):**
+
+> _tool: Bash - Compile check then run preview v4 with hall rebuild_
+
+**Agent (2026-11-27 03:07 UTC):**
+
+> _tool: Bash - Measure S2 roller corner v4 and build sheet_

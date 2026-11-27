@@ -194,6 +194,8 @@ namespace BubbleWash.EditorTools
                 F(m, "_BumpScale", 8f); F(m, "_BumpStrength", 0.25f);
                 F(m, "_MilkAlpha", 1f); F(m, "_MilkEdgeAlpha", 0.6f);
                 F(m, "_SrcBlend", (float)BlendMode.SrcAlpha); F(m, "_DstBlend", (float)BlendMode.OneMinusSrcAlpha); F(m, "_ZWrite", 1f);
+                // p2 measured: milky pixels L* 88-89 vs reference 93.5 (S4 / S5 / S6 crowns) -> brighter creamy body, more wrap
+                C(m, "_ColorA", "#F7FDFE"); C(m, "_ShadowColor", "#AAC1DC"); F(m, "_Wrap", 0.56f); F(m, "_Glow", 0.09f);
             }, (int)RenderQueue.Transparent);
             Mat("M_Foam_v2", "BWK/Soft", m =>
             {

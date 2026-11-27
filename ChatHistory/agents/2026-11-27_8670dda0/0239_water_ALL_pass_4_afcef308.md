@@ -322,3 +322,47 @@ Now the foam master: switch the bank / mound from many small bubbles to a few bi
 **Agent (2026-11-27 03:01 UTC):**
 
 > _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_ALL_p4/p2/stills/R4_front_S4_like_7s_16x9.png_
+
+**Agent (2026-11-27 03:01 UTC):**
+
+> _tool: Bash - Fan out tapered fingers and thicken band in crown script_
+
+**Agent (2026-11-27 03:01 UTC):**
+
+> _tool: Bash - Brighten milk material, compile-check, rebuild crowns_
+
+**Agent (2026-11-27 03:03 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Docs/AssetPreviews/FX_CrownV3_front.png_
+
+**Agent (2026-11-27 03:03 UTC):**
+
+> _tool: Bash - Log batch 3 and run preview p3 with stills_
+
+**Agent (2026-11-27 03:05 UTC):**
+
+> _tool: Bash - Measure p3 crowns in all front sections and S2_
+
+**Agent (2026-11-27 03:05 UTC):**
+
+> _tool: Bash - Print p3 milky coverage numbers_
+
+**Agent (2026-11-27 03:05 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_ALL_p4/S4_crowns_ref_before_p3.png_
+
+**Agent (2026-11-27 03:05 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_ALL_p4/S2_crowns_ref_before_p3.png_
+
+**Agent (2026-11-27 03:05 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_ALL_p4/p3/hero_mouth_9x16.png_
+
+**Agent (2026-11-27 03:05 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_ALL_p4/p3/stills/R6_front_S6_like_11s_16x9.png_
+
+**Agent (2026-11-27 03:06 UTC):**
+
+> _tool: Bash - Straighten wake fingers, rebuild crowns, run final preview p4_

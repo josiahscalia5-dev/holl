@@ -295,9 +295,12 @@ namespace BubbleWash.EditorTools
             // not only over the 3 m corridor: v2 (5.6 m deep, scale 1.45) was 3.6 m+ to the side but only ~2 m above it.
             // v3: 6.3 m deep + scale 1.6 keeps the corner coverage with the lift; axis closer to the door plane (z .1).
             var r2 = R2Cam();
-            var dRot = HallRollerRot(r2.rot * new Vector3(-1f, 0.1f, 0.1f));
+            // Screen ALL pass 4 (judge gap #4 "thin donut ring seen end-on"): with the axis z +.1 the open non-hub end turned
+            // TOWARD the camera (its hollow end read as a donut at x 250-320); z -.2 turns that end away so R2 sees the fur
+            // BODY, and u .035 -> 0 keeps the body in the reference corner (0-280 px) instead of the end
+            var dRot = HallRollerRot(r2.rot * new Vector3(-1f, 0.1f, -0.2f));
             // v1: the r8 layout showed its blue / white non-hub half here (corner 78 % blue) -> pink-dominant s2 body
-            HallRoller(holder, HallRollerClear(HallScreenPoint(r2, 0.035f, -0.08f, 6.3f), dRot, 1.6f, 2.6f, "door/S2", 12f), dRot, 1.6f, -36f,
+            HallRoller(holder, HallRollerClear(HallScreenPoint(r2, 0.0f, -0.08f, 6.3f), dRot, 1.6f, 2.6f, "door/S2", 12f), dRot, 1.6f, -36f,
                        "SM_BrushRoller_s2");
             // blue machine housing + gold pipe (SM_DoorMachine_s2, build_door_machinery_s2.py): front parallel to the door
             // wall, flange end (asset -X) at the rim; centre at R2 (u .06, v .32), 7 m deep = in front of the wall (40.35 m)
