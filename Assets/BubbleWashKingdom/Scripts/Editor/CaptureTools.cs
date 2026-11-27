@@ -231,6 +231,93 @@ namespace BubbleWash.EditorTools
             catch (System.Exception e) { Debug.LogError("[BWK] lead views failed: " + e); EditorApplication.Exit(1); }
         }
 
+        /// <summary>
+        /// Lead tool (no scene save; owner takeover brief 2026-11-26 20:15, item 5 "correct the comparison camera first"):
+        /// the reference hero frame (3.0 s) is taken AT the washing-machine door - thick gold hatch rim at both screen edges,
+        /// pink roller upper left, blue machinery + gold pipe left - while hero_16x9 is 65 m past that door (105.5 m).
+        /// Renders the UNCHANGED gameplay rig (2.75 / 1.3 / 10 / 58) with the mascot at several track distances / lanes and
+        /// logs where the door ring (SM_MouthRing_r7 at 40 m) lands on the 1280x720 frame (outer circle centre + extent),
+        /// so the matching comparison position is measured instead of guessed.
+        ///   -bwkDistances "32,33,34" (default 30-39 step 1)  -bwkLanes "0,-1.15" (default 0,-1.15)  -bwkOut DIR
+        /// </summary>
+        public static void MouthSearchBatch()
+        {
+            try
+            {
+                string outDir = ArgValue("-bwkOut") ?? "Captures/agents/_lead_mouth";
+                Directory.CreateDirectory(outDir);
+                EditorSceneManager.OpenScene(SceneBuilder.ScenePath);
+                var runner = Object.FindFirstObjectByType<RunnerController>();
+                var rig = Object.FindFirstObjectByType<RunnerCameraRig>(FindObjectsInactive.Include);
+                var cam = Camera.main;
+                if (runner == null || rig == null || cam == null) throw new System.Exception("scene objects missing");
+                SceneBuilder.ApplyHeroCamera(rig);
+                var brain = cam.GetComponent<CinemachineBrain>();
+                if (brain) brain.enabled = false;
+                runner.track.Rebuild();
+                var ring = GameObject.Find("SM_MouthRing_r7");
+                Bounds rb = default; bool haveRing = false;
+                if (ring != null)
+                    foreach (var r in ring.GetComponentsInChildren<Renderer>())
+                    { if (!haveRing) { rb = r.bounds; haveRing = true; } else rb.Encapsulate(r.bounds); }
+                Debug.Log($"[BWK] mouth ring {(haveRing ? $"centre {rb.center} extents {rb.extents}" : "NOT FOUND")}");
+                var animator = runner.GetComponentInChildren<Animator>();
+                AnimationClip slide = animator != null && animator.runtimeAnimatorController != null
+                    ? animator.runtimeAnimatorController.animationClips.FirstOrDefault(c => c.name == "Slide") : null;
+                foreach (var ps in Object.FindObjectsByType<ParticleSystem>(FindObjectsSortMode.None))
+                    if (ps.name == "AmbientBubbles") ps.Simulate(4f, true, true);
+                float[] Parse(string s, float[] def) => string.IsNullOrEmpty(s) ? def
+                    : s.Split(',').Select(x => float.Parse(x.Trim(), System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+                var dists = Parse(ArgValue("-bwkDistances"), new[] { 30f, 31f, 32f, 33f, 34f, 35f, 36f, 37f, 38f, 39f });
+                var lanes = Parse(ArgValue("-bwkLanes"), new[] { 0f, -1.15f });
+                foreach (float lat in lanes)
+                    foreach (float d in dists)
+                    {
+                        runner.TeleportTo(d, lat);
+                        if (slide != null) slide.SampleAnimation(animator.gameObject, 0.25f);
+                        SimulateSlideFX(runner);
+                        rig.aspectOverride = 1280f / 720f;
+                        rig.Snap();
+                        var lens = rig.vcam.Lens;
+                        cam.transform.SetPositionAndRotation(rig.transform.position, rig.transform.rotation * Quaternion.Euler(0f, 0f, lens.Dutch));
+                        cam.fieldOfView = lens.FieldOfView;
+                        string tag = ("d" + d.ToString("00.0", System.Globalization.CultureInfo.InvariantCulture) + "_l"
+                                      + lat.ToString("+0.00;-0.00;0", System.Globalization.CultureInfo.InvariantCulture)).Replace('.', 'p');
+                        Render(cam, 1280, 720, $"{outDir}/mouth_{tag}.png");
+                        if (!haveRing) continue;
+                        // outer circle of the ring in its own plane (ring forward = track forward), R = vertical half size
+                        float R = rb.extents.y;
+                        Vector3 c = rb.center, ax = ring.transform.right, ay = ring.transform.up;
+                        float minX = 1e9f, maxX = -1e9f, minY = 1e9f, maxY = -1e9f; int behind = 0;
+                        for (int i = 0; i < 72; i++)
+                        {
+                            float a = i * 5f * Mathf.Deg2Rad;
+                            var px = ProjectPx(cam, c + (ax * Mathf.Cos(a) + ay * Mathf.Sin(a)) * R, 1280, 720, out bool front);
+                            if (!front) { behind++; continue; }
+                            minX = Mathf.Min(minX, px.x); maxX = Mathf.Max(maxX, px.x); minY = Mathf.Min(minY, px.y); maxY = Mathf.Max(maxY, px.y);
+                        }
+                        var cc = ProjectPx(cam, c, 1280, 720, out _);
+                        Debug.Log($"[BWK] mouth {tag}: cam->ring {Vector3.Distance(cam.transform.position, c):F2} m, ring centre px ({cc.x:F0},{cc.y:F0}), " +
+                                  $"outer x {minX:F0}..{maxX:F0} y {minY:F0}..{maxY:F0}, points behind cam {behind}");
+                    }
+                rig.aspectOverride = 0f;
+                if (brain) brain.enabled = true;
+                Debug.Log("[BWK] mouth search written to " + Path.GetFullPath(outDir));
+                EditorApplication.Exit(0);
+            }
+            catch (System.Exception e) { Debug.LogError("[BWK] mouth search failed: " + e); EditorApplication.Exit(1); }
+        }
+
+        /// <summary>Pinhole projection of a world point to w x h pixels (y down) through cam's pose and vertical FOV.</summary>
+        static Vector2 ProjectPx(Camera cam, Vector3 world, int w, int h, out bool inFront)
+        {
+            var p = cam.transform.InverseTransformPoint(world);
+            inFront = p.z > 0.05f;
+            float z = Mathf.Max(p.z, 0.05f);
+            float f = h * 0.5f / Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            return new Vector2(w * 0.5f + p.x / z * f, h * 0.5f - p.y / z * f);
+        }
+
         /// <summary>Track distance with the most collectibles 2.5-14 m ahead (side-lane coins count double, gems x3).</summary>
         static float FindHeroDistance(RunnerController runner, TrackItemRegistry registry)
         {
