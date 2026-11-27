@@ -76,17 +76,19 @@ namespace BubbleWash.EditorTools
                 {
                     // pass 7: smoothness .38 -> .22 - the glossy bristle undersides mirrored the violet drum (blue-violet
                     // spikes at the roller's lower edge, corner pink 35 % vs reference 68 %); soft matte bristles like the ref
-                    C(m, "_BaseColor", albedo); F(m, "_Metallic", 0f); F(m, "_Smoothness", 0.22f);
+                    // v2: .22 rendered DARKER magenta (the new closed ends are lit only by the blue hall light) -> .3 and
+                    // the glow below raised to ~90 % of the albedo (the fur body's colour-true self-light approach)
+                    C(m, "_BaseColor", albedo); F(m, "_Metallic", 0f); F(m, "_Smoothness", 0.3f);
                     m.EnableKeyword("_EMISSION"); m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
                     C(m, "_EmissionColor", glow);
                 });
             }
             // v3: v2 glow (~40 % of the albedo) rendered the unlit bristle sides blue-violet under the hall light (corner
             // pink 45 -> 20 %) -> ~75 % colour-true self light, like the fur body's glow .6
-            Bristle("M_BristlePink_s2", "#E2368C", "#B42A6E");
-            Bristle("M_BristlePinkTip_s2", "#FF8CC8", "#D2649E");
-            Bristle("M_BristleWhite_s2", "#FFF0FA", "#BEB0C4");
-            Bristle("M_BristleCyan_s2", "#7CD0F4", "#3C8EB4");
+            Bristle("M_BristlePink_s2", "#E2368C", "#CC3280");
+            Bristle("M_BristlePinkTip_s2", "#FF8CC8", "#E87CB4");
+            Bristle("M_BristleWhite_s2", "#FFF0FA", "#DCD0DC");
+            Bristle("M_BristleCyan_s2", "#7CD0F4", "#5EAAD2");
 
             // ---------------------------------------------------------------- S2 door hatch + LED rim (pass 6)
             // Violet torus rims of the new masters SM_DoorHatch_s2 / SM_LedRim_s2 (build_s2_door_p6.py). Reference f_03.00s

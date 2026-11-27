@@ -135,7 +135,10 @@ Shader "BWK/Fur"
                     // every tuft centre is fully jittered and the nearest one wins (3x3 search), so tuft sizes / shapes
                     // vary like real plush and the partings follow the irregular cell borders (f2 - f1).
                     tuv += (float2(BWK_ValueNoise(tuv * 0.45 + 3.1), BWK_ValueNoise(tuv * 0.45 + 17.9)) - 0.5) * 0.7;
-                    float2 ip = floor(tuv);
+                    // tufts ~1.8x longer along v (v5 body UV: v runs up the body) = combed plush locks, not round bobbles
+                    const float2 an = float2(1.0, 0.55);
+                    float2 auv = tuv * an;
+                    float2 ip = floor(auv);
                     float f1 = 8.0, f2 = 8.0;
                     tc = ip + 0.5; tcell = ip;
                     [unroll] for (int vy = -1; vy <= 1; vy++)
@@ -144,14 +147,15 @@ Shader "BWK/Fur"
                         {
                             float2 cc = ip + float2(vx, vy);
                             float2 pp = cc + 0.05 + float2(BWK_Hash21(cc + 21.7), BWK_Hash21(cc + 4.3)) * 0.9;
-                            float dd = length(tuv - pp);
+                            float dd = length(auv - pp);
                             if (dd < f1) { f2 = f1; f1 = dd; tc = pp; tcell = cc; }
                             else if (dd < f2) { f2 = dd; }
                         }
                     }
                     tRnd = BWK_Hash21(tcell + 11.9);
                     pull = _TuftAmount * h * (0.6 + 0.8 * tRnd);
-                    relSkin = tuv - tc;
+                    tc.y -= h * 0.3;                                  // the lock's tips converge BELOW its centre (droop)
+                    relSkin = (auv - tc) / an;
                     rel = relSkin / max(1.0 - pull, 0.2);
                     // the strand's root (|rel| from the centre) belongs to a neighbour once it crosses the border
                     float over = f1 * pull / max(1.0 - pull, 0.2) - 0.5 * (f2 - f1);

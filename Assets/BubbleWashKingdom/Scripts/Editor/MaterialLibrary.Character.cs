@@ -99,25 +99,25 @@ namespace BubbleWash.EditorTools
             {
                 // crown: more saturated blue-violet yarn, deeper purl valleys (_PurlDepth 1) and bolder ribs
                 // pass 7 run 2: R2 crown rendered 40.5/36/-45 vs reference 36.7/44/-42 (too blue) -> linear x1.32/.73/.87
-                F(m, "_Mode", 2); C(m, "_ColorA", "#842F9E"); C(m, "_ColorB", "#EDE6FF"); F(m, "_Stripes", 3); F(m, "_StripeWidth", 0.0f);
-                F(m, "_StitchU", 44); F(m, "_StitchV", 38); F(m, "_BumpStrength", 1.6f); F(m, "_Smoothness", 0.14f); F(m, "_Glow", 0.1f);
-                F(m, "_PurlDepth", 1f);
+                F(m, "_Mode", 2); C(m, "_ColorA", "#912B9B"); C(m, "_ColorB", "#EDE6FF"); F(m, "_Stripes", 3); F(m, "_StripeWidth", 0.0f);
+                F(m, "_StitchU", 44); F(m, "_StitchV", 38); F(m, "_BumpStrength", 1.6f); F(m, "_Smoothness", 0.14f); F(m, "_Glow", 0.06f);
+                F(m, "_PurlDepth", 1.5f);   // prev1: crown Lstd 12.1 vs reference 16.2 (deeper purl valleys; > 1 extrapolates)
             });
             Mat("M_HatCuff_v5", "BWK/Character", m =>
             {
                 // thick folded brim (v5 geometry: outer rib surface rolled out 1.2 cm): bluer violet, deep rib shading
                 // pass 7 run 2: R2 cuff 36/41/-46 vs reference 39/47/-44 and FLAT (Lstd 3.4 vs 10.8) -> redder, lighter
                 // (linear x1.51/1.32/1.09) and deeper rib relief
-                F(m, "_Mode", 2); C(m, "_ColorA", "#9845AD"); C(m, "_ColorB", "#9845AD"); F(m, "_StripeWidth", 0f);
-                F(m, "_StitchU", 44); F(m, "_StitchV", 40); F(m, "_BumpStrength", 2.0f); F(m, "_Smoothness", 0.12f); F(m, "_Glow", 0.1f);
-                F(m, "_PurlDepth", 1f);
+                F(m, "_Mode", 2); C(m, "_ColorA", "#AB52B5"); C(m, "_ColorB", "#AB52B5"); F(m, "_StripeWidth", 0f);
+                F(m, "_StitchU", 44); F(m, "_StitchV", 40); F(m, "_BumpStrength", 2.0f); F(m, "_Smoothness", 0.12f); F(m, "_Glow", 0.06f);
+                F(m, "_PurlDepth", 1.8f);   // prev1: cuff still flat (Lstd 3.6 vs reference 10.8) -> much deeper rib valleys
             });
             Mat("M_HatStripe_v5", "BWK/Character", m =>
             {
                 // pale-pink band (reference ~70/27/-19): warmer pale pink, a little more self-light in the hat's shade
-                F(m, "_Mode", 2); C(m, "_ColorA", "#FBEAF2"); C(m, "_ColorB", "#FBEAF2"); F(m, "_StripeWidth", 0f);
-                F(m, "_StitchU", 44); F(m, "_StitchV", 46); F(m, "_BumpStrength", 1.1f); F(m, "_Smoothness", 0.15f); F(m, "_Glow", 0.3f);
-                F(m, "_PurlDepth", 1f);
+                F(m, "_Mode", 2); C(m, "_ColorA", "#F2EAF4"); C(m, "_ColorB", "#F2EAF4"); F(m, "_StripeWidth", 0f);
+                F(m, "_StitchU", 44); F(m, "_StitchV", 46); F(m, "_BumpStrength", 1.4f); F(m, "_Smoothness", 0.15f); F(m, "_Glow", 0.24f);
+                F(m, "_PurlDepth", 1.5f);   // prev1: stripe Lstd 10 vs reference 21 (visible knit stitches)
             });
             Mat("M_PawPad_v5", "BWK/Character", m =>
             {
@@ -137,11 +137,11 @@ namespace BubbleWash.EditorTools
                 // pass 7 run 2: R2 body 56.7/43/-11 vs reference 54.9/44/-6 (linear x1.03/.93/.84) and the 12 cm tuft cells
                 // read as a QUILTED LATTICE of round bumps -> BWK_Fur _PlushMode 1 (irregular Voronoi tufts, ~6.5 cm) +
                 // _StrandContrast 1 (reference body Lstd 11.3 vs ours 6.2), a little more downward droop
-                C(m, "_RootColor", "#DF7A69"); C(m, "_BaseColor", "#FF9981"); C(m, "_TipColor", "#FFCFB9");
+                C(m, "_RootColor", "#ED826A"); C(m, "_BaseColor", "#FFA382"); C(m, "_TipColor", "#FFDCBB");   // prev1 body 53.8/43.5/-8.9
                 C(m, "_PawRootColor", "#FFF0E2"); C(m, "_PawTipColor", "#FFF9EE"); F(m, "_PawGlow", 0.45f);
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
                 F(m, "_Density", 200); F(m, "_FurLength", 0.052f); F(m, "_Gravity", 0.02f); F(m, "_Thinning", 0.8f); F(m, "_ClumpAmount", 0.6f); F(m, "_ClumpScale", 5f);
-                F(m, "_AO", 0.3f); F(m, "_Curl", 1.0f); F(m, "_Underfur", 0.8f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.45f);
+                F(m, "_AO", 0.4f); F(m, "_Curl", 1.0f); F(m, "_Underfur", 0.8f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.45f);
                 F(m, "_TuftScale", 24f); F(m, "_TuftAmount", 0.5f); F(m, "_PlushMode", 1f); F(m, "_StrandContrast", 1f);
                 C(m, "_RimColor", "#FFD0C8"); F(m, "_Glow", 0.2f); F(m, "_RimStrength", 0.5f);
             }, (int)RenderQueue.AlphaTest);

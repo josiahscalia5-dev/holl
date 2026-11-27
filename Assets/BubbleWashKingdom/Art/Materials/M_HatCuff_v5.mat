@@ -27,10 +27,10 @@ Material:
     m_Floats:
     - _BumpScale: 6
     - _BumpStrength: 2
-    - _Glow: 0.1
+    - _Glow: 0.06
     - _Metallic: 0
     - _Mode: 2
-    - _PurlDepth: 1
+    - _PurlDepth: 1.8
     - _RimPower: 3
     - _RimStrength: 0.35
     - _Smoothness: 0.12
@@ -40,8 +40,8 @@ Material:
     - _Stripes: 4
     - _Wrap: 0.5
     m_Colors:
-    - _ColorA: {r: 0.59607846, g: 0.27058825, b: 0.6784314, a: 1}
-    - _ColorB: {r: 0.59607846, g: 0.27058825, b: 0.6784314, a: 1}
+    - _ColorA: {r: 0.67058825, g: 0.32156864, b: 0.70980394, a: 1}
+    - _ColorB: {r: 0.67058825, g: 0.32156864, b: 0.70980394, a: 1}
     - _ColorC: {r: 0.54999995, g: 0.29999998, b: 0.85, a: 1}
     - _ShadowColor: {r: 0.62, g: 0.62, b: 0.95, a: 1}
   m_BuildTextureStacks: []

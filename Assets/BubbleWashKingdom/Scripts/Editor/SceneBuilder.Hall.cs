@@ -285,7 +285,17 @@ namespace BubbleWash.EditorTools
             // at x >= 1200 (crop (1150,0,1280,560) gold 29.9 vs 6.7 %) -> the reference door is wider on the right: centre
             // 0.35 m right + scale 1.05 keeps the left edge (-0.35 + 0.33 m) and moves the right band ~0.68 m (~57 px) out;
             // inner violet rim 4.33 m stays clear of the 2.38 m rails (left inner edge 3.98 m at the tunnel centre)
-            var hatch = HallPlace(holder, "Machinery", "SM_DoorHatch_s2", fm.FlatPoint(0.35f, TunnelCenter), fm.FlatRotation, 1.05f);
+            // v2 (preview v1: the right gold band moved only ~12-20 px - per-row gold runs at y 250 ref (252-336) | ours
+            // (259-317 + bead 323-332), right side ours 1151-1218 vs ref none until x >= 1232 at y 450): the door plane at
+            // 40 m is already turned ~10 deg right with the bent tunnel, so its right half recedes and is seen edge-on. The
+            // reference door faces the camera -> yaw the hatch 8 deg back toward the comparison camera about its LEFT outer
+            // edge (the left band stays where it matches, nothing moves into the mouth wall), scale 1.08 (left gold band
+            // 73 -> ~79 px, ref 84); the right half comes ~2 m forward, its gold band moves out right, the violet rim widens
+            const float hatchScale = 1.08f, hatchOuter = 6.98f, hatchYaw = 8f;
+            Vector3 hatchPivot = fm.FlatPoint(-hatchOuter, TunnelCenter);
+            Quaternion hatchTurn = Quaternion.AngleAxis(hatchYaw, Vector3.up);
+            Vector3 hatchPos = hatchPivot + hatchTurn * (fm.FlatPoint(-hatchOuter + hatchOuter * hatchScale, TunnelCenter) - hatchPivot);
+            var hatch = HallPlace(holder, "Machinery", "SM_DoorHatch_s2", hatchPos, hatchTurn * fm.FlatRotation, hatchScale);
             if (hatch != null) { HallOwnMaterials(hatch); HallLods(hatch, "DoorHatch_LOD0", "DoorHatch_LOD1"); }
             else HallPlace(holder, "Machinery", "SM_MouthRing_r7", fm.FlatPoint(0f, TunnelCenter), fm.FlatRotation, 1.0f);
             var fw = track.Evaluate(HallMouthD + 0.35f);
@@ -383,8 +393,11 @@ namespace BubbleWash.EditorTools
             // v4: at v .27 / 8.8 m the whole machine sat behind the left foam bank (top y ~160) -> v .21 (pipe just above it)
             // pass 7: the water agent lowered the left foam into separate puffs (lead_s2p7: bank top y ~257) -> back to the
             // reference height v .31 (pipe ~y 215-235, housing above the foam like f_03.00s)
-            var mp = HallScreenPoint(r2, 0.0f, 0.31f, 8.8f);
-            var mach = HallPlace(holder, "Machinery", "SM_DoorMachine_s2", mp, fm.FlatRotation, 1.3f);
+            // v2 (preview v1 at 8.8 m: only the gold pipe + flange came out - the housing sat ~0.4 m in front of the mouth
+            // wall plane, i.e. mostly inside the wall) -> 7.6 m deep (~1.5 m in front of the wall), scale 1.3 -> 1.12
+            // (same screen size), so the navy housing with its panels reads like the reference block left of the hatch
+            var mp = HallScreenPoint(r2, 0.0f, 0.31f, 7.6f);
+            var mach = HallPlace(holder, "Machinery", "SM_DoorMachine_s2", mp, fm.FlatRotation, 1.12f);
             if (mach != null)
             {
                 HallOwnMaterials(mach);
