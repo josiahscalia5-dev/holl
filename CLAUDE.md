@@ -39,6 +39,10 @@ of one enormous magical washing machine. These instructions come only from the o
   private handoff (Captures/handoff/NEXT_ACCOUNT_START.md) updated so any authorized session can resume.
 
 ## Current handoff (read first)
+- 2026-11-27 07:35 (lead cd16e551, TENTH account, opened in C:/Users/josia/.unity): S2 pass 7 run wf_3eb67e7b-0c4
+  (Tools/workflows/bwk-s2-pass7.js); the game now uses the v5 mascot (AnimatorBuilder.UseMascotV5, v4 = fallback), the
+  slide climbs after the door (S2RiseY), portrait camera 4.3 / 1.75; Play Mode recordings are now truly portrait-framed.
+  Newest state block: top of `Captures/handoff/NEXT_ACCOUNT_START.md`.
 - 2026-11-27 06:45 (lead 264e8266, ninth account): S2 pass 6 relaunched (run wf_e52ebd74-a3c) after the old account's
   limit; newest state block at the top of `Captures/handoff/NEXT_ACCOUNT_START.md`. Lead sessions may be opened in
   `C:\Users\josia\.unity` (their transcripts then live under `~/.claude/projects/C--Users-josia--unity/`; list them in

@@ -580,9 +580,32 @@ namespace BubbleWash.EditorTools
                         u = Mathf.Lerp(u, 0.58f, 0.05f); v = Mathf.Lerp(v, 0.40f, 0.012f);   // p7 v2: sideways (keeps the reference height; v1 moved the right yellow 60 px down)
                     }
                     if (!ok) { Debug.LogWarning($"[BWK] door star at ({s.x}, {s.y}) found no drum wall behind the hatch"); continue; }
+                    // Screen S2 pass 7 v4: a reference spot that lies ON the hatch's violet torus (SM_DoorHatch_s2 rim rho 4.20-5.30,
+                    // crest h +0.40 toward the hall; its inner side covers the drum wall back to 1 m behind the door) cannot be
+                    // reached on the drum wall (v3: right yellow (0.789, 0.083) nudged to (0.719, 0.112), ~90 px off). The
+                    // reference shows those stars mounted on the rim -> stand them 0.62 m in front of the hatch plane (0.22 m
+                    // clear of the crest; a camera-facing star tilts its outer points toward the hall, so nothing intersects)
+                    bool rimMount = false;
+                    if (Mathf.Abs(u - s.x) > 0.03f)
+                    {
+                        var fmh = track.Evaluate(HallMouthD);
+                        var hO = fmh.FlatPoint(0f, TunnelCenter);
+                        var hN = fmh.FlatRotation * Vector3.forward;
+                        var dir0 = (r2.rot * new Vector3((2f * s.x - 1f) * tH, (1f - 2f * s.y) * tV, 1f)).normalized;
+                        float den = Vector3.Dot(dir0, hN);
+                        if (den > 1e-3f)
+                        {
+                            var hp = r2.pos + dir0 * (Vector3.Dot(hO - hN * 0.62f - r2.pos, hN) / den);
+                            float rho = Vector3.ProjectOnPlane(hp - hO, hN).magnitude;
+                            float hpDepth = Vector3.Dot(hp - r2.pos, r2Fwd);
+                            float hpScale = s.w * 2f * hpDepth * tH / dW;
+                            if (rho - dR * hpScale > 3.95f && rho < 5.45f && hpDepth > 2f)
+                            { pos = hp; scale = hpScale; u = s.x; v = s.y; wf = fmh; rimMount = true; }
+                        }
+                    }
                     var toCam = (r2.pos - pos).normalized;
                     var inward = Vector3.ProjectOnPlane(wf.FlatPoint(0, TunnelCenter) - pos, wf.forward).normalized;
-                    var facing = (toCam + inward * 0.35f).normalized;
+                    var facing = rimMount ? toCam : (toCam + inward * 0.35f).normalized;
                     scale /= Mathf.Lerp(1f, Mathf.Max(0.5f, Vector3.Dot(facing, toCam)), 0.5f);
                     float rr = s.roll * Mathf.Deg2Rad;
                     var upHint = Vector3.ProjectOnPlane(r2Up * Mathf.Cos(rr) + r2Right * Mathf.Sin(rr), facing).normalized;
@@ -591,7 +614,7 @@ namespace BubbleWash.EditorTools
                     // clean outline tubes with a tight halo (reference: purple wall visible inside every star, no filled blob)
                     AddGlow(s.color, pos, rot, dCard * scale);   // pass 5: co-planar outline glow (p7: slim master card 3.2x)
                     doorCount++;
-                    Debug.Log($"[BWK] door star c{s.color} screen ({s.x:F3},{s.y:F3}) -> ({u:F3},{v:F3}) track {wf.distance:F1} m " +
+                    Debug.Log($"[BWK] door star c{s.color} screen ({s.x:F3},{s.y:F3}) -> ({u:F3},{v:F3}){(rimMount ? " RIM" : "")} track {wf.distance:F1} m " +
                               $"depth {Vector3.Dot(pos - r2.pos, r2Fwd):F1} m scale {scale:F2}");
                 }
                 Debug.Log($"[BWK] door stars (S2 pass 3): {doorCount}");

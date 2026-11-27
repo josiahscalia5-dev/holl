@@ -48,6 +48,7 @@ Material:
     - _DoorFadeEnd: 112
     - _DoorFadeStart: 75
     - _DoorHole: 1
+    - _DoorPanelCurve: 0.25
     - _DoorRowSpread: 1
     - _DoorSlotEnd: 72
     - _DoorSlotFar: 1

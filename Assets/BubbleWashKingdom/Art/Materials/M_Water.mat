@@ -25,7 +25,7 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _CausticAmount: 0.4
+    - _CausticAmount: 0.26
     - _CenterGlow: 0.06
     - _ChevronEndX: 0.38
     - _ChevronGlow: 0.32

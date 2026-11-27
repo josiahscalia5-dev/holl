@@ -424,6 +424,14 @@ namespace BubbleWash.EditorTools
                             MouthBank(dm + RM(-0.15f, 0.15f), RM(2.30f, 2.42f), RM(0.68f, 0.72f), RM(0.85f, 1.1f), 2);
                         MouthBank(d0 + 1.4f, RM(2.55f, 2.65f), RM(0.42f, 0.46f), RM(0.5f, 0.62f), 1);
                         MouthBank(d0 + 3.4f, RM(2.55f, 2.65f), RM(0.42f, 0.46f), RM(0.5f, 0.62f), 1);
+                        // p2 (08:03): right crop (1030,370,1160,440) milky 0 % (ref 45.8 %, puffs ON the rail band, top y ~389) and left
+                        // 37.6 % (ref 57.6 %, a pile hanging over the rail at x 0-450 y 380-440): the rail-top pillows sank into
+                        // the rail tube -> small mounds clinging to the rail at the WATER EDGE (|lat| ~2.0, outside the lanes
+                        // +-1.5), tops ~0.65 m, where the reference shows them
+                        foreach (float dm in new[] { d0 + 1.2f, d0 + 2.2f, d0 + 3.3f })
+                            MouthBank(dm + RM(-0.15f, 0.15f), RM(1.95f, 2.05f), RM(0.25f, 0.32f), RM(0.55f, 0.75f), 1);
+                        foreach (float dm in new[] { d0 + 0.3f, d0 + 1.3f, d0 + 2.6f })
+                            MouthBank(dm + RM(-0.15f, 0.15f), -RM(1.98f, 2.08f), RM(0.26f, 0.32f), RM(0.7f, 0.9f), 1);
                     }
                     bool hall = d < tunnelStart;
                     foreach (int side in new[] { -1, 1 })
