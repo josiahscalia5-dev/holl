@@ -589,7 +589,7 @@ namespace BubbleWash.EditorTools
             var gem = ModelPrefab("Props", "SM_Gem");
             var chevron = ModelPrefab("Props", "SM_Chevron");
             var roller = ModelPrefab("Machinery", "SM_BrushRoller");
-            float lane = 1.15f;
+            float lane = SlideProfile.LaneWidth;
 
             TrackItem Make(GameObject prefab, PrimitiveType fallback, string fallbackMat, TrackItemKind kind, float d, float lat, float h, float scale)
             {

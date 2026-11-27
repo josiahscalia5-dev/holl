@@ -293,7 +293,7 @@ namespace BubbleWash.EditorTools
                 float[] Parse(string s, float[] def) => string.IsNullOrEmpty(s) ? def
                     : s.Split(',').Select(x => float.Parse(x.Trim(), System.Globalization.CultureInfo.InvariantCulture)).ToArray();
                 var dists = Parse(ArgValue("-bwkDistances"), new[] { 30f, 31f, 32f, 33f, 34f, 35f, 36f, 37f, 38f, 39f });
-                var lanes = Parse(ArgValue("-bwkLanes"), new[] { 0f, -1.15f });
+                var lanes = Parse(ArgValue("-bwkLanes"), new[] { 0f, -SlideProfile.LaneWidth });
                 foreach (float lat in lanes)
                     foreach (float d in dists)
                     {
@@ -745,7 +745,7 @@ namespace BubbleWash.EditorTools
             var shots = new (string name, float d, float lat)[]
             {
                 ("01_hall_start", 16f, 0f), ("02_hall_curve", 36f, 0f), ("03_tunnel_entry", 55f, 0f),
-                ("04_tunnel", 92f, 0f), ("05_tunnel_lane_left", 128f, -1.15f), ("06_tunnel_lane_right", 170f, 1.15f),
+                ("04_tunnel", 92f, 0f), ("05_tunnel_lane_left", 128f, -SlideProfile.LaneWidth), ("06_tunnel_lane_right", 170f, SlideProfile.LaneWidth),
                 ("07_chambers", 215f, 0f), ("08_sweep", 250f, 0f), ("09_portal", L - 34f, 0f),
             };
             foreach (var s in shots)

@@ -49,7 +49,15 @@ namespace BubbleWash
         public float maxDutch = 11f;
 
         [Header("Dynamics")]
-        public float boostFovKick = 7f;
+        // Motion E 2026-11-27 pass 7 (owner 09:20 s8 "no sudden zooms", lead "tune for a consistent size ... boost FOV kick
+        // 7 deg"): the old +7 deg kick shrank the mascot ~12 % on every chevron. The kick is now smaller and the camera
+        // pushes in by exactly the distance that keeps his on-screen size (a gentle dolly-zoom: the tunnel stretches for the
+        // speed feel, the mascot keeps its size). New field names, so the saved scene's old boostFovKick 7 no longer applies.
+        [Tooltip("Boost: extra FOV (degrees) for the speed feel.")]
+        public float boostFovKickDeg = 4f;
+        [Tooltip("0..1: how much of the FOV kick's size change the boost push-in cancels (1 = the mascot keeps his on-screen size).")]
+        [Range(0f, 1f)] public float boostSizeHold = 1f;
+        public float boostSmoothTime = 0.35f;
         public float positionSmoothTime = 0.09f;
         public float lookSmoothTime = 0.07f;
         public float dutchSmoothTime = 0.3f;
@@ -60,13 +68,19 @@ namespace BubbleWash
         // and its blend to this rig passed through the hat; the celebration orbit flew past the portal into empty space.
         // Both are now offsets on THIS rear rig (no camera switch, no blend through the mascot). They are zero in gameplay and
         // in every capture (Snap() clears them), so the frozen hero framing 2.75 / 1.3 / 10 / 58 is unchanged.
+        // Motion E 2026-11-27 pass 7 (owner 09:20 s8 "FIX THE OPENING: the first ~3.5 s must not make the mascot excessively
+        // large or hide the scenery ... measure the mascot box height / frame height at 0.5 ... 4 s and keep it consistent"):
+        // the old crane started 4.4 m further back and 1.7 m higher, so the mascot began at ~0.5x his gameplay size and
+        // doubled within 3.5 s. Now a short boom-down: a little higher and steeper (the slide, foam and door read around
+        // him) and only slightly further back, so his on-screen size stays within ~15 % from the first frame on.
+        // New field names, so the saved scene's old 4.4 / 1.7 / 7 no longer apply (revert: the old names and values).
         [Header("Opening crane (rear, eases into the gameplay framing)")]
         [Tooltip("The opening starts this much further back than the gameplay framing (metres along the track).")]
-        public float introExtraBack = 4.4f;
+        public float introCraneBack = 0.4f;
         [Tooltip("...and this much higher (metres).")]
-        public float introExtraHeight = 1.7f;
-        [Tooltip("...and pitched this much further down (degrees), so the shot reveals the hall and the slide ahead.")]
-        public float introExtraPitch = 7f;
+        public float introCraneHeight = 0.85f;
+        [Tooltip("...and pitched this much further down (degrees), so the slide ahead and the hall floor read around him.")]
+        public float introCranePitch = 5.5f;
 
         [Header("Finale (rear camera, mascot turned to face it, golden portal behind the mascot)")]
         public float finaleExtraBack = 1.4f;
@@ -81,7 +95,7 @@ namespace BubbleWash
 
         Vector3 posVel, lookVel, smoothedLook;
         float smLat, smH, latV, hV;
-        float dutch, dutchVel, fov, fovVel;
+        float dutch, dutchVel, fov, boostW, boostV;
         float introTime = -1f, introDuration = 1f, finaleTime = -1f;
         bool initialized;
         Camera outputCamera;
@@ -170,10 +184,22 @@ namespace BubbleWash
             if (wi > 0f || wf > 0f)
             {
                 float push = finaleTime > finaleBlendTime ? finalePushIn * SmootherStep((finaleTime - finaleBlendTime) / Mathf.Max(0.1f, finalePushTime)) : 0f;
-                back += wi * introExtraBack + wf * finaleExtraBack - push;
-                h += wi * introExtraHeight + wf * finaleExtraHeight;
-                pitch += wi * introExtraPitch - wf * finalePitchUp;
+                back += wi * introCraneBack + wf * finaleExtraBack - push;
+                h += wi * introCraneHeight + wf * finaleExtraHeight;
+                pitch += wi * introCranePitch - wf * finalePitchUp;
                 baseFov += wf * finaleFovDelta;
+            }
+
+            // Boost: smoothed 0..1 weight drives BOTH the FOV kick and the size-holding push-in (never one without the other).
+            float boostTarget = runner.Boosting && runner.State == RunnerState.Running ? 1f : 0f;
+            if (snap) { boostW = boostTarget; boostV = 0f; }
+            else boostW = Mathf.SmoothDamp(boostW, boostTarget, ref boostV, boostSmoothTime, Mathf.Infinity, dt);
+            if (boostW > 1e-4f && boostFovKickDeg > 0f)
+            {
+                float kick = boostFovKickDeg * boostW;
+                float k = Mathf.Tan(baseFov * 0.5f * Mathf.Deg2Rad) / Mathf.Tan((baseFov + kick) * 0.5f * Mathf.Deg2Rad);
+                back -= back * (1f - k) * boostSizeHold; // closer by the same factor the wider lens shrinks him
+                baseFov += kick;
             }
 
             float d = runner.Distance;
@@ -214,13 +240,9 @@ namespace BubbleWash
 
             // Bank with the slide (a fraction of its roll) so curves read clearly without making players dizzy.
             float targetDutch = Mathf.Clamp(-fr.roll * bankFactor, -maxDutch, maxDutch);
-            float targetFov = baseFov + (runner.Boosting ? boostFovKick : 0f);
-            if (snap) { dutch = targetDutch; fov = targetFov; }
-            else
-            {
-                dutch = Mathf.SmoothDamp(dutch, targetDutch, ref dutchVel, dutchSmoothTime, Mathf.Infinity, dt);
-                fov = Mathf.SmoothDamp(fov, targetFov, ref fovVel, 0.35f, Mathf.Infinity, dt);
-            }
+            if (snap) dutch = targetDutch;
+            else dutch = Mathf.SmoothDamp(dutch, targetDutch, ref dutchVel, dutchSmoothTime, Mathf.Infinity, dt);
+            fov = baseFov; // already smooth: the boost part follows boostW, the finale part FinaleWeight
             if (vcam != null)
             {
                 vcam.Lens.FieldOfView = fov;

@@ -25,7 +25,7 @@ namespace BubbleWash.EditorTools
             for (int side = -1; side <= 1; side += 2)
             {
                 var circle = new List<Vector2>();
-                for (int k = 0; k <= 12; k++) { float ang = k / 12f * Mathf.PI * 2f; circle.Add(new Vector2(side * 2.22f + Mathf.Cos(ang) * 0.16f, 0.72f + Mathf.Sin(ang) * 0.16f)); }
+                for (int k = 0; k <= 12; k++) { float ang = k / 12f * Mathf.PI * 2f; circle.Add(new Vector2(side * SlideProfile.RailX + Mathf.Cos(ang) * SlideProfile.RailR, SlideProfile.RailZ + Mathf.Sin(ang) * SlideProfile.RailR)); }
                 circle.Reverse(); // clockwise profile -> outward normals
                 Extrude(circle, length, rings, verts, uvs, tris1, false);
             }

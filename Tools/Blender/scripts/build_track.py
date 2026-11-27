@@ -47,7 +47,7 @@ A_TOP = X_TOP - FLAT
 Z_SPLIT = 0.40                  # M_Water below, M_RailRainbow above
 A_SPLIT = math.sqrt(Z_SPLIT / K)
 WALL_T = 0.12                   # wall / floor thickness
-RAIL_R, RAIL_X, RAIL_Z = 0.16, 2.22, 0.72
+RAIL_R, RAIL_X, RAIL_Z = 0.16, 2.22, 0.72   # keep FLAT / K / X_TOP / RAIL_* in sync with Assets/BubbleWashKingdom/Scripts/Runtime/Gameplay/SlideProfile.cs
 WATER_WALL_SEGS, RAINBOW_SEGS = 12, 4   # 16 profile segments per curved wall
 RAIL_SIDES, SHELL_WALL_SEGS = 12, 3
 

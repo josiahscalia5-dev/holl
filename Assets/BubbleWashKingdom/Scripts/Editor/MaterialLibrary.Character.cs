@@ -100,7 +100,7 @@ namespace BubbleWash.EditorTools
                 // crown: more saturated blue-violet yarn, deeper purl valleys (_PurlDepth 1) and bolder ribs
                 // pass 7 run 2: R2 crown rendered 40.5/36/-45 vs reference 36.7/44/-42 (too blue) -> linear x1.32/.73/.87
                 F(m, "_Mode", 2); C(m, "_ColorA", "#912B9B"); C(m, "_ColorB", "#EDE6FF"); F(m, "_Stripes", 3); F(m, "_StripeWidth", 0.0f);
-                F(m, "_StitchU", 44); F(m, "_StitchV", 38); F(m, "_BumpStrength", 1.0f); F(m, "_Smoothness", 0.14f); F(m, "_Glow", 0.06f);
+                F(m, "_StitchU", 44); F(m, "_StitchV", 38); F(m, "_BumpStrength", 1.6f); F(m, "_Smoothness", 0.14f); F(m, "_Glow", 0.06f);
                 F(m, "_PurlDepth", 1.5f);   // prev1: crown Lstd 12.1 vs reference 16.2 (deeper purl valleys; > 1 extrapolates)
             });
             Mat("M_HatCuff_v5", "BWK/Character", m =>
@@ -109,10 +109,8 @@ namespace BubbleWash.EditorTools
                 // pass 7 run 2: R2 cuff 36/41/-46 vs reference 39/47/-44 and FLAT (Lstd 3.4 vs 10.8) -> redder, lighter
                 // (linear x1.51/1.32/1.09) and deeper rib relief
                 F(m, "_Mode", 2); C(m, "_ColorA", "#AB52B5"); C(m, "_ColorB", "#AB52B5"); F(m, "_StripeWidth", 0f);
-                F(m, "_StitchU", 44); F(m, "_StitchV", 40); F(m, "_BumpStrength", 0.7f); F(m, "_Smoothness", 0.12f); F(m, "_Glow", 0.06f);
-                // prev2: deeper shader valleys did NOT add contrast (Lstd 3.6 -> 3.8): the shader ribs are sub-pixel at R2 and
-                // their strong normal noise averages the GEOMETRIC rib shading away -> weaker shader bump, moderate purl
-                F(m, "_PurlDepth", 1.2f);
+                F(m, "_StitchU", 44); F(m, "_StitchV", 40); F(m, "_BumpStrength", 2.0f); F(m, "_Smoothness", 0.12f); F(m, "_Glow", 0.06f);
+                F(m, "_PurlDepth", 1.8f);   // prev1: cuff still flat (Lstd 3.6 vs reference 10.8) -> much deeper rib valleys
             });
             Mat("M_HatStripe_v5", "BWK/Character", m =>
             {
@@ -139,7 +137,7 @@ namespace BubbleWash.EditorTools
                 // pass 7 run 2: R2 body 56.7/43/-11 vs reference 54.9/44/-6 (linear x1.03/.93/.84) and the 12 cm tuft cells
                 // read as a QUILTED LATTICE of round bumps -> BWK_Fur _PlushMode 1 (irregular Voronoi tufts, ~6.5 cm) +
                 // _StrandContrast 1 (reference body Lstd 11.3 vs ours 6.2), a little more downward droop
-                C(m, "_RootColor", "#E07462"); C(m, "_BaseColor", "#FFA382"); C(m, "_TipColor", "#FFE6CC");   // prev3: root/tip spread for Lstd 6.4 -> ref 11.3
+                C(m, "_RootColor", "#ED826A"); C(m, "_BaseColor", "#FFA382"); C(m, "_TipColor", "#FFDCBB");   // prev1 body 53.8/43.5/-8.9
                 C(m, "_PawRootColor", "#FFF0E2"); C(m, "_PawTipColor", "#FFF9EE"); F(m, "_PawGlow", 0.45f);
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
                 F(m, "_Density", 200); F(m, "_FurLength", 0.052f); F(m, "_Gravity", 0.02f); F(m, "_Thinning", 0.8f); F(m, "_ClumpAmount", 0.6f); F(m, "_ClumpScale", 5f);

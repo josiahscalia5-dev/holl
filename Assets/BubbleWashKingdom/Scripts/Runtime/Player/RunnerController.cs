@@ -49,13 +49,13 @@ namespace BubbleWash
         public float finishHopHeight = 0.32f;
 
         [Header("Lanes")]
-        public float laneWidth = 1.15f;
+        public float laneWidth = SlideProfile.LaneWidth;
         public int lanesEachSide = 1;
         public float laneChangeTime = 0.14f;
 
         [Header("Slide cross-section (must match SM_Slide_Module)")]
-        public float flatHalfWidth = 1.25f;
-        public float wallCurve = 0.9f;
+        public float flatHalfWidth = SlideProfile.FlatHalfWidth;
+        public float wallCurve = SlideProfile.WallCurve;
         [Tooltip("Outward drift up the wall in curves: meters per (curvature * speed^2).")]
         public float driftGain = 0.012f;
         public float maxDrift = 0.55f;

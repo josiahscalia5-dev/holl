@@ -19,7 +19,36 @@ namespace BubbleWash.Tests
     public class GameplayCaptureTests
     {
         const string Scene = "Level01_RainbowRush";
-        static string OutDir => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Captures", "playmode"));
+        // Motion E 2026-11-27: BWK_PLAY_OUT (optional) sends a specialist's run to its own folder so the lead's
+        // Captures/playmode files are never overwritten; unset = unchanged.
+        static string OutDir => Path.GetFullPath(Env("BWK_PLAY_OUT", Path.Combine(Application.dataPath, "..", "Captures", "playmode")));
+
+        // Motion E 2026-11-27 pass 7 (owner 09:20 s8 / brief s19: "he must not fill half the frame", "the first ~3.5 s must not
+        // make the mascot excessively large ... keep it consistent"): the mascot's on-screen box (his skinned geometry projected
+        // through the gameplay camera, portrait 720x1280) is measured every 0.5 s and asserted.
+        const float MaxBoxHeight = 0.42f, MinBoxHeight = 0.12f, MaxOpeningSizeRatio = 1.35f;
+
+        /// <summary>Viewport box (x0, y0, x1, y1; y up) of every skinned mesh under <paramref name="root"/>, false if none is in front.</summary>
+        static bool MascotScreenBox(Camera cam, Transform root, Mesh bake, out Vector4 box)
+        {
+            float x0 = float.MaxValue, y0 = float.MaxValue, x1 = float.MinValue, y1 = float.MinValue;
+            int n = 0;
+            foreach (var smr in root.GetComponentsInChildren<SkinnedMeshRenderer>())
+            {
+                if (!smr.enabled || !smr.gameObject.activeInHierarchy) continue;
+                smr.BakeMesh(bake, true);
+                var m = Matrix4x4.TRS(smr.transform.position, smr.transform.rotation, Vector3.one);
+                var vs = bake.vertices;
+                for (int i = 0; i < vs.Length; i++)
+                {
+                    Vector3 p = cam.WorldToViewportPoint(m.MultiplyPoint3x4(vs[i]));
+                    if (p.z < 0.05f) continue;
+                    x0 = Mathf.Min(x0, p.x); x1 = Mathf.Max(x1, p.x); y0 = Mathf.Min(y0, p.y); y1 = Mathf.Max(y1, p.y); n++;
+                }
+            }
+            box = new Vector4(Mathf.Clamp01(x0), Mathf.Clamp01(y0), Mathf.Clamp01(x1), Mathf.Clamp01(y1));
+            return n > 0;
+        }
 
         [UnityTest, Timeout(900000)]
         public IEnumerator A_RecordAutopilotRun()
@@ -78,6 +107,12 @@ namespace BubbleWash.Tests
             Transform eyeL = null;
             foreach (var t in runner.GetComponentsInChildren<Transform>(true)) if (t.name == "eye.L") { eyeL = t; break; }
             int faceChecks = 0, faceBackward = 0;
+            // mascot on-screen size (motion E pass 7)
+            var bake = new Mesh();
+            var driver = runner.GetComponent<MascotAnimatorDriver>();
+            var sizeCsv = new System.Text.StringBuilder("t,distance,state,boxH,boxW,top,bottom,left,right,camDist,fov,armHold\n");
+            int sizeSamples = 0, bigSamples = 0, smallSamples = 0;
+            float gameMinH = float.MaxValue, gameMaxH = 0f, openMinH = float.MaxValue, openMaxH = 0f;
             while (frames < 30 * 75)
             {
                 yield return null;
@@ -88,6 +123,25 @@ namespace BubbleWash.Tests
 #endif
                 if (frames % 60 == 0 && stills < 40)
                     File.WriteAllBytes(Path.Combine(OutDir, $"play_{stills++:00}_d{runner.Distance:000}.png"), tex.EncodeToPNG());
+                if (frames % 15 == 0 && mascotAnim != null && MascotScreenBox(cam, mascotAnim.transform, bake, out var box))
+                {
+                    float tv = frames / 30f, bh = box.w - box.y, bw = box.z - box.x;
+                    bool play = gm.RunStarted && !gm.Celebrating && runner.State == RunnerState.Running && runner.Distance > startDistance + 4f;
+                    sizeCsv.AppendLine(string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                        "{0:F2},{1:F1},{2},{3:F3},{4:F3},{5:F3},{6:F3},{7:F3},{8:F3},{9:F2},{10:F1},{11:F2}", tv, runner.Distance,
+                        gm.Celebrating ? "finish" : play ? "play" : gm.RunStarted ? "start" : "intro", bh, bw, 1f - box.w, 1f - box.y,
+                        box.x, box.z, Vector3.Distance(cam.transform.position, runner.visual != null ? runner.visual.position : runner.transform.position),
+                        cam.fieldOfView, driver != null ? driver.ArmHoldWeight : -1f));
+                    if (play)
+                    {
+                        sizeSamples++;
+                        gameMinH = Mathf.Min(gameMinH, bh); gameMaxH = Mathf.Max(gameMaxH, bh);
+                        if (bh > MaxBoxHeight) bigSamples++;
+                        if (bh < MinBoxHeight) smallSamples++;
+                    }
+                    if (tv >= 0.5f && tv <= 4.0f) { openMinH = Mathf.Min(openMinH, bh); openMaxH = Mathf.Max(openMaxH, bh); }
+                    if (tv <= 5.01f) File.WriteAllBytes(Path.Combine(OutDir, $"open_{tv:00.0}s.png"), tex.EncodeToPNG());
+                }
                 if (gm.RunStarted && !gm.Celebrating && runner.State == RunnerState.Running && runner.Distance > startDistance + 4f)
                 {
                     rearChecks++;
@@ -119,6 +173,11 @@ namespace BubbleWash.Tests
             File.AppendAllText(Path.Combine(OutDir, "run_summary.txt"),
                 $"laneChanges={laneChanges}\nlanesVisited={minLane}..{maxLane}\njumps={jumps}\nlandings={landings}\nbumps={bumps}\n" +
                 $"animatorStates={animStates.Count}\nfaceChecks={faceChecks}\nfaceBackward={faceBackward}\nfaceToCameraAtEnd={faceToCameraAtEnd}\n");
+            File.WriteAllText(Path.Combine(OutDir, "mascot_size.csv"), sizeCsv.ToString());
+            File.AppendAllText(Path.Combine(OutDir, "run_summary.txt"), string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                "sizeSamples={0}\nboxHeightPlay={1:F3}..{2:F3}\nboxHeightOpening0p5to4s={3:F3}..{4:F3} (ratio {5:F2})\nboxTooBig={6}\nboxTooSmall={7}\n",
+                sizeSamples, gameMinH, gameMaxH, openMinH, openMaxH, openMinH > 0f ? openMaxH / openMinH : 0f, bigSamples, smallSamples));
+            Object.Destroy(bake);
             Assert.Greater(runner.Distance - startDistance, runner.track.Length * 0.8f, "mascot did not travel the section");
             Assert.AreEqual(0, rearViolations, "camera was not behind the mascot during gameplay");
             Assert.IsTrue(gm.Celebrating, "run did not reach the finish");
@@ -131,6 +190,12 @@ namespace BubbleWash.Tests
             Assert.GreaterOrEqual(animStates.Count, 3, "the mascot animator did not cycle through slide / jump / celebration states");
             Assert.LessOrEqual(faceBackward, faceChecks / 20, "the mascot faced the rear camera instead of the travel direction");
             Assert.IsTrue(faceToCameraAtEnd, "the celebration did not turn the mascot's face toward the camera");
+            // Motion E 2026-11-27 pass 7: on-screen size in portrait gameplay (owner s8 / s19).
+            Assert.Greater(sizeSamples, 20, "the mascot's on-screen size was not measured during gameplay");
+            Assert.AreEqual(0, bigSamples, $"the mascot filled too much of the portrait frame (box height > {MaxBoxHeight} in {bigSamples} samples, max {gameMaxH:F3})");
+            Assert.AreEqual(0, smallSamples, $"the mascot was too small to read (box height < {MinBoxHeight} in {smallSamples} samples, min {gameMinH:F3})");
+            Assert.LessOrEqual(openMaxH / Mathf.Max(1e-3f, openMinH), MaxOpeningSizeRatio,
+                $"the opening changed the mascot's on-screen size too much (0.5-4 s box height {openMinH:F3}..{openMaxH:F3})");
         }
 
         [UnityTest, Timeout(600000)]

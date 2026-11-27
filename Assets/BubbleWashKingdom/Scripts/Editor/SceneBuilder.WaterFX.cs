@@ -438,17 +438,18 @@ namespace BubbleWash.EditorTools
                     {
                         if (hall)
                         {
-                            Place(f, side * Rand(2.42f, 2.75f), Rand(0.40f, 0.56f), Rand(1.0f, 1.4f), 0);
-                            Place(f, side * Rand(3.1f, 7.5f), Rand(-0.2f, 0.3f), Rand(1.4f, 2.2f), r.NextDouble() < 0.5 ? 0 : 1);
+                            // lead 72ca2928: lateral offsets now follow the shared rail line (SlideProfile.RailX = 2.22 -> same values)
+                            Place(f, side * (SlideProfile.RailX + Rand(0.20f, 0.53f)), Rand(0.40f, 0.56f), Rand(1.0f, 1.4f), 0);
+                            Place(f, side * (SlideProfile.RailX + Rand(0.88f, 5.28f)), Rand(-0.2f, 0.3f), Rand(1.4f, 2.2f), r.NextDouble() < 0.5 ? 0 : 1);
                         }
                         else
                         {
                             // v1 preview: at water level (h ~0) the banks hid behind the rail tubes (+-2.22 m, 0.72 m high) ->
                             // seated at the rail line so 0.3-0.5 m of foam shows above the rail like the reference
-                            Place(f, side * Rand(2.40f, 2.62f), Rand(0.42f, 0.58f), Rand(0.95f, 1.3f), 0);
-                            if (r.NextDouble() < 0.7) Place(f, side * Rand(2.72f, 3.1f), Rand(0.55f, 0.8f), Rand(1.05f, 1.55f), 1);
+                            Place(f, side * (SlideProfile.RailX + Rand(0.18f, 0.40f)), Rand(0.42f, 0.58f), Rand(0.95f, 1.3f), 0);
+                            if (r.NextDouble() < 0.7) Place(f, side * (SlideProfile.RailX + Rand(0.50f, 0.88f)), Rand(0.55f, 0.8f), Rand(1.05f, 1.55f), 1);
                         }
-                        if (r.NextDouble() < 0.45) Place(f, side * Rand(2.36f, 2.46f), Rand(0.52f, 0.64f), Rand(0.85f, 1.15f), 2);
+                        if (r.NextDouble() < 0.45) Place(f, side * (SlideProfile.RailX + Rand(0.14f, 0.24f)), Rand(0.52f, 0.64f), Rand(0.85f, 1.15f), 2);
                         placed++;
                     }
                     if (d - chunkStart > ChunkLength) { FlushChunk(); chunkStart = d; }
@@ -468,15 +469,15 @@ namespace BubbleWash.EditorTools
                     // with small puffs spilling onto the rail top between them
                     if (hall)
                     {
-                        Place(f, side * Rand(2.45f, 3.0f), Rand(-0.5f, 0.1f), Rand(0.85f, 1.5f), r.Next(lod0.Length));
-                        Place(f, side * Rand(3.2f, 7.5f), Rand(-0.6f, 0.1f), Rand(0.9f, 1.6f), r.Next(lod0.Length));
+                        Place(f, side * (SlideProfile.RailX + Rand(0.23f, 0.78f)), Rand(-0.5f, 0.1f), Rand(0.85f, 1.5f), r.Next(lod0.Length));
+                        Place(f, side * (SlideProfile.RailX + Rand(0.98f, 5.28f)), Rand(-0.6f, 0.1f), Rand(0.9f, 1.6f), r.Next(lod0.Length));
                     }
                     else
                     {
-                        Place(f, side * Rand(2.42f, 2.72f), Rand(-0.18f, 0.08f), Rand(0.75f, 1.05f), r.Next(lod0.Length));
-                        if (r.NextDouble() < 0.8) Place(f, side * Rand(2.95f, 3.35f), Rand(-0.1f, 0.3f), Rand(0.95f, 1.35f), r.Next(lod0.Length));
+                        Place(f, side * (SlideProfile.RailX + Rand(0.20f, 0.50f)), Rand(-0.18f, 0.08f), Rand(0.75f, 1.05f), r.Next(lod0.Length));
+                        if (r.NextDouble() < 0.8) Place(f, side * (SlideProfile.RailX + Rand(0.73f, 1.13f)), Rand(-0.1f, 0.3f), Rand(0.95f, 1.35f), r.Next(lod0.Length));
                     }
-                    if (r.NextDouble() < 0.6) Place(f, side * Rand(2.28f, 2.45f), Rand(0.02f, 0.14f), Rand(0.42f, 0.62f), small);
+                    if (r.NextDouble() < 0.6) Place(f, side * (SlideProfile.RailX + Rand(0.06f, 0.23f)), Rand(0.02f, 0.14f), Rand(0.42f, 0.62f), small);
                 }
                 if (d - chunkStart > ChunkLength) { FlushChunk(); chunkStart = d; }
             }

@@ -20,6 +20,24 @@ namespace BubbleWash
         public float pomDamping = 7f;
         public float pomMaxAngle = 35f;
 
+        // Motion E 2026-11-27 pass 7 (owner 09:20 s8: he SITS UPRIGHT ON HIS BOTTOM, natural arm / foot motion, reacts to jumps
+        // and lanes and returns smoothly to the seated pose). The v5 takes Lean / Turn / Balance / Jump / Bump drop the arms
+        // 39-50 deg (the rig's cuff solve) while Slide keeps them raised beside the brim, so every curve, lane change, jump
+        // and landing made the arms hang. Visual only: after the Animator, the arm / hand bones are blended back toward the
+        // Slide take's own pose (sampled once from the clip, phase-matched to the ride blend), keeping part of each
+        // reaction's motion. Weight 0 outside running (intro wait, finish turn, celebration keep their clips untouched).
+        [Header("Seated arm hold (visual only)")]
+        [Range(0f, 1f)] public float armHoldRide = 0.7f;
+        [Range(0f, 1f)] public float armHoldAction = 0.55f;
+        public string armHoldClip = "Slide";
+
+        // Gentle bounce on the water while seated (visual only, model root; off in the air and after the finish).
+        [Header("Water bob (visual only)")]
+        public float bobAmplitude = 0.016f;
+        public float bobFrequency = 1.7f;
+        public float bobRollDeg = 1.1f;
+        public float bobPitchDeg = 0.8f;
+
         static readonly int SteerId = Animator.StringToHash("Steer");
         static readonly int CurveId = Animator.StringToHash("Curve");
         static readonly int SpeedId = Animator.StringToHash("Speed");
@@ -37,14 +55,70 @@ namespace BubbleWash
         Vector3 squashBaseScale = Vector3.one;
         bool hasParams;
 
+        static readonly int RideState = Animator.StringToHash("Ride");
+        static readonly int JumpState = Animator.StringToHash("Jump");
+        static readonly int SplashState = Animator.StringToHash("Splash");
+        static readonly int BumpState = Animator.StringToHash("Bump");
+        static readonly string[] ArmBoneNames = { "arm.L", "hand.L", "arm.R", "hand.R" };
+        const int ArmSamples = 24;
+        Transform[] armBones;
+        Quaternion[] armTable;
+        float armClipLen = 1f, armW;
+        /// <summary>Current arm-hold weight (0 = clip pose, 1 = Slide pose) - for tests / reviews.</summary>
+        public float ArmHoldWeight => armW;
+
+        Vector3 bobBasePos;
+        Quaternion bobBaseRot = Quaternion.identity;
+        float bobW, bobT;
+
         void Awake()
         {
             if (animator == null) animator = GetComponentInChildren<Animator>();
             if (pomPom == null) pomPom = FindDeep(transform, "pompom");
             if (squashRoot == null && animator != null) squashRoot = animator.transform;
             if (pomPom != null) pomRest = pomPom.localRotation;
-            if (squashRoot != null) squashBaseScale = squashRoot.localScale;
+            if (squashRoot != null) { squashBaseScale = squashRoot.localScale; bobBasePos = squashRoot.localPosition; bobBaseRot = squashRoot.localRotation; }
             hasParams = animator != null && animator.runtimeAnimatorController != null;
+            if (hasParams) BuildArmTable();
+        }
+
+        /// <summary>Samples the Slide take's arm / hand rotations (ArmSamples phases) once, then restores the pose.</summary>
+        void BuildArmTable()
+        {
+            AnimationClip clip = null;
+            foreach (var c in animator.runtimeAnimatorController.animationClips)
+                if (c != null && c.name == armHoldClip) { clip = c; break; }
+            if (clip == null) { Debug.LogWarning("[BWK motion] arm hold: no '" + armHoldClip + "' clip - off"); return; }
+            var all = animator.GetComponentsInChildren<Transform>(true);
+            var bones = new System.Collections.Generic.List<Transform>();
+            foreach (var n in ArmBoneNames)
+                foreach (var t in all) if (t.name == n) { bones.Add(t); break; }
+            if (bones.Count == 0) { Debug.LogWarning("[BWK motion] arm hold: no arm bones - off"); return; }
+            var lp = new Vector3[all.Length]; var lr = new Quaternion[all.Length]; var ls = new Vector3[all.Length];
+            for (int i = 0; i < all.Length; i++) { lp[i] = all[i].localPosition; lr[i] = all[i].localRotation; ls[i] = all[i].localScale; }
+            int nb = bones.Count;
+            var table = new Quaternion[ArmSamples * nb];
+            float maxDelta = 0f;
+            for (int s = 0; s < ArmSamples; s++)
+            {
+                clip.SampleAnimation(animator.gameObject, clip.length * s / ArmSamples);
+                for (int b = 0; b < nb; b++)
+                {
+                    table[s * nb + b] = bones[b].localRotation;
+                    maxDelta = Mathf.Max(maxDelta, Quaternion.Angle(bones[b].localRotation, lr[System.Array.IndexOf(all, bones[b])]));
+                }
+            }
+            for (int i = 0; i < all.Length; i++) { all[i].localPosition = lp[i]; all[i].localRotation = lr[i]; all[i].localScale = ls[i]; }
+            if (maxDelta < 1f)
+            {
+                // sampling did not move the arms (would hold them in the bind pose) -> leave the clips untouched
+                Debug.LogWarning($"[BWK motion] arm hold: '{clip.name}' samples equal the bind pose ({maxDelta:F2} deg) - off");
+                return;
+            }
+            armBones = bones.ToArray();
+            armTable = table;
+            armClipLen = Mathf.Max(0.1f, clip.length);
+            Debug.Log($"[BWK motion] arm hold: {nb} bones from '{clip.name}' ({clip.length:F2} s), max sample delta from bind {maxDelta:F1} deg");
         }
 
         void OnEnable()
@@ -99,6 +173,46 @@ namespace BubbleWash
         void LateUpdate()
         {
             float dt = Mathf.Max(1e-4f, Time.deltaTime);
+            bool running = runner != null && runner.State == RunnerState.Running;
+            // Seated arm hold: blend the arm / hand bones back toward the Slide pose after the Animator wrote this frame.
+            if (armBones != null && hasParams)
+            {
+                var st = animator.GetCurrentAnimatorStateInfo(0);
+                int sh = st.shortNameHash;
+                float target = 0f;
+                if (running)
+                {
+                    if (sh == RideState) target = armHoldRide;
+                    else if (sh == JumpState || sh == SplashState || sh == BumpState) target = armHoldAction;
+                }
+                armW = Mathf.MoveTowards(armW, target, dt * 3f);
+                if (armW > 1e-3f)
+                {
+                    float ph = sh == RideState ? Mathf.Repeat(st.normalizedTime, 1f) : Mathf.Repeat(Time.time / armClipLen, 1f);
+                    float fs = ph * ArmSamples;
+                    int s0 = Mathf.FloorToInt(fs) % ArmSamples, s1 = (s0 + 1) % ArmSamples;
+                    float u = fs - Mathf.Floor(fs);
+                    int nb = armBones.Length;
+                    for (int b = 0; b < nb; b++)
+                    {
+                        Quaternion q = Quaternion.Slerp(armTable[s0 * nb + b], armTable[s1 * nb + b], u);
+                        armBones[b].localRotation = Quaternion.Slerp(armBones[b].localRotation, q, armW);
+                    }
+                }
+            }
+            // Gentle water bob on the model root while seated on the water (two detuned waves, a little roll / pitch).
+            if (squashRoot != null && runner != null)
+            {
+                float bobTarget = running && runner.Grounded ? Mathf.Clamp01(0.4f + 0.6f * runner.Speed / Mathf.Max(1f, runner.maxSpeed)) : 0f;
+                bobW = Mathf.MoveTowards(bobW, bobTarget, dt * 2f);
+                bobT += dt;
+                float w = 2f * Mathf.PI * bobFrequency * bobT;
+                float y = bobAmplitude * bobW * (0.75f * Mathf.Sin(w) + 0.25f * Mathf.Sin(1.83f * w + 1.1f));
+                float roll = bobRollDeg * bobW * Mathf.Sin(0.61f * w + 0.4f);
+                float pitchB = bobPitchDeg * bobW * Mathf.Sin(w - 0.9f);
+                squashRoot.localPosition = bobBasePos + Vector3.up * y;
+                squashRoot.localRotation = bobBaseRot * Quaternion.Euler(pitchB, 0f, roll);
+            }
             // Squash and stretch (volume-preserving) on the model root.
             if (squashRoot != null)
             {
