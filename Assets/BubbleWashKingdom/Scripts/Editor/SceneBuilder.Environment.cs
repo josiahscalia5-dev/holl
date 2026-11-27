@@ -283,11 +283,17 @@ namespace BubbleWash.EditorTools
             // instance instead of the combined fat SM_Ring). The gate keeps a slightly larger ring (x1.08) over the seam.
             // SM_Ring stays everywhere else (other screens unchanged) and is the fallback.
             var marquee = ModelPrefab("Machinery", "SM_MarqueeRing_s2");
+            // Screen S2 pass 7 (judge gap #2 "identical hoops"; owner 06:58 s4 "differentiated THICKNESS"): the reference
+            // rings inside the door alternate in band thickness / bulb size -> gate + every second ring = the MEDIUM master
+            // SM_MarqueeRing_s2b (build_s2_rings_p7.py, band 0.38 m, 40 bulbs r .115), the others the thin p6 master
+            // (the thick SM_MarqueeRing_s2a = the first ring at 50.5 m, SceneBuilder.Hall); fallback = the thin master
+            var marqueeB = ModelPrefab("Machinery", "SM_MarqueeRing_s2b");
+            int marqueeCount = 0;
             bool PlaceMarquee(float d, float scale)
             {
                 if (marquee == null || d >= MarqueeRingsUntil) return false;
                 var f = track.Evaluate(d);
-                var go = Spawn(marquee);
+                var go = Spawn(marqueeB != null && marqueeCount++ % 2 == 0 ? marqueeB : marquee);
                 go.name = "MarqueeRing_s2";
                 go.transform.SetParent(holder.transform, false);
                 go.transform.SetPositionAndRotation(f.FlatPoint(0, TunnelCenter), f.FlatRotation * Quaternion.Euler(0f, 0f, (Hash(d) - 0.5f) * 9f));

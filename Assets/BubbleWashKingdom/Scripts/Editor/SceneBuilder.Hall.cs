@@ -280,7 +280,12 @@ namespace BubbleWash.EditorTools
             // door = gold hatch band ~0.76 m | copper bead ~0.31 m | thick glossy VIOLET drum rim ~0.9 m, big warm bulbs all
             // round; ours was one fat gold torus with no violet rim. -> layered master SM_DoorHatch_s2
             // (build_s2_door_p6.py, LOD0 24k / LOD1 7k tris); SM_MouthRing_r7 stays the fallback.
-            var hatch = HallPlace(holder, "Machinery", "SM_DoorHatch_s2", fm.FlatPoint(0f, TunnelCenter), fm.FlatRotation, 1.0f);
+            // pass 7 (judge gap #2, lead_s2p7 R2 vs f_03.00s at y 300): our left gold outer edge x ~248 = reference ~245, but
+            // the right gold band sits at x ~1120-1230 where the reference shows the wide violet rim and its gold band starts
+            // at x >= 1200 (crop (1150,0,1280,560) gold 29.9 vs 6.7 %) -> the reference door is wider on the right: centre
+            // 0.35 m right + scale 1.05 keeps the left edge (-0.35 + 0.33 m) and moves the right band ~0.68 m (~57 px) out;
+            // inner violet rim 4.33 m stays clear of the 2.38 m rails (left inner edge 3.98 m at the tunnel centre)
+            var hatch = HallPlace(holder, "Machinery", "SM_DoorHatch_s2", fm.FlatPoint(0.35f, TunnelCenter), fm.FlatRotation, 1.05f);
             if (hatch != null) { HallOwnMaterials(hatch); HallLods(hatch, "DoorHatch_LOD0", "DoorHatch_LOD1"); }
             else HallPlace(holder, "Machinery", "SM_MouthRing_r7", fm.FlatPoint(0f, TunnelCenter), fm.FlatRotation, 1.0f);
             var fw = track.Evaluate(HallMouthD + 0.35f);
@@ -315,8 +320,13 @@ namespace BubbleWash.EditorTools
                     rimGo.transform.SetPositionAndRotation(frm.FlatPoint(0f, TunnelCenter), frm.FlatRotation);
                     HallOwnMaterials(rimGo);
                 }
-                var fmr = track.Evaluate(HallMouthD + 12.5f);
-                var mq = HallPlace(holder, "Machinery", "SM_MarqueeRing_s2", fmr.FlatPoint(0f, TunnelCenter), fmr.FlatRotation, 1.0f);
+                // pass 7 (judge gap #2 "identical hoops"): the reference's first gold marquee ring is THICK (band median
+                // ~19 px, big bulbs ON the band) at on-screen r ~147 px; ours = the thin p6 master at 52.5 m (r ~130 px,
+                // band 6 px) -> thick master SM_MarqueeRing_s2a (build_s2_rings_p7.py, band 0.60 m, 36 big bulbs) at
+                // 50.5 m (R2 depth ~18.3 m -> r ~145 px); the gate / deeper rings get the medium / thin masters (BuildRings)
+                var fmr = track.Evaluate(HallMouthD + 10.5f);
+                string mqName = ModelPrefab("Machinery", "SM_MarqueeRing_s2a") != null ? "SM_MarqueeRing_s2a" : "SM_MarqueeRing_s2";
+                var mq = HallPlace(holder, "Machinery", mqName, fmr.FlatPoint(0f, TunnelCenter), fmr.FlatRotation, 1.0f);
                 if (mq != null) { mq.name = "MouthDrumRing_s2"; HallOwnMaterials(mq); HallLods(mq, "MarqueeRing_LOD0", "MarqueeRing_LOD1"); }
             }
             else if (ringPrefab != null)
@@ -355,7 +365,10 @@ namespace BubbleWash.EditorTools
             // corner (lead build: bottom edge y ~100 vs reference ~160); with the bristle sleeve its centre sits at v -0.10
             // v3: v2 (u 0, corridor 4.5) still lifted 0.62 m (its right end reached 3.5 m from the centre line) -> u -0.08
             // (whole roller >= 4.3 m to the side, the corner coverage comes from the body + bristles), corridor 4.0
-            HallRoller(holder, HallRollerClear(HallScreenPoint(r2, -0.08f, -0.12f, 6.3f), dRot, 1.6f, 2.6f, "door/S2", 4.0f), dRot, 1.6f, -36f,
+            // pass 7: the end facing R2 read as a pink DONUT (open annulus end cap, violet wall through the hole) -> the
+            // bristle master now has closed, bristled ends (build_s2_roller_p6.py v3); u -0.08 -> -0.05 / v -0.12 -> -0.11
+            // so the rounded pink end reaches the reference's x ~250-290 (whole roller still >= 4.3 m to the side)
+            HallRoller(holder, HallRollerClear(HallScreenPoint(r2, -0.05f, -0.11f, 6.3f), dRot, 1.6f, 2.6f, "door/S2", 4.0f), dRot, 1.6f, -36f,
                        "SM_BrushRoller_s2");
             // blue machine housing + gold pipe (SM_DoorMachine_s2, build_door_machinery_s2.py): front parallel to the door
             // wall, flange end (asset -X) at the rim; centre at R2 (u .06, v .32), 7 m deep = in front of the wall (40.35 m)
@@ -368,7 +381,9 @@ namespace BubbleWash.EditorTools
             // u 0 (centre ~8 m to the side, outside the gold band), scale 1.3 keeps its screen size; the pipe end reaches
             // into the band like the reference pipe running into the rim
             // v4: at v .27 / 8.8 m the whole machine sat behind the left foam bank (top y ~160) -> v .21 (pipe just above it)
-            var mp = HallScreenPoint(r2, 0.0f, 0.21f, 8.8f);
+            // pass 7: the water agent lowered the left foam into separate puffs (lead_s2p7: bank top y ~257) -> back to the
+            // reference height v .31 (pipe ~y 215-235, housing above the foam like f_03.00s)
+            var mp = HallScreenPoint(r2, 0.0f, 0.31f, 8.8f);
             var mach = HallPlace(holder, "Machinery", "SM_DoorMachine_s2", mp, fm.FlatRotation, 1.3f);
             if (mach != null)
             {

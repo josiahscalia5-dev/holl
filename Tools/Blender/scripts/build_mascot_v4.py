@@ -1941,8 +1941,8 @@ def export_game_model():
 # build_mascot_rig.py tags only M_PomPom faces as shell fur) around a mid-violet core (M_PomPom shells = fuzz between
 # the locks). Derived from mascot_v4_game.blend/.json, so mascot_v4_game.*, SK_Mascot_v4.fbx and SK_Mascot.fbx stay
 # untouched. Rig: BWK_RIG_MODEL_BLEND/JSON = the v5 files, BWK_RIG_FBX = SK_Mascot_v5.fbx.
-V5_POM_TIP_R = 0.222      # yarn tip radius (reference rear: pom-pom diameter ~0.42-0.45 x brim width 0.98 m)
-V5_POM_CORE_R = 0.165     # core sphere (v4 0.148, p6 0.150; p7 bigger: its shell fuzz fills between the finer locks)
+V5_POM_TIP_R = 0.262      # yarn tip radius (p7 run 2: Unity R2 s2p7 pom-pom width 0.42 x cuff width vs reference 0.50 -> +18 %)
+V5_POM_CORE_R = 0.195     # core sphere (v4 0.148, p6 0.150, p7 0.165; run 2 keeps core / tip = 0.74)
 # ---- S2 pass 7 (2026-11-27 08:30, owner: big glossy eyes / cheerful smile in the finish pose, plush fur WITHOUT streaks
 #      or blocky patches, a soft round pom-pom instead of an urchin)
 V7_YARN_N = 1150          # Fibonacci directions for the finer, curlier, blunt yarn locks (p6: 560 pointed 4-sided locks)
@@ -1950,7 +1950,15 @@ V7_MOUTH_K = 1.22         # open smile scaled in the face plane (reference mouth
 V7_NOSE_K = 1.5           # the tiny nose was invisible in Unity (reference: small but clearly readable)
 V7_EYE_CLEAR = 1.14       # rig fur mask around the eyes x this: shells stop at the eye rim (pink fuzz covered the iris edge)
 V7_UV_S = math.pi * 0.5   # metres per shader base unit: BWK_Fur samples (2u, v) and expects square cells in metres
-V5_POM_SINK = 0.50        # fraction of the tip radius sunk into the crown (reference: ball sits ON the crown, no neck)
+V5_POM_SINK = 0.56        # fraction of the tip radius sunk into the crown (run 2: bigger ball, same visible height ratio)
+# ---- S2 pass 7 run 2 (09:45): Unity R2 measurements of lead_s2p7 vs reference f_03.00s (linear mean RGB ratios ref / ours:
+#      pom-pom 0.86 / 0.41 / 0.88 = ours pale lilac L61 a27 b-31 vs reference saturated violet L47 a49 b-46). The yarn locks
+#      carry VERTEX colours, which the FBX exporter writes sRGB-encoded and BWK_Character's fabric mode uses raw as linear
+#      albedo -> the ramp below is chosen in Unity-albedo terms and stored decoded (Blender linear).
+V7B_LOCK_COLS = ((0.073, 0.007, 0.180), (0.170, 0.015, 0.376), (0.301, 0.037, 0.570), (0.386, 0.058, 0.659))
+V7B_LOCK_TIP = (0.428, 0.067, 0.689)
+V7B_ARM_THIN = 0.80       # limb cross-section (rear R2: our arms ~60 px thick vs reference ~35 px = boxy blocks at the brim)
+V7B_MITT_THIN = 0.90      # round mitt keeps more of its size (reference: round paws wider than the limb)
 V5_YARN_N = 560           # Fibonacci directions; locks pointing into the crown are skipped (never seen)
 V5_ARM_UPPER = 18.0       # deg elevation of the upper arm (runs out under the brim; v4 straight arm 40.5)
 V5_ARM_FORE = 70.0        # deg elevation of the forearm + mitt beside the brim (reference rear: paws at brim/stripe height)
@@ -2033,8 +2041,8 @@ def _soft_yarn_locks(c, ax, n, r_tip, seed=23):
     V, F, UV, CO = [], [], [], []
     golden = math.pi * (3.0 - math.sqrt(5.0))
     rings = ((0.42, 0.85), (0.70, 1.00), (0.90, 0.95), (0.985, 0.62))   # (fraction of the lock length, radius scale)
-    cols = ((0.060, 0.018, 0.135), (0.235, 0.080, 0.500), (0.420, 0.230, 0.760), (0.540, 0.380, 0.880))
-    tip_col = (0.600, 0.450, 0.920)
+    cols = V7B_LOCK_COLS                  # run 2: saturated violet (was pale lilac in Unity: sRGB-encoded vertex colours)
+    tip_col = V7B_LOCK_TIP
     sides = 3
     for k in range(n):
         z = 1.0 - 2.0 * (k + 0.5) / n
@@ -2206,11 +2214,17 @@ def export_game_model_v5():
         for i in range(200):
             cl.append(cl[-1] + (Matrix.Rotation(ang_at((i + 0.5) * ds), 3, kax) @ d) * ds)
 
-        def bend(p, root=root, d=d, kax=kax, cl=cl, ds=ds, ang_at=ang_at):
+        L0 = a["length"]
+
+        def bend(p, root=root, d=d, kax=kax, cl=cl, ds=ds, ang_at=ang_at, L0=L0):
             t = (p - root).dot(d)
             if t <= 0.0:
                 return p.copy()
             q = p - (root + d * t)
+            # run 2: slimmer limb (reference: small rounded arms), the round mitt keeps more of its size
+            thin = 1.0 + (V7B_ARM_THIN - 1.0) * smooth01((t - 0.02) / 0.08)
+            thin += (V7B_MITT_THIN - V7B_ARM_THIN) * smooth01((t - (L0 - 0.16)) / 0.06)
+            q = q * thin
             t2 = t + V5_ARM_EXTRA * smooth01((t - 0.02) / 0.12)
             i = min(len(cl) - 2, int(t2 / ds))
             f = t2 / ds - i

@@ -74,7 +74,9 @@ namespace BubbleWash.EditorTools
             {
                 Mat(name, "Universal Render Pipeline/Lit", m =>
                 {
-                    C(m, "_BaseColor", albedo); F(m, "_Metallic", 0f); F(m, "_Smoothness", 0.38f);
+                    // pass 7: smoothness .38 -> .22 - the glossy bristle undersides mirrored the violet drum (blue-violet
+                    // spikes at the roller's lower edge, corner pink 35 % vs reference 68 %); soft matte bristles like the ref
+                    C(m, "_BaseColor", albedo); F(m, "_Metallic", 0f); F(m, "_Smoothness", 0.22f);
                     m.EnableKeyword("_EMISSION"); m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
                     C(m, "_EmissionColor", glow);
                 });

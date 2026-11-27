@@ -32,6 +32,8 @@ Shader "BWK/Fur"
         _PawGlow ("Paw Coat Self Glow", Range(0, 1)) = 0
         _TuftScale ("Tuft Cells per UV unit", Float) = 24
         _TuftAmount ("Tuft Clumping (0 = off)", Range(0, 0.9)) = 0
+        _PlushMode ("Irregular Voronoi Tufts (0 = v4 cells)", Range(0, 1)) = 0
+        _StrandContrast ("Extra Strand / Tuft Contrast (0 = v4)", Range(0, 1)) = 0
     }
     SubShader
     {
@@ -45,6 +47,7 @@ Shader "BWK/Fur"
             float _Density, _FurLength, _Gravity, _Thinning, _ClumpScale, _RimPower;
             half _ClumpAmount, _Wrap, _RimStrength, _AO, _Glow, _UseVertexTint, _StaticMode, _Curl, _Underfur, _EdgeSoft, _SilhouetteFade, _PawGlow;
             float _TuftScale, _TuftAmount;
+            half _PlushMode, _StrandContrast;
         CBUFFER_END
         ENDHLSL
 
@@ -122,15 +125,50 @@ Shader "BWK/Fur"
                 float2 base = float2(i.uv.x * 2.0, i.uv.y);              // UV.x unit = 2x UV.y unit in metres -> square cells
                 // domain-warped tuft cells: irregular organic clumps instead of a visible square grid
                 float2 tuv = base * _TuftScale;
-                tuv += (float2(BWK_ValueNoise(tuv * 0.37 + 3.1), BWK_ValueNoise(tuv * 0.37 + 17.9)) - 0.5) * 1.3;
-                float2 tcell = floor(tuv);
-                float2 tc = tcell + 0.5 + (float2(BWK_Hash21(tcell + 21.7), BWK_Hash21(tcell + 4.3)) - 0.5) * 0.45;
-                half tRnd = BWK_Hash21(tcell + 11.9);
-                float pull = _TuftAmount * h * (0.7 + 0.6 * tRnd);
-                float2 relSkin = tuv - tc;
-                float2 rel = relSkin / max(1.0 - pull, 0.2);
-                float2 rootOff = abs(tc + rel - (tcell + 0.5));          // root outside its own tuft cell -> parting
-                half parting = (_TuftAmount > 0.001 && h > 0.001) ? saturate(1.0 - (length(rootOff) - 0.55) * 2.5) : 1.0;
+                float2 tcell, tc, relSkin, rel;
+                half tRnd, parting;
+                float pull;
+                if (_PlushMode > 0.5)
+                {
+                    // S2 pass 7 (SK_Mascot_v5 only, _PlushMode 1): IRREGULAR Voronoi tufts. The v4 cells (one jittered
+                    // centre per square cell) still read as a quilted lattice of round bumps on the v5 metric UVs; here
+                    // every tuft centre is fully jittered and the nearest one wins (3x3 search), so tuft sizes / shapes
+                    // vary like real plush and the partings follow the irregular cell borders (f2 - f1).
+                    tuv += (float2(BWK_ValueNoise(tuv * 0.45 + 3.1), BWK_ValueNoise(tuv * 0.45 + 17.9)) - 0.5) * 0.7;
+                    float2 ip = floor(tuv);
+                    float f1 = 8.0, f2 = 8.0;
+                    tc = ip + 0.5; tcell = ip;
+                    [unroll] for (int vy = -1; vy <= 1; vy++)
+                    {
+                        [unroll] for (int vx = -1; vx <= 1; vx++)
+                        {
+                            float2 cc = ip + float2(vx, vy);
+                            float2 pp = cc + 0.05 + float2(BWK_Hash21(cc + 21.7), BWK_Hash21(cc + 4.3)) * 0.9;
+                            float dd = length(tuv - pp);
+                            if (dd < f1) { f2 = f1; f1 = dd; tc = pp; tcell = cc; }
+                            else if (dd < f2) { f2 = dd; }
+                        }
+                    }
+                    tRnd = BWK_Hash21(tcell + 11.9);
+                    pull = _TuftAmount * h * (0.6 + 0.8 * tRnd);
+                    relSkin = tuv - tc;
+                    rel = relSkin / max(1.0 - pull, 0.2);
+                    // the strand's root (|rel| from the centre) belongs to a neighbour once it crosses the border
+                    float over = f1 * pull / max(1.0 - pull, 0.2) - 0.5 * (f2 - f1);
+                    parting = (_TuftAmount > 0.001 && h > 0.001) ? saturate(1.0 - over * 3.0) : 1.0;
+                }
+                else
+                {
+                    tuv += (float2(BWK_ValueNoise(tuv * 0.37 + 3.1), BWK_ValueNoise(tuv * 0.37 + 17.9)) - 0.5) * 1.3;
+                    tcell = floor(tuv);
+                    tc = tcell + 0.5 + (float2(BWK_Hash21(tcell + 21.7), BWK_Hash21(tcell + 4.3)) - 0.5) * 0.45;
+                    tRnd = BWK_Hash21(tcell + 11.9);
+                    pull = _TuftAmount * h * (0.7 + 0.6 * tRnd);
+                    relSkin = tuv - tc;
+                    rel = relSkin / max(1.0 - pull, 0.2);
+                    float2 rootOff = abs(tc + rel - (tcell + 0.5));          // root outside its own tuft cell -> parting
+                    parting = (_TuftAmount > 0.001 && h > 0.001) ? saturate(1.0 - (length(rootOff) - 0.55) * 2.5) : 1.0;
+                }
                 parting = lerp(1.0, parting, saturate(h * 1.6));           // partings only open toward the tips
                 float2 rootUV = base + (rel - relSkin) / _TuftScale;      // = base on the skin; expands toward the tips
                 float2 suv = rootUV * _Density;
@@ -168,8 +206,10 @@ Shader "BWK/Fur"
                 half3 pawC = lerp(_PawRootColor.rgb, _PawTipColor.rgb, saturate(h * 1.4 + 0.2));
                 half coat = lerp(1.0, i.color.a, _UseVertexTint);
                 half3 col = lerp(pawC, pinkC, coat) * lerp(half3(1, 1, 1), i.color.rgb, _UseVertexTint);
-                col *= lerp(0.86, 1.06, strand);   // low strand contrast: plush, not needles
-                col *= lerp(1.0, lerp(0.92, 1.04, tRnd), saturate(_TuftAmount * 1.6));   // tufts vary a little in tone
+                // low strand contrast: plush, not needles (v5 _StrandContrast 1: reference R2 body Lstd 11.3 vs ours 6.2)
+                col *= lerp(lerp(0.86, 0.74, _StrandContrast), lerp(1.06, 1.12, _StrandContrast), strand);
+                col *= lerp(1.0, lerp(lerp(0.92, 0.86, _StrandContrast), lerp(1.04, 1.07, _StrandContrast), tRnd),
+                            saturate(_TuftAmount * 1.6));   // tufts vary a little in tone
                 half3 light = BWK_WrapLight(i.positionWS, n, _Wrap);
                 half ao = lerp(1.0 - _AO, 1.0, h);
                 half rim = BWK_Fresnel(n, v, _RimPower) * _RimStrength * (0.4 + 0.6 * h);
