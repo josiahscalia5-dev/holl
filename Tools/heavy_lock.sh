@@ -16,7 +16,9 @@ yield() {   # true while a different, live lead run is waiting
   [ -n "$p" ] && kill -0 "$p" 2>/dev/null
 }
 orphan() {  # a Unity / Blender process still running although nobody holds the lock (its shell was killed by a tool timeout)
-  tasklist //FI "IMAGENAME eq Unity.exe" //NH 2>/dev/null | grep -qi "^Unity.exe" && return 0
+  # lead 2026-11-27: only a real Unity EDITOR counts - the Unity CLI MCP server (AppData/Local/Unity/bin/unity.exe mcp) has the
+  # same image name and blocked every heavy run for 40 min
+  powershell.exe -NoProfile -Command 'if (Get-Process -Name Unity -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "*\Editor\Unity.exe" }) { exit 0 } else { exit 1 }' && return 0
   tasklist //FI "IMAGENAME eq blender.exe" //NH 2>/dev/null | grep -qi "^blender.exe" && return 0
   return 1
 }
