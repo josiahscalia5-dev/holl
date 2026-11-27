@@ -90,7 +90,7 @@ def main(out, mdir, bdir, adir, blabel, alabel):
 # show one complete comparison sheet": original reference, new front / side / rear / three-quarter, fur close-up, knitted hat +
 # pom-pom close-up, mascot inside actual Unity gameplay, compared with s2p10e, s2p10f and any newer version; owner 17:45: the
 # ORIGINAL Google Flow crops in Reference/google_flow_pack_1735/ are authoritative).
-#   python -I Tools/mascot_owner_sheet.py --accept OUT.png NEW_DIR ["NEW LABEL"] [BEFORE_MASCOT_DIR] [name=DIR,name=DIR,...]
+#   python -I Tools/mascot_owner_sheet.py --accept OUT.png NEW_DIR ["NEW LABEL"] [BEFORE_MASCOT_DIR] [name=DIR,name=DIR,...] ["BEFORE LABEL"]
 #   NEW_DIR = an AgentPreviewBatch -bwkMascotViews output (mascot/M1..M4 + R2_vs_reference_16x9.png + hero_vs_reference_9x16.png)
 #   BEFORE_MASCOT_DIR default Captures/lead/mascot_before_s2p10g (the s2p10g mascot alone, same cameras)
 #   versions default s2p10e=Captures/compare/build_s2p10e,s2p10f=Captures/compare/build_s2p10f,s2p10g=Captures/compare/build_s2p10g
@@ -181,6 +181,8 @@ def accept_main(argv):
     vers = argv[4] if len(argv) > 4 else ("s2p10e=Captures/compare/build_s2p10e,s2p10f=Captures/compare/build_s2p10f,"
                                           "s2p10g=Captures/compare/build_s2p10g")
     versions = [v.split("=", 1) for v in vers.split(",") if "=" in v]
+    # lead 9e4e986e 2026-11-27 18:50: optional 6th argument = the BEFORE label (pass 10i compares against the s2p10h gate preview)
+    blabel = argv[5] if len(argv) > 5 else "S2P10G"
     names = ["M1_mascot_rear", "M2_mascot_side_right", "M3_mascot_front", "M4_mascot_three_quarter"]
     rows = []
     rows.append(("ORIGINAL GOOGLE FLOW VIDEO (AUTHORITATIVE): REAR 3.00 S || FRONT 4.00 S || ANGLED 7.50 S || ANGLED REAR 0.00 S",
@@ -188,12 +190,12 @@ def accept_main(argv):
                            flow("mascot_angled_rear_00s.png")], 1.0)))
     before = [load_view(bdir, n) for n in names]
     new = [load_view(ndir, n) for n in names]
-    rows.append(("S2P10G (BEFORE), MASCOT ALONE: REAR || SIDE || FRONT || THREE-QUARTER", tile_row([mascot_tile(x) for x in before], 1.0)))
+    rows.append((f"{blabel} (BEFORE), MASCOT ALONE: REAR || SIDE || FRONT || THREE-QUARTER", tile_row([mascot_tile(x) for x in before], 1.0)))
     rows.append((f"{nlabel}, MASCOT ALONE: REAR || SIDE || FRONT || THREE-QUARTER", tile_row([mascot_tile(x) for x in new], 1.0)))
     cb, cn = closeups(before[0], before[2]), closeups(new[0], new[2])
-    rows.append((f"CLOSE-UPS: ORIGINAL FUR + HAT || S2P10G HAT || {nlabel} HAT || S2P10G FUR || {nlabel} FUR",
+    rows.append((f"CLOSE-UPS: ORIGINAL FUR + HAT || {blabel} HAT || {nlabel} HAT || {blabel} FUR || {nlabel} FUR",
                  tile_row([flow("fur_and_hat_03s.png"), cb["hat"], cn["hat"], cb["fur"], cn["fur"]], 1.15)))
-    rows.append((f"FACE: ORIGINAL 4.00 S || S2P10G || {nlabel}",
+    rows.append((f"FACE: ORIGINAL 4.00 S || {blabel} || {nlabel}",
                  tile_row([flow("face_and_paws_04s.png"), cb["face"], cn["face"]], 0.8)))
     box, pbox = (380, 150, 900, 640), (60, 560, 660, 1180)
     r2, pt = [], []

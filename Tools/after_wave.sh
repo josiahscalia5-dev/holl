@@ -49,7 +49,8 @@ if [ "$GATE" = "1" ]; then
   say "GATE (owner 17:35 4H): no full build with a new mascot before the acceptance sheet - no-save preview instead"
   bash Tools/unity_run.sh BubbleWash.EditorTools.CaptureTools.AgentPreviewBatch "lead_gate_${TAG}" -bwkOut "Captures/lead/gate_${TAG}" -bwkMascotViews >> "$LOG" 2>&1
   say "gate preview exit=$? (Captures/lead/gate_${TAG}/)"
-  "$PY" -I Tools/mascot_owner_sheet.py --accept "Captures/sections/OWNER_S2_mascot_accept_${TAG}.png" "Captures/lead/gate_${TAG}" "NEW ${TAG}" >> "$LOG" 2>&1
+  # lead 9e4e986e 18:55: GATE_BEFORE / GATE_VERSIONS / GATE_BLABEL = the newest baseline (e.g. the s2p10h gate preview) instead of s2p10g
+  "$PY" -I Tools/mascot_owner_sheet.py --accept "Captures/sections/OWNER_S2_mascot_accept_${TAG}.png" "Captures/lead/gate_${TAG}" "NEW ${TAG}" \n    "${GATE_BEFORE:-Captures/lead/mascot_before_s2p10g}" \n    "${GATE_VERSIONS:-s2p10e=Captures/compare/build_s2p10e,s2p10f=Captures/compare/build_s2p10f,s2p10g=Captures/compare/build_s2p10g}" \n    "${GATE_BLABEL:-S2P10G}" >> "$LOG" 2>&1
   say "gate sheet Captures/sections/OWNER_S2_mascot_accept_${TAG}.png - LEAD: review it, show the owner, then Tools/safe_build.sh lead_${TAG} (or revert)"
   say "after_wave ${TAG} done (gated, no build)"
   exit 0
