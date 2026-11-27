@@ -66,6 +66,11 @@ of one enormous magical washing machine. These instructions come only from the o
   autosave with verified pushes, no force-push / history rewrite, chat history and recovery notes LOCAL only.
 
 ## Current handoff (read first)
+- 2026-11-27 16:45 (session 15a68124 = LEAD, new account, opened in C:/Users/josia/thanksgiving): pass 10f was CUT at ~16:28 (session
+  ee862596 ended); lead reset the unreviewed p4 splash-crown placement (it covered the mascot), after_wave s2p10f is building
+  lead_s2p10f (16:40); PASS 10g = resume of character + water, run wf_08237afa-aba (Tools/workflows/bwk-s2-pass10g.js), after_wave
+  s2p10g armed. Lead next: owner sheet s2p10e | s2p10f, then tunnel step 2b redo (darker walls). Newest state block: top of
+  `Captures/handoff/NEXT_ACCOUNT_START.md`.
 - 2026-11-27 16:15 (session ee862596 = acting lead, opened in C:/Users/josia/thanksgiving): PASS 10f RUNNING = character (thick plush
   fur, knitted hat) + water (flowing water, translucent splashes), run wf_9d38984b-cfb (Tools/workflows/bwk-s2-pass10f.js), with
   after_wave s2p10f armed (automatic full build lead_s2p10f + stills + Play Mode when the wave ends). Tunnel step 2 kept (denser gold

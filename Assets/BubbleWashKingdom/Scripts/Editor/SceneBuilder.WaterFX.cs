@@ -932,8 +932,12 @@ namespace BubbleWash.EditorTools
         // (p3 +0.17 out: the inner finger of the right spray still leaned over his right half (it stood 0.44 m behind him, in
         // FRONT of his back) and the right spray read too wide, R2 x 680-1020 vs ref 740-960 -> p4 narrower, closer to his
         // back so the inner fingers tuck behind the body, a small outward step)
-        const float CrownV6Drop = -0.1f, CrownV6Back = -0.36f, CrownV6Lean = -8f, CrownV6ScaleX = 0.85f, CrownV6ScaleY = 1.3f, CrownV6ScaleZ = 1.2f;
-        const float CrownV6Out = 0.08f;
+        // (p4 -0.1 / -0.36 / -8 / 0.85 x 1.3 x 1.2, out .08: the sprays stood IN FRONT of his back and covered the whole body like a
+        // white cup = regression, never reviewed - the pass 10f water agent was cut at 16:28)
+        // LEAD 16:38 (pass 10f cut off): back to the reviewed s2p10e frame (identity = V6 crowns beside him, not over him) for the
+        // lead_s2p10f build; pass 10g water redoes "rise out of the water at both feet" with the crowns OUTSIDE the body silhouette.
+        const float CrownV6Drop = 0f, CrownV6Back = 0f, CrownV6Lean = 0f, CrownV6ScaleX = 1f, CrownV6ScaleY = 1f, CrownV6ScaleZ = 1f;
+        const float CrownV6Out = 0f;
 
         static void BuildCrowns(GameObject fxRoot, RunnerController runner, bool save, Vector3 rootL, Vector3 rootR)
         {
