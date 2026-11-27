@@ -107,10 +107,10 @@ namespace BubbleWash.EditorTools
             // measured hot 19.5 % vs ref 10.6, the cream centre clipped to a white-yellow disc): rays / cream weaker and more
             // golden; the gold + pink STARS of the reference burst come from new filled-star cards (M_DestStar*, placed by
             // SceneBuilder.TunePortalDestination inside the bulb ring)
-            DestGlow("M_DestRays", "#FFAE30", 2.3f, 1.1f, -9);     // golden-yellow rays fading toward the ring (p5: 2.6 #FFBE45)
+            DestGlow("M_DestRays", "#FFAA2A", 2.0f, 1.1f, -9);     // golden-yellow rays fading toward the ring (p5: 2.6 #FFBE45)
             // p1 (18:06): the multiply halo left a dark brown hole inside the ray roots (r < .44 m has no rays) -> p2 stronger,
             // broader cream centre (peak ~ (3.4, 2.2, .8) linear: tonemaps cream #f3e4ac-ish, B stays low = never white)
-            DestGlow("M_DestCream", "#FFC870", 2.2f, 1.25f, -8);   // cream centre (p5: 3.4 #FFD487 -> clipped white under the grade)
+            DestGlow("M_DestCream", "#FFC060", 1.3f, 1.4f, -8);   // v2: v1 2.2 still a white-yellow sun (portal hot 17.5 % vs ref 10.6)   // cream centre (p5: 3.4 #FFD487 -> clipped white under the grade)
             DestGlow("M_DestSparkle", "#FFBA3E", 2.0f, 1.3f, -7);  // small golden 4-point sparkles
             void DestStar(string name, string hex, float strength) => Mat(name, "BWK/LightBlob", m =>
             {
@@ -118,22 +118,24 @@ namespace BubbleWash.EditorTools
                 F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
                 F(m, "_NearFade", 0f); F(m, "_Shape", 2f); F(m, "_StarR", 0.62f); F(m, "_StarInner", 0.46f); F(m, "_StarGlowW", 0.09f);
             }, (int)RenderQueue.Transparent - 6);
-            DestStar("M_DestStarGold", "#FFA228", 1.7f);   // filled golden stars (reference f_14.25s: gold stars all over the burst)
+            DestStar("M_DestStarGold", "#FF9A14", 2.1f);   // v2: v1 #FFA228 x1.7 vanished in the rays   // filled golden stars (reference f_14.25s: gold stars all over the burst)
             DestStar("M_DestStarPink", "#FF3C9C", 1.5f);   // a few pink stars
             // Neon tubes (reference: thick tubes with PALE hot cores - yellow #fbe496, cyan #78eaf5 - inside saturated colour
             // edges and soft tinted halos): saturated edge hue, tinted core across most of the tube face (broad _CorePower),
             // moderate intensity so the tonemapper keeps the colour and the bloom carries the hue.
             EmissiveLook("M_Neon", "#00D8FF", 2.8f, core: 0.65f, corePower: 1.6f, halo: 0.5f, edgeSat: 0.6f, fog: 0.1f, pulse: 0.05f,
                 coreColor: "#70FFFF", probeDim: 0.45f);
-            EmissiveLook("M_Neon_Cyan", "#00D8FF", 2.8f, core: 0.45f, corePower: 1.6f, halo: 0.5f, edgeSat: 0.6f, fog: 0.1f, pulse: 0.05f,
+            EmissiveLook("M_Neon_Cyan", "#00D8FF", 2.2f, core: 0.45f, corePower: 1.6f, halo: 0.5f, edgeSat: 0.6f, fog: 0.1f, pulse: 0.05f,
                 coreColor: "#70FFFF", probeDim: 0.45f);   // S2 p3 v3: core .65 -> .45 (door cyan stars read white, cyan coverage .21 % vs ref 1.71)
-            EmissiveLook("M_Neon_Pink", "#FF2E9E", 3.0f, core: 0.5f, corePower: 1.6f, halo: 0.5f, edgeSat: 0.6f, fog: 0.1f, pulse: 0.05f,
+            EmissiveLook("M_Neon_Pink", "#FF2E9E", 2.4f, core: 0.5f, corePower: 1.6f, halo: 0.5f, edgeSat: 0.6f, fog: 0.1f, pulse: 0.05f,
                 coreColor: "#FFB0E0", probeDim: 0.45f);
-            EmissiveLook("M_Neon_Yellow", "#FF9C00", 3.2f, core: 0.8f, corePower: 1.6f, halo: 0.5f, edgeSat: 0.6f, fog: 0.1f, pulse: 0.05f,
+            EmissiveLook("M_Neon_Yellow", "#FF9C00", 2.3f, core: 0.62f, corePower: 1.6f, halo: 0.5f, edgeSat: 0.6f, fog: 0.1f, pulse: 0.05f,
                 coreColor: "#FFF0A0", probeDim: 0.45f);
-            EmissiveLook("M_Neon_Purple", "#B040FF", 2.9f, core: 0.55f, corePower: 1.6f, halo: 0.5f, edgeSat: 0.6f, fog: 0.1f, pulse: 0.05f,
+            EmissiveLook("M_Neon_Purple", "#B040FF", 2.3f, core: 0.55f, corePower: 1.6f, halo: 0.5f, edgeSat: 0.6f, fog: 0.1f, pulse: 0.05f,
                 coreColor: "#E8C8FF", probeDim: 0.45f);
 
+            // Screen ALL pass 5 v2: tube intensities -20..-28 % (cyan 2.8, pink 3.0, yellow 3.2 / core .8, purple 2.9 before): under the
+            // approved bloom (1.93 / scatter .82) the hot tubes flooded the inside of every near star = the judged "filled" look
             // soft coloured glow cards behind every neon star (additive BWK/LightBlob): the star's light spilling over the wall
             // (reference: the big yellow star is filled with a warm ORANGE glow, the cyan one with a soft cyan haze)
             // round 3: less yellow glare (owner sheet 01), a little more soft cyan / pink spill on the wall (lead audit)
@@ -196,7 +198,7 @@ namespace BubbleWash.EditorTools
                 // .625 of the card half = SM_NeonStarTube r .5 on a 1.6x card and SM_NeonStarTube_v2 r 1.0 on its 3.2x card),
                 // dark wall inside with a faint spill. Peak at the tube = strength -> ~0.55x the old centre value.
                 F(m, "_Shape", 1f); F(m, "_StarR", 0.625f); F(m, "_StarInner", 0.45f); F(m, "_StarTube", 0.045f);
-                F(m, "_StarGlowW", 0.055f); F(m, "_StarFill", 0.08f); F(m, "_Strength", strength * 0.6f);
+                F(m, "_StarGlowW", 0.05f); F(m, "_StarFill", 0.03f); F(m, "_Strength", strength * 0.6f);   // v2: tighter, emptier inside
             }, (int)RenderQueue.Transparent - 10);
         }
 

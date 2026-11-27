@@ -825,7 +825,7 @@ namespace BubbleWash.EditorTools
                         float rad = Mathf.Lerp(0.95f, 3.0f, Mathf.Sqrt(t));
                         float ang = (i * 137.508f + (float)rnd.NextDouble() * 20f) * Mathf.Deg2Rad;
                         bool isPink = i % 6 == 3;
-                        float size = isPink ? Mathf.Lerp(0.40f, 0.62f, (float)rnd.NextDouble()) : Mathf.Lerp(0.28f, 0.60f, (float)rnd.NextDouble());
+                        float size = isPink ? Mathf.Lerp(0.80f, 1.15f, (float)rnd.NextDouble()) : Mathf.Lerp(0.60f, 1.25f, (float)rnd.NextDouble());   // v2: x2 (v1 12-27 px stars)
                         var go = new GameObject($"DestStar_{i:00}");
                         go.transform.SetParent(starRoot, false);
                         go.transform.localPosition = new Vector3(Mathf.Cos(ang) * rad, Mathf.Sin(ang) * rad, 1.0f - 0.01f * i);

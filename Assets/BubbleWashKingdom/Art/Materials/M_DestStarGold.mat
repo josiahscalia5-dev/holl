@@ -38,8 +38,8 @@ Material:
     - _StarInner: 0.46
     - _StarR: 0.62
     - _StarTube: 0.05
-    - _Strength: 1.7
+    - _Strength: 2.1
     m_Colors:
-    - _Color: {r: 1, g: 0.63529414, b: 0.15686275, a: 1}
+    - _Color: {r: 1, g: 0.6039216, b: 0.078431375, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

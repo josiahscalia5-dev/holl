@@ -33,8 +33,8 @@ Material:
     - _Shape: 1
     - _Softness: 1
     - _SrcBlend: 1
-    - _StarFill: 0.08
-    - _StarGlowW: 0.055
+    - _StarFill: 0.03
+    - _StarGlowW: 0.05
     - _StarInner: 0.45
     - _StarR: 0.625
     - _StarTube: 0.045

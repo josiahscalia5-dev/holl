@@ -25,7 +25,7 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Core: 1.25
+    - _Core: 1.4
     - _DstBlend: 1
     - _FarFade: 0
     - _Mode: 1
@@ -38,8 +38,8 @@ Material:
     - _StarInner: 0.45
     - _StarR: 0.625
     - _StarTube: 0.05
-    - _Strength: 2.2
+    - _Strength: 1.3
     m_Colors:
-    - _Color: {r: 1, g: 0.78431374, b: 0.4392157, a: 1}
+    - _Color: {r: 1, g: 0.7529412, b: 0.3764706, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

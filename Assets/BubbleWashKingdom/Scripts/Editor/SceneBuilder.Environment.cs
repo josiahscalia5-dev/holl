@@ -356,8 +356,12 @@ namespace BubbleWash.EditorTools
                 // pair spans A - 2.52 (hinge) .. B + 2.52 (hinge) inside the 12.75 m ring gap
                 float offB = 8.67f, offA = 8.67f - DoorWedgeSpacing;
                 if (Mathf.Abs(g - 173.5f) < 0.2f) { offB = 9.23f; offA = offB - DoorWedgeSpacing; }        // R4 (192.6 m cam)
-                else if (Mathf.Abs(g - 211.75f) < 0.2f) { offB = 2.05f; offA = offB + 6.2f; }             // R5 (222.6 m cam), concave
-                else if (Mathf.Abs(g - 262.75f) < 0.2f) { offB = 9.23f; offA = offB - DoorWedgeSpacing; }  // R6 (282.6 m cam)
+                // pass 5 (gap #3/#4): the R5 gap keeps only its REAR door A (220.0 m, 07_chambers); its front door B (213.8 m)
+                // sat at the R5 frame edge (centre x ~100, cut) where the ref has the pink column -> the R5 porthole is now the
+                // previous gap's B moved downstream to 209.2 m (ref f_08.25s: column x 0-120, porthole centre x ~235)
+                else if (Mathf.Abs(g - 211.75f) < 0.2f) { offB = float.NaN; offA = 8.25f; }               // R5 (222.6 m cam)
+                else if (Mathf.Abs(g - 199f) < 0.2f) { offB = 10.2f; offA = 8.67f - DoorWedgeSpacing; }    // R5 porthole B 209.2 m
+                else if (Mathf.Abs(g - 262.75f) < 0.2f) { offB = 7.73f; offA = offB - DoorWedgeSpacing; }  // R6 (282.6 m cam); pass 5: 9.23 -> 7.73 (porthole less cut by the frame edge, room for the cyan pipe in front)
                 list.Add((g + offB, g + offA, 1));
                 bool leftWall = g >= 236f && g < 300f && !(g > 260f && g < 280f);   // S6 both walls, not in the R6 frame
                 if (leftWall) list.Add((g + 8.67f, g + 8.67f - DoorWedgeSpacing, -1));
@@ -400,7 +404,7 @@ namespace BubbleWash.EditorTools
         }
 
         /// <summary>Front-facing chamber doors (track distance, side): anchors for the pink risers.</summary>
-        static List<(float d, int side)> ChamberWindows() => ChamberDoors().Select(c => (c.dB, c.side)).ToList();
+        static List<(float d, int side)> ChamberWindows() => ChamberDoors().Where(c => !float.IsNaN(c.dB)).Select(c => (c.dB, c.side)).ToList();
 
         /// <summary>True when p lies inside the fixed hero camera's (16:9-wide) frustum closer than maxDepth: the hero frame
         /// (S2) keeps its designed layout, so round-7 dressing skips those spots.</summary>
@@ -452,11 +456,18 @@ namespace BubbleWash.EditorTools
                     float s = WindowScale * (front ? FrontDoorScale : 1f);
                     go.transform.localScale = new Vector3(mirror ? -s : s, s, s);
                     nd++;
+                    if (front)
+                        foreach (float rc in new[] { 190f, 220f, 280f })
+                        {
+                            var vp = HallViewport(RFrontCam(rc), pos);
+                            if (vp.z > 0.5f && vp.z < 16f && vp.x > -0.3f && vp.x < 0.6f)
+                                Debug.Log($"[BWK] pass-5 front door {d:F2} m in R cam {rc:F0}: centre px ({vp.x * 1280f:F0},{vp.y * 720f:F0}) depth {vp.z:F1} m");
+                        }
                 }
                 foreach (var (dB, dA, side) in ChamberDoors())
                 {
                     PlaceDoor(dA, side, -1);
-                    PlaceDoor(dB, side, 1);
+                    if (!float.IsNaN(dB)) PlaceDoor(dB, side, 1);
                 }
                 Debug.Log($"[BWK] pass-4 master door pairs: {nd} PF_WashDoor_Master (rear + front facing) between {ChamberStart} and {ChamberEnd} m");
                 BuildTunnelStarsV2(env);
@@ -805,7 +816,7 @@ namespace BubbleWash.EditorTools
                 var c6 = RFrontCam(280f);
                 const float latC = 3.95f, baseC = 0.9f, sC = 0.8f;
                 float topH = baseC + 2.6f * sC;
-                float dc = ShotMatchDistance(c6, 274.4f, 283f, latC, topH, 0.07f);
+                float dc = ShotMatchDistance(c6, 273.2f, 283f, latC, topH, 0.07f);   // door B (pass 5: 270.48 m) spans ~268.4-272.6
                 var f = track.Evaluate(dc);
                 var go = Spawn(curve);
                 go.name = $"CyanPipeCurve_R6_{dc:000.0}";
@@ -823,7 +834,7 @@ namespace BubbleWash.EditorTools
                     r.sharedMaterials = ms;
                 }
                 var vp = HallViewport(c6, f.FlatPoint(latC, topH));
-                var ve = HallViewport(c6, go.transform.TransformPoint(new Vector3(1.7f, 0.12f, 3.3f)));
+                var ve = HallViewport(c6, go.transform.TransformPoint(new Vector3(1.7f, 0.12f, -3.3f)));
                 Debug.Log($"[BWK] pass-5 R6 cyan curve pipe at {dc:F2} m: top px ({vp.x * 1280f:F0},{vp.y * 720f:F0}) depth {vp.z:F1} m, end px ({ve.x * 1280f:F0},{ve.y * 720f:F0})");
             }
             var glass = ModelParts("Track", "SM_GlassPipe_Module");

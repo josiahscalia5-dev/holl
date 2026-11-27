@@ -97,7 +97,7 @@ Shader "BWK/LightBlob"
                     if (_Shape < 1.5)
                     {
                         float ad = max(abs(d) - _StarTube, 0.0);
-                        a = 0.7 * exp(-ad / _StarGlowW) + 0.3 * exp(-ad / (_StarGlowW * 3.0));
+                        a = 0.8 * exp(-ad / _StarGlowW) + 0.2 * exp(-ad / (_StarGlowW * 2.0));   // v2: shorter tail (inside stays dark)
                         a += _StarFill * step(d, 0.0) * saturate(-d / (_StarGlowW * 2.0) + 0.3);
                     }
                     else

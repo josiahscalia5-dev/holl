@@ -1,6 +1,16 @@
 # Bubble Wash Kingdom - lead handoff (2026-11-26 12:30, lead session cd43a82d on the third Pro account)
 
-## STATUS 22:35 (lead 8670dda0, eighth account) - exact resume point (private details: Captures/handoff/NEXT_ACCOUNT_START.md)
+## STATUS 2026-11-27 06:00 (lead 8670dda0) - exact resume point (private details: Captures/handoff/NEXT_ACCOUNT_START.md)
+- Owner direction: ONE SCREEN AT A TIME. Target = S2 (video 3.00 s, golden tunnel entrance, rear view at the door), aim
+  as close to 9/10 as possible; honest status 5.5 / 10 with mascot, 6 / 10 scenery only; 9/10 not realistic without
+  rebuilding the hero assets (door hatch + marquee ring set, splash crowns, foam, mascot pom-pom / hat / arms / soles).
+- The S2 comparison camera is correct (fits the door ring and the mascot); the remaining composition gap is geometry: the
+  video tunnel bends right just inside the door, ours is straight.
+- Running (untouched): whole-level pass 5 (metal + assets, started before the new direction). Next: lead tunnel bend +
+  close coin for S2 -> S2-only pass 6 (door ring set, crowns, foam, water, bubbles) -> S2-only pass 7 (stars, walls,
+  mascot) -> one S2 judge. Checkpoint-26-grade is the newest tag; the colour grade is reversible (VideoLookGrade).
+
+## STATUS 22:35 (lead 8670dda0, eighth account)
 - Newest checkpoint: checkpoint-25-p4 (whole-level masters pass 4 + wider portrait camera 3.1/1.45/7/70). Independent
   judges: whole game 4.1 -> 4.4 with mascot, 4.5 -> 4.7 scenery only (table in Docs/VideoCoverageChecklist.md); Play Mode
   passed. Grade + glow preview rendered in Unity (not applied; owner decides).
