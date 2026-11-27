@@ -31,15 +31,14 @@ namespace BubbleWash.EditorTools
                 // specular streaks along the flow"; s2p9a corners: pink 28 / 26 % vs ref 34 / 55, highlights 4.5 / 2.8 vs
                 // 8.3 / 9.5): hotter pink outer bands, a slightly narrower-reading golden-orange stripe, ~1.6x racing white
                 // streaks + stronger clear-coat / fresnel sheen so the sharp highlights run along the flow
-                // pass 10 resume (preview v4 bottom-right: the bank face next to the water rendered as a wide PALE LAVENDER
-                // band = the grazing-angle mirror of the violet drum, corner pink 10.8 % vs ref 45.1; judge: streaks 2.3 ->
-                // ~1.8): less grazing mirror (smoothness .985 -> .9, clear coat 1.6 -> .8) so the candy pink keeps its colour,
-                // a touch more colour-true glow, streaks 1.8 keep the white highlights along the flow
+                // pass 10 resume (judge: streaks 2.3 -> ~1.8). Tried in preview v5: smoothness .9 / clear coat .8 / glow .33
+                // against the pale lavender band beside the water (bottom-right pink 10.8 % vs ref 45.1) -> WORSE (3.8 %, the
+                // band only turned greyer) = reverted; that band needs a closer look at which surface it is (NOTES.md)
                 F(m, "_Mode", 1); C(m, "_ColorA", "#FF4F96"); C(m, "_ColorB", "#FFB23A"); C(m, "_ColorC", "#F21E8C");
-                F(m, "_Smoothness", 0.9f); F(m, "_Metallic", 0f); F(m, "_Glow", 0.33f);
+                F(m, "_Smoothness", 0.985f); F(m, "_Metallic", 0f); F(m, "_Glow", 0.29f);
                 F(m, "_RimPower", 2.6f); F(m, "_RimStrength", 0.55f);
                 F(m, "_StreakAmount", 1.8f); F(m, "_StreakSpeed", 7f);       // racing rainbow reflections (pink / yellow / cyan)
-                F(m, "_ReflectBoost", 0.8f);                                   // clear-coat probe reflection (baked probes)
+                F(m, "_ReflectBoost", 1.6f);                                   // clear-coat probe reflection (baked probes)
             });
             Mat("M_RailTube_r8", "BWK/Soft", m =>
             {
@@ -196,10 +195,13 @@ namespace BubbleWash.EditorTools
                 // crop 02 = long separate locks with a ragged DROOPING lower edge): thicker strands (density 34 -> 24), longer
                 // (.42 -> .52 m), gravity droop .14 m, irregular Voronoi locks (_PlushMode 1, bigger tufts 7 -> 5 / .85) and
                 // extra strand / lock contrast so individual locks read at 6 m
-                F(m, "_Density", 24f); F(m, "_FurLength", 0.52f); F(m, "_Gravity", 0.14f); F(m, "_Thinning", 0.5f);
-                F(m, "_ClumpAmount", 0.8f); F(m, "_ClumpScale", 3f); F(m, "_AO", 0.45f); F(m, "_Curl", 0.6f);
-                F(m, "_Underfur", 1.0f); F(m, "_EdgeSoft", 0.22f); F(m, "_SilhouetteFade", 0.1f);
-                F(m, "_TuftScale", 5f); F(m, "_TuftAmount", 0.85f); F(m, "_PlushMode", 1f); F(m, "_StrandContrast", 0.7f);
+                // v6 (preview v5: pink 64 %, still a smooth velvet ball - the v5 locks were too small to read at 6 m):
+                // much coarser strands (24 -> 14), big ~.3 m locks (tufts 5 -> 3, .9) with darker partings (AO .6, full
+                // strand contrast), longer drooping fur (.62 m, gravity .2)
+                F(m, "_Density", 14f); F(m, "_FurLength", 0.62f); F(m, "_Gravity", 0.2f); F(m, "_Thinning", 0.55f);
+                F(m, "_ClumpAmount", 0.85f); F(m, "_ClumpScale", 2.5f); F(m, "_AO", 0.6f); F(m, "_Curl", 0.6f);
+                F(m, "_Underfur", 0.85f); F(m, "_EdgeSoft", 0.2f); F(m, "_SilhouetteFade", 0.08f);
+                F(m, "_TuftScale", 3f); F(m, "_TuftAmount", 0.9f); F(m, "_PlushMode", 1f); F(m, "_StrandContrast", 1f);
                 F(m, "_Wrap", 0.65f); C(m, "_RimColor", "#FFF0F6"); F(m, "_RimPower", 2.2f); F(m, "_RimStrength", 0.35f);
                 F(m, "_Glow", 0.6f);
             }, (int)RenderQueue.AlphaTest);

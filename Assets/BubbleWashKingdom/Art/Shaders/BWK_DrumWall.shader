@@ -162,6 +162,8 @@ Shader "BWK/DrumWall"
         [HDR] _DoorRampCeil ("Door ramp: body on the ceiling bays (blue)", Color) = (0.20, 0.12, 0.54, 1)
         _DoorRampCeilAmount ("Door ramp: ceiling body amount (0 = off)", Range(0, 1)) = 0
         _DoorThinSlots ("Door drum: keep thin far slot rows visible (0 = old 1.5 px fade)", Range(0, 1)) = 0
+        _DoorRampDeepBlue ("Door ramp: deeper drum body -> the cobalt ceiling body (by camera distance, _DoorRampNear.._DoorRampFarDist)", Range(0, 1)) = 0
+        _DoorBaySheen ("Door drum: bay sheen multiplier (glossy blue band on the ceiling bays)", Float) = 1
     }
     SubShader
     {
@@ -210,7 +212,7 @@ Shader "BWK/DrumWall"
             half4 _DoorRampDark, _DoorRampMid, _DoorRampHigh;
             float _DoorRampScale, _DoorRampNear, _DoorRampFarDist, _DoorRampCap;
             half4 _DoorRampCeil;
-            half _DoorRampCeilAmount, _DoorThinSlots;
+            half _DoorRampCeilAmount, _DoorThinSlots, _DoorRampDeepBlue, _DoorBaySheen;
         CBUFFER_END
 
         // Screen S2 pass 7: weight of the S2 door-drum grade at a distance along the tunnel (1 at the door, 0 beyond
@@ -518,7 +520,9 @@ Shader "BWK/DrumWall"
                 {
                     float bx = (secLocal - secLen * _BaySheenPos) / max(secLen * _BaySheenWidth, 0.05);
                     half topW = smoothstep(_CeilingWidth, 0.0, around);
-                    emission += _BaySheenColor.rgb * _BaySheen * exp(-bx * bx) * topW * (1.0 - hole);
+                    // v8: the door drum's ceiling bays carry a brighter glossy blue band (reference: light cyan-blue sheen
+                    // band between the dark slot rows); S3+ unchanged (doorW 0)
+                    emission += _BaySheenColor.rgb * _BaySheen * lerp(1.0, _DoorBaySheen, doorW) * exp(-bx * bx) * topW * (1.0 - hole);
                 }
                 // a few holes lit from behind (light leaking through the drum)
                 half flicker = 0.8 + 0.2 * sin(_Time.y * 2.3 + m.x * 1.7 + m.y * 0.9);
@@ -559,10 +563,14 @@ Shader "BWK/DrumWall"
                 if (_DoorRampAmount > 0.001)
                 {
                     half lumL = dot(lit.rgb, half3(0.2126, 0.7152, 0.0722));
-                    half deepK = lerp(1.0, _DoorRampFar, smoothstep(_DoorRampNear, _DoorRampFarDist, camDist));
+                    half deepS = smoothstep(_DoorRampNear, _DoorRampFarDist, camDist);
+                    half deepK = lerp(1.0, _DoorRampFar, deepS);
                     half x = min((1.0 - exp(-lumL * _DoorRampScale)) * deepK, _DoorRampCap);   // v5: cap
                     // v6: cobalt-blue body on the ceiling bays, violet on the side walls (reference inner drum)
                     half3 midC = lerp(_DoorRampMid.rgb, _DoorRampCeil.rgb, _DoorRampCeilAmount * smoothstep(_CeilingWidth, 0.0, around));
+                    // v8: reference - inside the first gold bulb ring the whole drum turns cobalt blue (dark dash rows on a
+                    // medium-bright blue body, not a dark indigo one)
+                    midC = lerp(midC, _DoorRampCeil.rgb, _DoorRampDeepBlue * deepS);
                     half3 rampC = x < 0.5 ? lerp(_DoorRampDark.rgb, midC, x * 2.0)
                                           : lerp(midC, _DoorRampHigh.rgb, x * 2.0 - 1.0);
                     lit.rgb = lerp(lit.rgb, rampC, _DoorRampAmount * doorW * (1.0 - hole));

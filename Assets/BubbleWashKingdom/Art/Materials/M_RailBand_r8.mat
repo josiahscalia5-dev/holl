@@ -32,7 +32,7 @@ Material:
     - _DstBlend: 0
     - _FormShade: 0
     - _GlintAmount: 0.5
-    - _Glow: 0.33
+    - _Glow: 0.29
     - _HotBoost: 0.6
     - _HotFar: 3.5
     - _HotNear: 3
@@ -42,10 +42,10 @@ Material:
     - _MilkGlass: 0
     - _MilkSoft: 0
     - _Mode: 1
-    - _ReflectBoost: 0.8
+    - _ReflectBoost: 1.6
     - _RimPower: 2.6
     - _RimStrength: 0.55
-    - _Smoothness: 0.9
+    - _Smoothness: 0.985
     - _SpecStrength: 1
     - _SrcBlend: 1
     - _StitchU: 64

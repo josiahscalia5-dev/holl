@@ -29,26 +29,26 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AO: 0.45
-    - _ClumpAmount: 0.8
-    - _ClumpScale: 3
+    - _AO: 0.6
+    - _ClumpAmount: 0.85
+    - _ClumpScale: 2.5
     - _Curl: 0.6
-    - _Density: 24
-    - _EdgeSoft: 0.22
-    - _FurLength: 0.52
+    - _Density: 14
+    - _EdgeSoft: 0.2
+    - _FurLength: 0.62
     - _Glow: 0.6
-    - _Gravity: 0.14
+    - _Gravity: 0.2
     - _PawGlow: 0
     - _PlushMode: 1
     - _RimPower: 2.2
     - _RimStrength: 0.35
-    - _SilhouetteFade: 0.1
+    - _SilhouetteFade: 0.08
     - _StaticMode: 0
-    - _StrandContrast: 0.7
-    - _Thinning: 0.5
-    - _TuftAmount: 0.85
-    - _TuftScale: 5
-    - _Underfur: 1
+    - _StrandContrast: 1
+    - _Thinning: 0.55
+    - _TuftAmount: 0.9
+    - _TuftScale: 3
+    - _Underfur: 0.85
     - _UseVertexTint: 1
     - _Wrap: 0.65
     m_Colors:

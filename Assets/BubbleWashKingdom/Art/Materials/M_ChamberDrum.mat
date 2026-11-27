@@ -44,6 +44,7 @@ Material:
     - _DepthTintEnd: 16
     - _DepthTintStart: 9
     - _DoorAmount: 0
+    - _DoorBaySheen: 1
     - _DoorDeepFar: 30
     - _DoorDeepNear: 14
     - _DoorDesat: 0.5
@@ -54,6 +55,7 @@ Material:
     - _DoorRampAmount: 0
     - _DoorRampCap: 1
     - _DoorRampCeilAmount: 0
+    - _DoorRampDeepBlue: 0
     - _DoorRampFar: 1
     - _DoorRampFarDist: 40
     - _DoorRampNear: 12

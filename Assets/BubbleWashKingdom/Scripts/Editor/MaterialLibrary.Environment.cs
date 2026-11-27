@@ -197,6 +197,11 @@ namespace BubbleWash.EditorTools
                 m.SetColor("_DoorRampHigh", new Color(0.78f, 0.58f, 0.95f));
                 m.SetColor("_DoorRampDark", new Color(0.10f, 0.07f, 0.42f));
                 F(m, "_DoorSlotFar", 1.1f);
+                // v8: v7 fixed the pale arc (portrait ceiling L 89 chroma 91, R2 ceiling 125/98/180 vs ref 112/88/180) but inside
+                // the first gold bulb ring the reference drum is COBALT blue with dark dash rows and light cyan-blue gloss bands;
+                // ours lilac-indigo, too dark for the slot rows to read -> deeper body slides to the cobalt body, less deep
+                // darkening (x .5 -> .8 = slot contrast), brighter glossy blue bay band in the door drum only
+                F(m, "_DoorRampDeepBlue", 0.85f); F(m, "_DoorRampFar", 0.8f); F(m, "_DoorBaySheen", 2.5f);
             });
             // polished lavender drum lips between the gold rings (SM_DrumRim, m1: fat rolled lip): the stylised BWK/Gold
             // environment shading with a lavender palette - violet body, magenta-pink fresnel edge, soft pink-lavender

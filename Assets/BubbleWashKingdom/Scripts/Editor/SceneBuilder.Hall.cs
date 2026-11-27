@@ -475,6 +475,20 @@ namespace BubbleWash.EditorTools
                 if (mwall != null)
                 {
                     HallOwnMaterials(mwall);
+                    // v5 preview: still invisible after the move. The FBX child is named "MachineWall_LOD0", so the model
+                    // importer adds an automatic LODGroup with ONLY that level and its default cull height; the slab covers
+                    // < ~30 % of the R2 frame height and was culled. One explicit level, culled only below 1 %.
+                    var wlg = mwall.GetComponent<LODGroup>();
+                    if (wlg != null)
+                    {
+                        wlg.SetLODs(new[] { new LOD(0.01f, mwall.GetComponentsInChildren<Renderer>()) });
+                        wlg.RecalculateBounds();
+                    }
+                    var wb = new Bounds(wp, Vector3.zero);
+                    int wr = 0;
+                    foreach (var r in mwall.GetComponentsInChildren<Renderer>()) { wb.Encapsulate(r.bounds); wr++; }
+                    Debug.Log($"[BWK] hall S2 machine wall p10 v6: LODGroup {(wlg != null ? "overridden" : "none")}, {wr} renderers, " +
+                              $"bounds {wb.size}, mouth-plane gap {Vector3.Dot(wPt - wp, wn):F2} m, from R2 {Vector3.Distance(r2.pos, wp):F1} m");
                     Debug.Log($"[BWK] hall S2 machine wall p10: centre {wp}, scale {wScale:F2}");
                 }
             }
