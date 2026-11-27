@@ -309,6 +309,19 @@ namespace BubbleWash
         public float clearance = 0.01f;
         [Tooltip("If no raise clears the hat, the shoulder may slide outward up to this fraction of the cuff radius.")]
         public float maxShoulderOut = 0.15f;
+        // pass 9 prev2: a straight arm only reached 14-16 deg (the elbow sits under the cuff overhang), so the mitts stayed
+        // level with the brim's lower edge. The reference (01 / crop 23b) raises the stubby forearm + mitt up-outward beside
+        // the brim: the elbow goes out past the cuff, the forearm rises steeply.
+        [Tooltip("Highest forearm / mitt elevation above horizontal (deg) the two-joint search may use.")]
+        public float forearmTopDeg = 52f;
+        [Tooltip("Largest elbow bend (forearm minus upper-arm elevation, deg).")]
+        public float maxBendDeg = 40f;
+        [Tooltip("Target mitt-centre height above the brim's lower edge, as a fraction of the cuff height.")]
+        public float mittHeightFrac = 0.5f;
+        [Tooltip("Score cost per degree of elbow bend (m of mitt height): prefers the straightest arm that reaches the target.")]
+        public float bendCost = 0.0005f;
+        [Tooltip("Keep the previous arm solve while it is clear and within this score (m) of the best: no flicker.")]
+        public float hysteresis = 0.012f;
     }
 
     /// <summary>
@@ -329,6 +342,9 @@ namespace BubbleWash
         Vector3[] cuffLocal, cuffWorld;
         /// <summary>Last solve per side (0 = .L, 1 = .R): raise used (deg, NaN = no safe raise), shoulder slide (m), clearance (m).</summary>
         public readonly float[] LastElevation = { float.NaN, float.NaN }, LastShoulderOut = new float[2], LastClearance = new float[2];
+        /// <summary>Last forearm / mitt elevation per side (deg).</summary>
+        public readonly float[] LastForearm = new float[2];
+        readonly float[] prevE = { float.NaN, float.NaN }, prevF = new float[2], prevO = new float[2];
         /// <summary>Last shoulder position vs the cuff: radial distance from the hat axis, height above the brim's lower edge (m).</summary>
         public readonly float[] LastShoulderRad = new float[2], LastShoulderH = new float[2];
         /// <summary>Last measured cuff radius / height (world m).</summary>
@@ -412,8 +428,8 @@ namespace BubbleWash
 
         public string LastSolve() =>
             $"cuff R {CuffRadius:F3} h {CuffHeight:F3}; L shoulder rad {LastShoulderRad[0]:F3} h {LastShoulderH[0]:F3} raise {LastElevation[0]:F1} " +
-            $"slide {LastShoulderOut[0]:F3} clear {LastClearance[0]:F3}; R shoulder rad {LastShoulderRad[1]:F3} h {LastShoulderH[1]:F3} " +
-            $"raise {LastElevation[1]:F1} slide {LastShoulderOut[1]:F3} clear {LastClearance[1]:F3}";
+            $"forearm {LastForearm[0]:F1} slide {LastShoulderOut[0]:F3} clear {LastClearance[0]:F3}; R shoulder rad {LastShoulderRad[1]:F3} " +
+            $"h {LastShoulderH[1]:F3} raise {LastElevation[1]:F1} forearm {LastForearm[1]:F1} slide {LastShoulderOut[1]:F3} clear {LastClearance[1]:F3}";
 
         /// <summary>Poses both arms on top of the current (clip) pose; weight 0..1, phase 0..1 of the ride cycle.</summary>
         public void Apply(float weight, SeatedArmSettings set, float phase)
@@ -459,28 +475,60 @@ namespace BubbleWash
                     Vector3 ds = S - C; float hs = Vector3.Dot(ds, A);
                     LastShoulderRad[side] = (ds - A * hs).magnitude; LastShoulderH[side] = hs - yb;
                 }
-                float eTop = set.elevationDeg + (side == 0 ? -0.5f : 0.5f) * set.asymmetryDeg
-                             + set.waveDeg * Mathf.Sin(2f * Mathf.PI * phase + side * Mathf.PI);
-                float chosenE = float.NaN, chosenO = 0f, chosenC = 0f;
+                // two-joint search: upper-arm elevation e, forearm elevation f (e + forearmExtra .. forearmTop, bend <= maxBend);
+                // score = mitt height above the brim's lower edge (capped at the target) minus a small cost per degree of bend
+                float tgtH = set.mittHeightFrac * (yt - yb);
+                float Eval(Vector3 Sp, float e, float f, out float mh)
+                {
+                    float e1 = e * Mathf.Deg2Rad, e2 = f * Mathf.Deg2Rad;
+                    Vector3 d1 = outDir * Mathf.Cos(e1) + A * Mathf.Sin(e1), d2 = outDir * Mathf.Cos(e2) + A * Mathf.Sin(e2);
+                    Vector3 E2 = Sp + d1 * L1, M2 = E2 + d2 * L2;
+                    mh = Vector3.Dot(M2 - C, A) - yb;
+                    return Mathf.Min(Mathf.Min(Clear(Sp + d1 * (0.75f * L1), ra * 0.8f), Clear(E2, ra)),
+                                     Mathf.Min(Clear(E2 + d2 * (0.5f * L2), ra), Clear(M2, rm)));
+                }
+                float Score(float mh, float e, float f) => Mathf.Min(mh, tgtH) - set.bendCost * (f - e);
+                float chosenE = float.NaN, chosenF = 0f, chosenO = 0f, chosenC = 0f, best = float.MinValue;
                 for (int pass = 0; pass < 4 && float.IsNaN(chosenE); pass++)
                 {
                     float o = pass * set.maxShoulderOut * Rc / 3f;
                     Vector3 Sp = S + lat * o;
-                    for (float e = eTop; e >= set.minElevationDeg - 1e-3f; e -= 2f)
+                    for (float e = set.elevationDeg; e >= set.minElevationDeg - 1e-3f; e -= 2f)
                     {
-                        float e1 = e * Mathf.Deg2Rad, e2 = (e + set.forearmExtraDeg) * Mathf.Deg2Rad;
-                        Vector3 d1 = outDir * Mathf.Cos(e1) + A * Mathf.Sin(e1), d2 = outDir * Mathf.Cos(e2) + A * Mathf.Sin(e2);
-                        Vector3 E2 = Sp + d1 * L1, M2 = E2 + d2 * L2;
-                        float c = Mathf.Min(Mathf.Min(Clear(Sp + d1 * (0.75f * L1), ra * 0.8f), Clear(E2, ra)),
-                                            Mathf.Min(Clear(E2 + d2 * (0.5f * L2), ra), Clear(M2, rm)));
-                        if (c >= 0f) { chosenE = e; chosenO = o; chosenC = c; break; }
+                        float fHi = Mathf.Max(set.forearmTopDeg, e + set.forearmExtraDeg);
+                        for (float f = e + set.forearmExtraDeg; f <= fHi + 1e-3f && f - e <= set.maxBendDeg + 1e-3f; f += 3f)
+                        {
+                            float c = Eval(Sp, e, f, out float mh);
+                            if (c < 0f) continue;
+                            float sc = Score(mh, e, f);
+                            if (sc > best) { best = sc; chosenE = e; chosenF = f; chosenO = o; chosenC = c; }
+                        }
+                    }
+                    // hysteresis: keep last frame's solve while it still clears and scores close to the best
+                    if (!float.IsNaN(chosenE) && !float.IsNaN(prevE[side]) && Mathf.Abs(prevO[side] - o) < 1e-4f)
+                    {
+                        float c = Eval(Sp, prevE[side], prevF[side], out float mh);
+                        if (c >= 0f && Score(mh, prevE[side], prevF[side]) >= best - set.hysteresis)
+                        { chosenE = prevE[side]; chosenF = prevF[side]; chosenC = c; }
+                    }
+                    if (!float.IsNaN(chosenE))
+                    {
+                        prevE[side] = chosenE; prevF[side] = chosenF; prevO[side] = o;
+                        // natural asymmetry (character-left lower) + slow alternating wave on the forearm, kept only if clear
+                        float off = (side == 0 ? -0.5f : 0.5f) * set.asymmetryDeg + set.waveDeg * Mathf.Sin(2f * Mathf.PI * phase + side * Mathf.PI);
+                        for (int k = 0; k < 2; k++)
+                        {
+                            float fo = chosenF + off * (k == 0 ? 1f : 0.5f);
+                            float c = Eval(Sp, chosenE, fo, out _);
+                            if (c >= 0f) { chosenF = fo; chosenC = c; break; }
+                        }
                     }
                 }
-                LastElevation[side] = chosenE; LastShoulderOut[side] = chosenO; LastClearance[side] = chosenC;
+                LastElevation[side] = chosenE; LastForearm[side] = chosenF; LastShoulderOut[side] = chosenO; LastClearance[side] = chosenC;
                 if (float.IsNaN(chosenE)) continue;   // no safe raise: keep the clip's own arm pose
                 if (chosenO > 0f)
                     a.localPosition = armRestLocalPos[side] + (a.parent != null ? a.parent.InverseTransformVector(lat * chosenO) : lat * chosenO) * weight;
-                float r1 = chosenE * Mathf.Deg2Rad, r2 = (chosenE + set.forearmExtraDeg) * Mathf.Deg2Rad;
+                float r1 = chosenE * Mathf.Deg2Rad, r2 = chosenF * Mathf.Deg2Rad;
                 Vector3 t1 = outDir * Mathf.Cos(r1) + A * Mathf.Sin(r1), t2 = outDir * Mathf.Cos(r2) + A * Mathf.Sin(r2);
                 Quaternion q1 = Quaternion.FromToRotation(hd.position - a.position, t1);
                 a.rotation = Quaternion.Slerp(a.rotation, q1 * a.rotation, weight);

@@ -678,12 +678,46 @@ namespace BubbleWash.EditorTools
             // lead 2026-11-27 (S2 focus, owner gap list): the reference's big tilted coin sits at the LOWER LEFT next to the
             // camera (centre ~(330,555) on 1280x720); through the R2 camera that is the left lane ~34.4 m, ~0.5 m up (the old
             // 35.0 m coin landed mid-frame at ~(420,390)). Still an ordinary collectable in the left lane.
-            foreach (var (dc, hc) in new[] { (34.4f, 0.5f), (37.2f, 0.55f), (39.6f, 1.55f) })
+            // lead 3c2b09a2 2026-11-27 13:00 (S2 gap #10, judge s2p9): HeroMouthDistance moved 35 -> 33.5 m, so the 34.4 m coin sat
+            // 0.9 m AHEAD of the mascot and read as a gold hoop at his left side (R2 ~(506,380)). The approved frame has ONE big
+            // tilted paw coin at the LOWER LEFT between the camera and the mascot -> S2HeroCoin() shot-matches it through the
+            // comparison camera; it stays an ordinary left-lane collectable. The 37.2 m and raised 39.6 m coins stay.
+            var hc0 = S2HeroCoin(lane);
+            if (!registry.items.Any(it => Mathf.Abs(it.distance - hc0.d) < 1f && Mathf.Abs(it.lateral - hc0.lat) < 0.6f))
+                Make(coin, PrimitiveType.Cylinder, "M_Coin", TrackItemKind.Coin, hc0.d, hc0.lat, hc0.h, hc0.s);
+            foreach (var (dc, hc) in new[] { (37.2f, 0.55f), (39.6f, 1.55f) })
                 if (!registry.items.Any(it => Mathf.Abs(it.distance - dc) < 1f && Mathf.Abs(it.lateral + lane) < 0.6f))
                     Make(coin, PrimitiveType.Cylinder, "M_Coin", TrackItemKind.Coin, dc, -lane, hc, 1f);
             foreach (var it in registry.items)
                 if (it.kind == TrackItemKind.Boost || it.kind == TrackItemKind.Obstacle) { it.spinSpeed = 0f; it.bobAmplitude = 0f; }
             registry.Sort();
+        }
+
+        /// <summary>lead 3c2b09a2 2026-11-27: the approved S2 frame's big tilted paw coin (centre ~(350,546), ~190 px wide on
+        /// 1280x720, lower left between the camera and the mascot). Casts that pixel through R2Cam() (the comparison pose
+        /// CaptureTools renders) to the depth where a coin of scale s (SM_Coin is 0.64 m across) is 190 px wide, converts the
+        /// point to track coordinates, and shrinks s (1 -> 0.7) until the coin floats clear of the water line.</summary>
+        static (float d, float lat, float h, float s) S2HeroCoin(float lane)
+        {
+            const float px = 350f, py = 546f, widthPx = 190f, coinDiameter = 0.64f;
+            var cam = R2Cam();
+            Vector3 dir = cam.rot * new Vector3((px / 1280f * 2f - 1f) * cam.tanHalf * cam.aspect, (1f - py / 720f * 2f) * cam.tanHalf, 1f);
+            float focal = 640f / (cam.tanHalf * cam.aspect);   // pixels per metre at camera depth 1
+            (float d, float lat, float h, float s) best = (HeroMouthDistance - 1f, -lane, 0.45f, 1f);
+            for (float s = 1f; s > 0.69f; s -= 0.05f)
+            {
+                Vector3 p = cam.pos + dir * (s * coinDiameter * focal / widthPx);
+                float d = HeroMouthDistance;
+                for (int i = 0; i < 10; i++) d += Vector3.Dot(p - track.Evaluate(d).position, track.Evaluate(d).forward);
+                var f = track.Evaluate(d);
+                best = (d, Vector3.Dot(p - f.position, f.right), Vector3.Dot(p - f.position, f.up), s);
+                if (best.h >= 0.32f * s + 0.06f) break;
+            }
+            // collectable in the left lane, and outside the runner's own lane so CaptureTools.HideCollectedItems keeps it
+            if (best.lat > -0.65f || best.lat < -1.5f)
+                Debug.LogWarning($"[BWK] S2 hero coin lateral {best.lat:F2} is outside the left lane (-1.5 .. -0.65) - check R2 / HeroMouthDistance");
+            Debug.Log($"[BWK] S2 hero coin: d {best.d:F2} m (mascot {HeroMouthDistance}), lateral {best.lat:F2}, height {best.h:F2}, scale {best.s:F2}");
+            return best;
         }
 
 
