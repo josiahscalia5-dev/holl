@@ -3,3 +3,5 @@
 # One "<project dir>/<session id>" per line. Only Bubble Wash Kingdom sessions - never another game's.
 # 2026-11-27 06:30 lead takeover session (ninth account), opened in C:\Users\josia\.unity:
 C--Users-josia--unity/264e8266-6ba9-4134-a35d-7f01bcc7daf6
+# 2026-11-27 07:23 lead takeover session (tenth account), opened in C:\Users\josia\.unity:
+C--Users-josia--unity/cd16e551-14f9-4af4-ba7f-41c675d59df8
