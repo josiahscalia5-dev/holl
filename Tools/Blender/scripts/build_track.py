@@ -40,14 +40,15 @@ SEGS = 7          # 7 segments = 8 evenly spaced edge loops (0.57 m) - mobile bu
 V_TILE = 4.0      # v = distance along / 4 m
 
 # ------------------------------------------------------------------ slide cross-section (RunnerController contract)
-FLAT = 0.95                     # flat floor |x| <= 0.95 at z = 0 (lead 2026-11-27 corridor: was 1.25 - reference slide ~0.78x narrower)
-K = 1.3                         # inner wall z = 1.3 * (|x| - FLAT)^2 (was 0.9)
-X_TOP = 1.64                    # wall top |x| = 1.64 (z ~ 0.62), buried inside the rail tube (was 2.10)
+FLAT = 1.05                     # flat floor |x| <= 1.05 at z = 0 (lead 84b218d4 11:00: reference 3.00 s back-projected with the R2 camera -
+                                # its pink starts at |x| ~1.45 on the floor and its rail tops sit ~0.55 m up; 10:40 had 0.95 / rails 1.10 m high)
+K = 0.9                         # inner wall z = 0.9 * (|x| - FLAT)^2 (gentle broad pink walls, 10:40 had 1.3)
+X_TOP = 1.75                    # wall top |x| = 1.75 (z ~ 0.44), buried inside the rail tube
 A_TOP = X_TOP - FLAT
-Z_SPLIT = 0.40                  # M_Water below, M_RailRainbow above
+Z_SPLIT = 0.12                  # M_Water below (water line |x| ~1.42 = the reference's pink start), M_RailRainbow above
 A_SPLIT = math.sqrt(Z_SPLIT / K)
 WALL_T = 0.12                   # wall / floor thickness
-RAIL_R, RAIL_X, RAIL_Z = 0.30, 1.86, 0.80   # keep FLAT / K / X_TOP / RAIL_* in sync with Assets/BubbleWashKingdom/Scripts/Runtime/Gameplay/SlideProfile.cs
+RAIL_R, RAIL_X, RAIL_Z = 0.28, 1.95, 0.30   # broad low tube, top 0.58 m (below the camera eye line like the reference); keep FLAT / K / X_TOP / RAIL_* in sync with Assets/BubbleWashKingdom/Scripts/Runtime/Gameplay/SlideProfile.cs
 WATER_WALL_SEGS, RAINBOW_SEGS = 12, 4   # 16 profile segments per curved wall
 RAIL_SIDES, SHELL_WALL_SEGS = 20, 3
 

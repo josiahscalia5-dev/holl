@@ -13,7 +13,9 @@ cd "$ROOT" || exit 1
 LOG="$ROOT/Logs/after_wave_${TAG}.log"
 say() { echo "$(date +%H:%M:%S) $*" | tee -a "$LOG"; }
 heavy_running() {
-  tasklist //FI "IMAGENAME eq Unity.exe" //NH 2>/dev/null | grep -qi "^Unity.exe" && return 0
+  # lead 84b218d4 2026-11-27: only a real Unity EDITOR counts - the Unity CLI MCP server (AppData/Local/Unity/bin/unity.exe mcp)
+  # has the same image name and would keep this watcher waiting forever (same fix as heavy_lock.sh orphan()).
+  powershell.exe -NoProfile -Command 'if (Get-Process -Name Unity -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "*\Editor\Unity.exe" }) { exit 0 } else { exit 1 }' && return 0
   tasklist //FI "IMAGENAME eq blender.exe" //NH 2>/dev/null | grep -qi "^blender.exe" && return 0
   return 1
 }
