@@ -116,12 +116,12 @@ namespace BubbleWash.EditorTools
                 // shallow lathe ribs (0.7 m, +-0.22 rad) -> circumferential sheen streaks strongest toward the vanishing point,
                 // warm gold beside every rim, a soft far-end glow; rounder drum (panel facets .45 -> .22), greyer lit metal
                 // (desat .12 -> .22), darker recesses (.32 -> .24)
-                m.SetColor("_DoorSheenColor", new Color(0.42f, 0.36f, 0.62f)); F(m, "_DoorSheenPower", 22f);   // v2: v1 (.24/.20/.36, p7) lit the whole drum evenly (every wall is seen within ~25 deg of the axis) -> tight crests
+                m.SetColor("_DoorSheenColor", new Color(0.36f, 0.30f, 0.56f)); F(m, "_DoorSheenPower", 28f);   // v4: v3 (.42/.36/.62, p22) read milky in the portrait gameplay frame -> tighter crests   // v2: v1 (.24/.20/.36, p7) lit the whole drum evenly (every wall is seen within ~25 deg of the axis) -> tight crests
                 F(m, "_DoorRibPitch", 0.85f); F(m, "_DoorRibTilt", 0.30f);
                 m.SetColor("_DoorWarmColor", new Color(0.22f, 0.12f, 0.03f)); F(m, "_DoorWarmWidth", 0.45f);
                 m.SetColor("_FarGlowColor", new Color(0.13f, 0.12f, 0.24f));   // v3: v2 (.10/.08/.16 from 80 m) far end 158/126/178 vs ref 152/110/190 (bluer, brighter core)
                 F(m, "_FarGlowNear", 35f); F(m, "_FarGlowFar", 70f); F(m, "_FarGlowEnd", 150f);
-                F(m, "_DoorPanelCurve", 0.22f); F(m, "_DoorDesat", 0.22f); F(m, "_DoorHole", 0.24f);
+                F(m, "_DoorPanelCurve", 0.22f); F(m, "_DoorDesat", 0.16f); F(m, "_DoorHole", 0.24f);   // v4: desat .22 -> .16 (keep the violet)
             });
             // polished lavender drum lips between the gold rings (SM_DrumRim, m1: fat rolled lip): the stylised BWK/Gold
             // environment shading with a lavender palette - violet body, magenta-pink fresnel edge, soft pink-lavender

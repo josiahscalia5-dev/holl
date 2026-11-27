@@ -34,10 +34,10 @@ Material:
     - _Softness: 1
     - _SrcBlend: 1
     - _StarFill: 0.02
-    - _StarGlowW: 0.035
+    - _StarGlowW: 0.03
     - _StarInner: 0.45
     - _StarR: 0.625
-    - _StarTube: 0.072
+    - _StarTube: 0.064
     - _Strength: 1.2
     m_Colors:
     - _Color: {r: 1, g: 0.7058824, b: 0.0627451, a: 1}

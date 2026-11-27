@@ -217,8 +217,8 @@ namespace BubbleWash.EditorTools
                 C(m, "_Color", hex); F(m, "_Softness", 1f); F(m, "_Core", 2.0f);
                 F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
                 F(m, "_FarFade", 22f);
-                F(m, "_Shape", 1f); F(m, "_StarR", 0.625f); F(m, "_StarInner", 0.45f); F(m, "_StarTube", 0.072f);
-                F(m, "_StarGlowW", 0.035f); F(m, "_StarFill", 0.02f); F(m, "_Strength", strength * 0.6f);
+                F(m, "_Shape", 1f); F(m, "_StarR", 0.625f); F(m, "_StarInner", 0.45f); F(m, "_StarTube", 0.064f);   // v4: .072 blurred the portrait door stars
+                F(m, "_StarGlowW", 0.03f); F(m, "_StarFill", 0.02f); F(m, "_Strength", strength * 0.6f);
             }, (int)RenderQueue.Transparent - 10);
         }
 
