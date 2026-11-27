@@ -128,12 +128,15 @@ namespace BubbleWash.EditorTools
             {
                 // body rendered 58/42/-11 vs reference 58/44/-4 -> slightly warmer albedo; bigger, stronger tufts = soft plush
                 // clumps instead of streaks; white feet keep v4's paw glow (smooth white soles: rig contract sole_fur .18)
-                C(m, "_RootColor", "#D26A5C"); C(m, "_BaseColor", "#F88B75"); C(m, "_TipColor", "#FFC6B2");
+                // pass 7: the v5 FBX now carries METRIC fur UVs (body equirectangular, arms cylindrical, 1.57 m per base unit)
+                // instead of the master's smart-UV islands that stretched the strand cells 2:1 = streaks / blocky patches.
+                // R2 body (s2p7b) rendered 53/43/-10 vs reference 60/39/-8 -> lighter, slightly less saturated coat.
+                C(m, "_RootColor", "#DC7E72"); C(m, "_BaseColor", "#FF9E8C"); C(m, "_TipColor", "#FFD6C8");
                 C(m, "_PawRootColor", "#FFF0E2"); C(m, "_PawTipColor", "#FFF9EE"); F(m, "_PawGlow", 0.45f);
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
-                F(m, "_Density", 200); F(m, "_FurLength", 0.052f); F(m, "_Gravity", 0.012f); F(m, "_Thinning", 0.8f); F(m, "_ClumpAmount", 0.8f); F(m, "_ClumpScale", 5f);
-                F(m, "_AO", 0.2f); F(m, "_Curl", 1.1f); F(m, "_Underfur", 0.8f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.45f);
-                F(m, "_TuftScale", 15f); F(m, "_TuftAmount", 0.6f);   // body Lstd 10.7 vs reference 14.3 (cand2): stronger tufts
+                F(m, "_Density", 200); F(m, "_FurLength", 0.052f); F(m, "_Gravity", 0.012f); F(m, "_Thinning", 0.8f); F(m, "_ClumpAmount", 0.6f); F(m, "_ClumpScale", 5f);
+                F(m, "_AO", 0.25f); F(m, "_Curl", 1.1f); F(m, "_Underfur", 0.8f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.45f);
+                F(m, "_TuftScale", 13f); F(m, "_TuftAmount", 0.6f);   // ~12 cm soft plush tufts on the metric UVs
                 C(m, "_RimColor", "#FFD0C8"); F(m, "_Glow", 0.2f); F(m, "_RimStrength", 0.5f);
             }, (int)RenderQueue.AlphaTest);
             Mat("M_PomPom_v5", "BWK/Fur", m =>
