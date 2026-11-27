@@ -611,7 +611,8 @@ namespace BubbleWash.EditorTools
                             // inner-tip test (rho - r > 3.95) kept it nudged; the reference mounts it on the rim with its
                             // inner tips over the drum mouth -> only the star centre must sit on the violet torus (rho > 4.27,
                             // the marquee ring's outer rho), high above the slide (screen top), so nothing reaches the lanes
-                            if (rho > 4.27f && rho < 5.45f && hpDepth > 2f)
+                            Debug.Log($"[BWK] door star rim test ({s.x:F3},{s.y:F3}) rho {rho:F2} depth {hpDepth:F1} r {dR * hpScale:F2}");
+                            if (rho > 4.27f && rho < 6.3f && hpDepth > 2f)   // v2: 5.45 -> 6.3 (hatch x1.08: torus 4.54-5.72, gold from 6.07)
                             { pos = hp; scale = hpScale; u = s.x; v = s.y; wf = fmh; rimMount = true; }
                         }
                     }

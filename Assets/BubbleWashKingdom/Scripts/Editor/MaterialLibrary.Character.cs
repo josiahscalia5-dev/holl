@@ -108,7 +108,7 @@ namespace BubbleWash.EditorTools
                 // thick folded brim (v5 geometry: outer rib surface rolled out 1.2 cm): bluer violet, deep rib shading
                 // pass 7 run 2: R2 cuff 36/41/-46 vs reference 39/47/-44 and FLAT (Lstd 3.4 vs 10.8) -> redder, lighter
                 // (linear x1.51/1.32/1.09) and deeper rib relief
-                F(m, "_Mode", 2); C(m, "_ColorA", "#AB52B5"); C(m, "_ColorB", "#AB52B5"); F(m, "_StripeWidth", 0f);
+                F(m, "_Mode", 2); C(m, "_ColorA", "#9C46AE"); C(m, "_ColorB", "#9C46AE");   /* p9: was #AB52B5 (prev1 cuff L 41.9 vs reference 36.4) */ F(m, "_StripeWidth", 0f);
                 F(m, "_StitchU", 44); F(m, "_StitchV", 40); F(m, "_BumpStrength", 2.0f); F(m, "_Smoothness", 0.12f); F(m, "_Glow", 0.06f);
                 F(m, "_PurlDepth", 1.8f);   // prev1: cuff still flat (Lstd 3.6 vs reference 10.8) -> much deeper rib valleys
             });
@@ -116,8 +116,8 @@ namespace BubbleWash.EditorTools
             {
                 // pale-pink band (reference ~70/27/-19): warmer pale pink, a little more self-light in the hat's shade
                 F(m, "_Mode", 2); C(m, "_ColorA", "#F2EAF4"); C(m, "_ColorB", "#F2EAF4"); F(m, "_StripeWidth", 0f);
-                F(m, "_StitchU", 44); F(m, "_StitchV", 46); F(m, "_BumpStrength", 1.0f); F(m, "_Smoothness", 0.15f); F(m, "_Glow", 0.24f);   // p9: bump 1.4 -> 1.0
-                F(m, "_PurlDepth", 0.9f);   // p9: 1.5 read as a high-contrast picket fence at R2 (reference: soft pale knit band)
+                F(m, "_StitchU", 44); F(m, "_StitchV", 46); F(m, "_BumpStrength", 0.6f); F(m, "_Smoothness", 0.15f); F(m, "_Glow", 0.40f);   // p9: bump 1.4 -> .6, glow .24 -> .40 (prev1 stripe L 55.5 vs reference 64)
+                F(m, "_PurlDepth", 0.4f);   // p9: 1.5 read as a high-contrast picket fence at R2 (reference: soft pale knit band)
             });
             Mat("M_PawPad_v5", "BWK/Character", m =>
             {
@@ -144,17 +144,17 @@ namespace BubbleWash.EditorTools
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
                 F(m, "_Density", 240); F(m, "_FurLength", 0.052f); F(m, "_Gravity", 0.02f); F(m, "_Thinning", 0.8f); F(m, "_ClumpAmount", 0.6f); F(m, "_ClumpScale", 5f);   // p7 density 200
                 F(m, "_AO", 0.28f); F(m, "_Curl", 1.0f); F(m, "_Underfur", 0.8f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.45f);   // p7 AO .4
-                F(m, "_TuftScale", 20f); F(m, "_TuftAmount", 0.5f); F(m, "_PlushMode", 1f); F(m, "_StrandContrast", 0.5f);   // p7 tufts 24, strand contrast 1
-                C(m, "_RimColor", "#FFD0C8"); F(m, "_Glow", 0.24f); F(m, "_RimStrength", 0.5f);   // p7 glow .2
+                F(m, "_TuftScale", 20f); F(m, "_TuftAmount", 0.3f); F(m, "_PlushMode", 1f); F(m, "_StrandContrast", 0.35f);   // p7 tufts 24 / .5, strand contrast 1 (prev1: still vertical streaks)
+                C(m, "_RimColor", "#FFD0C8"); F(m, "_Glow", 0.22f); F(m, "_RimStrength", 0.5f);   // p7 glow .2 (prev1 body L 62.0 vs reference 60.0)
             }, (int)RenderQueue.AlphaTest);
             Mat("M_PomPom_v5", "BWK/Fur", m =>
             {
                 // v5 pom-pom = real radial yarn locks (M_PawPad_v5) around this core: a short MID-violet fuzz that fills the gaps
                 // between the locks (v4's core was a near-black ball because it was the whole pom-pom)
                 // pass 7 run 2: R2 pom-pom pale lilac 61/27/-31 vs reference saturated violet 47/49/-46 (linear x.86/.41/.88)
-                C(m, "_RootColor", "#3E0C6E"); C(m, "_BaseColor", "#7220AE"); C(m, "_TipColor", "#B566E5");
+                C(m, "_RootColor", "#3E0C6E"); C(m, "_BaseColor", "#7220AE"); C(m, "_TipColor", "#A955E0");   // p9 tip was #B566E5
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
-                F(m, "_Density", 170); F(m, "_FurLength", 0.05f); F(m, "_Gravity", 0.0f); F(m, "_Thinning", 0.6f); F(m, "_AO", 0.35f);   // cand3: longer core fuzz softens the spiky lock silhouette
+                F(m, "_Density", 190); F(m, "_FurLength", 0.065f); F(m, "_Gravity", 0.0f); F(m, "_Thinning", 0.5f);   /* p9: core fuzz reaches past the yarn tips (core .232 + .065 > tip .272) = soft round outline; was 170 / .05 / .6 */ F(m, "_AO", 0.35f);   // cand3: longer core fuzz softens the spiky lock silhouette
                 F(m, "_Curl", 0.25f); F(m, "_Underfur", 0.8f); F(m, "_ClumpAmount", 0.55f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.3f);
                 C(m, "_RimColor", "#C878F1"); F(m, "_Glow", 0.06f); F(m, "_RimStrength", 0.4f);
             }, (int)RenderQueue.AlphaTest);
