@@ -334,11 +334,20 @@ namespace BubbleWash.EditorTools
         /// distance d (lane 0), camera back / height / lateral offset, yaw / pitch and vertical FOV; logs the 5 best poses and
         /// renders the best one (+ the unchanged gameplay rig at the same d) into -bwkOut DIR. The gameplay rig is not touched.
         /// </summary>
+        /// <summary>S2 comparison-only camera (R2_rear_S2_like_3s): mascot at SceneBuilder.HeroMouthDistance, camera back /
+        /// height / lateral (m) from the runner, yaw / pitch (deg) on the flat track heading, vertical FOV. Solved 2026-11-26
+        /// 20:25 by S2CameraSolveBatch (door ring both sides + mascot, rms 8.4 px). Re-solve after any S2 geometry change
+        /// (2026-11-27: tunnel bend right inside the door) with -bwkSolveVP so the vanishing point counts too.</summary>
+        public static float R2Back = 2.75f, R2Height = 1.0f, R2Lat = 0.3f, R2Yaw = -9f, R2Pitch = 6f, R2Fov = 58f;
+
         public static void S2CameraSolveBatch()
         {
             try
             {
                 string outDir = ArgValue("-bwkOut") ?? "Captures/agents/_lead_mouth";
+                // lead 2026-11-27: optional vanishing-point term (weight), reference VP ~(760,205) = tunnel centre ~50 m ahead
+                float vpW = float.Parse(ArgValue("-bwkSolveVP") ?? "0", System.Globalization.CultureInfo.InvariantCulture);
+                var vpTarget = new Vector2(760f, 205f);
                 Directory.CreateDirectory(outDir);
                 EditorSceneManager.OpenScene(SceneBuilder.ScenePath);
                 var runner = Object.FindFirstObjectByType<RunnerController>();
@@ -387,6 +396,7 @@ namespace BubbleWash.EditorTools
                     Vector3 fwd = Vector3.ProjectOnPlane(f.forward, Vector3.up).normalized, right = Vector3.Cross(Vector3.up, fwd);
                     Vector3 basePos = runner.transform.position;
                     var baseRot = Quaternion.LookRotation(fwd, Vector3.up);
+                    Vector3 vp = runner.track.Evaluate(Mathf.Min(d + 50f, runner.track.Length)).FlatPoint(0f, 2.3f);   // tunnel centre (TunnelCenter 2.3)
                     foreach (float fov in new[] { 50f, 58f, 66f })
                         for (float b = 2.25f; b <= 4.01f; b += 0.25f)
                             for (float h = 0.5f; h <= 1.61f; h += 0.1f)
@@ -394,7 +404,7 @@ namespace BubbleWash.EditorTools
                                 {
                                     Vector3 cp = basePos - fwd * b + Vector3.up * h + right * s;
                                     for (float yaw = -18f; yaw <= 18.01f; yaw += 1f)
-                                        for (float pitch = -6f; pitch <= 14.01f; pitch += 1f)
+                                        for (float pitch = -6f; pitch <= 18.01f; pitch += 1f)
                                         {
                                             var cr = baseRot * Quaternion.Euler(pitch, yaw, 0f);
                                             var pL = ProjectPose(cp, cr, fov, ringL, 1280, 720, out bool f1);
@@ -406,6 +416,7 @@ namespace BubbleWash.EditorTools
                                                        + 0.5f * (pR - new Vector2(1270f, 230f)).sqrMagnitude
                                                        + (pT - new Vector2(640f, 183f)).sqrMagnitude
                                                        + (pB.y - 520f) * (pB.y - 520f) + 0.5f * (pB.x - 640f) * (pB.x - 640f);
+                                            if (vpW > 0f) cost += vpW * (ProjectPose(cp, cr, fov, vp, 1280, 720, out _) - vpTarget).sqrMagnitude;
                                             if (best.Count < 5 || cost < best[best.Count - 1].cost)
                                             {
                                                 best.Add((cost, d, b, h, s, yaw, pitch, fov));
@@ -416,8 +427,19 @@ namespace BubbleWash.EditorTools
                                 }
                 }
                 foreach (var p in best)
-                    Debug.Log($"[BWK] S2 solve: rms {Mathf.Sqrt(p.cost / 4.5f):F1} px  d {p.d:F2} back {p.b:F2} height {p.h:F2} lat {p.s:F2} yaw {p.yaw:F0} pitch {p.pitch:F0} vfov {p.fov:F0}");
+                    Debug.Log($"[BWK] S2 solve: rms {Mathf.Sqrt(p.cost / (4.5f + vpW)):F1} px  d {p.d:F2} back {p.b:F2} height {p.h:F2} lat {p.s:F2} yaw {p.yaw:F0} pitch {p.pitch:F0} vfov {p.fov:F0}");
                 var w = best[0];
+                {   // where the solved pose puts the vanishing point and the door ring (compare with the reference VP ~(760,205))
+                    runner.TeleportTo(w.d, 0f);
+                    var f0 = runner.Frame;
+                    Vector3 fw0 = Vector3.ProjectOnPlane(f0.forward, Vector3.up).normalized, rt0 = Vector3.Cross(Vector3.up, fw0);
+                    Vector3 cp0 = runner.transform.position - fw0 * w.b + Vector3.up * w.h + rt0 * w.s;
+                    var cr0 = Quaternion.LookRotation(fw0, Vector3.up) * Quaternion.Euler(w.pitch, w.yaw, 0f);
+                    var pv = ProjectPose(cp0, cr0, w.fov, runner.track.Evaluate(Mathf.Min(w.d + 50f, runner.track.Length)).FlatPoint(0f, 2.3f), 1280, 720, out _);
+                    var pl = ProjectPose(cp0, cr0, w.fov, ringL, 1280, 720, out _);
+                    var pr = ProjectPose(cp0, cr0, w.fov, ringR, 1280, 720, out _);
+                    Debug.Log($"[BWK] S2 solve best: VP ({pv.x:F0},{pv.y:F0}) vs reference (760,205); ring L ({pl.x:F0},{pl.y:F0}) vs (248,230); ring R ({pr.x:F0},{pr.y:F0}) vs (1270,230); vpWeight {vpW}");
+                }
                 runner.TeleportTo(w.d, 0f);
                 if (slide != null) slide.SampleAnimation(animator.gameObject, 0.25f);
                 SimulateSlideFX(runner);
@@ -607,9 +629,9 @@ namespace BubbleWash.EditorTools
             {
                 var f = runner.Frame;
                 Vector3 fwd = Vector3.ProjectOnPlane(f.forward, Vector3.up).normalized, right = Vector3.Cross(Vector3.up, fwd);
-                Vector3 cp = runner.transform.position - fwd * 2.75f + Vector3.up * 1.0f + right * 0.3f;
-                cam.transform.SetPositionAndRotation(cp, Quaternion.LookRotation(fwd, Vector3.up) * Quaternion.Euler(6f, -9f, 0f));
-                cam.fieldOfView = 58f;
+                Vector3 cp = runner.transform.position - fwd * R2Back + Vector3.up * R2Height + right * R2Lat;
+                cam.transform.SetPositionAndRotation(cp, Quaternion.LookRotation(fwd, Vector3.up) * Quaternion.Euler(R2Pitch, R2Yaw, 0f));
+                cam.fieldOfView = R2Fov;
                 RenderWithBackground(cam, 1280, 720, stillsDir, "R2_rear_S2_like_3s_16x9.png", MascotRenderers(runner));
             }
             rig.aspectOverride = 0f;

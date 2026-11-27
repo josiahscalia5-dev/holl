@@ -681,6 +681,9 @@ namespace BubbleWash.EditorTools
                 if (d > 184f && d < 240f && angDeg > 40f)   // pink risers beside the S4-S5 front-facing doors
                     foreach (var w in risers)
                         if (w.side > 0 && Mathf.Abs(d - (w.d + PinkRiserAfterDoor)) < 1.0f) { blocked = true; break; }
+                // pass 5 v4: the R5 gap's front door B (213.8 m) is gone -> keep its old star block (+-2.7 m) and clear the
+                // shot-matched R5 pink column (215.75 m); v3 put a cyan star over the column (ref: the column's gold collar)
+                if (d > 211.1f && d < 217f && angDeg > 40f) blocked = true;
                 if (d > CyanPipeStart - 1f && d < CyanPipeEnd + 1f && Mathf.Abs(angDeg - CyanPipeAngle) < 22f) blocked = true;
                 if (d > portalD - 10f && angDeg < -35f) blocked = true;   // hall agent: portal chamber window + cyan pipe curve (travel-left)
                 if (d > 173f && d < 237f && ph > 1.3f && ph < 9.6f && angDeg < -72f) blocked = true;   // wall coin rows
@@ -758,7 +761,9 @@ namespace BubbleWash.EditorTools
             if (pink != null)
                 foreach (var (d, side) in ChamberWindows())
                 {
-                    if (side < 0 || d < 185f || d > 240f) continue;
+                    // pass 5 v4: no riser in front of the R5 porthole (209.2 m; v3: its riser at 212.3 m hid the porthole's left
+                    // half) - the R5 pink element is the shot-matched column at the frame edge (ref f_08.25s)
+                    if (side < 0 || d < 185f || d > 240f || Mathf.Abs(d - 209.2f) < 0.3f) continue;
                     float dp = d + PinkRiserAfterDoor;
                     var f = track.Evaluate(dp);
                     var inward = Vector3.ProjectOnPlane(-f.flatRight * side, Vector3.up).normalized;

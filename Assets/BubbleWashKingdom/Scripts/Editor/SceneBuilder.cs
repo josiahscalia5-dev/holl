@@ -69,6 +69,16 @@ namespace BubbleWash.EditorTools
         /// Tools/track_camera_model.py predicts mascot ~0.50 W / vanishing point ~0.62 W at 0.6. 1 = original bend.</summary>
         const float HeroBendScale = 0.6f;
 
+        /// <summary>Lead 2026-11-27 (owner: S2 = video 3.00 s at the washing-machine door, "actual tunnel curvature"): the video
+        /// tunnel bends RIGHT just inside the door (vanishing point ~(760,205) on 1280x720, rings offset right, both rails curve
+        /// right). The mirrored layout bent LEFT from 36 to 82 m (heading -15 -> -25 deg), so ours read as a centred straight
+        /// telescope. Knots 4-7 (48-82 m) now turn gently right (~-11 deg at the door -> ~0 deg at 60-75 m -> back to the
+        /// old -8 deg into knot 8) and every later knot is SHIFTED sideways by the same offset (no rotation: lights, probes,
+        /// sections and the portal keep their shape). Knots 0-3 (hall, door at 40 m) unchanged; the path between 36 and 96 m
+        /// gets ~3 m shorter. Gameplay is track-relative (runner, colliders, items, camera), so it follows. false = old layout.</summary>
+        public static readonly bool S2TunnelBendRight = true;
+        static readonly float[] S2BentX = { -4.4f, -5.4f, -5.6f, -6.0f };   // knots 4-7, mirrored world x (was -5.6 / -10.4 / -15.6 / -20)
+
         static Vector3[] LayoutKnots()
         {
             var k = (Vector3[])Knots.Clone();
@@ -81,6 +91,13 @@ namespace BubbleWash.EditorTools
             float shift = k[12].x - Knots[12].x;
             for (int i = 13; i < k.Length; i++) k[i].x = Knots[i].x + shift;
             for (int i = 0; i < k.Length; i++) k[i].x *= TrackMirrorX;
+            if (S2TunnelBendRight)
+            {
+                float step78 = k[8].x - k[7].x;                    // keep the knot 7 -> 8 step: the heading into S3 is unchanged
+                for (int i = 4; i <= 7; i++) k[i].x = S2BentX[i - 4];
+                float s2Shift = k[7].x + step78 - k[8].x;
+                for (int i = 8; i < k.Length; i++) k[i].x += s2Shift;
+            }
             return k;
         }
 
@@ -626,7 +643,10 @@ namespace BubbleWash.EditorTools
             // skipped wherever a pattern item already sits within 1 m in that lane.
             // s2p2 judges: a 6-coin queue read as clutter over the chevron and its first coin sat 1 m in front of the camera
             // -> three big coins flanking the mascot like the reference (two low beside it, one raised = a jump coin)
-            foreach (var (dc, hc) in new[] { (35.0f, 0.55f), (37.2f, 0.55f), (39.6f, 1.55f) })
+            // lead 2026-11-27 (S2 focus, owner gap list): the reference's big tilted coin sits at the LOWER LEFT next to the
+            // camera (centre ~(330,555) on 1280x720); through the R2 camera that is the left lane ~34.4 m, ~0.5 m up (the old
+            // 35.0 m coin landed mid-frame at ~(420,390)). Still an ordinary collectable in the left lane.
+            foreach (var (dc, hc) in new[] { (34.4f, 0.5f), (37.2f, 0.55f), (39.6f, 1.55f) })
                 if (!registry.items.Any(it => Mathf.Abs(it.distance - dc) < 1f && Mathf.Abs(it.lateral + lane) < 0.6f))
                     Make(coin, PrimitiveType.Cylinder, "M_Coin", TrackItemKind.Coin, dc, -lane, hc, 1f);
             foreach (var it in registry.items)

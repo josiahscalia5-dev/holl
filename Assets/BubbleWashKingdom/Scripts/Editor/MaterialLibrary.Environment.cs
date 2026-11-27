@@ -91,7 +91,7 @@ namespace BubbleWash.EditorTools
                 // spill weaker, plus a thin cool light line along every flange edge (reference: glowing panel edges).
                 F(m, "_DeepAmount", 1f); F(m, "_DeepStart", 68f); F(m, "_DeepEnd", 92f);
                 m.SetColor("_DeepTint", new Color(0.66f, 0.67f, 0.82f)); F(m, "_DeepHole", 0.45f); F(m, "_DeepEmit", 0.6f);   // sRGB -> linear x(.39, .41, .64): luminance x.42, bluer
-                m.SetColor("_DeepEdgeGlow", new Color(0.45f, 0.6f, 1.0f));
+                m.SetColor("_DeepEdgeGlow", new Color(0.30f, 0.40f, 0.70f));   // v4: v3 (.45, .6, 1) drew bright blue ring lines (finale portal, 07)
             });
             // polished lavender drum lips between the gold rings (SM_DrumRim, m1: fat rolled lip): the stylised BWK/Gold
             // environment shading with a lavender palette - violet body, magenta-pink fresnel edge, soft pink-lavender

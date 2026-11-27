@@ -588,6 +588,14 @@ namespace BubbleWash.EditorTools
             // sees the same 3D tubes from behind (double-sided outline halo cards).
             {
                 int rCount = 0;
+                // v3: the SLIM outline master SM_NeonStarTube_v2 (outer r 1.0, tube .065 = 6.5 % of r) - the chubby SM_NeonStarTube
+                // (tube 17 % of r) read as a FILLED glowing shape at these near sizes (v2 R5 top yellow); its 3.2x card = r .625
+                var slim = ModelParts("Lighting", "SM_NeonStarTube_v2");
+                bool useSlim = slim.Count > 0;
+                float rW = useSlim ? 2.13f : StarMeshWidth, rR = useSlim ? 1.065f : StarMeshRadius, rCard = useSlim ? 3.2f : StarGlowCard;
+                List<Part> RecolorR(Material mat) => useSlim
+                    ? slim.Select(p => new Part(p.mesh, Enumerable.Repeat(mat, Mathf.Max(1, p.mesh.subMeshCount)).ToArray(), p.local)).ToList()
+                    : Recolor(mat);
                 float tV = Mathf.Tan(26f * Mathf.Deg2Rad), tH = tV * 16f / 9f;
                 foreach (var s in RStarLayout)
                 {
@@ -603,8 +611,8 @@ namespace BubbleWash.EditorTools
                         ok = TunnelWallHit(cPos, dir, s.d + 2.6f, inset, out pos, out wf);
                         if (!ok) break;
                         float depth = Vector3.Dot(pos - cPos, cFwd);
-                        scale = s.w * 2f * depth * tH / StarMeshWidth;
-                        inset = 0.12f + StarMeshRadius * scale;
+                        scale = s.w * 2f * depth * tH / rW;
+                        inset = 0.12f + rR * scale;
                     }
                     if (!ok) { Debug.LogWarning($"[BWK] R star d{s.d} ({s.x}, {s.y}) found no wall"); continue; }
                     float hUp = Vector3.Dot(pos - wf.position, wf.flatUp), lat = Mathf.Abs(Vector3.Dot(pos - wf.position, wf.flatRight));
@@ -617,8 +625,8 @@ namespace BubbleWash.EditorTools
                     float rr = s.roll * Mathf.Deg2Rad;
                     var upHint = Vector3.ProjectOnPlane(cUp * Mathf.Cos(rr) + cRight * Mathf.Sin(rr), facing).normalized;
                     var rot = Quaternion.LookRotation(facing, upHint);
-                    comb.Add(Recolor(mats[s.color]), Matrix4x4.TRS(pos, rot, Vector3.one * scale));
-                    AddGlow(s.color, pos, rot, StarGlowCard * scale);
+                    comb.Add(RecolorR(mats[s.color]), Matrix4x4.TRS(pos, rot, Vector3.one * scale));
+                    AddGlow(s.color, pos, rot, rCard * scale);
                     rCount++;
                     Debug.Log($"[BWK] R star d{s.d} c{s.color} ({s.x:F2},{s.y:F2}) track {wf.distance:F1} m depth " +
                               $"{Vector3.Dot(pos - cPos, cFwd):F1} m scale {scale:F2} h {hUp:F1} lat {lat:F1}");
