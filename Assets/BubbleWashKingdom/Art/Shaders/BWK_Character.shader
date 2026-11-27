@@ -30,6 +30,8 @@ Shader "BWK/Character"
         _YarnRelief ("Yarn Relief Knit (0 = previous knit)", Range(0,1.5)) = 0
         _VioletLift ("Fabric: lift violet vertex colours (pom-pom yarn; 1 = off)", Range(0.5, 2.5)) = 1
         _WoolAbsorb ("Yarn relief: indirect light kept (wool scatters little env reflection; 1 = all)", Range(0.3, 1)) = 1
+        _KnitSoft ("Yarn relief: soft fuzzy wool (hand-knit wobble, fibre fuzz, fuzzy halo; 0 = off)", Range(0, 1)) = 0
+        _FuzzColor ("Yarn relief: fuzz halo tint", Color) = (1, 0.92, 1, 1)
     }
     SubShader
     {
@@ -40,6 +42,8 @@ Shader "BWK/Character"
             half4 _ColorA, _ColorB, _ColorC, _ShadowColor;
             half _Mode, _Smoothness, _Metallic, _Wrap, _BumpScale, _BumpStrength, _Stripes, _StripeWidth;
             half _StitchU, _StitchV, _Glow, _RimPower, _RimStrength, _PurlDepth, _YarnRelief, _VioletLift, _WoolAbsorb;
+            half _KnitSoft;
+            half4 _FuzzColor;
         CBUFFER_END
         ENDHLSL
         Pass
@@ -144,6 +148,12 @@ Shader "BWK/Character"
                         // real yarn relief: the knit height field is sampled 3x (finite differences) and tilts the normal, so
                         // every rib and V-stitch leg shades like a round wool strand; matte wool with a soft grazing sheen
                         float2 ph = float2(i.uv.x * _StitchU, i.uv.y * _StitchV);
+                        // p10g (owner 16:55 "a real chunky knit hat ... soft fabric look rather than rigid ribbing"): hand-knit
+                        // irregularity - every rib column wanders a little and the rows sit a little unevenly (no ruler-straight
+                        // plastic pleats)
+                        float wob = BWK_ValueNoise(float2(ph.x * 0.5 + 7.3, ph.y * 0.16));
+                        ph.x += (wob - 0.5) * 0.3 * _KnitSoft;
+                        ph.y += (BWK_ValueNoise(float2(ph.x * 0.9, ph.y * 0.35 + 3.7)) - 0.5) * 0.25 * _KnitSoft;
                         const float e = 0.04;
                         float h0 = KnitHeight(ph);
                         float gu = (KnitHeight(ph + float2(e, 0)) - h0) / e;   // dH per rib width
@@ -152,10 +162,17 @@ Shader "BWK/Character"
                         float ply = BWK_ValueNoise(float2(ph.x * 7.0, ph.y * 3.0 + ph.x * 2.0));   // plied fibres
                         // wool reads by its relief: rib flanks turned away from the viewer fall off (soft round tubes)
                         half facing = saturate(dot(n, v));
-                        albedo *= lerp(0.5, 1.1, h0) * lerp(0.92, 1.05, ply) * lerp(0.6, 1.08, facing * facing);
+                        // soft wool (_KnitSoft): rounder, less hard-edged relief (valleys and turned-away flanks keep more light),
+                        // fine fibre fuzz breaking every stitch, and a fuzzy light halo where the yarn turns away from the viewer
+                        half fib = BWK_ValueNoise(float2(ph.x * 9.0, ph.y * 5.0 + ph.x * 3.0));
+                        albedo *= lerp(lerp(0.5, 0.62, _KnitSoft), 1.1, h0) * lerp(0.92, 1.05, ply)
+                                * lerp(lerp(0.6, 0.74, _KnitSoft), 1.08, facing * facing) * lerp(1.0, lerp(0.86, 1.08, fib), _KnitSoft);
                         occlusion = lerp(0.45, 1.0, h0) * _WoolAbsorb;   // prev3: env reflection greyed the crown (G 83 vs ref 54)
                         half sheen = pow(1.0 - saturate(dot(n, v)), 3.0) * 0.45 + 0.06;
                         emission = albedo * (_Glow + sheen * h0 * 0.35);   // prev2: a white sheen greyed the crown (G 81 vs ref 54)
+                        half3 ng = normalize(i.normalWS);
+                        half halo = pow(1.0 - saturate(dot(ng, v)), 2.0) * (0.55 + 0.45 * fib) * h0;
+                        emission += lerp(albedo, _FuzzColor.rgb * max(max(albedo.r, albedo.g), albedo.b), 0.45) * halo * 0.6 * _KnitSoft;
                         half rimK = BWK_Fresnel(n, v, _RimPower) * _RimStrength;
                         return BWK_PBR(i.positionWS, i.positionCS, n, v, albedo, metallic, smooth, occlusion, emission + albedo * rimK, 1.0, i.fog);
                     }

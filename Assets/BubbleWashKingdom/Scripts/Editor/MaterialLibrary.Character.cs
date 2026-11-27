@@ -111,6 +111,10 @@ namespace BubbleWash.EditorTools
                 // p10g: s2p10f crown box (600,294)-(690,312) 113/60/143 a38 b-37 vs reference 122/50/164 a50 b-48 = same L but
                 // greyer -> more saturated violet yarn (linear R x1.2, B x1.35), less env grey
                 C(m, "_ColorA", "#8420AF"); F(m, "_WoolAbsorb", 0.55f);
+                // p10g prev2 (3x zoom): reference rib spacing ~8.5 px at R2 vs ours ~4.5 px. The hat UV.x spans RIB_N / 44 = 1.36
+                // turns, so StitchU 88 = ~120 shader ribs on the 60 GEOMETRIC ribs (a fine lampshade pleat + moire). StitchU 44 =
+                // exactly the 60 geometric ribs (~70 on the reference): chunky round ribs whose shader relief reinforces the geometry
+                F(m, "_StitchU", 44); C(m, "_ColorA", "#8A1CC0"); F(m, "_WoolAbsorb", 0.45f);
             });
             Mat("M_HatCuff_v5", "BWK/Character", m =>
             {
@@ -127,6 +131,7 @@ namespace BubbleWash.EditorTools
                 // p10g: s2p10f cuff (600,356)-(690,394) 130/61/154 L38.9 vs reference 108/45/157 L33.2 -> darker, bluer violet
                 // (linear x.67/.56/1.04), less env grey and self-glow
                 C(m, "_ColorA", "#9640C5"); C(m, "_ColorB", "#9640C5"); F(m, "_WoolAbsorb", 0.6f); F(m, "_Glow", 0.06f);
+                F(m, "_StitchU", 44);   // p10g: = the 60 geometric ribs (was 66 = 90 shader ribs; reference cuff ribs ~9.5 px at R2)
             });
             Mat("M_HatStripe_v5", "BWK/Character", m =>
             {
@@ -139,6 +144,7 @@ namespace BubbleWash.EditorTools
                 F(m, "_BumpStrength", 0.8f); F(m, "_Smoothness", 0.06f); F(m, "_Glow", 0.46f); F(m, "_YarnRelief", 0.75f);   // prev2 stripe L60.6 vs ref 66.7
                 // p10g: s2p10f stripe (600,328)-(690,342) 209/159/202 L71.5 vs reference 222/179/216 L77.8 -> lighter, less magenta
                 C(m, "_ColorA", "#F8F0F2"); C(m, "_ColorB", "#F8F0F2"); F(m, "_Glow", 0.52f);
+                F(m, "_StitchU", 44);   // p10g: same chunky 60-rib count as the crown / cuff (reference band = cuff rib scale)
             });
             Mat("M_PawPad_v5", "BWK/Character", m =>
             {
@@ -147,6 +153,7 @@ namespace BubbleWash.EditorTools
                 F(m, "_Mode", 4); C(m, "_ColorA", "#FFFFFF"); F(m, "_BumpScale", 0.6f); F(m, "_Smoothness", 0.3f); F(m, "_Glow", 0.5f);
                 F(m, "_RimStrength", 0.3f);
                 F(m, "_VioletLift", 1.45f);   // prev3: 1.8 -> L45.8 (ref 48.8) but white lock-tip specks; 1.45   // p10f: pom-pom yarn L42 vs reference 49 (pink toe beans unaffected); prev2 1.35 -> L43
+                F(m, "_VioletLift", 1.25f);   // p10g: R2 pom (605,200)-(665,250) 143/79/190 L46 vs reference 137/62/181 L41 + white lock specks
             });
             var furNoise = AssetDatabase.LoadAssetAtPath<Texture2D>($"{Tex}/T_FurNoise.png");
             Mat("M_Fur_v5", "BWK/Fur", m =>
@@ -208,6 +215,12 @@ namespace BubbleWash.EditorTools
                 C(m, "_RootColor", "#F8756A"); C(m, "_BaseColor", "#FF9E70"); C(m, "_TipColor", "#FFDCC0");
                 F(m, "_SeatLight", 1f); C(m, "_SeatColor", "#FFE8EE"); m.SetVector("_SeatRange", new Vector4(0.47f, 0.32f, 0f, 0f));
                 C(m, "_RimColor", "#FFE2DC"); F(m, "_RimStrength", 0.65f); F(m, "_RimSelf", 0.5f);
+                // p10g prev2: soft plush OK but pale lilac velvet again: midback 212/127/167 L63.5 (ref 207/103/144 L57.3), seat
+                // 221/164/205 L74 (ref 172/134/174 L61) -> saturated warm salmon albedo (linear R x.95, G x.62, B x.70), a little
+                // more clump / strand definition (ref midback hp 3.7 vs ours 2.2), softer seat
+                C(m, "_RootColor", "#F35D59"); C(m, "_BaseColor", "#FA7F5E"); C(m, "_TipColor", "#FAB2A3");
+                F(m, "_TuftAmount", 0.45f); F(m, "_StrandContrast", 0.55f); F(m, "_TuftLean", 0.5f);
+                F(m, "_SeatLight", 0.7f); C(m, "_SeatColor", "#F6D6E2"); m.SetVector("_SeatRange", new Vector4(0.45f, 0.30f, 0f, 0f));
             }, (int)RenderQueue.AlphaTest);
             Mat("M_PomPom_v5", "BWK/Fur", m =>
             {
@@ -223,6 +236,11 @@ namespace BubbleWash.EditorTools
                 // longer, finer, lighter violet fibres with deeper roots and a soft lilac halo
                 C(m, "_RootColor", "#5A1C96"); C(m, "_BaseColor", "#9A44D8"); C(m, "_TipColor", "#D49CFA"); F(m, "_Density", 230); F(m, "_FurLength", 0.075f); F(m, "_Thinning", 0.4f);
                 F(m, "_AO", 0.5f); F(m, "_Glow", 0.1f); C(m, "_RimColor", "#DAB0FF"); F(m, "_RimStrength", 0.5f); F(m, "_RimSelf", 0.2f);
+                // p10g: R2 pom Lstd 4.2 vs reference 11.6 = a flat fuzzy ball; the reference = a FIBROUS yarn ball (dark violet
+                // depth between straight radial fibres, light lilac fibre ends, soft halo) -> deeper roots, sparser lit tips,
+                // straighter fibres, strand contrast, softer lilac halo
+                C(m, "_RootColor", "#3A0C72"); C(m, "_TipColor", "#DDB0FF"); F(m, "_Thinning", 0.7f); F(m, "_StrandContrast", 0.6f);
+                F(m, "_AO", 0.6f); F(m, "_Curl", 0.1f); F(m, "_Density", 200); F(m, "_RimSelf", 0.3f);
             }, (int)RenderQueue.AlphaTest);
             // static (shell-less) variants, same naming rule as v4 (name + "_Static")
             foreach (var n in new[] { "M_Fur_v5", "M_PomPom_v5" })
