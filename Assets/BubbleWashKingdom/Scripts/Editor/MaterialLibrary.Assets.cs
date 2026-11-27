@@ -120,7 +120,10 @@ namespace BubbleWash.EditorTools
             // door torus and every band step pale lilac, see MaterialLibrary.Environment.cs M_DrumWall note)
             Mat("M_HatchViolet_s2", "BWK/Gold", m =>
             {
-                C(m, "_HighColor", "#E6B4FF"); C(m, "_MidColor", "#6E40C4"); C(m, "_LowColor", "#2A1260");
+                // lead tunnel lane 2b L1 (owner 17:35 section 5): _HighColor #E6B4FF -> #B07CCD = the reference rim-high colour
+                // measured above (:115); the pale-lavender high stop washed the near-right hatch flange of R2 (RW4 .507 vs
+                // ref .322) and the SM_LedRim_s2 band faces that share this material -> deeper, saturated violet flange
+                C(m, "_HighColor", "#B07CCD"); C(m, "_MidColor", "#6E40C4"); C(m, "_LowColor", "#2A1260");
                 C(m, "_RimColor", "#C064F0"); C(m, "_BandColor", "#C8A0F4");
                 F(m, "_Brightness", 0.80f); F(m, "_Emission", 0.06f); F(m, "_Contrast", 1.6f); F(m, "_ViewGradient", 1f);
                 F(m, "_EnvReflect", 0.45f); F(m, "_EnvTint", 0.55f); F(m, "_EnvRoughness", 0.18f);

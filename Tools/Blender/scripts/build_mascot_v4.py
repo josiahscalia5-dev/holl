@@ -1960,7 +1960,7 @@ V7B_LOCK_TIP = (0.428, 0.067, 0.689)
 V7B_ARM_THIN = 0.80       # limb cross-section (rear R2: our arms ~60 px thick vs reference ~35 px = boxy blocks at the brim)
 V7B_MITT_THIN = 0.90      # round mitt keeps more of its size (reference: round paws wider than the limb)
 V7B_ARM_FUR = 0.60        # rig contract 'arm_fur': arm shell-fur length x this (prev2: 5.2 cm shells on the slim arm = fat blocks)
-V7B_TAPER_Z0, V7B_TAPER_Z1, V7B_TAPER_K = 0.42, 0.10, 0.82   # p9: K was .90, Z1 .12 (R2 s2p9a: straight sides, reference rear rounds in to ~0.70 x brim at the seat); lower body narrows in x to 90 % at the seat (owner: too wide / squat)
+V7B_TAPER_Z0, V7B_TAPER_Z1, V7B_TAPER_K = 0.42, 0.10, 0.92   # p10h: K .82 -> .92 (lead s2p10g read: the front / side views taper to a point between the feet = inverted teardrop; the original 4.00 s front is a round bottom-heavy ball that SITS); p9: K was .90, Z1 .12 (R2 s2p9a: straight sides, reference rear rounds in to ~0.70 x brim at the seat); lower body narrows in x to 90 % at the seat (owner: too wide / squat)
 V5_YARN_N = 560           # Fibonacci directions; locks pointing into the crown are skipped (never seen)
 V5_ARM_UPPER = 18.0       # deg elevation of the upper arm (runs out under the brim; v4 straight arm 40.5)
 V5_ARM_FORE = 70.0        # deg elevation of the forearm + mitt beside the brim (reference rear: paws at brim/stripe height)
@@ -1968,6 +1968,8 @@ V5_ARM_EXTRA = 0.110      # m added to the shoulder->mitt segment only (v4 0.13 
 V5_ARM_CUFF_TOL = 0.015   # rig cuff-solve tolerance (contract 'arm_cuff_tol'; v4 default -0.004)
 V5_SOLE_FUR = 0.18        # rig (contract 'sole_fur'): sole-side paw fur scaled to 18 % -> smooth white sole + pink pads
 V5_CUFF_ROLL = 0.022      # p9: was .012 (reference: THICK folded brim clearly wider than the crown); folded brim: outer rib surface pushed out up to 1.2 cm mid-height = thicker rolled cuff
+V10H_BULGE, V10H_BULGE_Z, V10H_BULGE_W = 0.05, 0.24, 0.15   # p10h: lower-flank widening (x), centre height, gaussian width (m)
+V10H_UV_LEG_V, V10H_UV_TAIL_V = 5.0, 7.0   # p10h: leg / tail / mouth-fur UV.y offsets (outside the body's 0..1 baked groom map)
 GAME5_BLEND = os.path.join(OUT, "mascot_v5_game.blend")
 GAME5_JSON = os.path.join(OUT, "mascot_v5_game.json")
 
@@ -2166,6 +2168,26 @@ def _v7_face_and_fur_uv(contract):
             ang = math.atan2(q.dot(b2), q.dot(b1))               # 0 on top, seam (+-pi) underneath
             return ((ang + math.pi) * 0.085 / V7_UV_S) * 0.5, t / V7_UV_S + 3.3
         write_uv(bpy.data.objects["Arm." + tag].data, arm_uv, math.pi * 0.085 / V7_UV_S)
+    # p10h (owner 17:20 METHOD: groom + BAKE): the body's equirect UV (u 0..0.92 + seam wrap, v 0..1) now also addresses the
+    # baked groom maps (T_MascotV5_Groom*), so every other fur part moves OUT of that range: legs (smart-UV islands in 0..1)
+    # v + 5, tail and the mouth's fur ring (all UVs 0,0) v + 7 (BWK_Fur: base.y > 1.2 = not body = procedural coat only)
+    def shift_v(ob, dv, mat_name=None):
+        me = ob.data
+        uvl = me.uv_layers.get("UVMap") or me.uv_layers.new(name="UVMap")
+        n = 0
+        for pl in me.polygons:
+            if mat_name is not None:
+                m = me.materials[pl.material_index]
+                if m is None or m.name != mat_name:
+                    continue
+            for li in pl.loop_indices:
+                uvl.data[li].uv = (uvl.data[li].uv[0], uvl.data[li].uv[1] + dv)
+                n += 1
+        return n
+    nsh = sum(shift_v(bpy.data.objects["Leg." + t], V10H_UV_LEG_V) for t in ('L', 'R'))
+    nsh += shift_v(bpy.data.objects["Tail"], V10H_UV_TAIL_V)
+    nsh += shift_v(bpy.data.objects["Mouth"], V10H_UV_TAIL_V, "M_Fur")
+    print("CHECK p10h UV offsets: legs v+%.1f, tail / mouth fur v+%.1f, %d loops" % (V10H_UV_LEG_V, V10H_UV_TAIL_V, nsh))
     print("CHECK v7 face: mouth/tongue verts %d x%.2f, nose verts %d x%.2f, eye_scale %.3f mouth_scale %.3f; fur UVs "
           "body equirect + arm cylinders at %.3f m/unit" % (nm, V7_MOUTH_K, nn, V7_NOSE_K, contract["eye_scale"],
                                                              contract["mouth_scale"], V7_UV_S))
@@ -2270,6 +2292,9 @@ def export_game_model_v5():
     for v in bo.data.vertices:
         s_t = smooth01((V7B_TAPER_Z0 - v.co.z) / (V7B_TAPER_Z0 - V7B_TAPER_Z1))
         v.co.x *= 1.0 - (1.0 - V7B_TAPER_K) * s_t
+        # p10h: seated plush bulge - the lower flanks swell out a little where a stuffed toy settles on its bottom (x only:
+        #       the face / belly front line and the rear camera's centre line keep their place)
+        v.co.x *= 1.0 + V10H_BULGE * math.exp(-((v.co.z - V10H_BULGE_Z) / V10H_BULGE_W) ** 2)
     bo.data.update()
     contract["arm_fur"] = V7B_ARM_FUR
     _v7_face_and_fur_uv(contract)            # ---- 4. pass 7: face (smile, nose, eye rims) + metric fur UVs
