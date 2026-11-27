@@ -885,8 +885,11 @@ namespace BubbleWash.EditorTools
         {
             var milk = Mat("M_FX_Milk_v3");
             string ver = left.name.Contains("V6") ? "V6" : left.name.Contains("V5") ? "V5" : left.name.Contains("V4") ? "V4" : "V3";
-            var framesL = CrownV2FrameMeshes(left, $"SM_FX_Crown{ver}_L", save);
-            var framesR = CrownV2FrameMeshes(right, $"SM_FX_Crown{ver}_R", save);
+            // S2 pass 10h: each side wears the OTHER side's V6 sheet shifted across (see CrownV6Swap below)
+            bool swap = ver == "V6" && CrownV6Swap;
+            Debug.Log($"[BWK] waterfx crowns V6 source bounds: L {left.bounds.min} .. {left.bounds.max} | R {right.bounds.min} .. {right.bounds.max} (swap {swap})");
+            var framesL = CrownV2FrameMeshes(swap ? ShiftedCrownMesh(right, -CrownV6Shift) : left, $"SM_FX_Crown{ver}_L", save);
+            var framesR = CrownV2FrameMeshes(swap ? ShiftedCrownMesh(left, CrownV6Shift) : right, $"SM_FX_Crown{ver}_R", save);
             var holder = Child(fxRoot, "Crowns");
             var sc = holder.AddComponent<SplashCrowns>();
             sc.runner = runner;
@@ -903,12 +906,17 @@ namespace BubbleWash.EditorTools
             var cRot = v6 ? Quaternion.Euler(CrownV6Lean, 0f, 0f) : Quaternion.identity;
             var cScl = v6 ? new Vector3(CrownV6ScaleX, CrownV6ScaleY, CrownV6ScaleZ) : Vector3.one;
             var crowns = new List<MeshFilter>();
+            var rotL = swap ? Quaternion.Euler(CrownV6RotL) : cRot;
+            var rotR = swap ? Quaternion.Euler(CrownV6RotR) : cRot;
+            var sclL = swap ? CrownV6SclL : cScl;
+            var sclR = swap ? CrownV6SclR : cScl;
             foreach (float side in new[] { -1f, 1f })
             {
                 var go = Child(holder, side < 0 ? "CrownL" : "CrownR");
-                go.transform.localPosition = cPos + new Vector3(v6 ? side * CrownV6Out : 0f, 0f, 0f);   // p3: beside the body, not over it
-                go.transform.localRotation = cRot;
-                go.transform.localScale = cScl;
+                go.transform.localPosition = swap ? (side < 0 ? CrownV6PosL : CrownV6PosR)
+                                                  : cPos + new Vector3(v6 ? side * CrownV6Out : 0f, 0f, 0f);   // p3: beside the body, not over it
+                go.transform.localRotation = side < 0 ? rotL : rotR;
+                go.transform.localScale = side < 0 ? sclL : sclR;
                 var mf = go.AddComponent<MeshFilter>();
                 mf.sharedMesh = (side < 0 ? framesL : framesR)[side < 0 ? 0 : CrownV2Frames / 2];
                 var mr = go.AddComponent<MeshRenderer>();
@@ -918,11 +926,26 @@ namespace BubbleWash.EditorTools
                 crowns.Add(mf);
             }
             sc.crowns = crowns.ToArray();
-            sc.baseScale = new[] { cScl, cScl };
-            sc.baseRotation = new[] { cRot, cRot };
+            sc.baseScale = new[] { sclL, sclR };
+            sc.baseRotation = new[] { rotL, rotR };
             sc.phase = new[] { 0, CrownV2Frames / 2 };
-            Debug.Log($"[BWK] waterfx crowns MASTER: {left.name} / {right.name} x{CrownV2Frames} frames ({left.triangles.Length / 3} + {right.triangles.Length / 3} tris), runner-local, pos {cPos} lean {(v6 ? CrownV6Lean : 0f)} scale {cScl}, M_FX_Milk_v3");
+            Debug.Log(swap
+                ? $"[BWK] waterfx crowns MASTER V6 p10h swapped sheets: L pos {CrownV6PosL} rot {CrownV6RotL} scale {CrownV6SclL} | R pos {CrownV6PosR} rot {CrownV6RotR} scale {CrownV6SclR}, shift {CrownV6Shift}, M_FX_Milk_v3"
+                : $"[BWK] waterfx crowns MASTER: {left.name} / {right.name} x{CrownV2Frames} frames ({left.triangles.Length / 3} + {right.triangles.Length / 3} tris), runner-local, pos {cPos} lean {(v6 ? CrownV6Lean : 0f)} scale {cScl}, M_FX_Milk_v3");
             return true;
+        }
+
+        /// <summary>S2 pass 10h: a copy of a V6 crown sheet moved across the runner axis by dx metres (vertices only), so the
+        /// crown pivot stays near the body and the runtime scale / yaw jitter (SplashCrowns) keeps the foot end in place.</summary>
+        static Mesh ShiftedCrownMesh(Mesh src, float dx)
+        {
+            var m = Object.Instantiate(src);
+            m.name = src.name + (dx < 0 ? "_toL" : "_toR");
+            var vs = src.vertices;
+            for (int i = 0; i < vs.Length; i++) vs[i].x += dx;
+            m.vertices = vs;
+            m.RecalculateBounds();
+            return m;
         }
 
         // S2 pass 10f V6 crown frame in runner space (m / deg): sink, pull back toward the camera, lean the top back, taller
@@ -938,6 +961,17 @@ namespace BubbleWash.EditorTools
         // lead_s2p10f build; pass 10g water redoes "rise out of the water at both feet" with the crowns OUTSIDE the body silhouette.
         const float CrownV6Drop = 0f, CrownV6Back = 0f, CrownV6Lean = 0f, CrownV6ScaleX = 1f, CrownV6ScaleY = 1f, CrownV6ScaleZ = 1f;
         const float CrownV6Out = 0f;
+        // S2 pass 10h (owner 17:45 ORIGINAL crops water_splashes_03s / splash_crown_04s: the milky crowns rise OUT of the water at
+        // BOTH feet and spill back toward the camera, beside the body - never over it). Placement solved offline in pass 10g
+        // (the projected V6 sheet vs the reference spray masks through the R2 + portrait cameras: IoU_R2 L .377 / R .228, crown
+        // pixels over the mascot silhouette R2 0 / 0, portrait 1 / 0): each side wears the OTHER side's sheet shifted across
+        // (tall fingers outward, the low bent end at the foot), ~0.65-0.8 m toward the camera from the runner origin (the feet),
+        // taller (y x1.5). Revert = CrownV6Swap false (identity frame = the s2p10e / s2p10g crowns beside the arms).
+        static readonly bool CrownV6Swap = true;
+        const float CrownV6Shift = 1.26f;   // x0 + x1 of the V6 sheet (.18 .. 1.08 m): maps one side's span onto the other
+        static readonly Vector3 CrownV6PosL = new Vector3(-0.16f, -0.02f, -0.65f), CrownV6PosR = new Vector3(0.24f, -0.02f, -0.80f);
+        static readonly Vector3 CrownV6RotL = new Vector3(0f, 0f, 0f), CrownV6RotR = new Vector3(0f, -10f, 0f);   // Euler (lean, yaw, 0)
+        static readonly Vector3 CrownV6SclL = new Vector3(0.9f, 1.35f, 0.9f), CrownV6SclR = new Vector3(0.9f, 1.35f, 0.9f);
 
         static void BuildCrowns(GameObject fxRoot, RunnerController runner, bool save, Vector3 rootL, Vector3 rootR)
         {

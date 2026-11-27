@@ -221,6 +221,15 @@ namespace BubbleWash.EditorTools
                 C(m, "_RootColor", "#F35D59"); C(m, "_BaseColor", "#FA7F5E"); C(m, "_TipColor", "#FAB2A3");
                 F(m, "_TuftAmount", 0.45f); F(m, "_StrandContrast", 0.55f); F(m, "_TuftLean", 0.5f);
                 F(m, "_SeatLight", 0.7f); C(m, "_SeatColor", "#F6D6E2"); m.SetVector("_SeatRange", new Vector4(0.45f, 0.30f, 0f, 0f));
+                // p10h QUICK WIN (owner 17:20: STOP the pinecone / scale fur; lead s2p10g read = mode-1 Voronoi locks over the
+                // whole coat): the cheap SMOOTH path - no Voronoi locks (_PlushMode 0 = single-cell path, no 3x3 loop), no tuft
+                // clumping, no tuft depth, no per-tuft pile length; only a gentle low-frequency tone breakup, fine low-contrast
+                // strands and a soft fuzzy outline. Rose-salmon albedo: less orange in the neutral mascot views, same rose hue
+                // under the tunnel's violet light (s2p10g R2 midback 195/93/137 a45 b-5 vs reference 207/103/144 a45 b-3)
+                F(m, "_PlushMode", 0f); F(m, "_TuftAmount", 0f); F(m, "_TuftDepth", 0f); F(m, "_LenNoise", 0f);
+                F(m, "_StrandContrast", 0.2f); F(m, "_SoftBreakup", 0.06f); F(m, "_FurLength", 0.055f); F(m, "_Thinning", 0.7f);
+                F(m, "_Curl", 0.5f); F(m, "_Gravity", 0.018f); F(m, "_ClumpAmount", 0.45f); F(m, "_Density", 280f);
+                C(m, "_RootColor", "#F06470"); C(m, "_BaseColor", "#FA8682"); C(m, "_TipColor", "#FCC0BC");
             }, (int)RenderQueue.AlphaTest);
             Mat("M_PomPom_v5", "BWK/Fur", m =>
             {
