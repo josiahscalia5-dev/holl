@@ -86,6 +86,13 @@ namespace BubbleWash.EditorTools
                 // p3 (p2 water crop p50 ours #76BFD7 vs ref #73A8D5, near-left #92DBEB vs #7FA0CA = too green / pale cyan):
                 // bluer crests + turquoise patches, a little less light through the crests
                 C(m, "_CrestColor", "#38AEEA"); C(m, "_TurquoiseColor", "#3EB0E2"); F(m, "_Translucency", 0.25f);
+                // S2 pass 10h (owner 17:35 section 9A "no thin white scratches"; ORIGINAL crop water_splashes_03s; s2p10g R2 lowL
+                // p50 #7ACDDF hue 188 V .90 vs original #548DC8 hue 203 V .78, lane #65CADE vs #4FA7DD = too pale cyan): soft broken
+                // foam streaks replace most of the thin flow lines, the cyan probe-reflection / caustic tints turn azure, too-cyan lit
+                // water is pulled up to hue 203 (two-sided hue lock), less near-camera brightening
+                F(m, "_FlowLines", 0.14f); F(m, "_FoamStreaks", 0.9f); F(m, "_FoamStreakDensity", 0.9f); C(m, "_FoamStreakColor", "#E2F2FF");
+                C(m, "_ReflectTint", "#80CCFF"); C(m, "_CausticColor", "#84D0FF"); F(m, "_HueLockLow", 0.8f); F(m, "_HueLowStart", 172f);
+                F(m, "_NearBrighten", 0.08f);
                 // light halos around the decor chevrons: same period / geometry / runway offset as SceneBuilder.BuildDecorChevrons
                 F(m, "_ChevronStart", SceneBuilder.ChevronStart); F(m, "_ChevronSpacing", SceneBuilder.ChevronSpacing);
                 // (v2 notch measured #55B8E5 vs reference deep #3386CC: the arrows now bloom on their own -> fainter, tighter pool)

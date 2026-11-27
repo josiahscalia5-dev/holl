@@ -67,6 +67,15 @@ Shader "BWK/Water"
         _FresnelBoost ("p10f Grazing Reflection Boost", Range(0,3)) = 0
         _CrestColor ("p10f Crest Color", Color) = (0.3, 0.82, 0.95, 1)
         _Absorb ("p10f Red Absorption in the Lane (deep saturated blue)", Range(0,1)) = 0
+        // S2 pass 10h (owner 17:35 section 9A "no thin white scratches / harsh repetitive white lines"; ORIGINAL crop
+        // water_splashes_03s: soft broken whitish-blue foam streaks carried down the slide, deep azure water): soft gaussian foam
+        // streaks whose width breathes along the flow + a two-sided turquoise hue lock (too-cyan lit water pulled up to the
+        // target hue, never the chevron light). All 0 = the pass-10f water.
+        _FoamStreaks ("p10h Soft Foam Streaks", Range(0,2)) = 0
+        _FoamStreakDensity ("p10h Foam Streaks per Metre", Float) = 0.9
+        _FoamStreakColor ("p10h Foam Streak Color", Color) = (0.9, 0.96, 1.0, 1)
+        _HueLockLow ("p10h Hue Lock for too-cyan hues", Range(0,1)) = 0
+        _HueLowStart ("p10h Hue Lock Low Start (deg)", Range(150,200)) = 172
     }
     SubShader
     {
@@ -90,6 +99,10 @@ Shader "BWK/Water"
             float _FlowLineDensity;
             half4 _CrestColor;
             half _Absorb;
+            half _FoamStreaks;
+            float _FoamStreakDensity;
+            half4 _FoamStreakColor;
+            half _HueLockLow, _HueLowStart;
         CBUFFER_END
 
         // flowing height field: long swells stretched along the flow + a finer, faster chop
@@ -341,9 +354,39 @@ Shader "BWK/Water"
                     half gfr = saturate(BWK_Fresnel(n, viewDir, 2.0) * 1.4 + 0.2);
                     gloss = (half)(smoothstep(0.86, 0.985, gl1) * 0.8 + smoothstep(0.9, 0.99, gl2) * 0.45) * gfr * _GlossLines * (1.0 - foam);
                 }
+                // ---- S2 pass 10h soft broken FOAM streaks: per lateral cell one streak at a random offset, a soft gaussian
+                //      profile (no drawn edge) whose width breathes along the flow, long broken segments and a stretched bubbly
+                //      texture inside; widened to >= 1 px with the energy kept far away (no shimmer). They run along the track
+                //      distance (UV0.y), so they follow every curve of the slide.
+                half foamStreak = 0;
+                if (_FoamStreaks > 0.001)
+                {
+                    float swarp = (BWK_ValueNoise(float2(m.x * 0.45 + 2.1, flowY * 0.1)) - 0.5) * 1.2
+                                + (BWK_ValueNoise(float2(m.x * 1.3 + 6.3, flowY * 0.3)) - 0.5) * 0.35;
+                    [unroll] for (int fs = 0; fs < 2; fs++)
+                    {
+                        float dens = _FoamStreakDensity * (fs == 0 ? 1.0 : 2.1);
+                        float fxs = (m.x + swarp * (fs == 0 ? 1.0 : 0.75)) * dens + fs * 0.53;
+                        float cellS = floor(fxs);
+                        float q1 = BWK_Hash21(float2(cellS, 21.7 + fs * 3.0));
+                        float q2 = BWK_Hash21(float2(cellS, 13.3 + fs * 7.0));
+                        float breathe = 0.45 + 1.1 * BWK_ValueNoise(float2(cellS * 2.1 + 5.0 + fs, flowY * 0.7 + q1 * 10.0));
+                        float wid = lerp(0.025, 0.06, q2) * breathe * (fs == 0 ? 1.0 : 0.7);
+                        float ds = frac(fxs) - (0.25 + 0.5 * q1);
+                        float w2 = max(wid, max(fwidth(fxs), 1e-4) * 0.75);
+                        float prof = exp(-ds * ds / (w2 * w2)) * (wid / w2);
+                        float seg = smoothstep(0.35, 0.72, BWK_ValueNoise(float2(cellS * 1.71 + fs * 9.0, flowY * (0.08 + 0.07 * q1))));
+                        float bub = BWK_ValueNoise(float2(fxs * 7.0, flowY * 2.2 + q2 * 7.0)) * 0.6 + BWK_ValueNoise(float2(fxs * 15.0, flowY * 4.5)) * 0.4;
+                        float tex = saturate(0.35 + bub);
+                        foamStreak = max(foamStreak, (half)(prof * seg * tex * (0.55 + 0.45 * q2) * (fs == 0 ? 1.0 : 0.6)));
+                    }
+                    foamStreak = saturate(foamStreak * _FoamStreaks * (1.0 - foam));
+                }
 
                 half3 albedo = lerp(body, _StreakColor.rgb, saturate(streak + foam + flowLine * 0.8));
+                albedo = lerp(albedo, _FoamStreakColor.rgb, foamStreak);
                 half smooth = lerp(_Smoothness, 0.55, saturate(foam + streak * 0.5));
+                smooth = lerp(smooth, 0.4, foamStreak);
 
                 // ---- emission: self glow of the body, centre lane, chevron light, streaks, sparkle glints
                 half3 emission = body * _Glow + _ShallowColor.rgb * centre * _CenterGlow * 0.35;
@@ -364,6 +407,7 @@ Shader "BWK/Water"
                 emission += refl * (fres * fres) * _FresnelBoost * (1.0 - foam);
                 emission += _StreakColor.rgb * flowLine * 0.32 + half3(0.86, 0.98, 1.0) * gloss;
                 emission += _CrestColor.rgb * smoothstep(0.55, 0.95, depthK) * _Translucency * (0.35 + 0.65 * centre) * 0.45;
+                emission += _FoamStreakColor.rgb * foamStreak * 0.2;
 
                 half4 lit = BWK_PBR_Lit(i.positionWS, i.positionCS, n, viewDir, albedo, 0.0, smooth, 1.0, emission, 1.0, i.fog);
                 // S2 pass 10f (p1 lane p10 ours #4388B1 vs ref #3B8CD0: the lavender tunnel reflections grey the deep water):
@@ -371,7 +415,7 @@ Shader "BWK/Water"
                 // foam or the white flow lines
                 if (_Absorb > 0.001)
                 {
-                    half amask = (1.0 - smoothstep(0.62, 0.95, across)) * saturate(1.0 - foam - flowLine - gloss);
+                    half amask = (1.0 - smoothstep(0.62, 0.95, across)) * saturate(1.0 - foam - flowLine - gloss - foamStreak);
                     lit.rgb *= lerp(half3(1, 1, 1), half3(0.8, 0.97, 1.08), _Absorb * amask);
                 }
                 // ---- S2 pass 2 (owner 20:15 "rich vivid turquoise flowing water"; measured lane under the mascot ours #7099D3
@@ -393,7 +437,11 @@ Shader "BWK/Water"
                     }
                     half band = smoothstep(_HueTarget, _HueTarget + 6.0, hue) * (1.0 - smoothstep(262.0, 292.0, hue));
                     half lockMask = (1.0 - smoothstep(0.6, 0.92, across)) * (1.0 - foam);
-                    half ang = radians(-(hue - _HueTarget) * band * _HueLock * lockMask);
+                    // S2 pass 10h: too-cyan lit water (hue below the target, measured ~188-194 vs the original's ~203) is pulled
+                    // UP to the target too; the rotation is 0 at the target (continuous), never the chevron light pools
+                    half bandLo = _HueLockLow * smoothstep(_HueLowStart, _HueLowStart + 8.0, hue) * step(hue, _HueTarget)
+                                * (1.0 - saturate(chevLight * 1.5));
+                    half ang = radians(-(hue - _HueTarget) * (band * _HueLock + bandLo) * lockMask);
                     const half3 k = half3(0.57735, 0.57735, 0.57735);
                     half ca = cos(ang), sa = sin(ang);
                     c = c * ca + cross(k, c) * sa + k * dot(k, c) * (1.0 - ca);
