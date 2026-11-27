@@ -30,7 +30,7 @@ Material:
     - _ChaseScale: 1.6
     - _ChaseSpeed: 1.5
     - _CorePower: 1.6
-    - _CoreWhite: 0.65
+    - _CoreWhite: 0.45
     - _EdgeSaturate: 0.6
     - _FogAmount: 0.1
     - _HaloBoost: 0.5

@@ -131,6 +131,12 @@ namespace BubbleWash.EditorTools
                 C(m, "_BaseColor", "#B08CC8"); C(m, "_HighlightColor", "#D8BCE6"); C(m, "_HoleColor", "#1E0C34");
                 C(m, "_HoleGlow", "#8A4AB8"); F(m, "_Circumference", 4f); F(m, "_VTile", 4f); F(m, "_HoleSpacing", 0.8f);
                 F(m, "_HoleRadius", 0.25f); F(m, "_Glow", 0.18f); F(m, "_PanelLength", 1000f);
+                // S2 pass 3: this bulkhead (TunnelMouthWall 62 m / HallBackWall) is only seen THROUGH the annular gap between
+                // the door ring (inner r ~4.98) and the mouth drum (r 4.2): its bright grid of small holes read as a speaker
+                // grille right inside the hatch. Reference f_03.00s shows a DARK recessed violet band there -> plain dark
+                // violet metal, no holes (_HoleBand 0), almost no self glow
+                C(m, "_BaseColor", "#3E2E72"); C(m, "_HighlightColor", "#5C4A98"); F(m, "_HoleBand", 0f); F(m, "_Glow", 0.03f);
+                F(m, "_Metallic", 0.6f); F(m, "_Smoothness", 0.55f);
             });
             Emissive("M_Screen", "#5E8FC7", 1.6f, pulse: 0.05f);
             Emissive("M_ButtonCyan", "#3FF0FF", 2.2f);

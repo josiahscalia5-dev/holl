@@ -368,11 +368,11 @@ namespace BubbleWash.EditorTools
         /// (900, 150) ~50, pink (1050, 285) ~60, small yellow (820, 205) ~26, small pink (825, 250) ~22.</summary>
         static readonly (float x, float y, float w, float roll, int color)[] DoorStarLayout =
         {
-            (0.398f, 0.083f, 0.055f, -12f, 0),
-            (0.465f, 0.194f, 0.039f, 14f, 1),
-            (0.789f, 0.083f, 0.059f, 10f, 0),
-            (0.703f, 0.208f, 0.039f, -12f, 1),
-            (0.820f, 0.396f, 0.047f, -8f, 2),
+            (0.398f, 0.083f, 0.066f, -12f, 0),   // v2: widths x1.2 (v1 yellow ~55 px vs reference ~70)
+            (0.465f, 0.194f, 0.047f, 14f, 1),
+            (0.789f, 0.083f, 0.071f, 10f, 0),
+            (0.672f, 0.215f, 0.047f, -12f, 1),   // v3: left of the nudged right yellow (v2: hidden behind it)
+            (0.820f, 0.396f, 0.056f, -8f, 2),
             (0.641f, 0.285f, 0.020f, 6f, 0),
             (0.645f, 0.347f, 0.017f, -6f, 2),
         };
@@ -509,7 +509,7 @@ namespace BubbleWash.EditorTools
                 foreach (var s in DoorStarLayout)
                 {
                     float u = s.x, v = s.y, inset = 0.5f, scale = 1f; Vector3 pos = r2.pos; TrackFrame wf = default; bool ok = false;
-                    for (int nudge = 0; nudge < 8; nudge++)
+                    for (int nudge = 0; nudge < 20; nudge++)
                     {
                         var dir = (r2.rot * new Vector3((2f * u - 1f) * tH, (1f - 2f * v) * tV, 1f)).normalized;
                         inset = 0.5f;
@@ -523,7 +523,7 @@ namespace BubbleWash.EditorTools
                         }
                         if (ok && wf.distance > HallMouthD + 1.2f) break;
                         ok = false;
-                        u = Mathf.Lerp(u, 0.58f, 0.12f); v = Mathf.Lerp(v, 0.40f, 0.12f);
+                        u = Mathf.Lerp(u, 0.58f, 0.05f); v = Mathf.Lerp(v, 0.40f, 0.05f);   // v3: finer steps (closer to the reference spot)
                     }
                     if (!ok) { Debug.LogWarning($"[BWK] door star at ({s.x}, {s.y}) found no drum wall behind the hatch"); continue; }
                     var toCam = (r2.pos - pos).normalized;

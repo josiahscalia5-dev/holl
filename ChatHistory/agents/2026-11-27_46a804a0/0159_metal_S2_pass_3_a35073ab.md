@@ -251,3 +251,75 @@ Now the drum-wall values in MaterialLibrary.Environment.cs.
 **Agent (2026-11-27 02:09 UTC):**
 
 > _tool: Bash - Run Unity agent preview v1 for pass 3_
+
+**Agent (2026-11-27 02:10 UTC):**
+
+> _tool: Bash - Check preview output and log for errors_
+
+**Agent (2026-11-27 02:10 UTC):**
+
+> _tool: Bash - Search preview log for star placement and errors_
+
+**Agent (2026-11-27 02:10 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/lighting/screen_S2_p3/v1/R2_rear_S2_like_3s_16x9.png_
+
+**Agent (2026-11-27 02:11 UTC):**
+
+> _tool: Bash - Build wall crop sheet ref vs before vs v1_
+
+**Agent (2026-11-27 02:11 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/lighting/screen_S2_p3/c_walls_v1.png_
+
+**Agent (2026-11-27 02:11 UTC):**
+
+> _tool: Bash - Build far-tunnel crop sheet for hero_mouth_
+
+**Agent (2026-11-27 02:11 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/lighting/screen_S2_p3/c_far_v1.png_
+
+**Agent (2026-11-27 02:11 UTC):**
+
+> _tool: Bash - Append v1 notes to NOTES.md_
+
+**Agent (2026-11-27 02:12 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/MaterialLibrary.Environment.cs_
+
+**Agent (2026-11-27 02:12 UTC):**
+
+> _tool: Bash - Enlarge door star widths and compile-check_
+
+**Agent (2026-11-27 02:12 UTC):**
+
+> _tool: Bash - Run Unity agent preview v2 for pass 3_
+
+**Agent (2026-11-27 02:14 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/lighting/screen_S2_p3/v2/R2_rear_S2_like_3s_16x9.png_
+
+**Agent (2026-11-27 02:14 UTC):**
+
+> _tool: Bash - Measure walls, stars, far tunnel, rims: ref vs before vs v2_
+
+**Agent (2026-11-27 02:14 UTC):**
+
+> _tool: Bash - Fix the metrics script imports and rerun_
+
+**Agent (2026-11-27 02:14 UTC):**
+
+> _tool: Bash - Build wall crop sheet ref vs before vs v2_
+
+**Agent (2026-11-27 02:14 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/lighting/screen_S2_p3/c_walls_v2.png_
+
+**Agent (2026-11-27 02:15 UTC):**
+
+> _tool: Bash - Apply finer star nudge and move right cyan star_
+
+**Agent (2026-11-27 02:15 UTC):**
+
+> _tool: Bash - Tone cyan core, compile-check, run preview v3_

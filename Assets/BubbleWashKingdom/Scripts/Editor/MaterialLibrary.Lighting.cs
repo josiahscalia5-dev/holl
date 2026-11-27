@@ -113,8 +113,8 @@ namespace BubbleWash.EditorTools
             // moderate intensity so the tonemapper keeps the colour and the bloom carries the hue.
             EmissiveLook("M_Neon", "#00D8FF", 2.8f, core: 0.65f, corePower: 1.6f, halo: 0.5f, edgeSat: 0.6f, fog: 0.1f, pulse: 0.05f,
                 coreColor: "#70FFFF", probeDim: 0.45f);
-            EmissiveLook("M_Neon_Cyan", "#00D8FF", 2.8f, core: 0.65f, corePower: 1.6f, halo: 0.5f, edgeSat: 0.6f, fog: 0.1f, pulse: 0.05f,
-                coreColor: "#70FFFF", probeDim: 0.45f);
+            EmissiveLook("M_Neon_Cyan", "#00D8FF", 2.8f, core: 0.45f, corePower: 1.6f, halo: 0.5f, edgeSat: 0.6f, fog: 0.1f, pulse: 0.05f,
+                coreColor: "#70FFFF", probeDim: 0.45f);   // S2 p3 v3: core .65 -> .45 (door cyan stars read white, cyan coverage .21 % vs ref 1.71)
             EmissiveLook("M_Neon_Pink", "#FF2E9E", 3.0f, core: 0.5f, corePower: 1.6f, halo: 0.5f, edgeSat: 0.6f, fog: 0.1f, pulse: 0.05f,
                 coreColor: "#FFB0E0", probeDim: 0.45f);
             EmissiveLook("M_Neon_Yellow", "#FF9C00", 3.2f, core: 0.8f, corePower: 1.6f, halo: 0.5f, edgeSat: 0.6f, fog: 0.1f, pulse: 0.05f,

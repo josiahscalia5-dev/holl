@@ -14,7 +14,9 @@ namespace BubbleWash.EditorTools
     /// </summary>
     public static class AnimatorBuilder
     {
-        public const string FbxPath = "Assets/BubbleWashKingdom/Art/Models/Characters/SK_Mascot.fbx";
+        // OWNER 2026-11-26 21:20 approved the v4 mascot in-game (pale hat band, raised arms, rounder fluffy body; same 17
+        // bones, 13 takes, 11 material names as SK_Mascot.fbx, which stays as the fallback). Was SK_Mascot.fbx.
+        public const string FbxPath = "Assets/BubbleWashKingdom/Art/Models/Characters/SK_Mascot_v4.fbx";
         public const string ControllerPath = "Assets/BubbleWashKingdom/Animation/Mascot.controller";
 
         [MenuItem("Bubble Wash/Setup/4 Build Animator")]
