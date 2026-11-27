@@ -329,6 +329,8 @@ namespace BubbleWash
         Vector3[] cuffLocal, cuffWorld;
         /// <summary>Last solve per side (0 = .L, 1 = .R): raise used (deg, NaN = no safe raise), shoulder slide (m), clearance (m).</summary>
         public readonly float[] LastElevation = { float.NaN, float.NaN }, LastShoulderOut = new float[2], LastClearance = new float[2];
+        /// <summary>Last shoulder position vs the cuff: radial distance from the hat axis, height above the brim's lower edge (m).</summary>
+        public readonly float[] LastShoulderRad = new float[2], LastShoulderH = new float[2];
         /// <summary>Last measured cuff radius / height (world m).</summary>
         public float CuffRadius { get; private set; }
         public float CuffHeight { get; private set; }
@@ -409,8 +411,9 @@ namespace BubbleWash
             $"upper arm {hand[0].localPosition.magnitude:F3}/{hand[1].localPosition.magnitude:F3}, mitt dist {mittLocal[0].magnitude:F3}/{mittLocal[1].magnitude:F3} (bone units), cuff pts {cuffLocal.Length}";
 
         public string LastSolve() =>
-            $"cuff R {CuffRadius:F3} h {CuffHeight:F3}; L raise {LastElevation[0]:F1} slide {LastShoulderOut[0]:F3} clear {LastClearance[0]:F3}; " +
-            $"R raise {LastElevation[1]:F1} slide {LastShoulderOut[1]:F3} clear {LastClearance[1]:F3}";
+            $"cuff R {CuffRadius:F3} h {CuffHeight:F3}; L shoulder rad {LastShoulderRad[0]:F3} h {LastShoulderH[0]:F3} raise {LastElevation[0]:F1} " +
+            $"slide {LastShoulderOut[0]:F3} clear {LastClearance[0]:F3}; R shoulder rad {LastShoulderRad[1]:F3} h {LastShoulderH[1]:F3} " +
+            $"raise {LastElevation[1]:F1} slide {LastShoulderOut[1]:F3} clear {LastClearance[1]:F3}";
 
         /// <summary>Poses both arms on top of the current (clip) pose; weight 0..1, phase 0..1 of the ride cycle.</summary>
         public void Apply(float weight, SeatedArmSettings set, float phase)
@@ -448,7 +451,14 @@ namespace BubbleWash
                 lat.Normalize();
                 float back = set.backDeg * Mathf.Deg2Rad;
                 Vector3 outDir = (lat * Mathf.Cos(back) - fwd * Mathf.Sin(back)).normalized;
-                float rm = mittRadius[side] * Mathf.Abs(hd.lossyScale.x), ra = armRadius[side] * Mathf.Abs(a.lossyScale.x);
+                // the upper-arm vertex spread (~0.19) includes the shoulder blend into the body; the limb itself is about as
+                // thick as the mitt, so the segment checks use the mitt radius (+15 %)
+                float rm = mittRadius[side] * Mathf.Abs(hd.lossyScale.x);
+                float ra = Mathf.Min(armRadius[side] * Mathf.Abs(a.lossyScale.x), rm * 1.15f);
+                {
+                    Vector3 ds = S - C; float hs = Vector3.Dot(ds, A);
+                    LastShoulderRad[side] = (ds - A * hs).magnitude; LastShoulderH[side] = hs - yb;
+                }
                 float eTop = set.elevationDeg + (side == 0 ? -0.5f : 0.5f) * set.asymmetryDeg
                              + set.waveDeg * Mathf.Sin(2f * Mathf.PI * phase + side * Mathf.PI);
                 float chosenE = float.NaN, chosenO = 0f, chosenC = 0f;
@@ -461,7 +471,7 @@ namespace BubbleWash
                         float e1 = e * Mathf.Deg2Rad, e2 = (e + set.forearmExtraDeg) * Mathf.Deg2Rad;
                         Vector3 d1 = outDir * Mathf.Cos(e1) + A * Mathf.Sin(e1), d2 = outDir * Mathf.Cos(e2) + A * Mathf.Sin(e2);
                         Vector3 E2 = Sp + d1 * L1, M2 = E2 + d2 * L2;
-                        float c = Mathf.Min(Mathf.Min(Clear(Sp + d1 * (0.6f * L1), ra), Clear(E2, ra)),
+                        float c = Mathf.Min(Mathf.Min(Clear(Sp + d1 * (0.75f * L1), ra * 0.8f), Clear(E2, ra)),
                                             Mathf.Min(Clear(E2 + d2 * (0.5f * L2), ra), Clear(M2, rm)));
                         if (c >= 0f) { chosenE = e; chosenO = o; chosenC = c; break; }
                     }

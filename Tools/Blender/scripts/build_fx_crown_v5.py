@@ -158,64 +158,56 @@ def crown_side(s, seed, big):
     E = Elems()
     k = 1.0 if big else 0.82
     fx, fz = s * 0.22, 0.10                                  # foot centre (sole pads face the rear camera)
-    # v5b (p3 12:15 + Blender v5 preview 12:26: thin coral / antler twigs vs crop 18's FAT webbed cartoon splat): a taller,
-    # thicker connected milk wall round the outer side of the foot, from which a few fat fingers fan out, webbed at the base
+    # v5c (Unity p4 12:36: v5b read as bundles of white sticks converging on the feet, vs crop 18 / f_03.00s: broad milk SHEETS
+    # facing the rear camera with scalloped, bulb-tipped edges): the main spray is ONE webbed fan standing beside the foot in
+    # the plane facing the camera (azimuth ~sideways, elevation spread 8-80 deg), its fingers joined by webbing over the first
+    # 4 of 7 segments (a sheet that breaks into fat bulb-tipped fingers), on a thick connected band round the outer side
     rim = base_band(E, rng, s, fx, fz, 0.17, 18.0, 172.0, 0.06, 0.2 * k, 16, 0.038)
 
     def rim_at(u):
         return rim[max(0, min(len(rim) - 1, int(round(u * (len(rim) - 1)))))]
 
-    # 1) outer fan: fat fingers from the band fanning sideways, rising 20-62 deg and arcing back down, webbed together
-    n_main = 7 if big else 5
+    n_main = 8 if big else 6
     paths = []
     for i in range(n_main):
-        top, o, ang = rim_at((i + rng.uniform(0.3, 0.7)) / n_main)
-        az = s * (ang + rng.uniform(-10.0, 10.0))
-        el = rng.uniform(20.0, 62.0)
-        L = rng.uniform(0.3, 0.5) * k * (1.12 if 55.0 < ang < 140.0 else 0.92)
+        f = i / (n_main - 1)
+        el = 8.0 + 72.0 * f + rng.uniform(-4.0, 4.0)
+        top, o, ang = rim_at(0.42 + 0.3 * f + rng.uniform(-0.04, 0.04))
+        az = s * rng.uniform(80.0, 112.0)
+        L = rng.uniform(0.34, 0.52) * k * (1.1 if 25.0 < el < 65.0 else 0.92)
         pth = [(top, 0.04)]
-        finger(E, rng, top, dir_from(az, el), L, rng.uniform(0.034, 0.042), fork=0.45, path=pth)
+        finger(E, rng, top, dir_from(az, el), L, rng.uniform(0.032, 0.04), fork=0.35, path=pth,
+               grav=GRAV * (1.3 if el < 30.0 else 1.0))
         paths.append(pth)
     for i in range(len(paths) - 1):
-        web(E, paths[i], paths[i + 1], 3)
-    # 2) tall risers beside the body (rear camera: the reference spray rises beside him to arm height), roots joined to the
-    #    band by a fat low milk bridge so the splash stays one connected body; webbed to each other
-    n_r = 3 if big else 2
-    prev = (fx + s * 0.16, 0.014, fz - 0.02)
-    rpaths = []
-    for j in range(n_r):
-        u = (j + 0.5) / n_r
-        root = (s * (0.40 + 0.16 * u * k), 0.0, 0.03 - 0.22 * u)
-        E.capsule(prev, (root[0], 0.016, root[2]), 0.034 * (1.0 - 0.2 * u))
-        prev = (root[0], 0.016, root[2])
-        h = 0.08 + 0.04 * rng.random()
-        E.capsule((root[0], 0.008, root[2]), (root[0] + s * 0.02, h, root[2]), 0.038)
-        pth = [((root[0] + s * 0.02, h, root[2]), 0.038)]
-        finger(E, rng, (root[0] + s * 0.02, h, root[2]), dir_from(s * rng.uniform(70.0, 120.0), rng.uniform(50.0, 72.0)),
-               rng.uniform(0.4, 0.58) * k, rng.uniform(0.034, 0.04), fork=0.5, path=pth)
-        rpaths.append(pth)
-    for i in range(len(rpaths) - 1):
-        web(E, rpaths[i], rpaths[i + 1], 2)
-    # 3) long low arms skimming the water outward + back toward the rear camera, flicking up at the tip (crop 18 lower arms;
-    #    the reference's right spray reaches the lower right of the frame)
+        if rng.random() < 0.15:
+            web(E, paths[i], paths[i + 1], 2)                 # an occasional shorter web = a ragged gap in the sheet
+        else:
+            web(E, paths[i], paths[i + 1], 4)
+    # long low arms skimming the water outward + back toward the rear camera, flicking up at the tip (crop 18 lower arms;
+    # the reference's right spray reaches the lower right of the frame), webbed to the lowest fan finger
     n_w = 3 if big else 2
+    wpaths = []
     for j in range(n_w):
-        top, o, ang = rim_at(rng.uniform(0.62, 1.0))
-        az = s * rng.uniform(120.0, 156.0)
+        top, o, ang = rim_at(rng.uniform(0.7, 1.0))
+        az = s * rng.uniform(118.0, 150.0)
+        pth = [(top, 0.036)]
         finger(E, rng, top, dir_from(az, rng.uniform(5.0, 14.0)), rng.uniform(0.65, 0.95) * k, rng.uniform(0.03, 0.036),
-               fork=0.6, grav=0.05, curl=0.26, taper=0.25)
-    # 4) small forward bow (front comparison cameras): fingers fanning forward-outward from the toes
+               fork=0.6, grav=0.05, curl=0.26, taper=0.25, path=pth)
+        wpaths.append(pth)
+    web(E, paths[0], wpaths[0], 3)
+    # small forward bow (front comparison cameras): fingers fanning forward-outward from the toes
     n_b = 3 if big else 2
     for j in range(n_b):
         top, o, ang = rim_at(rng.uniform(0.0, 0.25))
         finger(E, rng, top, dir_from(s * rng.uniform(22.0, 62.0), rng.uniform(16.0, 42.0)), rng.uniform(0.24, 0.38) * k,
                rng.uniform(0.028, 0.034), fork=0.3)
-    # 5) a few loose rounded droplets of varied size around the spray (never over the lane centre)
-    for _ in range(9 if big else 6):
-        az = s * rng.uniform(30.0, 165.0)
+    # a few loose rounded droplets of varied size around the spray (never over the lane centre)
+    for _ in range(10 if big else 7):
+        az = s * rng.uniform(40.0, 160.0)
         dist = rng.uniform(0.4, 0.95) * k
         o = dir_from(az, 0.0)
-        c = (fx + o[0] * dist, rng.uniform(0.1, 0.55) * k, fz + o[2] * dist)
+        c = (fx + o[0] * dist, rng.uniform(0.1, 0.6) * k, fz + o[2] * dist)
         if abs(c[0]) < 0.3:
             continue
         E.ball(c, rng.uniform(0.014, 0.034))
