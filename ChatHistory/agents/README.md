@@ -84,5 +84,7 @@ One file per agent (lead brief + agent statements + tool actions), grouped by le
 - [Water/FX specialist: Round 3 splash and water](2026-11-26_ee36a165/1052_Water_FX_specialist_Round_3_splash_and_water_a862e553.md)
 - [assets S2 pass 2](2026-11-27_46a804a0/0132_assets_S2_pass_2_a8e686c4.md)
 - [water S2 pass 2](2026-11-27_46a804a0/0132_water_S2_pass_2_aec4cab7.md)
+- [judge S2 s2p2](2026-11-27_46a804a0/0159_judge_S2_s2p2_ab95c345.md)
+- [metal S2 pass 3](2026-11-27_46a804a0/0159_metal_S2_pass_3_a35073ab.md)
 - [judge S2 s2p1](2026-11-27_c8eeab8b/0006_judge_S2_s2p1_ab0c67df.md)
 - [skeptic S2 s2p1](2026-11-27_c8eeab8b/0006_skeptic_S2_s2p1_a4dda9d4.md)

@@ -343,3 +343,7 @@ Now batch 2: milkier crowns, less hue overshoot, exact S2-camera bubble placemen
 **Agent (2026-11-27 01:54 UTC):**
 
 > _tool: Bash - Append final preview notes_
+
+**Agent (2026-11-27 01:54 UTC):**
+
+> _tool: StructuredOutput_

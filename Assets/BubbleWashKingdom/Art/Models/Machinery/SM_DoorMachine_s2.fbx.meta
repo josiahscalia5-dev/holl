@@ -3,11 +3,31 @@ guid: eb8bebaa609381743b74fd907a4aad44
 ModelImporter:
   serializedVersion: 24300
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_DoorMachineBlue_s2
+    second: {fileID: 2100000, guid: f40d60fa46606f549a970eb655ba7c40, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_DoorMachinePanel_s2
+    second: {fileID: 2100000, guid: 174538782eae4dd49a39d228f5bddb0f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_DoorMachineVent_s2
+    second: {fileID: 2100000, guid: f842ca058ff944140bb23c1f8ba6ec59, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Gold
+    second: {fileID: 2100000, guid: e312a9ec70578a1498820a43dfc35ba9, type: 2}
   materials:
     materialImportMode: 2
-    materialName: 0
-    materialSearch: 1
+    materialName: 1
+    materialSearch: 2
     materialLocation: 1
     searchTexturesGlobally: 0
   animations:

@@ -3,11 +3,26 @@ guid: 039b684ab2a4a3c4aab24ea4caff2fd5
 ModelImporter:
   serializedVersion: 24300
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Gold
+    second: {fileID: 2100000, guid: e312a9ec70578a1498820a43dfc35ba9, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_MachineLavender
+    second: {fileID: 2100000, guid: e3d68b183170dfc46abfdd7cc35c79aa, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_RollerFur_r8
+    second: {fileID: 2100000, guid: 244796056fc488a4e95f8ad20240a7bb, type: 2}
   materials:
     materialImportMode: 2
-    materialName: 0
-    materialSearch: 1
+    materialName: 1
+    materialSearch: 2
     materialLocation: 1
     searchTexturesGlobally: 0
   animations:
