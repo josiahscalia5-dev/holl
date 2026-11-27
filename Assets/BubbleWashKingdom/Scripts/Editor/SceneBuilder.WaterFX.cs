@@ -804,6 +804,13 @@ namespace BubbleWash.EditorTools
         // runner-local frame as V3. Revert = delete SM_FX_CrownV4_*.fbx (V3 takes over again).
         static bool BuildCrownsV2(GameObject fxRoot, RunnerController runner, bool save)
         {
+            // Screen S2 pass 9 (owner 10:48 / 12:08 "rebuild cheap assets properly", library crop 18; p3: v4 read as a lumpy
+            // popcorn fan): build_fx_crown_v5.py SM_FX_CrownV5_L/R = smooth tapering milk fingers with bulb tips fanning
+            // outward from a connected band, tall risers, low skimming arms, few varied droplets; same runner-local frame.
+            // Revert = delete SM_FX_CrownV5_*.fbx (V4 takes over again).
+            var p5l = ModelParts("FX", "SM_FX_CrownV5_L");
+            var p5r = ModelParts("FX", "SM_FX_CrownV5_R");
+            if (p5l.Count > 0 && p5r.Count > 0 && Mat("M_FX_Milk_v3") != null) return BuildCrownsV3(fxRoot, runner, save, p5l[0].mesh, p5r[0].mesh);
             var pl = ModelParts("FX", "SM_FX_CrownV4_L");
             var pr = ModelParts("FX", "SM_FX_CrownV4_R");
             if (pl.Count > 0 && pr.Count > 0 && Mat("M_FX_Milk_v3") != null) return BuildCrownsV3(fxRoot, runner, save, pl[0].mesh, pr[0].mesh);
@@ -858,8 +865,9 @@ namespace BubbleWash.EditorTools
         static bool BuildCrownsV3(GameObject fxRoot, RunnerController runner, bool save, Mesh left, Mesh right)
         {
             var milk = Mat("M_FX_Milk_v3");
-            var framesL = CrownV2FrameMeshes(left, left.name.Contains("V4") ? "SM_FX_CrownV4_L" : "SM_FX_CrownV3_L", save);
-            var framesR = CrownV2FrameMeshes(right, right.name.Contains("V4") ? "SM_FX_CrownV4_R" : "SM_FX_CrownV3_R", save);
+            string ver = left.name.Contains("V5") ? "V5" : left.name.Contains("V4") ? "V4" : "V3";
+            var framesL = CrownV2FrameMeshes(left, $"SM_FX_Crown{ver}_L", save);
+            var framesR = CrownV2FrameMeshes(right, $"SM_FX_Crown{ver}_R", save);
             var holder = Child(fxRoot, "Crowns");
             var sc = holder.AddComponent<SplashCrowns>();
             sc.runner = runner;
