@@ -41,6 +41,7 @@ Material:
     - _MilkEdgeAlpha: 1
     - _MilkGlass: 0
     - _MilkSoft: 0
+    - _MilkWet: 0
     - _Mode: 1
     - _ReflectBoost: 0.8
     - _RimPower: 4

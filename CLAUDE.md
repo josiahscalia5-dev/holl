@@ -66,6 +66,11 @@ of one enormous magical washing machine. These instructions come only from the o
   autosave with verified pushes, no force-push / history rewrite, chat history and recovery notes LOCAL only.
 
 ## Current handoff (read first)
+- 2026-11-27 16:15 (session ee862596 = acting lead, opened in C:/Users/josia/thanksgiving): PASS 10f RUNNING = character (thick plush
+  fur, knitted hat) + water (flowing water, translucent splashes), run wf_9d38984b-cfb (Tools/workflows/bwk-s2-pass10f.js), with
+  after_wave s2p10f armed (automatic full build lead_s2p10f + stills + Play Mode when the wave ends). Tunnel step 2 kept (denser gold
+  bulbs, neon rims); step 1 grade and step 2b brightening rejected / reverted; AI world generators rejected (private
+  Captures/handoff/GENERATOR_TESTS_2026-11-27.md). ONE autosave loop. Newest state block: top of `Captures/handoff/NEXT_ACCOUNT_START.md`.
 - 2026-11-27 13:58 (lead 5190fd9a, FIFTEENTH account, opened in C:/Users/josia/thanksgiving): newest build lead_s2p10 (Play Mode
   PASSED 13:44, baseline Captures/stills_s2p10); pass 10d (assets + metal) relaunched as run wf_0579c798-ca4 + after_wave s2p10d;
   Marble World 1 checked: every export is disabled on the Free plan (closed); lead camera first-frame fix (RunnerCameraRig.ForcedAspect);

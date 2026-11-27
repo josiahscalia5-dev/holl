@@ -582,12 +582,14 @@ namespace BubbleWash.EditorTools
                 return Sub(fx.spray, n, "M_FX_Milk", new Vector3(side < 0 ? -(Mathf.Abs(crownL.x) + 0.2f) : Mathf.Abs(crownR.x) + 0.2f, 0.35f, crownL.z - 0.1f), dir, ps =>
                 {
                     var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.3f, 0.6f); m.startSpeed = new ParticleSystem.MinMaxCurve(1.3f, 2.8f);
-                    m.startSize = new ParticleSystem.MinMaxCurve(0.02f, 0.055f); m.gravityModifier = 1.3f; m.simulationSpace = ParticleSystemSimulationSpace.Local;
-                    m.maxParticles = 140; m.startColor = Color.white;
+                    // S2 pass 10f (owner 15:55 "translucent splashes with flying droplets"; the approved frame throws many
+                    // round milky beads around both sprays): bigger, more droplets (0.02-0.055 m x30/s -> 0.03-0.075 m x42/s)
+                    m.startSize = new ParticleSystem.MinMaxCurve(0.03f, 0.075f); m.gravityModifier = 1.3f; m.simulationSpace = ParticleSystemSimulationSpace.Local;
+                    m.maxParticles = 160; m.startColor = Color.white;
                     var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Cone; sh.angle = 30f; sh.radius = 0.2f;
                     var sz = ps.sizeOverLifetime; sz.enabled = true;
                     sz.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, 0.7f), new Keyframe(0.15f, 1f), new Keyframe(0.75f, 1f), new Keyframe(1f, 0f)));
-                    var e = ps.emission; e.rateOverTime = 30f;
+                    var e = ps.emission; e.rateOverTime = 42f;
                     MeshParticles(ps, dropMesh, true);
                     Seed(ps, seed);
                 });
@@ -606,7 +608,7 @@ namespace BubbleWash.EditorTools
                 Seed(ps, 24);
             });
             fx.extra = new[] { dropsL, dropsR, speedLines };
-            fx.extraRates = new[] { 30f, 30f, 30f };
+            fx.extraRates = new[] { 42f, 42f, 30f };
             fx.sheets = new ParticleSystem[0];   // flat crown sprites replaced by the 3D crowns below
 
             // glassy bubbles at the reference screen positions (lower-left cluster, a big one lower-right, a few beside
@@ -891,13 +893,22 @@ namespace BubbleWash.EditorTools
             sc.frames = framesL.ToArray();
             sc.framesRight = framesR.ToArray();
             sc.fps = 12f;
+            // S2 pass 10f (owner 15:55 "beautiful translucent splashes ... lowered onto the water"; judge #4: our V6 crowns float
+            // beside him at arm height, R2 y 380-540, vs the approved sprays that rise OUT of the water at both feet and spill
+            // back over it toward the camera, y 400-620): the V6 sheets sink into the water (their leg fingers vanish below the
+            // opaque surface, the milk body sits ON it), move back toward the camera, lean back and grow taller. Older crown
+            // versions keep their authored frame. Runtime SplashCrowns keeps this frame (baseScale / baseRotation below).
+            bool v6 = ver == "V6";
+            var cPos = v6 ? new Vector3(0f, CrownV6Drop, CrownV6Back) : Vector3.zero;
+            var cRot = v6 ? Quaternion.Euler(CrownV6Lean, 0f, 0f) : Quaternion.identity;
+            var cScl = v6 ? new Vector3(CrownV6ScaleX, CrownV6ScaleY, CrownV6ScaleZ) : Vector3.one;
             var crowns = new List<MeshFilter>();
             foreach (float side in new[] { -1f, 1f })
             {
                 var go = Child(holder, side < 0 ? "CrownL" : "CrownR");
-                go.transform.localPosition = Vector3.zero;
-                go.transform.localRotation = Quaternion.identity;
-                go.transform.localScale = Vector3.one;
+                go.transform.localPosition = cPos;
+                go.transform.localRotation = cRot;
+                go.transform.localScale = cScl;
                 var mf = go.AddComponent<MeshFilter>();
                 mf.sharedMesh = (side < 0 ? framesL : framesR)[side < 0 ? 0 : CrownV2Frames / 2];
                 var mr = go.AddComponent<MeshRenderer>();
@@ -907,12 +918,15 @@ namespace BubbleWash.EditorTools
                 crowns.Add(mf);
             }
             sc.crowns = crowns.ToArray();
-            sc.baseScale = new[] { Vector3.one, Vector3.one };
-            sc.baseRotation = new[] { Quaternion.identity, Quaternion.identity };
+            sc.baseScale = new[] { cScl, cScl };
+            sc.baseRotation = new[] { cRot, cRot };
             sc.phase = new[] { 0, CrownV2Frames / 2 };
-            Debug.Log($"[BWK] waterfx crowns MASTER: {left.name} / {right.name} x{CrownV2Frames} frames ({left.triangles.Length / 3} + {right.triangles.Length / 3} tris), runner-local, M_FX_Milk_v3");
+            Debug.Log($"[BWK] waterfx crowns MASTER: {left.name} / {right.name} x{CrownV2Frames} frames ({left.triangles.Length / 3} + {right.triangles.Length / 3} tris), runner-local, pos {cPos} lean {(v6 ? CrownV6Lean : 0f)} scale {cScl}, M_FX_Milk_v3");
             return true;
         }
+
+        // S2 pass 10f V6 crown frame in runner space (m / deg): sink, pull back toward the camera, lean the top back, taller
+        const float CrownV6Drop = -0.16f, CrownV6Back = -0.3f, CrownV6Lean = -24f, CrownV6ScaleX = 1.0f, CrownV6ScaleY = 1.3f, CrownV6ScaleZ = 1.2f;
 
         static void BuildCrowns(GameObject fxRoot, RunnerController runner, bool save, Vector3 rootL, Vector3 rootR)
         {

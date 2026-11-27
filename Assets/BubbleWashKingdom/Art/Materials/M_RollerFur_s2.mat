@@ -38,15 +38,19 @@ Material:
     - _FurLength: 0.62
     - _Glow: 0.6
     - _Gravity: 0.2
+    - _LenNoise: 0
+    - _LenNoiseScale: 0.5
     - _PawGlow: 0
     - _PlushMode: 1
     - _RimPower: 2.2
+    - _RimSelf: 0
     - _RimStrength: 0.35
     - _SilhouetteFade: 0.08
     - _StaticMode: 0
     - _StrandContrast: 1
     - _Thinning: 0.55
     - _TuftAmount: 0.9
+    - _TuftDepth: 0
     - _TuftScale: 3
     - _Underfur: 0.85
     - _UseVertexTint: 1

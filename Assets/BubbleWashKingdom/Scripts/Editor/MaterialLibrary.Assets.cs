@@ -116,17 +116,16 @@ namespace BubbleWash.EditorTools
             // along the crest; the shared lavender drum lip M_DrumRim (fog .75, pale pink streaks) rendered the v1 hatch rim
             // like the drum wall. Same stylised BWK/Gold violet palette, deeper mid / low, less fog, a tighter brighter
             // highlight and fewer streaks, so the torus shape reads as polished violet metal (no emission added).
-            // owner step 2b (2026-11-27 16:00, "thick glowing violet bands"): the tunnel's violet band steps (SM_LedRim_s2 body)
-            // and the door's violet torus read DARK purple; the approved bands glow as thick lilac neon-metal rings -> brighter
-            // lilac palette with real self-glow (below the bloom threshold, so the pink lip keeps the hot line), more probe gloss
+            // (owner step 2b 2026-11-27 16:00 tried a glowing lilac version of this material - REVERTED 16:15: it washed the
+            // door torus and every band step pale lilac, see MaterialLibrary.Environment.cs M_DrumWall note)
             Mat("M_HatchViolet_s2", "BWK/Gold", m =>
             {
-                C(m, "_HighColor", "#F8DCFF"); C(m, "_MidColor", "#A46CF0"); C(m, "_LowColor", "#4A2496");
-                C(m, "_RimColor", "#E890FF"); C(m, "_BandColor", "#E0B8FF");
-                F(m, "_Brightness", 1.05f); F(m, "_Emission", 0.32f); F(m, "_Contrast", 1.35f); F(m, "_ViewGradient", 1f);
-                F(m, "_EnvReflect", 0.6f); F(m, "_EnvTint", 0.55f); F(m, "_EnvRoughness", 0.16f);
-                F(m, "_SpecPower", 120f); F(m, "_SpecStrength", 1.9f); F(m, "_GlintStrength", 0.9f);
-                F(m, "_Sparkle", 0.25f); F(m, "_SparkleScale", 16f); F(m, "_FogAmount", 0.35f);
+                C(m, "_HighColor", "#E6B4FF"); C(m, "_MidColor", "#6E40C4"); C(m, "_LowColor", "#2A1260");
+                C(m, "_RimColor", "#C064F0"); C(m, "_BandColor", "#C8A0F4");
+                F(m, "_Brightness", 0.80f); F(m, "_Emission", 0.06f); F(m, "_Contrast", 1.6f); F(m, "_ViewGradient", 1f);
+                F(m, "_EnvReflect", 0.45f); F(m, "_EnvTint", 0.55f); F(m, "_EnvRoughness", 0.18f);
+                F(m, "_SpecPower", 120f); F(m, "_SpecStrength", 1.5f); F(m, "_GlintStrength", 0.9f);
+                F(m, "_Sparkle", 0.25f); F(m, "_SparkleScale", 16f); F(m, "_FogAmount", 0.45f);
                 F(m, "_HighlightSize", 6f); F(m, "_BandSharpness", 16f); F(m, "_LightInfluence", 0.35f);
                 F(m, "_StreakStrength", 0.3f); F(m, "_StreakHeight", 0.6f);
             });

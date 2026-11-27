@@ -39,6 +39,7 @@ Material:
     - _StripeWidth: 0
     - _Stripes: 4
     - _Wrap: 0.5
+    - _YarnRelief: 0
     m_Colors:
     - _ColorA: {r: 0.95686275, g: 0.8784314, b: 0.95686275, a: 1}
     - _ColorB: {r: 0.95686275, g: 0.8784314, b: 0.95686275, a: 1}

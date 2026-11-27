@@ -1,5 +1,7 @@
 # Bubble Wash Kingdom - lead handoff (2026-11-26 12:30, lead session cd43a82d on the third Pro account)
 
+## STATUS 2026-11-27 16:15 (session ee862596 = acting lead) - S2 pass 10f (character fur / knitted hat + water flow / translucent splashes) running with an automatic build + Play Mode afterwards; tunnel step 2 kept (denser gold bulbs, neon rims), grade and brightening tests rejected; AI world generators (SAM 3D, WorldGen, HunyuanWorld 2.0) evaluated and rejected. Private details: Captures/handoff/NEXT_ACCOUNT_START.md
+
 ## STATUS 2026-11-27 06:45 (lead 264e8266, ninth account) - exact resume point (private details: Captures/handoff/NEXT_ACCOUNT_START.md)
 - The previous account's usage limit cut the S2 quality pass 6 at 06:25; this account relaunched it at 06:39 with the same
   team rules (character + environment first, water + metal queued, max 2 specialists at once) and per-agent resume notes.

@@ -38,22 +38,28 @@ Material:
     - _ChevronThick: 0.36
     - _ChevronWidth: 0.5
     - _Depth: 0.22
+    - _DepthContrast: 0.6
     - _DetailStrength: 0.85
     - _EdgeFoam: 0.6
     - _EdgeTintAmount: 0.42
+    - _FlowLineDensity: 2.2
+    - _FlowLines: 0.75
     - _FlowSpeed: 7.5
+    - _FresnelBoost: 0.5
+    - _GlossLines: 0.55
     - _Glow: 0.16
     - _HueLock: 0.85
     - _HueTarget: 203
     - _NearBrighten: 0.16
     - _PatchAmount: 0.42
     - _RainbowAmount: 0.32
-    - _ReflectBoost: 0.55
+    - _ReflectBoost: 0.38
     - _RippleStrength: 1.45
     - _Smoothness: 0.62
     - _SparkleAmount: 1.05
     - _StreakAmount: 0.2
     - _StreakDensity: 1.15
+    - _Translucency: 0.35
     - _VTile: 4
     - _WaveHeight: 0.025
     - _WeaveAmp: 0.5
@@ -63,6 +69,7 @@ Material:
     m_Colors:
     - _CausticColor: {r: 0.49803922, g: 0.9137255, b: 1, a: 1}
     - _ChevronColor: {r: 0.14117648, g: 0.8784314, b: 0.85490197, a: 1}
+    - _CrestColor: {r: 0.24705882, g: 0.79607844, b: 0.93333334, a: 1}
     - _DeepColor: {r: 0.039215688, g: 0.40784314, b: 0.78431374, a: 1}
     - _EdgeTint: {r: 0.9019608, g: 0.41568628, b: 0.78431374, a: 1}
     - _ReflectTint: {r: 0.49803922, g: 0.9411765, b: 1, a: 1}

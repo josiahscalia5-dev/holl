@@ -27,6 +27,7 @@ Shader "BWK/Character"
         _RimPower ("Rim Power", Float) = 3
         _RimStrength ("Rim Strength", Range(0,2)) = 0.35
         _PurlDepth ("Knit Purl Depth (0 = v4 look)", Range(0,1)) = 0
+        _YarnRelief ("Yarn Relief Knit (0 = previous knit)", Range(0,1.5)) = 0
     }
     SubShader
     {
@@ -36,7 +37,7 @@ Shader "BWK/Character"
         CBUFFER_START(UnityPerMaterial)
             half4 _ColorA, _ColorB, _ColorC, _ShadowColor;
             half _Mode, _Smoothness, _Metallic, _Wrap, _BumpScale, _BumpStrength, _Stripes, _StripeWidth;
-            half _StitchU, _StitchV, _Glow, _RimPower, _RimStrength, _PurlDepth;
+            half _StitchU, _StitchV, _Glow, _RimPower, _RimStrength, _PurlDepth, _YarnRelief;
         CBUFFER_END
         ENDHLSL
         Pass
@@ -84,6 +85,21 @@ Shader "BWK/Character"
                 return o;
             }
 
+            // S2 p10f (SK_Mascot_v5 knit, _YarnRelief > 0): height of a chunky 1x1 rib knit at rib / row phase ph.
+            // Knit columns are round bulging ribs of stacked V stitches (two round yarn legs each, meeting in a small groove
+            // at the column centre); the purl columns between them are narrow deep valleys.
+            float KnitHeight(float2 ph)
+            {
+                float c = frac(ph.x) - 0.5;                       // -0.5..0.5 across one rib, 0 = rib crest
+                float ac = abs(c);
+                float rib = saturate(cos(c * 3.14159) * 1.35 - 0.1);
+                float r = frac(ph.y - ac * 1.2);                  // V stitch rows: legs slant down toward the column centre
+                float leg = sin(r * 3.14159);
+                leg = leg * (2.0 - leg);                          // full, round yarn strand across the leg
+                float pinch = smoothstep(0.0, 0.09, ac);
+                return rib * (0.62 + 0.38 * leg * lerp(0.55, 1.0, pinch));
+            }
+
             half4 frag(Varyings i) : SV_Target
             {
                 half3 n = normalize(i.normalWS);
@@ -121,6 +137,24 @@ Shader "BWK/Character"
                     float sv = i.uv.y * _Stripes;
                     half stripe = step(1.0 - _StripeWidth, frac(sv));
                     albedo = lerp(_ColorA.rgb, _ColorB.rgb, stripe);
+                    if (_YarnRelief > 0.001)
+                    {
+                        // real yarn relief: the knit height field is sampled 3x (finite differences) and tilts the normal, so
+                        // every rib and V-stitch leg shades like a round wool strand; matte wool with a soft grazing sheen
+                        float2 ph = float2(i.uv.x * _StitchU, i.uv.y * _StitchV);
+                        const float e = 0.04;
+                        float h0 = KnitHeight(ph);
+                        float gu = (KnitHeight(ph + float2(e, 0)) - h0) / e;   // dH per rib width
+                        float gv = (KnitHeight(ph + float2(0, e)) - h0) / e;   // dH per stitch row
+                        n = normalize(n - (i.tangentWS.xyz * gu * 0.30 + bitangent * gv * 0.22) * (_BumpStrength * _YarnRelief));
+                        float ply = BWK_ValueNoise(float2(ph.x * 7.0, ph.y * 3.0 + ph.x * 2.0));   // plied fibres
+                        albedo *= lerp(0.5, 1.1, h0) * lerp(0.92, 1.05, ply);
+                        occlusion = lerp(0.45, 1.0, h0);
+                        half sheen = pow(1.0 - saturate(dot(n, v)), 3.0) * 0.45 + 0.06;
+                        emission = albedo * _Glow + lerp(albedo, half3(1, 1, 1), 0.25) * (sheen * h0 * 0.35);
+                        half rimK = BWK_Fresnel(n, v, _RimPower) * _RimStrength;
+                        return BWK_PBR(i.positionWS, i.positionCS, n, v, albedo, metallic, smooth, occlusion, emission + albedo * rimK, 1.0, i.fog);
+                    }
                     float colPhase = frac(i.uv.x * _StitchU) - 0.5;          // across one rib (-0.5..0.5)
                     float ribH = cos(colPhase * 3.14159);                    // 1 at the rib crest, 0 in the purl valley
                     float vPhase = frac(i.uv.y * _StitchV + abs(colPhase) * 0.9) - 0.5;   // stacked V stitches

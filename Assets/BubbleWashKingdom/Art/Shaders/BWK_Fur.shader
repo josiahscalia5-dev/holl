@@ -34,6 +34,10 @@ Shader "BWK/Fur"
         _TuftAmount ("Tuft Clumping (0 = off)", Range(0, 0.9)) = 0
         _PlushMode ("Irregular Voronoi Tufts (0 = v4 cells)", Range(0, 1)) = 0
         _StrandContrast ("Extra Strand / Tuft Contrast (0 = v4)", Range(0, 1)) = 0
+        _TuftDepth ("Tuft Depth Shading (0 = off)", Range(0, 1)) = 0
+        _LenNoise ("Per-Tuft Pile Length Variation (0 = off)", Range(0, 1)) = 0
+        _LenNoiseScale ("Length Variation Scale (x tuft cells)", Float) = 0.5
+        _RimSelf ("Unlit Soft Rim (0 = off)", Range(0, 1)) = 0
     }
     SubShader
     {
@@ -48,6 +52,8 @@ Shader "BWK/Fur"
             half _ClumpAmount, _Wrap, _RimStrength, _AO, _Glow, _UseVertexTint, _StaticMode, _Curl, _Underfur, _EdgeSoft, _SilhouetteFade, _PawGlow;
             float _TuftScale, _TuftAmount;
             half _PlushMode, _StrandContrast;
+            half _TuftDepth, _LenNoise, _RimSelf;
+            float _LenNoiseScale;
         CBUFFER_END
         ENDHLSL
 
@@ -94,6 +100,14 @@ Shader "BWK/Fur"
                 UNITY_TRANSFER_INSTANCE_ID(i, o);
                 float h = i.shell.x * (1.0 - _StaticMode);
                 float mask = (i.shell.y > 0.001 && _StaticMode < 0.5) ? i.shell.y : 1.0;
+                // S2 p10f (v5 only, _LenNoise > 0): every patch of locks gets its own pile length (UV-space noise, so it is
+                // stable under skinning) -> long tufts break the silhouette instead of an even velvet outline
+                if (_LenNoise > 0.001)
+                {
+                    float2 q = float2(i.uv.x * 2.0, i.uv.y) * (_TuftScale * _LenNoiseScale);
+                    float nz = BWK_ValueNoise(q) * 0.7 + BWK_ValueNoise(q * 2.6 + 11.3) * 0.3;
+                    mask *= lerp(1.0, 0.5 + 1.1 * nz, _LenNoise);
+                }
                 float3 nWS = TransformObjectToWorldNormal(i.normalOS);
                 float3 posWS = TransformObjectToWorld(i.positionOS.xyz);
                 posWS += nWS * (h * _FurLength * mask);
@@ -127,6 +141,7 @@ Shader "BWK/Fur"
                 float2 tuv = base * _TuftScale;
                 float2 tcell, tc, relSkin, rel;
                 half tRnd, parting;
+                half tuftShade = 0.5;
                 float pull;
                 if (_PlushMode > 0.5)
                 {
@@ -153,6 +168,10 @@ Shader "BWK/Fur"
                         }
                     }
                     tRnd = BWK_Hash21(tcell + 11.9);
+                    // S2 p10f (_TuftDepth): each lock is lit on its lower (tip) half and shadowed on its upper half where
+                    // the lock above overlaps it, and darkens toward the partings = shingled, deep plush instead of velvet
+                    float2 dT = (auv - tc) / an;
+                    tuftShade = 0.55 * saturate(0.5 - dT.y * 0.8) + 0.45 * saturate((f2 - f1) * 2.5);
                     pull = _TuftAmount * h * (0.6 + 0.8 * tRnd);
                     tc.y -= h * 0.3;                                  // the lock's tips converge BELOW its centre (droop)
                     relSkin = (auv - tc) / an;
@@ -214,10 +233,12 @@ Shader "BWK/Fur"
                 col *= lerp(lerp(0.86, 0.74, _StrandContrast), lerp(1.06, 1.12, _StrandContrast), strand);
                 col *= lerp(1.0, lerp(lerp(0.92, 0.86, _StrandContrast), lerp(1.04, 1.07, _StrandContrast), tRnd),
                             saturate(_TuftAmount * 1.6));   // tufts vary a little in tone
+                col *= lerp(1.0, lerp(0.5, 1.18, tuftShade), _TuftDepth);
                 half3 light = BWK_WrapLight(i.positionWS, n, _Wrap);
                 half ao = lerp(1.0 - _AO, 1.0, h);
                 half rim = BWK_Fresnel(n, v, _RimPower) * _RimStrength * (0.4 + 0.6 * h);
                 half3 c = col * light * ao + _RimColor.rgb * rim * light + col * (_Glow + _PawGlow * (1.0 - coat));
+                c += _RimColor.rgb * rim * _RimSelf;   // p10f: soft white-pink halo on the backlit silhouette tips
                 c = MixFog(c, i.fog);
                 return half4(c, alpha);
             }

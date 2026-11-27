@@ -56,6 +56,16 @@ Shader "BWK/Water"
         // S2 pass 2: water absorption hue lock (the lit water keeps its luminance, blue-violet hues turn toward _HueTarget)
         _HueLock ("Turquoise Hue Lock", Range(0,1)) = 0
         _HueTarget ("Turquoise Hue (deg)", Range(170,220)) = 198
+        // S2 pass 10f (owner 15:55 "natural flowing water"; judge #2 "flat cyan sheet without flow"): long white downhill flow
+        // lines, elongated wet crest highlights, deep-blue troughs / bright turquoise crests, light through the thin crests and
+        // a grazing-angle (Fresnel) reflection of the real surroundings. All 0 = the pass-9 water.
+        _FlowLines ("p10f Downhill Flow Lines", Range(0,2)) = 0
+        _FlowLineDensity ("p10f Flow Lines per Metre", Float) = 2.4
+        _GlossLines ("p10f Elongated Crest Highlights", Range(0,3)) = 0
+        _DepthContrast ("p10f Deep Troughs / Bright Crests", Range(0,1)) = 0
+        _Translucency ("p10f Light Through Thin Crests", Range(0,1)) = 0
+        _FresnelBoost ("p10f Grazing Reflection Boost", Range(0,3)) = 0
+        _CrestColor ("p10f Crest Color", Color) = (0.3, 0.82, 0.95, 1)
     }
     SubShader
     {
@@ -75,6 +85,9 @@ Shader "BWK/Water"
             float _ChevronHalfLen, _ChevronHalfWidth, _ChevronThick, _ChevronOffset, _ChevronEndX;
             float _WeaveAmp, _WeaveLen, _WeaveZero;
             half _HueLock, _HueTarget;
+            half _FlowLines, _GlossLines, _DepthContrast, _Translucency, _FresnelBoost;
+            float _FlowLineDensity;
+            half4 _CrestColor;
         CBUFFER_END
 
         // flowing height field: long swells stretched along the flow + a finer, faster chop
@@ -206,6 +219,19 @@ Shader "BWK/Water"
                 // brighter, more translucent where the camera looks down into the water (near the camera)
                 half ndv = saturate(dot(n, viewDir));
                 body = lerp(body, body * 1.18 + _ShallowColor.rgb * 0.22, smoothstep(0.2, 0.8, ndv) * _NearBrighten);
+                // ---- S2 pass 10f depth colour (R2 lane measured ref p10 #3B8CD0 / p50 #4CBBE1 vs ours #4887B4 / #52AED2: the
+                //      approved water has DEEPER saturated blue troughs AND brighter turquoise crests): the flowing swell field
+                //      (h0) splits the body into deep-blue troughs and bright crests, plus a slow broad depth wave along the flow
+                half swell = saturate((h0 - 0.5) * 1.9 + 0.5);
+                half broad = BWK_ValueNoise(float2(md.x * 0.55 + 7.7, (md.y - t * _FlowSpeed * 0.7) * 0.12));
+                half depthK = saturate(swell * 0.75 + broad * 0.45 - 0.1);
+                if (_DepthContrast > 0.001)
+                {
+                    half3 trough = _DeepColor.rgb * 0.78;
+                    half3 crest = lerp(body, _CrestColor.rgb, 0.55) * 1.1;
+                    half bankFade = 1.0 - smoothstep(0.72, 0.98, across);
+                    body = lerp(body, lerp(trough, crest, smoothstep(0.12, 0.88, depthK)), _DepthContrast * bankFade);
+                }
 
                 // ---- light pools around the glowing decor chevrons (SM_Chevron: apex toward travel, 45-degree arms;
                 //      arm centre line from (0, +0.26) to (+-0.52, -0.26) chevron metres, x ChevronScale)
@@ -276,7 +302,45 @@ Shader "BWK/Water"
                 float gate = smoothstep(0.42, 0.8, BWK_ValueNoise(float2(sx * 1.3 + 11.0, flowY * 0.5)));
                 half streak = saturate((smoothstep(0.9, 0.985, sA) * 0.85 + smoothstep(0.935, 0.992, sB) * 0.55) * gate) * _StreakAmount;
 
-                half3 albedo = lerp(body, _StreakColor.rgb, saturate(streak + foam));
+                // ---- S2 pass 10f downhill flow lines (approved frame: thin white flow lines running down the slide, denser
+                //      toward the banks, broken into long segments, gently curving). One line per lateral cell at a random
+                //      offset / width / brightness, two scales; anti-aliased and faded where a line is thinner than a pixel
+                //      (no far-away shimmer), a soft halo so they read as wet light, not drawn lines.
+                half flowLine = 0;
+                if (_FlowLines > 0.001)
+                {
+                    float fwarp = (BWK_ValueNoise(float2(m.x * 0.6 + 1.3, flowY * 0.16)) - 0.5) * 0.55
+                                + (BWK_ValueNoise(float2(m.x * 1.7 + 4.1, flowY * 0.45)) - 0.5) * 0.14;
+                    [unroll] for (int fl = 0; fl < 2; fl++)
+                    {
+                        float dens = _FlowLineDensity * (fl == 0 ? 1.0 : 2.3);
+                        float fxl = (m.x + fwarp * (fl == 0 ? 1.0 : 0.7)) * dens + fl * 0.37;
+                        float cellL = floor(fxl);
+                        float r1 = BWK_Hash21(float2(cellL, 3.7 + fl * 11.0));
+                        float r2 = BWK_Hash21(float2(cellL, 9.1 + fl * 5.0));
+                        float dl = abs(frac(fxl) - (0.2 + 0.6 * r1));
+                        float wid = lerp(0.03, 0.09, r2) * (fl == 0 ? 1.0 : 0.75);
+                        float aa = max(fwidth(fxl), 1e-4);
+                        float lcore = saturate((wid - dl) / aa + 0.5) * saturate(wid * 2.5 / aa);
+                        float lhalo = exp(-dl * dl / (wid * wid * 12.0)) * 0.28;
+                        float seg = smoothstep(0.36, 0.74, BWK_ValueNoise(float2(cellL * 1.37 + fl * 7.0, flowY * (0.09 + 0.08 * r1))));
+                        flowLine = max(flowLine, (half)((lcore + lhalo) * seg * (0.45 + 0.55 * r2) * (fl == 0 ? 1.0 : 0.65)));
+                    }
+                    flowLine *= _FlowLines * lerp(0.5, 1.0, smoothstep(0.15, 0.85, across)) * (1.0 - foam);
+                }
+                // ---- S2 pass 10f elongated wet crest highlights: contour ridges of a flow-stretched noise (meandering, varying
+                //      width), brightest toward grazing angles (Fresnel) -> glossy white-cyan highlight streaks moving with the water
+                half gloss = 0;
+                if (_GlossLines > 0.001)
+                {
+                    float gwp = (BWK_ValueNoise(float2(m.x * 1.1 + 6.3, flowY * 0.3)) - 0.5) * 0.6;
+                    float gl1 = Ridge(BWK_ValueNoise(float2((m.x + gwp) * 3.4, flowY * 0.42 + 1.9)));
+                    float gl2 = Ridge(BWK_ValueNoise(float2((m.x - gwp) * 6.1 + 3.0, flowY * 0.8 + 5.2)));
+                    half gfr = saturate(BWK_Fresnel(n, viewDir, 2.0) * 1.4 + 0.2);
+                    gloss = (half)(smoothstep(0.86, 0.985, gl1) * 0.8 + smoothstep(0.9, 0.99, gl2) * 0.45) * gfr * _GlossLines * (1.0 - foam);
+                }
+
+                half3 albedo = lerp(body, _StreakColor.rgb, saturate(streak + foam + flowLine * 0.8));
                 half smooth = lerp(_Smoothness, 0.55, saturate(foam + streak * 0.5));
 
                 // ---- emission: self glow of the body, centre lane, chevron light, streaks, sparkle glints
@@ -293,6 +357,11 @@ Shader "BWK/Water"
                 half fres = BWK_Fresnel(n, viewDir, 4.0);
                 half3 refl = GlossyEnvironmentReflection(reflect(-viewDir, n), i.positionWS, 0.06h, 1.0h, GetNormalizedScreenSpaceUV(i.positionCS));
                 emission += refl * _ReflectTint.rgb * (0.12 + fres * 0.88) * _ReflectBoost * (1.0 - foam);
+                // S2 pass 10f: untinted grazing reflection (the real pink rails / gold rings / tunnel light on the wet surface,
+                // strongest far away and toward the banks), the flow lines + crest highlights, light through the thin crests
+                emission += refl * (fres * fres) * _FresnelBoost * (1.0 - foam);
+                emission += _StreakColor.rgb * flowLine * 0.32 + half3(0.86, 0.98, 1.0) * gloss;
+                emission += _CrestColor.rgb * smoothstep(0.55, 0.95, depthK) * _Translucency * (0.35 + 0.65 * centre) * 0.45;
 
                 half4 lit = BWK_PBR_Lit(i.positionWS, i.positionCS, n, viewDir, albedo, 0.0, smooth, 1.0, emission, 1.0, i.fog);
                 // ---- S2 pass 2 (owner 20:15 "rich vivid turquoise flowing water"; measured lane under the mascot ours #7099D3

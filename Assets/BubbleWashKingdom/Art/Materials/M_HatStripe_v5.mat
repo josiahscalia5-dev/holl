@@ -26,22 +26,23 @@ Material:
     m_Ints: []
     m_Floats:
     - _BumpScale: 6
-    - _BumpStrength: 0.6
-    - _Glow: 0.4
+    - _BumpStrength: 0.8
+    - _Glow: 0.36
     - _Metallic: 0
     - _Mode: 2
     - _PurlDepth: 0.4
     - _RimPower: 3
     - _RimStrength: 0.35
-    - _Smoothness: 0.15
-    - _StitchU: 44
-    - _StitchV: 46
+    - _Smoothness: 0.06
+    - _StitchU: 88
+    - _StitchV: 66
     - _StripeWidth: 0
     - _Stripes: 4
     - _Wrap: 0.5
+    - _YarnRelief: 0.75
     m_Colors:
-    - _ColorA: {r: 0.9490196, g: 0.91764706, b: 0.95686275, a: 1}
-    - _ColorB: {r: 0.9490196, g: 0.91764706, b: 0.95686275, a: 1}
+    - _ColorA: {r: 0.9647059, g: 0.9019608, b: 0.9411765, a: 1}
+    - _ColorB: {r: 0.9647059, g: 0.9019608, b: 0.9411765, a: 1}
     - _ColorC: {r: 0.54999995, g: 0.29999998, b: 0.85, a: 1}
     - _ShadowColor: {r: 0.62, g: 0.62, b: 0.95, a: 1}
   m_BuildTextureStacks: []

@@ -102,6 +102,11 @@ namespace BubbleWash.EditorTools
                 F(m, "_Mode", 2); C(m, "_ColorA", "#912B9B"); C(m, "_ColorB", "#EDE6FF"); F(m, "_Stripes", 3); F(m, "_StripeWidth", 0.0f);
                 F(m, "_StitchU", 44); F(m, "_StitchV", 38); F(m, "_BumpStrength", 1.6f); F(m, "_Smoothness", 0.14f); F(m, "_Glow", 0.06f);
                 F(m, "_PurlDepth", 1.5f);   // prev1: crown Lstd 12.1 vs reference 16.2 (deeper purl valleys; > 1 extrapolates)
+                // p10f (owner 15:55 "knitted hat materials"): YARN RELIEF knit = round V-stitch legs (height-field normals),
+                // 96 ribs around like the reference (was 48 coarse pleats), matte wool + grazing sheen; R2 crown s2p10e
+                // 146/84/167 vs reference 120/54/156 -> deeper, more saturated purple
+                C(m, "_ColorA", "#7A2098"); F(m, "_StitchU", 88); F(m, "_StitchV", 60); F(m, "_BumpStrength", 1.0f);
+                F(m, "_Smoothness", 0.05f); F(m, "_YarnRelief", 1.0f);
             });
             Mat("M_HatCuff_v5", "BWK/Character", m =>
             {
@@ -111,6 +116,9 @@ namespace BubbleWash.EditorTools
                 F(m, "_Mode", 2); C(m, "_ColorA", "#9C46AE"); C(m, "_ColorB", "#9C46AE");   /* p9: was #AB52B5 (prev1 cuff L 41.9 vs reference 36.4) */ F(m, "_StripeWidth", 0f);
                 F(m, "_StitchU", 44); F(m, "_StitchV", 40); F(m, "_BumpStrength", 2.0f); F(m, "_Smoothness", 0.12f); F(m, "_Glow", 0.06f);
                 F(m, "_PurlDepth", 1.8f);   // prev1: cuff still flat (Lstd 3.6 vs reference 10.8) -> much deeper rib valleys
+                // p10f: yarn relief knit (s2p10e R2 cuff Lstd 3.5 vs reference 13.0 = flat pleats)
+                C(m, "_ColorA", "#A84EB8"); C(m, "_ColorB", "#A84EB8"); F(m, "_StitchU", 88); F(m, "_StitchV", 60);
+                F(m, "_BumpStrength", 1.2f); F(m, "_Smoothness", 0.05f); F(m, "_Glow", 0.08f); F(m, "_YarnRelief", 1.0f);
             });
             Mat("M_HatStripe_v5", "BWK/Character", m =>
             {
@@ -118,6 +126,9 @@ namespace BubbleWash.EditorTools
                 F(m, "_Mode", 2); C(m, "_ColorA", "#F2EAF4"); C(m, "_ColorB", "#F2EAF4"); F(m, "_StripeWidth", 0f);
                 F(m, "_StitchU", 44); F(m, "_StitchV", 46); F(m, "_BumpStrength", 0.6f); F(m, "_Smoothness", 0.15f); F(m, "_Glow", 0.40f);   // p9: bump 1.4 -> .6, glow .24 -> .40 (prev1 stripe L 55.5 vs reference 64)
                 F(m, "_PurlDepth", 0.4f);   // p9: 1.5 read as a high-contrast picket fence at R2 (reference: soft pale knit band)
+                // p10f: cream-pink knitted band with visible V stitches (yarn relief, softer than the purple ribs)
+                C(m, "_ColorA", "#F6E6F0"); C(m, "_ColorB", "#F6E6F0"); F(m, "_StitchU", 88); F(m, "_StitchV", 66);
+                F(m, "_BumpStrength", 0.8f); F(m, "_Smoothness", 0.06f); F(m, "_Glow", 0.36f); F(m, "_YarnRelief", 0.75f);
             });
             Mat("M_PawPad_v5", "BWK/Character", m =>
             {
@@ -146,6 +157,15 @@ namespace BubbleWash.EditorTools
                 F(m, "_AO", 0.28f); F(m, "_Curl", 1.0f); F(m, "_Underfur", 0.8f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.45f);   // p7 AO .4
                 F(m, "_TuftScale", 20f); F(m, "_TuftAmount", 0.3f); F(m, "_PlushMode", 1f); F(m, "_StrandContrast", 0.35f);   // p7 tufts 24 / .5, strand contrast 1 (prev1: still vertical streaks)
                 C(m, "_RimColor", "#FFD0C8"); F(m, "_Glow", 0.22f); F(m, "_RimStrength", 0.5f);   // p7 glow .2 (prev1 body L 62.0 vs reference 60.0)
+                // p10f (owner 15:55 "realistic thick pink fur"): s2p10e R2 body 206/127/173 Lstd 7.5 vs reference 203/116/154
+                // Lstd 13.0 = grey-pink velvet. Now a THICK deep coat: 50 % longer pile, bigger locks that part at the tips,
+                // shingled tuft depth shading (_TuftDepth), per-tuft pile length (_LenNoise: tufts break the silhouette),
+                // saturated warm-rose roots -> pale pink tips, less flat self-glow, soft unlit white-pink rim (_RimSelf)
+                C(m, "_RootColor", "#F06470"); C(m, "_BaseColor", "#FFA084"); C(m, "_TipColor", "#FFDCCB");
+                F(m, "_FurLength", 0.078f); F(m, "_Gravity", 0.035f); F(m, "_Thinning", 0.75f); F(m, "_Curl", 0.8f);
+                F(m, "_TuftScale", 15f); F(m, "_TuftAmount", 0.55f); F(m, "_StrandContrast", 0.45f); F(m, "_AO", 0.5f);
+                F(m, "_TuftDepth", 0.8f); F(m, "_LenNoise", 0.6f); F(m, "_LenNoiseScale", 0.5f); F(m, "_SilhouetteFade", 0.3f);
+                C(m, "_RimColor", "#FFD6D6"); F(m, "_Glow", 0.14f); F(m, "_RimStrength", 0.55f); F(m, "_RimSelf", 0.25f);
             }, (int)RenderQueue.AlphaTest);
             Mat("M_PomPom_v5", "BWK/Fur", m =>
             {
@@ -157,6 +177,10 @@ namespace BubbleWash.EditorTools
                 F(m, "_Density", 190); F(m, "_FurLength", 0.065f); F(m, "_Gravity", 0.0f); F(m, "_Thinning", 0.5f);   /* p9: core fuzz reaches past the yarn tips (core .232 + .065 > tip .272) = soft round outline; was 170 / .05 / .6 */ F(m, "_AO", 0.35f);   // cand3: longer core fuzz softens the spiky lock silhouette
                 F(m, "_Curl", 0.25f); F(m, "_Underfur", 0.8f); F(m, "_ClumpAmount", 0.55f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.3f);
                 C(m, "_RimColor", "#C878F1"); F(m, "_Glow", 0.06f); F(m, "_RimStrength", 0.4f);
+                // p10f: s2p10e R2 pom-pom 124/72/175 L41.5 Lstd 8 vs reference 153/87/189 L48.8 Lstd 17 = dark flat ball ->
+                // longer, finer, lighter violet fibres with deeper roots and a soft lilac halo
+                C(m, "_BaseColor", "#8834C6"); C(m, "_TipColor", "#C68CF4"); F(m, "_Density", 230); F(m, "_FurLength", 0.075f);
+                F(m, "_AO", 0.5f); F(m, "_Glow", 0.1f); C(m, "_RimColor", "#DAB0FF"); F(m, "_RimStrength", 0.5f); F(m, "_RimSelf", 0.2f);
             }, (int)RenderQueue.AlphaTest);
             // static (shell-less) variants, same naming rule as v4 (name + "_Static")
             foreach (var n in new[] { "M_Fur_v5", "M_PomPom_v5" })

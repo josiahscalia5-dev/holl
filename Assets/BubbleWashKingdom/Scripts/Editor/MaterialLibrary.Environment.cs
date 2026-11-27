@@ -205,16 +205,11 @@ namespace BubbleWash.EditorTools
                 // v9: v8 deep drum still lilac-pink: the grazing deeper walls mirror the pink LED rims (fresnel ~.7) + the pink
                 // rim spill -> both kept at 30 % on the deeper door-drum walls (the rims themselves keep their pink LEDs)
                 F(m, "_DoorDeepPink", 0.3f);
-                // owner step 2b (2026-11-27 16:00, "deep reflective blue-violet metallic walls, smaller dark perforations,
-                // beautiful distant glowing core"; side-by-side Captures/look/s2_step2_rims_ref_vs_ours.png): the near door-drum
-                // walls carry big ~1.3:1 dark ovals (scale 1.25) where the approved frame has rows of smaller dark SLITS (~2:1)
-                // -> near slots x.7 and slit-shaped, deeper rows a little smaller; the near walls stay deep blue-violet (body cap
-                // .62 -> .5, gloss comes from reflections), polished metal mirrors the glowing violet bands / gold rings harder
-                // (F0 .40 -> .55, rims mirror violet-pink), and the far end glows a brighter cool blue-white core
-                F(m, "_DoorSlotNear", 0.7f); F(m, "_DoorSlotAspect", 2.2f); F(m, "_DoorSlotFar", 0.9f);
-                F(m, "_DoorRampCap", 0.5f); F(m, "_DoorSmooth", 0.9f); F(m, "_MirrorF0", 0.55f);
-                m.SetColor("_MirrorRim", new Color(0.80f, 0.30f, 0.85f));
-                m.SetColor("_FarGlowColor", new Color(0.12f, 0.14f, 0.32f));
+                // owner step 2b tried 2026-11-27 16:00 and REVERTED 16:15 (side lead ee862596): near slots x.7 / aspect 2.2, ramp
+                // cap .5, smooth .9, mirror F0 .55 + brighter violet-pink rim mirror, far glow (.12/.14/.32) and a glowing lilac
+                // M_HatchViolet_s2 made the drum PALER (R2 right wall lum .495 -> .573, reference .451; milky lavender, no depth)
+                // - Captures/look/s2_step2b/. Lesson: the approved wall is DARKER than ours; the glow must stay on the band
+                // EDGES (pink-violet lip) over deep violet band faces - never brighten the faces / mirror on this drum.
             });
             // polished lavender drum lips between the gold rings (SM_DrumRim, m1: fat rolled lip): the stylised BWK/Gold
             // environment shading with a lavender palette - violet body, magenta-pink fresnel edge, soft pink-lavender

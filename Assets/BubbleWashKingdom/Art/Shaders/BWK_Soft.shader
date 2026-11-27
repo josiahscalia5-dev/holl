@@ -47,6 +47,7 @@ Shader "BWK/Soft"
         _MilkSoft ("Round-8 rounded milk volume shading (mode 6, 0 = off)", Range(0,1)) = 0
         _MilkThin ("Thin milk edge, lit through by the water (mode 6, _MilkSoft)", Color) = (0.49, 0.75, 0.91, 1)
         _MilkGlass ("S2 p2 thin liquid sheet shading (mode 6, 0 = off)", Range(0,1)) = 0
+        _MilkWet ("S2 p10f wet liquid milk: sharp glints, rim reflection, see-through thin film (mode 6 _MilkSoft, 0 = off)", Range(0,2)) = 0
         _ArrowEdge ("S2 p2 two-tone chevron: HDR edge band (mode 7, 0 = off)", Range(0,4)) = 0
         _ArrowFillAlpha ("S2 p2 two-tone chevron fill opacity (mode 7)", Range(0,1)) = 1
         // blend state (defaults = opaque; round 4: M_FX_Milk renders translucent with SrcAlpha / OneMinusSrcAlpha)
@@ -70,6 +71,7 @@ Shader "BWK/Soft"
             half _MilkSoft;
             half _MilkGlass, _ArrowEdge, _ArrowFillAlpha;
             half _FormShade;
+            half _MilkWet;
         CBUFFER_END
         ENDHLSL
         Pass
@@ -406,10 +408,27 @@ Shader "BWK/Soft"
                     col += spec * _SpecStrength;
                     col += GlossyEnvironmentReflection(reflect(-v, n), i.positionWS, 0.25h, 1.0h, GetNormalizedScreenSpaceUV(i.positionCS)) * (0.03 + fr * 0.35) * _ReflectBoost;
                     col = col * tint + _ColorA.rgb * _Glow;
+                    half wet = 0;
+                    if (_MilkWet > 0.001)
+                    {
+                        // S2 pass 10f (owner 15:55 "beautiful translucent splashes"; R2 splash p90 ours #FDFBFF vs ref #E4E4F0 =
+                        // chalky flat white): LIQUID milk - two sharp wet glints (view-space key + sun) and a crisp probe
+                        // reflection along the rounded rims; the thin film between the thick ribs turns see-through (alpha
+                        // below) so the blue water shows through the spray
+                        wet = (pow(key, 110.0) * 1.2 + pow(nh, 220.0) * 1.5 * L.shadowAttenuation) * _MilkWet;
+                        col += wet;
+                        half3 wenv = GlossyEnvironmentReflection(reflect(-v, n), i.positionWS, 0.03h, 1.0h, GetNormalizedScreenSpaceUV(i.positionCS));
+                        col += wenv * pow(1.0 - fv, 2.5) * 0.45 * _MilkWet;
+                    }
                     // translucency: opaque milky where the sheet faces the camera, see-through blue at thin / grazing parts
                     half alpha = lerp(_MilkAlpha, _MilkEdgeAlpha, saturate(fr * 1.4));
                     // round 8: soft translucent silhouette band (not a hard paper edge) where the volume shading is on
                     alpha = lerp(alpha, lerp(_MilkEdgeAlpha, _MilkAlpha, smoothstep(0.03, 0.42, fv)) * lerp(0.7, 1.0, thick), _MilkSoft);
+                    if (_MilkWet > 0.001)
+                    {
+                        alpha *= lerp(1.0, lerp(0.42, 1.0, smoothstep(0.35, 0.85, thick)), saturate(_MilkWet));
+                        alpha = saturate(alpha + saturate(wet) * 0.6);   // glints stay visible on the see-through film
+                    }
                     col = MixFog(col, i.fog);
                     return half4(col, alpha);
                 }

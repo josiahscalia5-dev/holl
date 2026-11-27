@@ -137,6 +137,7 @@ Material:
     - _WorkflowMode: 1
     - _Wrap: 0.5
     - _XRMotionVectorsPass: 1
+    - _YarnRelief: 0
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 0.9490196, g: 0.95686275, b: 1, a: 1}

@@ -71,6 +71,14 @@ namespace BubbleWash.EditorTools
                 // S2 pass 9 p4 (R2 lower water ref p10 #3189C8 / p90 #ACDEEF vs ours #3B8ABA / #7AE4E7: the reference's deep
                 // water is a richer saturated blue and carries bright glossy ripple glints): deeper saturated body, more glints
                 C(m, "_DeepColor", "#0A68C8"); F(m, "_SparkleAmount", 1.05f); F(m, "_RippleStrength", 1.45f);
+                // S2 pass 10f (owner 15:55 "natural flowing water"; judge #2 "flat cyan sheet without flow"; R2 lane (560,560,
+                // 760,720) ref p10 #3B8CD0 / p50 #4CBBE1 / p90 #D8FDF9 vs ours #4887B4 / #52AED2 / #83D4E3, thin bright-line
+                // pixels in (300,500,1000,720) ref 14.5 % vs ours 9.4 %): deep-blue troughs + bright turquoise crests, white
+                // downhill flow lines, elongated wet crest highlights, less of the flat grey probe floor and more grazing
+                // (Fresnel) reflection of the real rails / rings, a little light through the crests
+                F(m, "_DepthContrast", 0.6f); C(m, "_CrestColor", "#3FCBEE"); F(m, "_Translucency", 0.35f);
+                F(m, "_FlowLines", 0.75f); F(m, "_FlowLineDensity", 2.2f); F(m, "_GlossLines", 0.55f);
+                F(m, "_ReflectBoost", 0.38f); F(m, "_FresnelBoost", 0.5f);
                 // light halos around the decor chevrons: same period / geometry / runway offset as SceneBuilder.BuildDecorChevrons
                 F(m, "_ChevronStart", SceneBuilder.ChevronStart); F(m, "_ChevronSpacing", SceneBuilder.ChevronSpacing);
                 // (v2 notch measured #55B8E5 vs reference deep #3386CC: the arrows now bloom on their own -> fainter, tighter pool)
@@ -157,6 +165,9 @@ namespace BubbleWash.EditorTools
                 // turquoise centre, white Fresnel rim, sharp glints)
                 F(m, "_MilkGlass", 1f); C(m, "_MilkThin", "#9FE6F4"); F(m, "_MilkEdgeAlpha", 0.3f); F(m, "_BumpStrength", 0f);
                 F(m, "_RimPower", 2.2f); F(m, "_SpecStrength", 1.3f); F(m, "_ReflectBoost", 0.6f); F(m, "_Glow", 0.05f); C(m, "_ColorB", "#3CC8E0");
+                // S2 pass 10f (approved frame: the flying beads read as milky-clear drops with a white rim and a bright glint):
+                // a light milk floor in the bead body, lighter film, more opaque rim
+                F(m, "_MilkSoft", 1f); C(m, "_MilkThin", "#BCE6F4"); F(m, "_MilkEdgeAlpha", 0.42f);
             }, (int)RenderQueue.Transparent);
             // round 6 shot 8.25 s test (NEW materials for SM_FX_Crown_v2_* / SM_Foam_v2_*; the level's materials above are unchanged)
             Mat("M_FX_Milk_v2", "BWK/Soft", m =>
@@ -209,6 +220,13 @@ namespace BubbleWash.EditorTools
                 F(m, "_SrcBlend", (float)BlendMode.SrcAlpha); F(m, "_DstBlend", (float)BlendMode.OneMinusSrcAlpha); F(m, "_ZWrite", 1f);
                 // p2 measured: milky pixels L* 88-89 vs reference 93.5 (S4 / S5 / S6 crowns) -> brighter creamy body, more wrap
                 C(m, "_ColorA", "#F7FDFE"); C(m, "_ShadowColor", "#AAC1DC"); F(m, "_Wrap", 0.56f); F(m, "_Glow", 0.09f);
+                // S2 pass 10f (owner 15:55 "beautiful translucent splashes"; judge #4 small opaque crowns; R2 splash boxes
+                // (400,380,560,620) / (740,380,960,620) p90 ours #FDFBFF / #FBECEE vs ref #E4E4F0 / #DFF4F5 = our milk clips
+                // to flat chalk white): translucent LIQUID milk on the V6 crowns - cooler, less white body, stronger thick-rib /
+                // thin-film variation (thin film = water-lit blue, see-through), sharp wet glints + rim reflection (_MilkWet)
+                C(m, "_ColorA", "#E6F1F8"); C(m, "_ShadowColor", "#9BB3D8"); C(m, "_MilkThin", "#8FC6EC"); F(m, "_Glow", 0.02f);
+                F(m, "_BumpScale", 7f); F(m, "_BumpStrength", 0.75f); F(m, "_MilkAlpha", 0.88f); F(m, "_MilkEdgeAlpha", 0.3f);
+                F(m, "_MilkWet", 1f); F(m, "_SpecStrength", 0.9f);
             }, (int)RenderQueue.Transparent);
             Mat("M_Foam_v2", "BWK/Soft", m =>
             {

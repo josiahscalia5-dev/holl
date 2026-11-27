@@ -27,26 +27,27 @@ Material:
     m_Floats:
     - _ArrowEdge: 0
     - _ArrowFillAlpha: 1
-    - _BumpScale: 8
-    - _BumpStrength: 0.25
+    - _BumpScale: 7
+    - _BumpStrength: 0.75
     - _DstBlend: 10
     - _FormShade: 0
     - _GlintAmount: 0.5
-    - _Glow: 0.09
+    - _Glow: 0.02
     - _HotBoost: 0.6
     - _HotFar: 3.5
     - _HotNear: 3
     - _Metallic: 0
-    - _MilkAlpha: 1
-    - _MilkEdgeAlpha: 0.6
+    - _MilkAlpha: 0.88
+    - _MilkEdgeAlpha: 0.3
     - _MilkGlass: 0
     - _MilkSoft: 1
+    - _MilkWet: 1
     - _Mode: 6
     - _ReflectBoost: 0.35
     - _RimPower: 2.6
     - _RimStrength: 0.3
     - _Smoothness: 0.35
-    - _SpecStrength: 1.25
+    - _SpecStrength: 0.9
     - _SrcBlend: 5
     - _StitchU: 64
     - _StitchV: 26
@@ -59,10 +60,10 @@ Material:
     - _Wrap: 0.56
     - _ZWrite: 1
     m_Colors:
-    - _ColorA: {r: 0.96862745, g: 0.99215686, b: 0.99607843, a: 1}
+    - _ColorA: {r: 0.9019608, g: 0.94509804, b: 0.972549, a: 1}
     - _ColorB: {r: 0.5254902, g: 0.78431374, b: 0.9254902, a: 1}
     - _ColorC: {r: 0.54999995, g: 0.29999998, b: 0.85, a: 1}
-    - _MilkThin: {r: 0.7058824, g: 0.8627451, b: 0.9411765, a: 1}
-    - _ShadowColor: {r: 0.6666667, g: 0.75686276, b: 0.8627451, a: 1}
+    - _MilkThin: {r: 0.56078434, g: 0.7764706, b: 0.9254902, a: 1}
+    - _ShadowColor: {r: 0.60784316, g: 0.7019608, b: 0.84705883, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
