@@ -497,6 +497,14 @@ namespace BubbleWash.EditorTools
                 glowComb.Add(new List<Part> { new Part(quadMesh, new[] { glowMats[ci] }, Matrix4x4.identity) },
                              Matrix4x4.TRS(pos, rot, new Vector3(size, size, 1f)));
             }
+            // Screen S2 pass 9 (judge gap #8): the S2 door stars get their own bolder outline cards (M_StarGlowDoor_*)
+            var glowDoorMats = new[] { Mat("M_StarGlowDoor_Yellow"), Mat("M_StarGlowDoor_Cyan"), Mat("M_StarGlowDoor_Pink") };
+            void AddGlowDoor(int ci, Vector3 pos, Quaternion rot, float size)
+            {
+                var gm = ci < glowDoorMats.Length && glowDoorMats[ci] != null ? glowDoorMats[ci] : null;
+                if (gm == null) { AddGlow(ci, pos, rot, size); return; }
+                AddCard(gm, pos, rot, size);
+            }
 
             // ---- hero frame: the reference layout, projected from the fixed hero camera onto the drum wall
             HeroCameraPose(out var camPos, out var camRot);
@@ -599,7 +607,11 @@ namespace BubbleWash.EditorTools
                             float rho = Vector3.ProjectOnPlane(hp - hO, hN).magnitude;
                             float hpDepth = Vector3.Dot(hp - r2.pos, r2Fwd);
                             float hpScale = s.w * 2f * hpDepth * tH / dW;
-                            if (rho - dR * hpScale > 3.95f && rho < 5.45f && hpDepth > 2f)
+                            // Screen S2 pass 9 (judge gap #8: right yellow ~85 px off its reference spot (1010, 60)): the
+                            // inner-tip test (rho - r > 3.95) kept it nudged; the reference mounts it on the rim with its
+                            // inner tips over the drum mouth -> only the star centre must sit on the violet torus (rho > 4.27,
+                            // the marquee ring's outer rho), high above the slide (screen top), so nothing reaches the lanes
+                            if (rho > 4.27f && rho < 5.45f && hpDepth > 2f)
                             { pos = hp; scale = hpScale; u = s.x; v = s.y; wf = fmh; rimMount = true; }
                         }
                     }
@@ -612,7 +624,7 @@ namespace BubbleWash.EditorTools
                     var rot = Quaternion.LookRotation(facing, upHint);
                     comb.Add(RecolorD(mats[s.color]), Matrix4x4.TRS(pos, rot, Vector3.one * scale));
                     // clean outline tubes with a tight halo (reference: purple wall visible inside every star, no filled blob)
-                    AddGlow(s.color, pos, rot, dCard * scale);   // pass 5: co-planar outline glow (p7: slim master card 3.2x)
+                    AddGlowDoor(s.color, pos, rot, dCard * scale);   // pass 5: co-planar outline glow (p7: slim master card 3.2x; p9: door cards)
                     doorCount++;
                     Debug.Log($"[BWK] door star c{s.color} screen ({s.x:F3},{s.y:F3}) -> ({u:F3},{v:F3}){(rimMount ? " RIM" : "")} track {wf.distance:F1} m " +
                               $"depth {Vector3.Dot(pos - r2.pos, r2Fwd):F1} m scale {scale:F2}");

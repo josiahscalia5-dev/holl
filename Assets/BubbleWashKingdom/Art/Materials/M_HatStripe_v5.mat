@@ -26,11 +26,11 @@ Material:
     m_Ints: []
     m_Floats:
     - _BumpScale: 6
-    - _BumpStrength: 1.4
+    - _BumpStrength: 1
     - _Glow: 0.24
     - _Metallic: 0
     - _Mode: 2
-    - _PurlDepth: 1.5
+    - _PurlDepth: 0.9
     - _RimPower: 3
     - _RimStrength: 0.35
     - _Smoothness: 0.15

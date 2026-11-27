@@ -143,6 +143,14 @@ namespace BubbleWash.EditorTools
             StarGlow("M_StarGlow_Cyan", "#14B8FF", 1.4f, 2.0f);     // v3 (was 1.9 / 1.8)
             StarGlow("M_StarGlow_Pink", "#FF2AA8", 1.3f, 2.0f);     // v3 (was 1.8 / 1.8)
             StarGlow("M_StarGlow_Purple", "#9A3CFF", 1.3f, 2.0f);   // v3 (was 1.8 / 1.8): far r7 star cluster glow cards stacked into a pale haze disk inside the third ring
+            // Screen S2 pass 9 (judge gap #8: the S2 door stars read thinner / dimmer than the reference's bold hollow tubes,
+            // ~4-5 px vs ~7-8 px at 720p): door-only outline cards (SceneBuilder.Lighting door loop) with a solid band ~1.6x
+            // the slim tube (_StarTube .045 -> .072 in card units) and a SHORTER tail (.05 -> .035), lemon yellow instead of
+            // orange (reference tube #F8E860, warm halo) -> a bolder neon tube with the wall still visible inside; other
+            // stars keep M_StarGlow_*
+            StarGlowDoor("M_StarGlowDoor_Yellow", "#FFB410", 2.0f);
+            StarGlowDoor("M_StarGlowDoor_Cyan", "#20C8FF", 1.5f);
+            StarGlowDoor("M_StarGlowDoor_Pink", "#FF38B4", 1.4f);
             // inside of the yellow star (reference: filled with warm orange light): a multiply card first pulls the pale
             // lavender wall / rim behind it toward orange, then the additive glow lights it up
             Mat("M_StarFill_Yellow", "BWK/LightBlob", m =>
@@ -199,6 +207,18 @@ namespace BubbleWash.EditorTools
                 // dark wall inside with a faint spill. Peak at the tube = strength -> ~0.55x the old centre value.
                 F(m, "_Shape", 1f); F(m, "_StarR", 0.625f); F(m, "_StarInner", 0.45f); F(m, "_StarTube", 0.045f);
                 F(m, "_StarGlowW", 0.05f); F(m, "_StarFill", 0.03f); F(m, "_Strength", strength * 0.6f);   // v2: tighter, emptier inside
+            }, (int)RenderQueue.Transparent - 10);
+        }
+
+        static void StarGlowDoor(string name, string hex, float strength)
+        {
+            Mat(name, "BWK/LightBlob", m =>
+            {
+                C(m, "_Color", hex); F(m, "_Softness", 1f); F(m, "_Core", 2.0f);
+                F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
+                F(m, "_FarFade", 22f);
+                F(m, "_Shape", 1f); F(m, "_StarR", 0.625f); F(m, "_StarInner", 0.45f); F(m, "_StarTube", 0.072f);
+                F(m, "_StarGlowW", 0.035f); F(m, "_StarFill", 0.02f); F(m, "_Strength", strength * 0.6f);
             }, (int)RenderQueue.Transparent - 10);
         }
 

@@ -889,8 +889,9 @@ namespace BubbleWash.EditorTools
                 var views = new (string name, Vector3 pos, Vector3 look, float fov, bool clay)[]
                 {
                     ("A_matched_R2", p - fwd * R2Back + up * R2Height + right * R2Lat, Vector3.zero, R2Fov, true),
-                    ("B_high_rear_left", p - fwd * 6.5f + up * 4.2f - right * 3.2f, p + fwd * 6f + up * 0.6f, 60f, true),
-                    ("C_side_right_low", p - fwd * 1.0f + up * 1.3f + right * 3.4f, p + fwd * 2.5f - right * 0.8f + up * 0.5f, 70f, false),
+                    // s2p9a: B at -6.5 / 4.2 / -3.2 m sat behind pale hall panels -> moved into the open hall (E's side)
+                    ("B_high_rear_right", p - fwd * 8f + up * 3.2f + right * 1.0f, p + fwd * 6f + up * 0.8f, 60f, true),
+                    ("C_side_right_low", p - fwd * 1.0f + up * 1.3f + right * 3.4f, p + fwd * 2.5f - right * 0.8f + up * 0.5f, 70f, true),
                     ("D_ahead_looking_back", p + fwd * 7f + up * 1.6f + right * 0.4f, p - fwd * 3f + up * 0.6f, 62f, true),
                     ("E_hall_wide_from_behind", p - fwd * 14f + up * 5.5f + right * 1.5f, p + fwd * 4f + up * 1.2f, 58f, false),
                 };
@@ -908,8 +909,13 @@ namespace BubbleWash.EditorTools
                 clay.SetColor("_EmissionColor", new Color(0.10f, 0.10f, 0.11f));
                 var all = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);
                 var saved = all.Select(r => r.sharedMaterials).ToArray();
+                // neutral clay: no fog / colour grade / bloom (s2p9a clay renders were tinted pink by the fog + grade)
+                var vols = Object.FindObjectsByType<UnityEngine.Rendering.Volume>(FindObjectsSortMode.None).Where(v => v.enabled).ToArray();
+                bool fog = RenderSettings.fog;
                 try
                 {
+                    RenderSettings.fog = false;
+                    foreach (var v in vols) v.enabled = false;
                     foreach (var r in all) r.sharedMaterials = Enumerable.Repeat(clay, Mathf.Max(1, r.sharedMaterials.Length)).ToArray();
                     foreach (var v in views.Where(v => v.clay))
                     {
@@ -918,7 +924,12 @@ namespace BubbleWash.EditorTools
                         Render(cam, 1280, 720, $"{outDir}/{v.name}_clay.png");
                     }
                 }
-                finally { for (int i = 0; i < all.Length; i++) if (all[i] != null) all[i].sharedMaterials = saved[i]; }
+                finally
+                {
+                    for (int i = 0; i < all.Length; i++) if (all[i] != null) all[i].sharedMaterials = saved[i];
+                    RenderSettings.fog = fog;
+                    foreach (var v in vols) v.enabled = true;
+                }
                 Debug.Log("[BWK] S2 proof views written to " + Path.GetFullPath(outDir));
                 EditorApplication.Exit(0);
             }

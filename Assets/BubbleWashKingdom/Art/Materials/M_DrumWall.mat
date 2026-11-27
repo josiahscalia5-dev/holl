@@ -44,19 +44,26 @@ Material:
     - _DepthTintEnd: 26
     - _DepthTintStart: 14
     - _DoorAmount: 1
-    - _DoorDesat: 0.12
+    - _DoorDesat: 0.22
     - _DoorFadeEnd: 112
     - _DoorFadeStart: 78
-    - _DoorHole: 0.32
-    - _DoorPanelCurve: 0.45
+    - _DoorHole: 0.24
+    - _DoorPanelCurve: 0.22
+    - _DoorRibPitch: 0.7
+    - _DoorRibTilt: 0.22
     - _DoorRowSpread: 1.45
+    - _DoorSheenPower: 7
     - _DoorSlotEnd: 70
     - _DoorSlotFar: 0.72
     - _DoorSlotNear: 1.15
     - _DoorSlotStart: 54
     - _DoorSmooth: 0.82
+    - _DoorWarmWidth: 0.45
     - _EdgeAO: 0.4
     - _EdgeAOWidth: 0.5
+    - _FarGlowEnd: 150
+    - _FarGlowFar: 80
+    - _FarGlowNear: 35
     - _FlangeWidth: 0.2
     - _Glow: 0.035
     - _GlowChance: 0.03
@@ -107,7 +114,10 @@ Material:
     - _DeepEdgeGlow: {r: 0.3, g: 0.4, b: 0.7, a: 1}
     - _DeepTint: {r: 0.66, g: 0.67, b: 0.82, a: 1}
     - _DepthTintColor: {r: 0.30588236, g: 0.3529412, b: 0.54901963, a: 1}
+    - _DoorSheenColor: {r: 0.24, g: 0.2, b: 0.36, a: 1}
     - _DoorTint: {r: 1.08, g: 1.08, b: 1.18, a: 1}
+    - _DoorWarmColor: {r: 0.22, g: 0.12, b: 0.03, a: 1}
+    - _FarGlowColor: {r: 0.1, g: 0.08, b: 0.16, a: 1}
     - _FlangeColor: {r: 0.54901963, g: 0.45490196, b: 0.78431374, a: 1}
     - _GlowColorA: {r: 1.7, g: 0.85, b: 1.6, a: 1}
     - _GlowColorB: {r: 0.75, g: 1.35, b: 1.9, a: 1}

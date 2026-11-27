@@ -116,8 +116,8 @@ namespace BubbleWash.EditorTools
             {
                 // pale-pink band (reference ~70/27/-19): warmer pale pink, a little more self-light in the hat's shade
                 F(m, "_Mode", 2); C(m, "_ColorA", "#F2EAF4"); C(m, "_ColorB", "#F2EAF4"); F(m, "_StripeWidth", 0f);
-                F(m, "_StitchU", 44); F(m, "_StitchV", 46); F(m, "_BumpStrength", 1.4f); F(m, "_Smoothness", 0.15f); F(m, "_Glow", 0.24f);
-                F(m, "_PurlDepth", 1.5f);   // prev1: stripe Lstd 10 vs reference 21 (visible knit stitches)
+                F(m, "_StitchU", 44); F(m, "_StitchV", 46); F(m, "_BumpStrength", 1.0f); F(m, "_Smoothness", 0.15f); F(m, "_Glow", 0.24f);   // p9: bump 1.4 -> 1.0
+                F(m, "_PurlDepth", 0.9f);   // p9: 1.5 read as a high-contrast picket fence at R2 (reference: soft pale knit band)
             });
             Mat("M_PawPad_v5", "BWK/Character", m =>
             {
@@ -137,13 +137,15 @@ namespace BubbleWash.EditorTools
                 // pass 7 run 2: R2 body 56.7/43/-11 vs reference 54.9/44/-6 (linear x1.03/.93/.84) and the 12 cm tuft cells
                 // read as a QUILTED LATTICE of round bumps -> BWK_Fur _PlushMode 1 (irregular Voronoi tufts, ~6.5 cm) +
                 // _StrandContrast 1 (reference body Lstd 11.3 vs ours 6.2), a little more downward droop
-                C(m, "_RootColor", "#ED826A"); C(m, "_BaseColor", "#FFA382"); C(m, "_TipColor", "#FFDCBB");   // prev1 body 53.8/43.5/-8.9
+                // pass 9: R2 body crop (560,410)-(720,500) s2p8a 188/99/144 vs reference 203/119/158 = darker + more magenta with
+                // strand streaks -> green lifted (linear x1.3), lighter roots (AO .4 -> .28), half the strand contrast, finer strands
+                C(m, "_RootColor", "#FF9A78"); C(m, "_BaseColor", "#FFB48E"); C(m, "_TipColor", "#FFE6D2");   // p7 #ED826A / #FFA382 / #FFDCBB
                 C(m, "_PawRootColor", "#FFF0E2"); C(m, "_PawTipColor", "#FFF9EE"); F(m, "_PawGlow", 0.45f);
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
-                F(m, "_Density", 200); F(m, "_FurLength", 0.052f); F(m, "_Gravity", 0.02f); F(m, "_Thinning", 0.8f); F(m, "_ClumpAmount", 0.6f); F(m, "_ClumpScale", 5f);
-                F(m, "_AO", 0.4f); F(m, "_Curl", 1.0f); F(m, "_Underfur", 0.8f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.45f);
-                F(m, "_TuftScale", 24f); F(m, "_TuftAmount", 0.5f); F(m, "_PlushMode", 1f); F(m, "_StrandContrast", 1f);
-                C(m, "_RimColor", "#FFD0C8"); F(m, "_Glow", 0.2f); F(m, "_RimStrength", 0.5f);
+                F(m, "_Density", 240); F(m, "_FurLength", 0.052f); F(m, "_Gravity", 0.02f); F(m, "_Thinning", 0.8f); F(m, "_ClumpAmount", 0.6f); F(m, "_ClumpScale", 5f);   // p7 density 200
+                F(m, "_AO", 0.28f); F(m, "_Curl", 1.0f); F(m, "_Underfur", 0.8f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.45f);   // p7 AO .4
+                F(m, "_TuftScale", 20f); F(m, "_TuftAmount", 0.5f); F(m, "_PlushMode", 1f); F(m, "_StrandContrast", 0.5f);   // p7 tufts 24, strand contrast 1
+                C(m, "_RimColor", "#FFD0C8"); F(m, "_Glow", 0.24f); F(m, "_RimStrength", 0.5f);   // p7 glow .2
             }, (int)RenderQueue.AlphaTest);
             Mat("M_PomPom_v5", "BWK/Fur", m =>
             {

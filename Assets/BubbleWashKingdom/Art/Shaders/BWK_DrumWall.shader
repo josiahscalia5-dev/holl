@@ -502,6 +502,35 @@ Shader "BWK/DrumWall"
                     float few = fwidth(secLocal) * 1.5 + 0.015;
                     emission += _DeepEdgeGlow.rgb * deepW * exp(-abs(fe) / few) * (1.0 - hole);
                 }
+                // Screen S2 pass 9 (judge gap #2: flat saturated walls; reference = polished blue-violet metal with bright sheen
+                // streaks running around the drum, warm reflections beside the gold rings, a luminous far end). The polished
+                // drum mirrors the bright far end: reflection of the view ray about the wall normal, tilted by shallow lathe
+                // ribs along the axis, measured against the tunnel axis (uv.y direction) -> streaks that run AROUND the drum
+                // and strengthen toward the vanishing point (grazing), only in the S2 door drum (doorW) and the far end seen
+                // through it (S3+ cameras beyond _FarGlowEnd unchanged)
+                if (_Pattern > 0.5)
+                {
+                    half3 alongDir = normalize(bitangent);
+                    half farW = _DoorAmount * smoothstep(_FarGlowNear, _FarGlowFar, camDist) * (1.0 - smoothstep(_FarGlowEnd - 20.0, _FarGlowEnd, m.y));
+                    half sheenW = max(doorW, farW);
+                    if (sheenW > 0.001)
+                    {
+                        float ribP = max(_DoorRibPitch, 0.1);
+                        float ribFade = saturate(1.0 - fwidth(m.y) * 5.0 / ribP);
+                        half3 nr = normalize(n + alongDir * (_DoorRibTilt * ribFade * sin(m.y * 6.2831853 / ribP)));
+                        half3 R = reflect(-viewDir, nr);
+                        half down = saturate(abs(dot(R, alongDir)));
+                        half sheen = pow(down, max(_DoorSheenPower, 1.0));
+                        emission += _DoorSheenColor.rgb * sheen * sheenW * (1.0 - hole * 0.85);
+                        if (secLocal >= 0.0)
+                        {
+                            float ww = max(_DoorWarmWidth, 0.05);
+                            half warm = exp(-secLocal / ww) + exp(-(secLen - secLocal) / ww);
+                            emission += _DoorWarmColor.rgb * saturate(warm) * doorW * (1.0 - hole);
+                        }
+                        emission += _FarGlowColor.rgb * farW * (1.0 - hole * 0.6);
+                    }
+                }
                 lit.rgb = MixFog(lit.rgb + emission, i.fog);
                 return lit;
             }
