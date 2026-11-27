@@ -85,8 +85,162 @@ def main(out, mdir, bdir, adir, blabel, alabel):
     print("wrote", out, sheet.shape[1], "x", sheet.shape[0])
 
 
+# ------------------------------------------------------------------------------------------------------------------------
+# ACCEPT mode (lead 6d001969 2026-11-27 17:40, owner 17:35 section 4H "before committing the new mascot to another full game build,
+# show one complete comparison sheet": original reference, new front / side / rear / three-quarter, fur close-up, knitted hat +
+# pom-pom close-up, mascot inside actual Unity gameplay, compared with s2p10e, s2p10f and any newer version; owner 17:45: the
+# ORIGINAL Google Flow crops in Reference/google_flow_pack_1735/ are authoritative).
+#   python -I Tools/mascot_owner_sheet.py --accept OUT.png NEW_DIR ["NEW LABEL"] [BEFORE_MASCOT_DIR] [name=DIR,name=DIR,...]
+#   NEW_DIR = an AgentPreviewBatch -bwkMascotViews output (mascot/M1..M4 + R2_vs_reference_16x9.png + hero_vs_reference_9x16.png)
+#   BEFORE_MASCOT_DIR default Captures/lead/mascot_before_s2p10g (the s2p10g mascot alone, same cameras)
+#   versions default s2p10e=Captures/compare/build_s2p10e,s2p10f=Captures/compare/build_s2p10f,s2p10g=Captures/compare/build_s2p10g
+FLOW = "Reference/google_flow_pack_1735/Crops"
+SHEET_W = 2100
+
+
+def fit_box(img, w, h):
+    ih, iw = img.shape[:2]
+    sc = min(w / iw, h / ih)
+    nw, nh = max(1, int(round(iw * sc))), max(1, int(round(ih * sc)))
+    r = fit_w(img, nw)
+    if r.shape[0] < nh:
+        r = np.concatenate([r, np.repeat(r[-1:], nh - r.shape[0], 0)], 0)
+    out = np.full((h, w, 3), BG, np.uint8)
+    y0, x0 = (h - nh) // 2, (w - nw) // 2
+    out[y0:y0 + nh, x0:x0 + nw] = r[:nh, :nw]
+    return out
+
+
+def tile_row(tiles, ratio=1.0):
+    n = len(tiles)
+    tw = (SHEET_W - GAP * (n - 1)) // n
+    th = int(round(tw * ratio))
+    cells = []
+    for t in tiles:
+        cells.append(fit_box(t, tw, th) if t is not None else np.full((th, tw, 3), BG, np.uint8))
+        cells.append(np.full((th, GAP, 3), BG, np.uint8))
+    row = np.concatenate(cells[:-1], axis=1)
+    if row.shape[1] < SHEET_W:
+        row = np.concatenate([row, np.full((th, SHEET_W - row.shape[1], 3), BG, np.uint8)], axis=1)
+    return row
+
+
+def mascot_bbox(img):
+    """Mascot-alone renders have a flat backdrop: bbox of the pixels that differ from the median border colour."""
+    border = np.concatenate([img[0], img[-1], img[:, 0], img[:, -1]]).astype(np.float32)
+    bg = np.median(border, axis=0)
+    d = np.abs(img.astype(np.float32) - bg).sum(axis=2)
+    ys, xs = np.nonzero(d > 45)
+    if len(xs) < 50:
+        return 0, 0, img.shape[1], img.shape[0]
+    return (int(np.percentile(xs, 0.3)), int(np.percentile(ys, 0.3)),
+            int(np.percentile(xs, 99.7)) + 1, int(np.percentile(ys, 99.7)) + 1)
+
+
+def load_view(d, n):
+    for p in (os.path.join(d, "mascot", n + ".png"), os.path.join(d, n + ".png")):
+        if os.path.exists(p):
+            return read_png(p)[:, :, :3]
+    return None
+
+
+def mascot_tile(img):
+    if img is None:
+        return None
+    x0, y0, x1, y1 = mascot_bbox(img)
+    pad = int(0.06 * max(x1 - x0, y1 - y0))
+    return img[max(0, y0 - pad):y1 + pad, max(0, x0 - pad):x1 + pad]
+
+
+def closeups(rear, front):
+    """hat + pom-pom = upper half of the REAR mascot bbox, fur = the back below the brim, face = lower part of the FRONT bbox."""
+    out = {"hat": None, "fur": None, "face": None}
+    if rear is not None:
+        x0, y0, x1, y1 = mascot_bbox(rear)
+        w, h = x1 - x0, y1 - y0
+        out["hat"] = rear[y0:y0 + int(0.52 * h), x0 + int(0.18 * w):x1 - int(0.18 * w)]
+        out["fur"] = rear[y0 + int(0.56 * h):y0 + int(0.86 * h), x0 + int(0.28 * w):x1 - int(0.28 * w)]
+    if front is not None:
+        x0, y0, x1, y1 = mascot_bbox(front)
+        w, h = x1 - x0, y1 - y0
+        out["face"] = front[y0 + int(0.42 * h):y1, x0 + int(0.12 * w):x1 - int(0.12 * w)]
+    return out
+
+
+def flow(name):
+    p = os.path.join(FLOW, name)
+    return read_png(p)[:, :, :3] if os.path.exists(p) else None
+
+
+def accept_main(argv):
+    if len(argv) < 2:
+        raise SystemExit(__doc__)
+    out, ndir = argv[0], argv[1]
+    nlabel = argv[2] if len(argv) > 2 else "NEW"
+    bdir = argv[3] if len(argv) > 3 else "Captures/lead/mascot_before_s2p10g"
+    vers = argv[4] if len(argv) > 4 else ("s2p10e=Captures/compare/build_s2p10e,s2p10f=Captures/compare/build_s2p10f,"
+                                          "s2p10g=Captures/compare/build_s2p10g")
+    versions = [v.split("=", 1) for v in vers.split(",") if "=" in v]
+    names = ["M1_mascot_rear", "M2_mascot_side_right", "M3_mascot_front", "M4_mascot_three_quarter"]
+    rows = []
+    rows.append(("ORIGINAL GOOGLE FLOW VIDEO (AUTHORITATIVE): REAR 3.00 S || FRONT 4.00 S || ANGLED 7.50 S || ANGLED REAR 0.00 S",
+                 tile_row([flow("mascot_rear_03s.png"), flow("mascot_front_04s.png"), flow("mascot_angled_07_5s.png"),
+                           flow("mascot_angled_rear_00s.png")], 1.0)))
+    before = [load_view(bdir, n) for n in names]
+    new = [load_view(ndir, n) for n in names]
+    rows.append(("S2P10G (BEFORE), MASCOT ALONE: REAR || SIDE || FRONT || THREE-QUARTER", tile_row([mascot_tile(x) for x in before], 1.0)))
+    rows.append((f"{nlabel}, MASCOT ALONE: REAR || SIDE || FRONT || THREE-QUARTER", tile_row([mascot_tile(x) for x in new], 1.0)))
+    cb, cn = closeups(before[0], before[2]), closeups(new[0], new[2])
+    rows.append((f"CLOSE-UPS: ORIGINAL FUR + HAT || S2P10G HAT || {nlabel} HAT || S2P10G FUR || {nlabel} FUR",
+                 tile_row([flow("fur_and_hat_03s.png"), cb["hat"], cn["hat"], cb["fur"], cn["fur"]], 1.15)))
+    rows.append((f"FACE: ORIGINAL 4.00 S || S2P10G || {nlabel}",
+                 tile_row([flow("face_and_paws_04s.png"), cb["face"], cn["face"]], 0.8)))
+    box, pbox = (380, 150, 900, 640), (60, 560, 660, 1180)
+    r2, pt = [], []
+    ref = pref = None
+    for _, d in versions + [("new", ndir)]:
+        p = os.path.join(d, "R2_vs_reference_16x9.png")
+        q = os.path.join(d, "hero_vs_reference_9x16.png")
+        if os.path.exists(p):
+            a, b = halves(p)
+            ref = a if ref is None else ref
+            r2.append(mascot_box(b, box))
+        else:
+            r2.append(None)
+        if os.path.exists(q):
+            a, b = halves(q)
+            pref = a if pref is None else pref
+            pt.append(mascot_box(b, pbox))
+        else:
+            pt.append(None)
+    labels = " || ".join(["APPROVED"] + [n.upper() for n, _ in versions] + [nlabel])
+    rows.append((f"IN-GAME R2 (LANDSCAPE): {labels}",
+                 tile_row([mascot_box(ref, box) if ref is not None else None] + r2, (box[3] - box[1]) / (box[2] - box[0]))))
+    rows.append((f"IN-GAME PORTRAIT GAMEPLAY: {labels}",
+                 tile_row([mascot_box(pref, pbox) if pref is not None else None] + pt, (pbox[3] - pbox[1]) / (pbox[2] - pbox[0]))))
+    px = max(2, SHEET_W // 500)
+    blocks = []
+    for cap, img in rows:
+        # row title on its own bar (text before the first ':'), then one label per tile
+        title, _, labs = cap.partition(":")
+        if labs.strip():
+            blocks.append(caption_bar(title.strip(), SHEET_W, px))
+            blocks.append(caption_bar(labs.strip(), SHEET_W, max(2, px - 1)))
+        else:
+            blocks.append(caption_bar(cap, SHEET_W, max(2, px - 1)))
+        blocks.append(img)
+        blocks.append(np.full((GAP, SHEET_W, 3), BG, np.uint8))
+    sheet = np.concatenate(blocks[:-1], axis=0)
+    os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
+    write_png(out, sheet)
+    print("wrote", out, sheet.shape[1], "x", sheet.shape[0])
+
+
 if __name__ == "__main__":
     a = sys.argv[1:]
+    if a and a[0] == "--accept":
+        accept_main(a[1:])
+        raise SystemExit(0)
     if len(a) < 6:
         raise SystemExit(__doc__)
     main(*a[:6])

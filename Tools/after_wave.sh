@@ -7,6 +7,11 @@
 #   -> section_triptych <tag> <before> stills_<tag> -> Play Mode autopilot recording -> review frames.
 # Log: Logs/after_wave_<tag>.log. Never kills anything; every heavy run goes through heavy_lock (lead priority).
 DIR="$1"; N="${2:-3}"; TAG="${3:-r8m}"; BEFORE="${4:-Captures/stills_r8}"; IDLE_MIN="${IDLE_MIN:-12}"
+# lead 6d001969 2026-11-27 17:55 (owner 17:35 section 4H: "Before committing the new mascot to another full game build, show one
+# complete comparison sheet"): GATE=1 = no full build - a no-save mascot preview (-bwkMascotViews) + the owner acceptance sheet
+# Captures/sections/OWNER_S2_mascot_accept_<tag>.png instead; the LEAD reviews it, shows the owner, then builds (or reverts).
+GATE="${GATE:-0}"
+PY="/c/Users/josia/Blender/blender-5.3.0-windows-x64/5.3/python/bin/python.exe"
 ROOT=/c/Users/josia/thanksgiving
 UNITY="/c/Program Files/Unity/Hub/Editor/6000.3.29f1/Editor/Unity.exe"
 cd "$ROOT" || exit 1
@@ -40,6 +45,15 @@ if [ $CS -eq 1 ]; then say "cs_check: compile errors - NO build (fix first, see 
 [ $CS -ne 0 ] && say "cs_check setup problem (exit $CS) - building anyway (Unity compiles itself)"
 FREE=$(df -k /c | awk 'NR==2 {print $4}')
 if [ "${FREE:-0}" -lt 1500000 ]; then say "only $((FREE / 1024)) MB free on C: - NO build"; exit 3; fi
+if [ "$GATE" = "1" ]; then
+  say "GATE (owner 17:35 4H): no full build with a new mascot before the acceptance sheet - no-save preview instead"
+  bash Tools/unity_run.sh BubbleWash.EditorTools.CaptureTools.AgentPreviewBatch "lead_gate_${TAG}" -bwkOut "Captures/lead/gate_${TAG}" -bwkMascotViews >> "$LOG" 2>&1
+  say "gate preview exit=$? (Captures/lead/gate_${TAG}/)"
+  "$PY" -I Tools/mascot_owner_sheet.py --accept "Captures/sections/OWNER_S2_mascot_accept_${TAG}.png" "Captures/lead/gate_${TAG}" "NEW ${TAG}" >> "$LOG" 2>&1
+  say "gate sheet Captures/sections/OWNER_S2_mascot_accept_${TAG}.png - LEAD: review it, show the owner, then Tools/safe_build.sh lead_${TAG} (or revert)"
+  say "after_wave ${TAG} done (gated, no build)"
+  exit 0
+fi
 say "safe_build lead_${TAG} ($((FREE / 1024)) MB free)"
 bash Tools/safe_build.sh "lead_${TAG}" >> "$LOG" 2>&1; CODE=$?
 say "safe_build lead_${TAG} exit=$CODE"
