@@ -52,10 +52,10 @@ Material:
     - _GlossLines: 0.4
     - _Glow: 0.16
     - _HueLock: 0.85
-    - _HueLockLow: 0.8
-    - _HueLowStart: 172
-    - _HueTarget: 203
-    - _NearBrighten: 0.08
+    - _HueLockLow: 1
+    - _HueLowStart: 168
+    - _HueTarget: 212
+    - _NearBrighten: 0
     - _PatchAmount: 0.42
     - _RainbowAmount: 0.32
     - _ReflectBoost: 0.38

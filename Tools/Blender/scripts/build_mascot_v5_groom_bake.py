@@ -166,7 +166,8 @@ def comb_dir(P, NR, seed):
     """Combed plush direction in the tangent plane: down the body, a little outward to the sides, slowly swirling."""
     down = np.array([0.0, 0.0, -1.0])
     t = down[None, :] - NR * (NR @ down)[:, None]
-    side = np.zeros_like(P); side[:, 0] = np.sign(P[:, 0] - BODY_C[0]) * 0.28
+    # outward toward the flanks, smooth through the back / front centre line (a sign() flip combed a visible centre parting)
+    side = np.zeros_like(P); side[:, 0] = np.tanh((P[:, 0] - BODY_C[0]) / 0.14) * 0.22
     side -= NR * np.sum(side * NR, axis=1, keepdims=True)
     radial = P - BODY_C; radial[:, 2] = 0.0
     radial -= NR * np.sum(radial * NR, axis=1, keepdims=True)
