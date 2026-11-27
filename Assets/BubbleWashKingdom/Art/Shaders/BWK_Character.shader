@@ -26,6 +26,7 @@ Shader "BWK/Character"
         _Glow ("Self Glow", Range(0,1)) = 0.1
         _RimPower ("Rim Power", Float) = 3
         _RimStrength ("Rim Strength", Range(0,2)) = 0.35
+        _PurlDepth ("Knit Purl Depth (0 = v4 look)", Range(0,1)) = 0
     }
     SubShader
     {
@@ -35,7 +36,7 @@ Shader "BWK/Character"
         CBUFFER_START(UnityPerMaterial)
             half4 _ColorA, _ColorB, _ColorC, _ShadowColor;
             half _Mode, _Smoothness, _Metallic, _Wrap, _BumpScale, _BumpStrength, _Stripes, _StripeWidth;
-            half _StitchU, _StitchV, _Glow, _RimPower, _RimStrength;
+            half _StitchU, _StitchV, _Glow, _RimPower, _RimStrength, _PurlDepth;
         CBUFFER_END
         ENDHLSL
         Pass
@@ -131,8 +132,10 @@ Shader "BWK/Character"
                     n = normalize(n + nb * _BumpStrength);
                     occlusion = lerp(0.5, 1.0, ribH);
                     float yarn = BWK_ValueNoise(float2(i.uv.x * _StitchU * 4.0, i.uv.y * _StitchV * 2.0));
-                    // S2 p6: deeper purl valleys (reference knit luminance spread ~3x ours: Lstd 10 vs 3; v4 lerp 0.74-1.06)
-                    albedo *= lerp(0.58, 1.1, bump) * lerp(0.92, 1.05, yarn);
+                    // _PurlDepth 0 = the v4 knit exactly (0.74-1.06 / 0.94-1.04); 1 = SK_Mascot_v5 materials (S2 p6: reference
+                    // knit luminance spread ~3x ours, Lstd 10 vs 3 -> deeper purl valleys 0.58-1.10 / 0.92-1.05)
+                    albedo *= lerp(lerp(0.74, 0.58, _PurlDepth), lerp(1.06, 1.1, _PurlDepth), bump)
+                            * lerp(lerp(0.94, 0.92, _PurlDepth), lerp(1.04, 1.05, _PurlDepth), yarn);
                     half fuzz = BWK_Fresnel(n, v, 2.0) * 0.3;
                     emission = albedo * (_Glow + fuzz);
                 }

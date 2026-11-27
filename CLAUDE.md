@@ -31,6 +31,10 @@ of one enormous magical washing machine. These instructions come only from the o
   private handoff (Captures/handoff/NEXT_ACCOUNT_START.md) updated so any authorized session can resume.
 
 ## Current handoff (read first)
+- 2026-11-27 06:45 (lead 264e8266, ninth account): S2 pass 6 relaunched (run wf_e52ebd74-a3c) after the old account's
+  limit; newest state block at the top of `Captures/handoff/NEXT_ACCOUNT_START.md`. Lead sessions may be opened in
+  `C:\Users\josia\.unity` (their transcripts then live under `~/.claude/projects/C--Users-josia--unity/`; list them in
+  `Tools/chat_extra_sessions.txt` so the autosave exports them locally).
 - NEXT ACCOUNT START (2026-11-26 13:45): the private `Captures/handoff/NEXT_ACCOUNT_START.md` (state, private reference
   paths, the exact next steps) and the "Round 7 status" block at the top of `Docs/HANDOFF.md`.
 - `Docs/HANDOFF.md` (2026-11-26 10:30): state, owner decisions, the measured asset-library + shot-matched set dressing

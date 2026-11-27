@@ -18,14 +18,21 @@ namespace BubbleWash.EditorTools
         // 17 bones, 13 takes, 11 material names) and keep the previous model + all animations as the fallback: set
         // UseMascotV4 = false and run a full build to go back to SK_Mascot.fbx (v3). Never delete either FBX.
         public const bool UseMascotV4 = true;
+        // Lead 2026-11-27 06:45 (owner 06:20 / 06:30): SK_Mascot_v5.fbx = the character artist's reconstruction of the
+        // ORIGINAL approved character, a SEPARATE version. v4 (and v3) stay the complete fallbacks - never deleted, their
+        // materials untouched (v5 uses its own *_v5 materials via ModelImportRules.RemapVersionedMaterials). v5 is a correct
+        // export (no BWK_RIG_TEST_YAW) -> ModelYaw 0. true + full build = show v5 to the owner in gameplay (NOT an approval:
+        // the owner decides); false + full build = v4 exactly as before.
+        public const bool UseMascotV5 = false;
         public const string FbxPathV3 = "Assets/BubbleWashKingdom/Art/Models/Characters/SK_Mascot.fbx";
         public const string FbxPathV4 = "Assets/BubbleWashKingdom/Art/Models/Characters/SK_Mascot_v4.fbx";
-        public const string FbxPath = UseMascotV4 ? FbxPathV4 : FbxPathV3;
+        public const string FbxPathV5 = "Assets/BubbleWashKingdom/Art/Models/Characters/SK_Mascot_v5.fbx";
+        public const string FbxPath = UseMascotV5 ? FbxPathV5 : UseMascotV4 ? FbxPathV4 : FbxPathV3;
         // Lead 2026-11-26 21:40: SK_Mascot_v4.fbx was exported with the TEST-ONLY BWK_RIG_TEST_YAW=180 of
         // build_mascot_rig.py (its Armature object has yaw -180 in Blender, SK_Mascot.fbx has 0), so in-game the rear camera
         // saw its face while sliding and its back in the celebration (s2p3 recording). SceneBuilder turns the model root by
         // this yaw so v4 faces the travel direction like v3. A re-export without the test yaw must set this back to 0.
-        public const float ModelYaw = UseMascotV4 ? 180f : 0f;
+        public const float ModelYaw = UseMascotV5 ? 0f : UseMascotV4 ? 180f : 0f;
         public const string ControllerPath = "Assets/BubbleWashKingdom/Animation/Mascot.controller";
 
         [MenuItem("Bubble Wash/Setup/4 Build Animator")]

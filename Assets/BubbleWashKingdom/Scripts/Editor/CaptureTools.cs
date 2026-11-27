@@ -117,6 +117,7 @@ namespace BubbleWash.EditorTools
                     // same M_* project materials as the in-game mascot (embedded FBX materials remapped by name)
                     mi.materialLocation = ModelImporterMaterialLocation.InPrefab;
                     mi.SearchAndRemapMaterials(ModelImporterMaterialName.BasedOnMaterialName, ModelImporterMaterialSearch.Everywhere);
+                    ModelImportRules.RemapVersionedMaterials(mi, fbx);   // SK_Mascot_v5 -> its own *_v5 materials (v4 keeps M_*)
                     mi.SaveAndReimport();
                 }
                 EditorSceneManager.OpenScene(SceneBuilder.ScenePath);

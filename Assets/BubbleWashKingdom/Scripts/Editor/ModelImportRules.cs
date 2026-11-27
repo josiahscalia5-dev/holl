@@ -81,9 +81,39 @@ namespace BubbleWash.EditorTools
                 {
                     mi.materialLocation = ModelImporterMaterialLocation.InPrefab;
                     mi.SearchAndRemapMaterials(ModelImporterMaterialName.BasedOnMaterialName, ModelImporterMaterialSearch.Everywhere);
+                    RemapVersionedMaterials(mi, path);
                     mi.SaveAndReimport();
                 }
             }
+        }
+
+        /// <summary>
+        /// Lead 2026-11-27 06:45 (owner: v4 stays the COMPLETE fallback, including its materials): a versioned model export
+        /// whose file name ends in "_v5", "_v6", ... keeps v4's FBX material names but uses its OWN project materials named
+        /// "&lt;name&gt;_v5" wherever the character artist created them (MaterialLibrary.Character.cs); any name without a
+        /// versioned material keeps the shared M_* material. Call after SearchAndRemapMaterials, before SaveAndReimport.
+        /// </summary>
+        public static int RemapVersionedMaterials(ModelImporter mi, string path)
+        {
+            var m = System.Text.RegularExpressions.Regex.Match(System.IO.Path.GetFileNameWithoutExtension(path), @"_(v\d+)$");
+            if (!m.Success) return 0;
+            string suffix = "_" + m.Groups[1].Value;
+            int n = 0;
+            foreach (var kv in mi.GetExternalObjectMap())
+            {
+                if (kv.Key.type != typeof(Material)) continue;
+                string want = kv.Key.name + suffix;
+                foreach (string guid in AssetDatabase.FindAssets(want + " t:Material"))
+                {
+                    string p = AssetDatabase.GUIDToAssetPath(guid);
+                    if (System.IO.Path.GetFileNameWithoutExtension(p) != want) continue;
+                    var mat = AssetDatabase.LoadAssetAtPath<Material>(p);
+                    if (mat != null) { mi.AddRemap(kv.Key, mat); n++; }
+                    break;
+                }
+            }
+            if (n > 0) Debug.Log($"[BWK] {path}: {n} materials remapped to their {suffix} versions");
+            return n;
         }
     }
 }

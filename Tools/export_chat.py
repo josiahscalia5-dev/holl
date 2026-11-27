@@ -19,7 +19,28 @@ import os
 import re
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-SRC = os.path.join(os.path.expanduser("~"), ".claude", "projects", "C--Users-josia-thanksgiving")
+PROJECTS = os.path.join(os.path.expanduser("~"), ".claude", "projects")
+SRC = os.path.join(PROJECTS, "C--Users-josia-thanksgiving")
+# Lead 2026-11-27 06:45: Bubble Wash sessions opened in ANOTHER folder (e.g. C:\Users\josia\.unity) keep their transcripts
+# under that folder's project dir. List them here (one "<project dir>/<session id>" per line, '#' = comment) so the
+# 5-minute autosave exports them too. Only list Bubble Wash Kingdom sessions - never another game's.
+EXTRA_LIST = os.path.join(ROOT, "Tools", "chat_extra_sessions.txt")
+
+
+def extra_sessions():
+    """Absolute '<projects>/<dir>/<session id>' bases (no .jsonl) of the listed Bubble Wash sessions outside SRC."""
+    out = []
+    try:
+        with open(EXTRA_LIST, encoding="utf-8") as f:
+            for line in f:
+                line = line.split("#", 1)[0].strip().replace("\\", "/").strip("/")
+                if line and ".." not in line:
+                    base = os.path.join(PROJECTS, *line.split("/"))
+                    if os.path.exists(base + ".jsonl") or os.path.isdir(base):
+                        out.append(base)
+    except OSError:
+        pass
+    return out
 OUT = os.path.join(ROOT, "ChatHistory")
 AGENTS_OUT = os.path.join(OUT, "agents")
 
@@ -166,7 +187,9 @@ def export_agent(path, session):
 
 def export_agents():
     done, index = [], []
-    for session_dir in sorted(d for d in glob.glob(os.path.join(SRC, "*")) if os.path.isdir(d)):
+    dirs = sorted(d for d in glob.glob(os.path.join(SRC, "*")) if os.path.isdir(d))
+    dirs += [b for b in extra_sessions() if os.path.isdir(b)]
+    for session_dir in dirs:
         session = os.path.basename(session_dir)
         for path in sorted(glob.glob(os.path.join(session_dir, "subagents", "**", "agent-*.jsonl"), recursive=True)):
             agent8 = os.path.basename(path)[len("agent-"):len("agent-") + 8]
@@ -192,6 +215,8 @@ def export_agents():
 
 
 if __name__ == "__main__":
-    done = [n for n in (export(p) for p in sorted(glob.glob(os.path.join(SRC, "*.jsonl")))) if n]
+    mains = sorted(glob.glob(os.path.join(SRC, "*.jsonl")))
+    mains += [b + ".jsonl" for b in extra_sessions() if os.path.exists(b + ".jsonl")]
+    done = [n for n in (export(p) for p in mains) if n]
     agents = export_agents()
     print("exported:", ", ".join(done) if done else "nothing", "| agents:", len(agents))
