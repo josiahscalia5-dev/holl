@@ -1928,10 +1928,66 @@ def export_game_model():
     print("GAMEMODEL_DONE")
 
 
+# ------------------------------------------------------------------ v5 GAME model: targeted owner corrections (2026-11-27)
+# Owner S2 item 05 (same identity, v4 + skeleton + takes kept as the fallback): the in-game pom-pom was only the 0.148 m
+# dark core + short shells (~0.25 x cuff width on screen, reference ~0.53), the arms ended close to the body and the
+# soles were covered by white shell fur (pads unreadable). Derived from mascot_v4_game.blend/.json (no v4 rebuild), so
+# the v4 game model, SK_Mascot_v4.fbx and SK_Mascot.fbx stay untouched. Rig: BWK_RIG_MODEL_BLEND/JSON = the v5 files.
+V5_POM_SCALE = 1.40      # pom-pom core radius 0.148 -> 0.207 (+ longer Unity yarn shells -> ~0.52 x cuff width)
+V5_POM_LIFT = 0.045      # centre up the hat axis so the bigger ball still sits ON the crown (bottom sinks ~1.5 cm)
+V5_ARM_STRETCH = 0.16    # arms 16 % longer past the shoulder root: mitts reach out past the body like the reference
+V5_SOLE_FUR = 0.18       # rig (contract 'sole_fur'): sole-side paw fur scaled to 18 % -> smooth white sole + pink pads
+GAME5_BLEND = os.path.join(OUT, "mascot_v5_game.blend")
+GAME5_JSON = os.path.join(OUT, "mascot_v5_game.json")
+
+
+def export_game_model_v5():
+    bpy.ops.wm.open_mainfile(filepath=GAME_BLEND)
+    with open(GAME_JSON) as fh:
+        contract = json.load(fh)
+    ax = Vector(contract["HAT_AXIS"]).normalized()
+    # ---- bigger pom-pom core, lifted so it still rests on the crown (shells inside the beanie are hidden by the rig)
+    pom = bpy.data.objects["PomPom"]
+    c0 = Vector(contract["hat"]["pompom_c"])
+    c1 = c0 + ax * V5_POM_LIFT
+    for v in pom.data.vertices:
+        v.co = c1 + (v.co - c0) * V5_POM_SCALE
+    contract["hat"]["pompom_c"] = list(c1)
+    contract["hat"]["pompom_r"] = contract["hat"]["pompom_r"] * V5_POM_SCALE
+    # ---- longer arms: stretch along the arm axis past the root (the shoulder seam at t = 0 stays put)
+    for tag in ("L", "R"):
+        a = contract["arms"][tag]
+        root, d = Vector(a["root"]), Vector(a["dir"]).normalized()
+        ob = bpy.data.objects["Arm." + tag]
+        for v in ob.data.vertices:
+            t = (v.co - root).dot(d)
+            if t > 0.0:
+                v.co = v.co + d * (t * V5_ARM_STRETCH)
+        pc = Vector(a["palm_c"])
+        a["palm_c"] = list(pc + d * (max(0.0, (pc - root).dot(d)) * V5_ARM_STRETCH))
+        a["length"] = a["length"] * (1.0 + V5_ARM_STRETCH)
+    contract["sole_fur"] = V5_SOLE_FUR
+    objs = [o for o in bpy.data.objects if o.type == 'MESH']
+    contract["counts"] = {o.name: len(o.data.vertices) for o in objs}
+    contract["source"] = "build_mascot_v4.py BWK_V4_MODE=gamemodel_v5 (v5 candidate from the v4 game model)"
+    for o in objs:
+        o.data.update()
+    with open(GAME5_JSON, "w") as fh:
+        json.dump(contract, fh, indent=1, default=float)
+    print("CHECK v5 pompom c %s r %.3f  arm L length %.3f palm %s" % (
+        tuple(round(x, 3) for x in c1), contract["hat"]["pompom_r"], contract["arms"]["L"]["length"],
+        tuple(round(x, 3) for x in contract["arms"]["L"]["palm_c"])))
+    bpy.ops.wm.save_as_mainfile(filepath=GAME5_BLEND, compress=True)
+    print("SAVED", GAME5_BLEND, GAME5_JSON)
+    print("GAMEMODEL_V5_DONE")
+
+
 MODE = os.environ.get("BWK_V4_MODE", "")
 if MODE == "refs":
     export_ref_crops()
 elif MODE == "gamemodel":
     export_game_model()
+elif MODE == "gamemodel_v5":
+    export_game_model_v5()
 else:
     main()

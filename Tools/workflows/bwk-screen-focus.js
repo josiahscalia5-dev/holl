@@ -85,7 +85,7 @@ const GAPS = {
       rank: { type: 'number' },
       what: { type: 'string', description: 'The visible difference, concrete (object, shape, size, colour, material, light)' },
       where: { type: 'string', description: 'Where in the frame (e.g. upper left ring, lane centre, far end)' },
-      owner: { type: 'string', enum: ['assets', 'metal', 'water', 'character', 'lead'] },
+      owner: { type: 'string', enum: ['assets', 'metal', 'water', 'character', 'motion', 'lead'] },
       fix: { type: 'string', description: 'What would make our render match, in one or two sentences' },
       measure: { type: 'string', description: 'How to measure it: crop box (x0,y0,x1,y1 on the 1280x720 frames) + the property (mean colour, coverage %, size in px)' } },
       required: ['rank', 'what', 'where', 'owner', 'fix', 'measure'] } },
@@ -113,8 +113,10 @@ const DOMAIN = {
   water: 'You are WATER + FOAM + BUBBLES + GLASS (water/FX owner, unity-shader-specialist). Output folder Captures/agents/waterfx/',
   // lead 2026-11-27: owner APPROVED targeted mascot improvements for S2 pass 7 (keep v4 + skeleton + animations as the fallback)
   character: 'You are the CHARACTER ARTIST (the pink mascot: Tools/Blender/scripts/build_mascot_v4.py + build_mascot_rig.py, BWK_Fur / BWK_Character shaders, MaterialLibrary.Character.cs). Your Captures/agents/character/NOTES.md has the v4 history. Output folder Captures/agents/character/',
+  // owner 2026-11-27 06:20 role E: seated sliding motion + continuous rear camera (gameplay feel; never the gameplay rules)
+  motion: 'You are the CHARACTER ANIMATION + CAMERA SPECIALIST (owner role E): the mascot SITS UPRIGHT ON HIS BOTTOM while sliding, faces the travel direction, feet forward, leans / tilts through curves, bounces gently with the water, natural arm / foot motion, jump / landing / lane-change reactions that always return to the seated pose; the portrait rear camera follows behind his back through every curve, climb and descent with smooth banking, no cuts, no front views in normal play (only the existing destination celebration turns him to the player). Prove it with Play Mode recordings (Tools/review_recording.sh) and the Play Mode test asserts. Output folder Captures/agents/motion/',
 }
-const FILES = 'FILE OWNERSHIP (CLAUDE.md "Parallel specialists"): metal = SceneBuilder.Lighting.cs, MaterialLibrary.Lighting.cs, MaterialLibrary.Environment.cs (material values), SceneBuilder.Hall.cs (material values), BWK_Gold, BWK_Emissive, BWK_DrumWall, BWKCommon.hlsl, Assets/Settings/*; assets = build_hall_assets.py, build_track.py, build_machinery.py, build_shot0825_assets.py, build_master_door.py, MaterialLibrary.Assets.cs, Prefabs/PF_*.prefab, SceneBuilder.Environment.cs + SceneBuilder.Hall.cs (model / material references and the placement fixes allowed below); water = BWK_Water, BWK_Glass, BWK_Soft, MaterialLibrary.WaterFX.cs, SceneBuilder.WaterFX.cs, TextureGenerator.cs, SplashFX.cs, build_fx_v2.py, build_props.py. Edit only your own files; ask through your NOTES.md for anything else.'
+const FILES = 'FILE OWNERSHIP (CLAUDE.md "Parallel specialists"): metal = SceneBuilder.Lighting.cs, MaterialLibrary.Lighting.cs, MaterialLibrary.Environment.cs (material values), SceneBuilder.Hall.cs (material values), BWK_Gold, BWK_Emissive, BWK_DrumWall, BWKCommon.hlsl, Assets/Settings/*; assets = build_hall_assets.py, build_track.py, build_machinery.py, build_shot0825_assets.py, build_master_door.py, MaterialLibrary.Assets.cs, Prefabs/PF_*.prefab, SceneBuilder.Environment.cs + SceneBuilder.Hall.cs (model / material references and the placement fixes allowed below); water = BWK_Water, BWK_Glass, BWK_Soft, MaterialLibrary.WaterFX.cs, SceneBuilder.WaterFX.cs, TextureGenerator.cs, SplashFX.cs, build_fx_v2.py, build_props.py; character = build_mascot_v4.py (+ its new-version mode), build_mascot_rig.py exports to NEW file names, BWK_Fur, BWK_Character, MaterialLibrary.Character.cs; motion = MascotAnimatorDriver.cs, RunnerCameraRig.cs, CameraDirector.cs, AnimatorBuilder.cs (states / blend tree / transitions - not FbxPath, that is the lead's switch), RunnerController.cs VISUAL lean / bob / tilt parameters only (never speed, lanes, jump physics, colliders), GameplayCaptureTests.cs (new asserts only), clip changes requested from the character agent through NOTES.md. Edit only your own files; ask through your NOTES.md for anything else.'
 
 function fixBrief(k, gaps) {
   const mine = gaps.gaps.filter(g => g.owner === k)
@@ -177,7 +179,7 @@ log(`${SCREEN} now ${gaps.score_with_mascot} with mascot / ${gaps.score_scenery_
 if (MODE === 'gaps') return { screen: SCREEN, before: BEFORE, gaps }   // gap list only (cheap); pass it later as args.gaps
 
 // pick the two specialist domains that own the most (rank-weighted) gaps unless the lead named them
-const weight = { assets: 0, metal: 0, water: 0, character: 0 }
+const weight = { assets: 0, metal: 0, water: 0, character: 0, motion: 0 }
 gaps.gaps.forEach(g => { if (g.owner in weight) weight[g.owner] += Math.max(1, 11 - g.rank) })
 const ranked = Object.keys(weight).sort((a, b) => weight[b] - weight[a])
 const pick = (Array.isArray(A.agents) && A.agents.length) ? A.agents : ranked.slice(0, 2)

@@ -515,14 +515,21 @@ def tag_fur(objs, info):
             pid = PART_ARM if arm else PART_LEG
             part = [pid if mats[pl.material_index] == "M_Fur" else PART_NONE for pl in me.polygons]
             nlv = info['leg_verts'][tag] if not arm else 0
+            sole_k = CONTRACT.get('sole_fur')      # optional (v5 candidate): None = v4 / v3 behaviour unchanged
             for v in me.vertices:
                 if arm:
                     w = V_LIMB                             # no palm pads: full fur mitt
                 else:
                     w = V_LIMB if v.index < nlv else V_PAW
+                    pad_lo = 0.25
+                    if sole_k is not None and v.index >= nlv:
+                        # v5: the sole side of the paw keeps only a short velvet pile, so the smooth white sole and its
+                        # pink pads read from the rear gameplay camera like the reference (owner 2026-11-27 item 05)
+                        w *= 1.0 - (1.0 - sole_k) * smoothstep(-0.15, 0.45, v.normal.dot(info['sole_n'][tag]))
+                        pad_lo = 0.0
                     for k, pc in enumerate(info['pads'][tag]):
                         r0, r1 = (0.058, 0.082) if k == 0 else (0.024, 0.040)
-                        w *= 0.25 + 0.75 * smoothstep(r0, r1, (v.co - pc).length)
+                        w *= pad_lo + (1.0 - pad_lo) * smoothstep(r0, r1, (v.co - pc).length)
                 hide[v.index] = 1 if inside_depth(body_bvh, v.co) > 0.002 else 0
                 furv[v.index] = w
         elif name == 'PomPom':

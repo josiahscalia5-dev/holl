@@ -13,9 +13,19 @@ of one enormous magical washing machine. These instructions come only from the o
 - ONE SCREEN AT A TIME: S2 (video 3.00 s, golden tunnel entrance at the washing-machine door) until the owner has
   reviewed the improved S2 gameplay; aim 9/10+. Private plan: Captures/agents/_shared/S2_FOCUS_PLAN.md; the owner's
   annotated corrections: Reference/s2_corrections/.
-- Gameplay: real interactive 3D; the pink mascot sits upright on his bottom while sliding; the gameplay camera always
-  follows behind his back (portrait). The matched comparison camera (R2) is for evaluation only - never change the
-  gameplay perspective to improve a comparison score.
+- Gameplay: real interactive 3D; the pink mascot SITS UPRIGHT ON HIS BOTTOM while sliding, faces the travel direction,
+  little feet forward, leans / tilts through curves, bounces gently with the water, reacts to jumps / landings / lane
+  changes and always returns to the seated pose (never swims on his stomach or runs upright). The gameplay camera
+  (portrait) always follows behind his back through every curve, climb and descent, banking smoothly - no cuts, no
+  front views in normal play; only the existing destination celebration turns him to the player. The front-facing
+  video shots are references for the character / scenery only. The matched comparison camera (R2) is for evaluation
+  only - never change the gameplay perspective to improve a comparison score.
+- Character (owner 2026-11-27 06:20): reconstruct the ACTUAL approved character (target 9/10+, honest scores) as a
+  SEPARATE improved version next to v4 (v4 + skeleton + animations + materials stay the complete fallback); the owner
+  reviews it in real gameplay before it replaces v4. Scene order: S2, then S1 after his review.
+- Team (owner 2026-11-27 06:20): A character artist, B environment artist, C water / VFX, D cinematic graphics
+  (metal / lighting), E character animation + camera; clear file ownership (bwk-screen-focus.js FILES), lead integrates;
+  heavy Unity / Blender runs staggered (max 2 specialists active at once on this laptop).
 - Exactly ONE five-minute autosave loop (`Tools/autosave.sh 300`); private references, chat history and credentials stay
   out of public GitHub (BWK_PUBLISH_CHAT=0 default). Never interrupt running specialists, builds or workflows; keep the
   private handoff (Captures/handoff/NEXT_ACCOUNT_START.md) updated so any authorized session can resume.
