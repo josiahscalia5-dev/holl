@@ -178,6 +178,25 @@ namespace BubbleWash.EditorTools
                 // reflections only); deeper drum darker indigo (x .65 -> .5). v3/v4 far slots (.5) faded out below a pixel
                 // (no slot rows visible deeper in) -> .85: the rows shrink by perspective, as in the reference
                 F(m, "_DoorRampCap", 0.62f); F(m, "_DoorRampFar", 0.5f); F(m, "_DoorSlotFar", 0.85f);
+                // v6: v5 inner-drum ceiling still grey-lavender (portrait metal 133/121/180, 119/107/173; R2 ceiling 148/122/176)
+                // vs the reference's COBALT-BLUE ceiling (79/81/167, 101/109/202, 93/105/171; R2 112/88/180) and violet side
+                // walls (134/98/180 vs ours 124/93/159). Per-channel fit through the grade (SetColor = sRGB -> linear; display
+                // vs set value measured on v5): ceiling body blue (R x.56, G x.78, B x1.27 in display linear), side body a
+                // little bluer / richer, deep indigo shadow; far slot rows kept down to ~1 px (thin dashes deeper in)
+                F(m, "_DoorRampCeilAmount", 1f); m.SetColor("_DoorRampCeil", new Color(0.36f, 0.31f, 0.98f));
+                m.SetColor("_DoorRampMid", new Color(0.53f, 0.38f, 0.98f));
+                m.SetColor("_DoorRampDark", new Color(0.12f, 0.09f, 0.45f));
+                F(m, "_DoorThinSlots", 1f);
+                // v7: v6 moved the ceiling only 133/121/180 -> 123/118/193 (chroma 65 -> 76): display ~ 0.4 x set-linear + an
+                // offset ~ (.14, .15, .25) linear = the bloom veil of the bulb ring / stars + the WALL ITSELF (URP bloom knee
+                // starts at max channel .45; the ramp's blue reached ~1.0 linear over a large area). -> ceiling body nearly
+                // pure cobalt (R / G carried by the veil), every stop's max channel <= ~.89 linear (less self-bloom veil),
+                // side body less green (grey), deeper slots no smaller in metres (perspective shrinks them; rows visible)
+                m.SetColor("_DoorRampCeil", new Color(0.18f, 0.12f, 0.90f));
+                m.SetColor("_DoorRampMid", new Color(0.53f, 0.32f, 0.95f));
+                m.SetColor("_DoorRampHigh", new Color(0.78f, 0.58f, 0.95f));
+                m.SetColor("_DoorRampDark", new Color(0.10f, 0.07f, 0.42f));
+                F(m, "_DoorSlotFar", 1.1f);
             });
             // polished lavender drum lips between the gold rings (SM_DrumRim, m1: fat rolled lip): the stylised BWK/Gold
             // environment shading with a lavender palette - violet body, magenta-pink fresnel edge, soft pink-lavender

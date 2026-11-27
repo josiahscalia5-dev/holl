@@ -452,12 +452,25 @@ namespace BubbleWash.EditorTools
             // ours 129 / 96 / 150 = bare violet wall): NEW SM_MachineWall_s2 (build_s2_machwall_p10.py, 5 x 3.4 m slab +
             // raised bevelled panels, vents, pilaster, gold trim / bolts, warm lamps) behind the housing, ~0.5 m in front of
             // the mouth wall (8.7 m deep), sized to the corner (u 0-0.17 = x 0-218, never over the hatch's gold band)
+            // pass 10 resume (preview v4: the slab never showed - at 8.7 m along the ray, half-turned toward the camera, its
+            // 0.46 m deep back and far edge sat INSIDE SM_MouthWall_r7; x 0-240 stayed bare violet wall): mounted FLAT on the
+            // mouth wall plane (parallel to it, back face 0.25 m in front of it = reads as a solid wall unit from any angle),
+            // centre / width from where the R2 rays at u -0.05 / 0.175 (x -64 / 224) hit that plane
             {
-                const float wu = 0.06f, wv = 0.30f, wDepth = 8.7f, wSpan = 0.22f;
-                var wp = HallScreenPoint(r2, wu, wv, wDepth);
-                float wWorld = wSpan * 2f * r2.tanHalf * r2.aspect * wDepth;
-                float wScale = Mathf.Clamp(wWorld / 5.0f / 0.9f, 0.5f, 3f);
-                var wRot = Quaternion.Slerp(fm.FlatRotation, HallFaceCam(r2, wp), 0.5f);
+                const float wv = 0.30f, uL = -0.05f, uR = 0.175f, slabBack = 0.545f, gap = 0.25f;
+                var fwm = track.Evaluate(HallMouthD + 0.35f);
+                Vector3 wn = fwm.forward.normalized, wPt = fwm.FlatPoint(0f, TunnelCenter);
+                Vector3 RayHit(float u)
+                {
+                    var dir = (HallScreenPoint(r2, u, wv, 1f) - r2.pos).normalized;
+                    float den = Vector3.Dot(dir, wn);
+                    float t = Mathf.Abs(den) > 1e-3f ? Vector3.Dot(wPt - r2.pos, wn) / den : 9f;
+                    return r2.pos + dir * Mathf.Clamp(t, 3f, 30f);
+                }
+                Vector3 hL = RayHit(uL), hR = RayHit(uR);
+                float wScale = Mathf.Clamp(Vector3.Distance(hL, hR) / 5.0f, 0.6f, 2.6f);
+                var wp = (hL + hR) * 0.5f - wn * (slabBack * wScale + gap);
+                var wRot = fwm.FlatRotation;
                 var mwall = HallPlace(holder, "Machinery", "SM_MachineWall_s2", wp, wRot, wScale);
                 if (mwall != null)
                 {

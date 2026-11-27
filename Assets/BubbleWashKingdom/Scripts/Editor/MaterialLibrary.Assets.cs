@@ -31,11 +31,15 @@ namespace BubbleWash.EditorTools
                 // specular streaks along the flow"; s2p9a corners: pink 28 / 26 % vs ref 34 / 55, highlights 4.5 / 2.8 vs
                 // 8.3 / 9.5): hotter pink outer bands, a slightly narrower-reading golden-orange stripe, ~1.6x racing white
                 // streaks + stronger clear-coat / fresnel sheen so the sharp highlights run along the flow
+                // pass 10 resume (preview v4 bottom-right: the bank face next to the water rendered as a wide PALE LAVENDER
+                // band = the grazing-angle mirror of the violet drum, corner pink 10.8 % vs ref 45.1; judge: streaks 2.3 ->
+                // ~1.8): less grazing mirror (smoothness .985 -> .9, clear coat 1.6 -> .8) so the candy pink keeps its colour,
+                // a touch more colour-true glow, streaks 1.8 keep the white highlights along the flow
                 F(m, "_Mode", 1); C(m, "_ColorA", "#FF4F96"); C(m, "_ColorB", "#FFB23A"); C(m, "_ColorC", "#F21E8C");
-                F(m, "_Smoothness", 0.985f); F(m, "_Metallic", 0f); F(m, "_Glow", 0.29f);
+                F(m, "_Smoothness", 0.9f); F(m, "_Metallic", 0f); F(m, "_Glow", 0.33f);
                 F(m, "_RimPower", 2.6f); F(m, "_RimStrength", 0.55f);
-                F(m, "_StreakAmount", 2.3f); F(m, "_StreakSpeed", 7f);       // racing rainbow reflections (pink / yellow / cyan)
-                F(m, "_ReflectBoost", 1.6f);                                   // clear-coat probe reflection (baked probes)
+                F(m, "_StreakAmount", 1.8f); F(m, "_StreakSpeed", 7f);       // racing rainbow reflections (pink / yellow / cyan)
+                F(m, "_ReflectBoost", 0.8f);                                   // clear-coat probe reflection (baked probes)
             });
             Mat("M_RailTube_r8", "BWK/Soft", m =>
             {
@@ -57,9 +61,12 @@ namespace BubbleWash.EditorTools
             {
                 // pass 7: rendered saturated violet (#5435A1 / #644A83 vs reference slate #403F62 / #4A435E): the glossy
                 // clear coat mirrored the violet drum -> desaturated slate-navy paint, smoothness .72 -> .5
-                C(m, "_BaseColor", "#3E4478"); F(m, "_Metallic", 0.3f); F(m, "_Smoothness", 0.5f);
+                // pass 10 resume (preview v4: x 0-240 rendered 137 / 107 / 151 vs reference 103 / 88 / 112, the reference
+                // machinery wall = DARK slate navy with lit seams): darker, greyer paint + weaker self-light, so the vents,
+                // gold trim and warm lamps carry the detail instead of a bright violet sheet
+                C(m, "_BaseColor", "#2C3050"); F(m, "_Metallic", 0.35f); F(m, "_Smoothness", 0.46f);
                 m.EnableKeyword("_EMISSION"); m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
-                C(m, "_EmissionColor", "#181C3A");
+                C(m, "_EmissionColor", "#0E1022");
             });
             Mat("M_DoorMachinePanel_s2", "Universal Render Pipeline/Lit", m =>
             {
@@ -185,10 +192,14 @@ namespace BubbleWash.EditorTools
             {
                 C(m, "_RootColor", "#D8C8A8"); C(m, "_BaseColor", "#FFF6C6"); C(m, "_TipColor", "#FFFFE6");
                 F(m, "_UseVertexTint", 1f); F(m, "_StaticMode", 0f);
-                F(m, "_Density", 34f); F(m, "_FurLength", 0.42f); F(m, "_Gravity", 0f); F(m, "_Thinning", 0.45f);
-                F(m, "_ClumpAmount", 0.65f); F(m, "_ClumpScale", 4f); F(m, "_AO", 0.4f); F(m, "_Curl", 0.5f);
-                F(m, "_Underfur", 1.0f); F(m, "_EdgeSoft", 0.26f); F(m, "_SilhouetteFade", 0.12f);
-                F(m, "_TuftScale", 7f); F(m, "_TuftAmount", 0.7f);
+                // v5 (preview v4: hot pink + dense at last, corner pink 21.5 -> 60.1 % vs ref 72.4, but a smooth velvet blob;
+                // crop 02 = long separate locks with a ragged DROOPING lower edge): thicker strands (density 34 -> 24), longer
+                // (.42 -> .52 m), gravity droop .14 m, irregular Voronoi locks (_PlushMode 1, bigger tufts 7 -> 5 / .85) and
+                // extra strand / lock contrast so individual locks read at 6 m
+                F(m, "_Density", 24f); F(m, "_FurLength", 0.52f); F(m, "_Gravity", 0.14f); F(m, "_Thinning", 0.5f);
+                F(m, "_ClumpAmount", 0.8f); F(m, "_ClumpScale", 3f); F(m, "_AO", 0.45f); F(m, "_Curl", 0.6f);
+                F(m, "_Underfur", 1.0f); F(m, "_EdgeSoft", 0.22f); F(m, "_SilhouetteFade", 0.1f);
+                F(m, "_TuftScale", 5f); F(m, "_TuftAmount", 0.85f); F(m, "_PlushMode", 1f); F(m, "_StrandContrast", 0.7f);
                 F(m, "_Wrap", 0.65f); C(m, "_RimColor", "#FFF0F6"); F(m, "_RimPower", 2.2f); F(m, "_RimStrength", 0.35f);
                 F(m, "_Glow", 0.6f);
             }, (int)RenderQueue.AlphaTest);

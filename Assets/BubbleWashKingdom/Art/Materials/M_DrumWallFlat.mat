@@ -53,6 +53,7 @@ Material:
     - _DoorPanelCurve: 0.25
     - _DoorRampAmount: 0
     - _DoorRampCap: 1
+    - _DoorRampCeilAmount: 0
     - _DoorRampFar: 1
     - _DoorRampFarDist: 40
     - _DoorRampNear: 12
@@ -67,6 +68,7 @@ Material:
     - _DoorSlotNear: 1
     - _DoorSlotStart: 52
     - _DoorSmooth: 0.66
+    - _DoorThinSlots: 0
     - _DoorWarmWidth: 0.5
     - _EdgeAO: 0
     - _EdgeAOWidth: 0.45
@@ -130,6 +132,7 @@ Material:
     - _DeepTint: {r: 1, g: 1, b: 1, a: 1}
     - _DepthTintColor: {r: 0.29999998, g: 0.39999998, b: 0.7, a: 1}
     - _DoorDeepTint: {r: 1, g: 1, b: 1, a: 1}
+    - _DoorRampCeil: {r: 0.2, g: 0.12, b: 0.54, a: 1}
     - _DoorRampDark: {r: 0.03, g: 0.02, b: 0.14, a: 1}
     - _DoorRampHigh: {r: 0.8, g: 0.5, b: 1.1, a: 1}
     - _DoorRampMid: {r: 0.2, g: 0.12, b: 0.54, a: 1}
