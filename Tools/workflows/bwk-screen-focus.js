@@ -57,6 +57,18 @@ const SCREENS = {
     preview: 'bash Tools/unity_run.sh BubbleWash.EditorTools.CaptureTools.AgentPreviewBatch <log> -bwkOut <dir> -bwkStills (~7 min: <dir>/stills/R5_front_*, 07_chambers_*)',
   },
 }
+// lead 2026-11-26 21:50: owner 21:33 sent his 7 authoritative section frames (identical to Reference/frames4k_720 at
+// 0.75 / 3.00 / 4.50 / 6.75 / 8.25 / 11.25 / 14.25 s) + 10 priority asset sheets (02 07 11 12 15 16 17 18 23 24) and asked
+// to correct the scenery of ALL seven sections -> a whole-level "masters" screen: fix assets that recur in several sections.
+SCREENS.ALL = {
+  name: 'WHOLE LEVEL, ALL SEVEN SECTIONS (owner frames: S1 0.75 s opening laundry hall; S2 3.00 s golden tunnel entrance; S3 4.50 s metallic drum tunnel; S4 6.75 s first golden sock chamber; S5 8.25 s pink pipes + sock chambers; S6 11.25 s cyan pipes + later chambers; S7 14.25 s golden destination). S3-S7 are FRONT views in the video (our matched comparison cameras R3-R6 + 10_finale); the gameplay camera is always BEHIND the mascot (07_chambers / hero_mouth = gameplay views)',
+  scope: 'OWNER 2026-11-26 21:33 (sent his 7 authoritative section frames + 10 priority asset sheets): "Use them to correct the complete scenery throughout all seven sections ... reconstruct the actual geometry, scenery placement, golden doors, washing chambers, rollers, machinery, glass pipes, water, foam, bubbles, lighting, materials ... approximately 9-10/10 ... Use Blender to construct properly detailed 3D assets and Unity to assemble ... substantial visible improvements". THIS RUN builds / fixes MASTER assets that recur across the sections (one change -> every section that shows it); check each change in every section still that shows it.',
+  ref4k: ['Reference/frames4k/f_03.00s.png'],
+  ref720: ['00.75', '03.00', '04.50', '06.75', '08.25', '11.25', '14.25'].map(t => `Reference/frames4k_720/f_${t}s.png`)
+    .concat(['02_Striped_fluffy_washing_roller', '11_Ornate_gold_sock_chamber', '12_Colorful_socks_and_rainbow_insert', '15_Glossy_multicolored_slide_rails', '16_Flowing_turquoise_water', '17_Soft_soap_foam_banks', '18_Milky_splash_crown'].map(n => `Reference/asset_library/Individual_References/${n}.png`)),
+  ours: ['01_hall_start_16x9.png', 'R2_rear_S2_like_3s_16x9.png', 'R3_front_S3_like_5s_16x9.png', 'R4_front_S4_like_7s_16x9.png', 'R5_front_S5_like_8s_16x9.png', 'R6_front_S6_like_11s_16x9.png', '10_finale_16x9.png', '07_chambers_9x16.png', 'hero_mouth_9x16.png'],
+  preview: 'bash Tools/unity_run.sh BubbleWash.EditorTools.CaptureTools.AgentPreviewBatch <log> -bwkOut <dir> (~2.5 min: R2 + hero_mouth only) ; add -bwkStills for every section still (~7 min: <dir>/stills/01_hall_start_*, R3..R6_*, 07_chambers_*, 10_finale_* + bg/) ; add -bwkEnvHall (hall set: door ring, rollers, machinery) and / or -bwkEnvChambers (PF_WashDoor_Master chambers) to rebuild those sets in memory so new models / placements show',
+}
 const S = SCREENS[SCREEN]
 if (!S) throw new Error('unknown screen ' + SCREEN + ' (known: ' + Object.keys(SCREENS).join(', ') + ')')
 const OURS = S.ours.map(f => `${ROOT}/${BEFORE}/${f}`).concat(S.ours.map(f => `${ROOT}/${BEFORE}/bg/${f}`))
@@ -107,7 +119,7 @@ function fixBrief(k, gaps) {
   const rest = gaps.gaps.filter(g => g.owner !== k)
   const directive = (A.directives && A.directives[k]) ? `OWNER DIRECTIVE FOR THIS PASS (highest priority, in this order): ${A.directives[k]}\n` : ''
   return `${resumeFor(k)}${DOMAIN[k]}screen_${SCREEN}_p${PASS}/ (create it). You work on Bubble Wash Kingdom (Unity 6.3 URP 17.3 + Blender 5.3) at ${ROOT} for the lead.
-OWNER 2026-11-26 18:05: "do a couple of screens, one at a time" (target about 8.5/10 per screen, honest numbers only). THIS RUN improves ONE screen only - ${S.name}.
+${S.scope ? S.scope + ' Scope: ' + S.name + '.' : `OWNER 2026-11-26 18:05: "do a couple of screens, one at a time" (target about 8.5/10 per screen, honest numbers only). THIS RUN improves ONE screen only - ${S.name}.`}
 ${directive}OWNER 2026-11-26 20:15: "substantial improvements in actual 3D geometry, materials, scenery composition, lighting and environmental depth - not numerous minor adjustments that barely improve the overall appearance". Spend the time on the few changes that visibly change the frame most.
 Approved reference (private, never in tracked files): ${REFS.join(', ')}. Our current render (build ${BASE}): ${OURS.join(', ')} (bg/ = mascot hidden). Independent score now: ${gaps.score_with_mascot} with mascot / ${gaps.score_scenery_only} scenery only.
 YOUR GAPS (independent judge, biggest first - fix them in this order):
