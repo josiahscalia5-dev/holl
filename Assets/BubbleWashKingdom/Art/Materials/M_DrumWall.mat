@@ -44,6 +44,8 @@ Material:
     - _DepthTintEnd: 26
     - _DepthTintStart: 14
     - _DoorAmount: 1
+    - _DoorDeepFar: 30
+    - _DoorDeepNear: 14
     - _DoorDesat: 0.16
     - _DoorFadeEnd: 112
     - _DoorFadeStart: 78
@@ -121,10 +123,11 @@ Material:
     - _DeepEdgeGlow: {r: 0.3, g: 0.4, b: 0.7, a: 1}
     - _DeepTint: {r: 0.66, g: 0.67, b: 0.82, a: 1}
     - _DepthTintColor: {r: 0.30588236, g: 0.3529412, b: 0.54901963, a: 1}
+    - _DoorDeepTint: {r: 0.62, g: 0.66, b: 0.92, a: 1}
     - _DoorSheenColor: {r: 0.16, g: 0.13, b: 0.26, a: 1}
-    - _DoorTint: {r: 0.92, g: 0.9, b: 1.1, a: 1}
+    - _DoorTint: {r: 1.02, g: 1, b: 1.16, a: 1}
     - _DoorWarmColor: {r: 0.22, g: 0.12, b: 0.03, a: 1}
-    - _FarGlowColor: {r: 0.07, g: 0.065, b: 0.15, a: 1}
+    - _FarGlowColor: {r: 0.05, g: 0.05, b: 0.12, a: 1}
     - _FlangeColor: {r: 0.54901963, g: 0.45490196, b: 0.78431374, a: 1}
     - _GlowColorA: {r: 1.7, g: 0.85, b: 1.6, a: 1}
     - _GlowColorB: {r: 0.75, g: 1.35, b: 1.9, a: 1}
@@ -132,11 +135,11 @@ Material:
     - _HoleColor: {r: 0.023529412, g: 0.011764706, b: 0.05490196, a: 1}
     - _HoleGlow: {r: 0.14117648, g: 0.08627451, b: 0.24313726, a: 1}
     - _LitTint: {r: 0.91, g: 0.745, b: 1, a: 1}
-    - _MirrorCore: {r: 0.42, g: 0.38, b: 0.8, a: 1}
+    - _MirrorCore: {r: 0.3, g: 0.27, b: 0.62, a: 1}
     - _MirrorFloor: {r: 0.25, g: 0.62, b: 0.85, a: 1}
     - _MirrorGold: {r: 1, g: 0.62, b: 0.3, a: 1}
     - _MirrorRim: {r: 1, g: 0.42, b: 0.88, a: 1}
-    - _MirrorWall: {r: 0.1, g: 0.1, b: 0.3, a: 1}
+    - _MirrorWall: {r: 0.14, g: 0.12, b: 0.34, a: 1}
     - _PinkSpill: {r: 1, g: 0.43137255, b: 0.8235294, a: 1}
     - _SeamColor: {r: 0.1254902, g: 0.078431375, b: 0.2901961, a: 1}
     - _ShadowColor: {r: 0.22745098, g: 0.22745098, b: 0.49411765, a: 1}

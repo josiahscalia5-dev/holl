@@ -88,15 +88,17 @@ namespace BubbleWash.EditorTools
                 {
                     F(m, "_Mode", 4); C(m, "_ColorA", glow); C(m, "_ColorB", glow); C(m, "_ColorC", albedo);
                     F(m, "_Smoothness", 0.25f); F(m, "_Metallic", 0f); F(m, "_Glow", 0.62f);
-                    F(m, "_RimPower", 2.2f); F(m, "_RimStrength", 0.35f); F(m, "_BumpScale", 1f);
+                    F(m, "_RimPower", 2.2f); F(m, "_RimStrength", 0.2f); F(m, "_BumpScale", 1f);
                     F(m, "_ReflectBoost", 0f); F(m, "_StreakAmount", 0f);
                 });
             }
             // (pass 7 v3 URP/Lit version: matte albedo + _EMISSION keyword + _EmissionColor = glow, no specular / env)
             // v3 albedo ~55 % of the colour, glow ~ the colour (pink / light tip / white / cyan of the reference roller)
-            Bristle("M_BristlePink_s2", "#8A2458", "#C83A88");
+            // pass 10 v2: drum v2 preview v1 rendered pale LILAC (corner mean 172/126/182 vs ref hot pink 162/84/136) -> warmer,
+            // deeper pink root + pink (not white) tips, weaker pale rim
+            Bristle("M_BristlePink_s2", "#A8185A", "#E62878");
             // pass 10 (crop 02 "long soft pink strands with WHITE tips"): lighter, whiter tips
-            Bristle("M_BristlePinkTip_s2", "#B07898", "#F8C0E0");
+            Bristle("M_BristlePinkTip_s2", "#B83C78", "#F064A8");
             Bristle("M_BristleWhite_s2", "#888088", "#E6DCE8");
             Bristle("M_BristleCyan_s2", "#3C6E88", "#66B8E0");
 

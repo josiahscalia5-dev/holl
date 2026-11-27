@@ -129,13 +129,17 @@ namespace BubbleWash.EditorTools
                 // drops to ~45 %, the lit metal a little bluer / darker so the reflections carry the value contrast
                 m.SetColor("_MirrorGold", new Color(1.0f, 0.62f, 0.30f)); m.SetColor("_MirrorRim", new Color(1.0f, 0.42f, 0.88f));
                 m.SetColor("_MirrorWall", new Color(0.10f, 0.10f, 0.30f)); m.SetColor("_MirrorFloor", new Color(0.25f, 0.62f, 0.85f));
-                m.SetColor("_MirrorCore", new Color(0.42f, 0.38f, 0.80f)); F(m, "_MirrorF0", 0.55f);
+                m.SetColor("_MirrorCore", new Color(0.30f, 0.27f, 0.62f)); F(m, "_MirrorF0", 0.55f);   // v2: v1 .42/.38/.80 milky far end
                 // far end: ours 172/135/173 (bg) vs ref 154/111/192 - bluer / darker deep drum, the flat far glow halves
-                m.SetColor("_FarGlowColor", new Color(0.07f, 0.065f, 0.15f));
+                m.SetColor("_FarGlowColor", new Color(0.05f, 0.05f, 0.12f));   // v2: v1 .07/.065/.15
                 F(m, "_MirrorRingA", 50.5f); F(m, "_MirrorRingB", 61.7f); F(m, "_MirrorRingWidth", 0.45f);
                 F(m, "_MirrorCoreStart", 25f); F(m, "_MirrorCoreEnd", 80f);
                 m.SetColor("_DoorSheenColor", new Color(0.16f, 0.13f, 0.26f));
-                m.SetColor("_DoorTint", new Color(0.92f, 0.90f, 1.10f));
+                // v2: v1 (.92/.90/1.10) + rib-normal mirror = speckled streaks, wallR2 p50 96 vs ref 106 -> lighter near
+                // lavender metal, the deep drum (camera 14-30 m+) deep blue (ref: indigo between the rings, pale only near)
+                m.SetColor("_DoorTint", new Color(1.02f, 1.0f, 1.16f));
+                m.SetColor("_MirrorWall", new Color(0.14f, 0.12f, 0.34f));
+                m.SetColor("_DoorDeepTint", new Color(0.62f, 0.66f, 0.92f)); F(m, "_DoorDeepNear", 14f); F(m, "_DoorDeepFar", 30f);
                 // crop 07: near ovals bigger and ~2:1 (ours 1.35:1)
                 F(m, "_DoorSlotNear", 1.25f); F(m, "_DoorSlotAspect", 1.3f);
             });

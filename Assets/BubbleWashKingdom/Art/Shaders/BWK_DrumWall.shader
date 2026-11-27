@@ -143,6 +143,9 @@ Shader "BWK/DrumWall"
         _MirrorCoreStart ("Mirror: far end from reflected distance (m)", Float) = 25
         _MirrorCoreEnd ("Mirror: far end full at reflected distance (m)", Float) = 80
         _DoorSlotAspect ("Door grade near-oval elongation around the drum (1 = off)", Float) = 1
+        _DoorDeepTint ("Door grade multiplier on the lit metal far from the camera (deep blue drum)", Color) = (1, 1, 1, 1)
+        _DoorDeepNear ("Door deep tint from camera distance (m)", Float) = 14
+        _DoorDeepFar ("Door deep tint full at camera distance (m)", Float) = 30
     }
     SubShader
     {
@@ -185,6 +188,8 @@ Shader "BWK/DrumWall"
             half4 _MirrorGold, _MirrorRim, _MirrorWall, _MirrorFloor, _MirrorCore;
             half _MirrorF0;
             float _MirrorRingA, _MirrorRingB, _MirrorRingWidth, _MirrorCoreStart, _MirrorCoreEnd, _DoorSlotAspect;
+            half4 _DoorDeepTint;
+            float _DoorDeepNear, _DoorDeepFar;
         CBUFFER_END
 
         // Screen S2 pass 7: weight of the S2 door-drum grade at a distance along the tunnel (1 at the door, 0 beyond
@@ -511,6 +516,9 @@ Shader "BWK/DrumWall"
                 // reference (43-49, 19-37, -39..-44), L p10-p90 spread 13 vs 24-28): the door drum keeps the light's blue-violet
                 // saturation (less grey-lavender grade), deeper recesses and a polished metal (probe reflections) = contrast
                 lit.rgb *= lerp(half3(1, 1, 1), _DoorTint.rgb * lerp(1.0, _DoorHole, hole), doorW);
+                // Screen S2 pass 10 v2: the deeper drum seen through the door is deep blue metal (reference) - value contrast
+                // against the gold rings / bulbs / neon instead of an evenly pale lavender tunnel
+                lit.rgb *= lerp(half3(1, 1, 1), _DoorDeepTint.rgb, doorW * smoothstep(_DoorDeepNear, _DoorDeepFar, camDist));
                 // Screen ALL pass 5 (judge gap #5): S3-S6 walls read as flat light lilac plates; the video's deep tunnel is
                 // darker slate blue-violet metal with black oval recesses and glowing panel edges. Graded by the distance
                 // along the tunnel (m.y) so the S2 door drum (40-62 m) keeps its look.
@@ -558,9 +566,10 @@ Shader "BWK/DrumWall"
                         // meets the wall again after a chord 2 R0 cos(th) -> along offset tHit * Ra (always deeper: the camera
                         // looks down the tunnel and a cylinder keeps the along component), around angle + pi - 2 th
                         float R0 = _Circumference * 0.15915494;
-                        float Ra = abs(dot(R, alongDir));
-                        float Rn = dot(R, i.normalWS);
-                        float Rt = dot(R, i.tangentWS.xyz);
+                        half3 Rm = reflect(-viewDir, n);                                   // v2: smooth normal (no ribs)
+                        float Ra = abs(dot(Rm, alongDir));
+                        float Rn = dot(Rm, i.normalWS);
+                        float Rt = dot(Rm, i.tangentWS.xyz);
                         float perp2 = max(1.0 - Ra * Ra, 1e-3);
                         float tHit = 2.0 * R0 * saturate(Rn) / perp2;
                         float dAl = min(tHit * Ra, 400.0);
@@ -573,8 +582,10 @@ Shader "BWK/DrumWall"
                         float rl = frac((yH - _BandOffset - _RimPhase * G) / G) * G;
                         float dRim = min(rl, G - rl) + step(yH, _BandOffset) * 1e3;
                         float rw = max(_MirrorRingWidth, 0.05) * (1.0 + tHit * 0.03);           // glossy, not perfect: wider far
-                        half gW = exp(-dGold * dGold / (rw * rw));
-                        half rW = exp(-dRim * dRim / (rw * rw * 1.6));
+                        float fwy = min(fwidth(yH), 30.0);
+                        float rwE = sqrt(rw * rw + fwy * fwy);                                  // v2: filtered (no aliasing)
+                        half gW = exp(-dGold * dGold / (rwE * rwE)) * (rw / rwE);
+                        half rW = exp(-dRim * dRim / (rwE * rwE * 1.6)) * (rw / rwE);
                         // around position of the hit: 0 = ceiling .. 1 = floor; the floor quarter is the water / slide
                         float aH = frac(i.uv.x + 0.5 - atan2(Rt, max(Rn, 1e-3)) * 0.31830989);
                         half floorH = smoothstep(0.62, 0.82, abs(aH - 0.5) * 2.0);
@@ -583,7 +594,7 @@ Shader "BWK/DrumWall"
                         env += (_MirrorGold.rgb * gW + _MirrorRim.rgb * rW) * (1.0 - floorH * 0.7);
                         env = lerp(env, _MirrorCore.rgb, smoothstep(_MirrorCoreStart, _MirrorCoreEnd, dAl));
                         // polished, slightly worn metal: Schlick fresnel on the rib normal, broken by a coarse wipe pattern
-                        half nv = saturate(dot(nr, viewDir));
+                        half nv = saturate(dot(n, viewDir));
                         half fr = _MirrorF0 + (1.0 - _MirrorF0) * pow(1.0 - nv, 5.0);
                         half wipe = lerp(0.55, 1.0, BWK_Fbm(float2(m.x * 0.9, m.y * 0.22) + 3.1));
                         emission += env * fr * wipe * sheenW * (1.0 - hole);

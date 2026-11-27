@@ -181,8 +181,8 @@ def frame(d):
 
 def strand(m, root, d, bend, length, w0, key, sides):
     """curved strand: root ring -> mid ring (bent by `bend`) -> tip point. sides 3 (LOD0) / 4 (LOD1)."""
-    mid = root + d * (length * 0.55)
-    tip = mid + (d + bend).normalized() * (length * 0.45)
+    mid = root + d * (length * 0.66)
+    tip = mid + (d + bend).normalized() * (length * 0.34)
     dm = (tip - root).normalized()
     rings = []
     for c, w, dd in ((root, w0, d), (mid, w0 * 0.72, dm)):
@@ -231,9 +231,9 @@ def build_roller(n_clumps, per, seed, seg, sides):
         sweep = tang * rnd.uniform(-0.55, -0.15) + n * 0.15        # swept back + a soft flop at the tips
         for i in range(per):
             jit = Vector((rnd.uniform(-0.06, 0.06), rnd.uniform(-0.06, 0.06), rnd.uniform(-0.06, 0.06)))
-            d = (base + Vector((rnd.uniform(-0.2, 0.2), rnd.uniform(-0.2, 0.2), rnd.uniform(-0.2, 0.2)))).normalized()
+            d = (base + Vector((rnd.uniform(-0.12, 0.12), rnd.uniform(-0.12, 0.12), rnd.uniform(-0.12, 0.12)))).normalized()
             bend = sweep + Vector((rnd.uniform(-0.25, 0.25), rnd.uniform(-0.25, 0.25), rnd.uniform(-0.25, 0.25)))
-            w0 = rnd.uniform(0.020, 0.032) * (1.6 if per == 1 else 1.0)
+            w0 = rnd.uniform(0.034, 0.052) * (1.6 if per == 1 else 1.0)
             strand(m, root + jit, d, bend, length * rnd.uniform(0.8, 1.15), w0, key, sides)
     return m
 
@@ -280,10 +280,11 @@ def export_roller():
 
 def main():
     C.reset_scene()
-    r, h0, h1 = export_hatch()
-    for o in (r, h0, h1):
-        o.hide_render = True
-        o.hide_viewport = True
+    if not os.environ.get("P10_ROLLER_ONLY"):
+        r, h0, h1 = export_hatch()
+        for o in (r, h0, h1):
+            o.hide_render = True
+            o.hide_viewport = True
     export_roller()
     C.save_work("s2_p10.blend")
     print("DONE")

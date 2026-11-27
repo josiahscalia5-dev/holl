@@ -238,7 +238,7 @@ namespace BubbleWash
                 if (seatW > 1e-3f)
                 {
                     float ph = sh == RideState ? Mathf.Repeat(st.normalizedTime, 1f) : Mathf.Repeat(Time.time / armClipLen, 1f);
-                    armSolver.Apply(seatW, seatedArms, ph);
+                    armSolver.Apply(seatW, seatedArms, ph, dt);
                 }
             }
             // Gentle water bob on the model root while seated on the water (two detuned waves, a little roll / pitch).
@@ -322,6 +322,13 @@ namespace BubbleWash
         public float bendCost = 0.0005f;
         [Tooltip("Keep the previous arm solve while it is clear and within this score (m) of the best: no flicker.")]
         public float hysteresis = 0.012f;
+        // pass 9 Play Mode s2p9 (13:13): with upper-arm raises up to 46 deg the solve flipped between two regimes (upper arm
+        // ~28 deg + forearm ~36 vs ~8 + ~47) from one sample to the next -> elbow pops. The upper arm stays low (it hides
+        // under the cuff and fur anyway; the forearm + mitt do the visible raise) and the applied angles move at a limited rate.
+        [Tooltip("Upper-arm elevation cap for the two-joint search (deg); new field so saved scenes pick it up.")]
+        public float upperArmMaxDeg = 18f;
+        [Tooltip("Runtime: the applied upper-arm / forearm angles move toward the solve at most this fast (deg/s); 0 = snap.")]
+        public float maxRateDeg = 80f;
     }
 
     /// <summary>
@@ -345,6 +352,7 @@ namespace BubbleWash
         /// <summary>Last forearm / mitt elevation per side (deg).</summary>
         public readonly float[] LastForearm = new float[2];
         readonly float[] prevE = { float.NaN, float.NaN }, prevF = new float[2], prevO = new float[2];
+        readonly float[] curE = { float.NaN, float.NaN }, curF = new float[2], curO = new float[2];
         /// <summary>Last shoulder position vs the cuff: radial distance from the hat axis, height above the brim's lower edge (m).</summary>
         public readonly float[] LastShoulderRad = new float[2], LastShoulderH = new float[2];
         /// <summary>Last measured cuff radius / height (world m).</summary>
@@ -431,8 +439,9 @@ namespace BubbleWash
             $"forearm {LastForearm[0]:F1} slide {LastShoulderOut[0]:F3} clear {LastClearance[0]:F3}; R shoulder rad {LastShoulderRad[1]:F3} " +
             $"h {LastShoulderH[1]:F3} raise {LastElevation[1]:F1} forearm {LastForearm[1]:F1} slide {LastShoulderOut[1]:F3} clear {LastClearance[1]:F3}";
 
-        /// <summary>Poses both arms on top of the current (clip) pose; weight 0..1, phase 0..1 of the ride cycle.</summary>
-        public void Apply(float weight, SeatedArmSettings set, float phase)
+        /// <summary>Poses both arms on top of the current (clip) pose; weight 0..1, phase 0..1 of the ride cycle; dt > 0 (runtime)
+        /// rate-limits the applied angles (SeatedArmSettings.maxRateDeg), dt 0 (the bake) snaps to each frame's solve.</summary>
+        public void Apply(float weight, SeatedArmSettings set, float phase, float dt = 0f)
         {
             if (weight <= 0f || set == null) return;
             Vector3 A = root.up;
@@ -493,7 +502,7 @@ namespace BubbleWash
                 {
                     float o = pass * set.maxShoulderOut * Rc / 3f;
                     Vector3 Sp = S + lat * o;
-                    for (float e = set.elevationDeg; e >= set.minElevationDeg - 1e-3f; e -= 2f)
+                    for (float e = Mathf.Min(set.elevationDeg, set.upperArmMaxDeg); e >= set.minElevationDeg - 1e-3f; e -= 2f)
                     {
                         float fHi = Mathf.Max(set.forearmTopDeg, e + set.forearmExtraDeg);
                         for (float f = e + set.forearmExtraDeg; f <= fHi + 1e-3f && f - e <= set.maxBendDeg + 1e-3f; f += 3f)
@@ -524,6 +533,15 @@ namespace BubbleWash
                         }
                     }
                 }
+                // runtime rate limit: move the applied angles toward this frame's solve (kept only while the step pose clears)
+                if (!float.IsNaN(chosenE) && dt > 0f && set.maxRateDeg > 0f && !float.IsNaN(curE[side]) && Mathf.Abs(curO[side] - chosenO) < 1e-4f)
+                {
+                    float step = set.maxRateDeg * dt;
+                    float ne = Mathf.MoveTowards(curE[side], chosenE, step), nf = Mathf.MoveTowards(curF[side], chosenF, step);
+                    float c = Eval(S + lat * chosenO, ne, nf, out _);
+                    if (c >= 0f) { chosenE = ne; chosenF = nf; chosenC = c; }
+                }
+                if (!float.IsNaN(chosenE)) { curE[side] = chosenE; curF[side] = chosenF; curO[side] = chosenO; }
                 LastElevation[side] = chosenE; LastForearm[side] = chosenF; LastShoulderOut[side] = chosenO; LastClearance[side] = chosenC;
                 if (float.IsNaN(chosenE)) continue;   // no safe raise: keep the clip's own arm pose
                 if (chosenO > 0f)

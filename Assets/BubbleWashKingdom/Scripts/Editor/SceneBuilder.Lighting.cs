@@ -389,13 +389,16 @@ namespace BubbleWash.EditorTools
         /// (900, 150) ~50, pink (1050, 285) ~60, small yellow (820, 205) ~26, small pink (825, 250) ~22.</summary>
         static readonly (float x, float y, float w, float roll, int color)[] DoorStarLayout =
         {
-            (0.398f, 0.083f, 0.066f, -12f, 0),   // v2: widths x1.2 (v1 yellow ~55 px vs reference ~70)
-            (0.465f, 0.194f, 0.047f, 14f, 1),
-            (0.789f, 0.083f, 0.071f, 10f, 0),
+            // Screen S2 pass 10 (judge gap #6): reference yellow core-tube boxes UL x 471-541 / y 16-113, UR x 966-1056 / y
+            // 12-129 (TALL: mounted on the drum, turned toward the axis), ours 473-542 / 19-93 and 970-1053 / 16-95 -> the big
+            // door stars x1.25 (cyan x1.15) and turned toward the tunnel axis (facing below) = same width, taller, thicker
+            (0.398f, 0.083f, 0.083f, -12f, 0),   // v2: widths x1.2 (v1 yellow ~55 px vs reference ~70); p10 x1.25
+            (0.465f, 0.194f, 0.054f, 14f, 1),
+            (0.789f, 0.083f, 0.089f, 10f, 0),
             // S2 pass 7 v2 (R2 07:44 solve, slim master): right cyan back to its reference spot (898, 153) now that the right
             // yellow is nudged sideways only (v1: (858, 153)); pink 0.056 -> 0.050 wide (reference 1020-1080 = 60 px); the
             // small yellow / pink measured 37 / 27 px wide at (821, 205) / (826, 251) (v1 rendered 16 / 20 px)
-            (0.702f, 0.213f, 0.047f, -12f, 1),
+            (0.702f, 0.213f, 0.054f, -12f, 1),
             (0.820f, 0.390f, 0.050f, -8f, 2),
             (0.641f, 0.285f, 0.028f, 6f, 0),
             (0.645f, 0.349f, 0.021f, -6f, 2),
@@ -628,7 +631,9 @@ namespace BubbleWash.EditorTools
                     }
                     var toCam = (r2.pos - pos).normalized;
                     var inward = Vector3.ProjectOnPlane(wf.FlatPoint(0, TunnelCenter) - pos, wf.forward).normalized;
-                    var facing = rimMount ? toCam : (toCam + inward * 0.35f).normalized;
+                    // Screen S2 pass 10: mounted look (reference stars are foreshortened toward the tunnel axis): inward .35 -> .9,
+                    // rim-mounted stars turned toward the axis as well (they were camera-facing)
+                    var facing = (toCam + inward * (rimMount ? 0.4f : 0.9f)).normalized;   // rim: tips stay clear of the torus crest
                     scale /= Mathf.Lerp(1f, Mathf.Max(0.5f, Vector3.Dot(facing, toCam)), 0.5f);
                     float rr = s.roll * Mathf.Deg2Rad;
                     var upHint = Vector3.ProjectOnPlane(r2Up * Mathf.Cos(rr) + r2Right * Mathf.Sin(rr), facing).normalized;

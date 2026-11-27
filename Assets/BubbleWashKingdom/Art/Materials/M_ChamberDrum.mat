@@ -44,6 +44,8 @@ Material:
     - _DepthTintEnd: 16
     - _DepthTintStart: 9
     - _DoorAmount: 0
+    - _DoorDeepFar: 30
+    - _DoorDeepNear: 14
     - _DoorDesat: 0.5
     - _DoorFadeEnd: 112
     - _DoorFadeStart: 75
@@ -121,6 +123,7 @@ Material:
     - _DeepEdgeGlow: {r: 0, g: 0, b: 0, a: 1}
     - _DeepTint: {r: 1, g: 1, b: 1, a: 1}
     - _DepthTintColor: {r: 0.29999998, g: 0.39999998, b: 0.7, a: 1}
+    - _DoorDeepTint: {r: 1, g: 1, b: 1, a: 1}
     - _DoorSheenColor: {r: 0, g: 0, b: 0, a: 1}
     - _DoorTint: {r: 1, g: 1, b: 1, a: 1}
     - _DoorWarmColor: {r: 0, g: 0, b: 0, a: 1}
