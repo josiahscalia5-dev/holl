@@ -218,7 +218,8 @@ namespace BubbleWash.EditorTools
                 F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
                 F(m, "_FarFade", 22f);
                 F(m, "_Shape", 1f); F(m, "_StarR", 0.625f); F(m, "_StarInner", 0.45f); F(m, "_StarTube", 0.064f);   // v4: .072 blurred the portrait door stars
-                F(m, "_StarGlowW", 0.03f); F(m, "_StarFill", 0.02f); F(m, "_Strength", strength * 0.6f);
+                // Screen S2 pass 10: the door stars are now THICK tubes (SM_NeonStarTube_v3) -> restrained halo (x.6 -> x.45)
+                F(m, "_StarGlowW", 0.03f); F(m, "_StarFill", 0.02f); F(m, "_Strength", strength * 0.45f);
             }, (int)RenderQueue.Transparent - 10);
         }
 

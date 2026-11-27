@@ -400,8 +400,15 @@ namespace BubbleWash.EditorTools
             // v -0.11 (previews v1-v3) -> a dark navy spiky starburst (corner pink 35 -> 20 %) = REJECTED, pass-6 geometry and
             // placement kept (the fix needs a new roller body master with a closed fur end cap, see NOTES.md)
             // pass 9: body = the new bristle drum master SM_RollerDrum_s2 (the s2 body + sleeve stay the fallback)
-            HallRoller(holder, HallRollerClear(HallScreenPoint(r2, -0.08f, -0.12f, 6.3f), dRot, 1.6f, 2.6f, "door/S2", 4.0f), dRot, 1.6f, -36f,
-                       S2DrumRollerP9 && ModelPrefab("Machinery", "SM_RollerDrum_s2") != null ? "SM_RollerDrum_s2" : "SM_BrushRoller_s2");
+            // pass 10 (judge gap #2 "fringed pink DONUT / corner sliver; ref = large dense fluffy shaggy brush, white tips"):
+            // SM_RollerDrum_s2 v2 (build_s2_p10.py: closed capsule core + 1350 clumps x 6 curved strands over the cylinder
+            // AND both end domes, 0.5-0.8 m) at the pass-6 placement / axis that filled the corner (pink 38 %): the end R2
+            // sees is now a fluffy bristle hemisphere instead of the open annulus; scale 1.6 -> 1.5 (the drum is fatter)
+            const bool S2DrumRollerP10 = true;
+            bool drumV2 = S2DrumRollerP10 && ModelPrefab("Machinery", "SM_RollerDrum_s2") != null;
+            float drumScale = drumV2 ? 1.5f : 1.6f;
+            HallRoller(holder, HallRollerClear(HallScreenPoint(r2, -0.08f, -0.12f, 6.3f), dRot, drumScale, 2.6f, "door/S2", 4.0f), dRot, drumScale, -36f,
+                       (S2DrumRollerP9 || drumV2) && ModelPrefab("Machinery", "SM_RollerDrum_s2") != null ? "SM_RollerDrum_s2" : "SM_BrushRoller_s2");
             // blue machine housing + gold pipe (SM_DoorMachine_s2, build_door_machinery_s2.py): front parallel to the door
             // wall, flange end (asset -X) at the rim; centre at R2 (u .06, v .32), 7 m deep = in front of the wall (40.35 m)
             // (v1 u .03 / v .29: pipe at y ~190 and flange at x ~165; reference pipe y 195-235 reaching the rim at x ~245)

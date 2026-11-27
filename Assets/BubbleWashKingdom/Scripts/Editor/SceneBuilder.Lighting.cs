@@ -399,6 +399,9 @@ namespace BubbleWash.EditorTools
             (0.820f, 0.390f, 0.050f, -8f, 2),
             (0.641f, 0.285f, 0.028f, 6f, 0),
             (0.645f, 0.349f, 0.021f, -6f, 2),
+            // Screen S2 pass 10 (judge gap #6 "more stars deeper in the tunnel"): the small yellow just inside the first gold
+            // ring, upper left (4K f_03.00s (1965, 525) -> 720p (655, 175), ~23 px, half hidden by the pom-pom)
+            (0.512f, 0.243f, 0.019f, -10f, 0),
         };
 
         /// <summary>Screen ALL pass 5: big neon outline stars of the owner's front frames (track distance of the R still, centre
@@ -559,9 +562,15 @@ namespace BubbleWash.EditorTools
                 // stars use the SLIM outline master SM_NeonStarTube_v2 (tube 6.5 % of r; reference door stars ~5 px tubes on
                 // 70-75 px stars) with its 3.2x outline-glow card; the chubby SM_NeonStarTube (tube 17 % of r) read as filled
                 // glowing shapes under the approved bloom
-                var slimD = ModelParts("Lighting", "SM_NeonStarTube_v2");
+                // Screen S2 pass 10 (judge gap #6 "near yellow stars large and THICK-stroked"; lead 12:40 "thicker emissive star
+                // tubes so the glow cards can shrink"): the THICK master SM_NeonStarTube_v3 (build_lighting_stars.py: the v2
+                // outline, tube r .11 instead of .065 = ~7-8 px at 720p like the reference) when it exists, v2 = fallback
+                var slimD = ModelParts("Lighting", "SM_NeonStarTube_v3");
+                bool thickDoor = slimD.Count > 0;
+                if (!thickDoor) slimD = ModelParts("Lighting", "SM_NeonStarTube_v2");
                 bool slimDoor = slimD.Count > 0;
-                float dW = slimDoor ? 2.13f : StarMeshWidth, dR = slimDoor ? 1.065f : StarMeshRadius, dCard = slimDoor ? 3.2f : StarGlowCard;
+                float dW = thickDoor ? 2.22f : slimDoor ? 2.13f : StarMeshWidth, dR = thickDoor ? 1.11f : slimDoor ? 1.065f : StarMeshRadius;
+                float dCard = slimDoor ? 3.2f : StarGlowCard;
                 List<Part> RecolorD(Material mat) => slimDoor
                     ? slimD.Select(p => new Part(p.mesh, Enumerable.Repeat(mat, Mathf.Max(1, p.mesh.subMeshCount)).ToArray(), p.local)).ToList()
                     : Recolor(mat);

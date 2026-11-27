@@ -53,6 +53,7 @@ Material:
     - _DoorRibTilt: 0.3
     - _DoorRowSpread: 1.45
     - _DoorSheenPower: 28
+    - _DoorSlotAspect: 1
     - _DoorSlotEnd: 70
     - _DoorSlotFar: 0.72
     - _DoorSlotNear: 1.15
@@ -79,6 +80,12 @@ Material:
     - _LipWidth: 0.03
     - _LitDesat: 0.5
     - _Metallic: 0.64
+    - _MirrorCoreEnd: 80
+    - _MirrorCoreStart: 25
+    - _MirrorF0: 0.5
+    - _MirrorRingA: 50.5
+    - _MirrorRingB: 61.7
+    - _MirrorRingWidth: 0.45
     - _PanelCurve: 0.25
     - _PanelLength: 3
     - _Pattern: 1
@@ -125,6 +132,11 @@ Material:
     - _HoleColor: {r: 0.023529412, g: 0.011764706, b: 0.05490196, a: 1}
     - _HoleGlow: {r: 0.14117648, g: 0.08627451, b: 0.24313726, a: 1}
     - _LitTint: {r: 0.91, g: 0.745, b: 1, a: 1}
+    - _MirrorCore: {r: 0, g: 0, b: 0, a: 1}
+    - _MirrorFloor: {r: 0, g: 0, b: 0, a: 1}
+    - _MirrorGold: {r: 0, g: 0, b: 0, a: 1}
+    - _MirrorRim: {r: 0, g: 0, b: 0, a: 1}
+    - _MirrorWall: {r: 0, g: 0, b: 0, a: 1}
     - _PinkSpill: {r: 1, g: 0.43137255, b: 0.8235294, a: 1}
     - _SeamColor: {r: 0.1254902, g: 0.078431375, b: 0.2901961, a: 1}
     - _ShadowColor: {r: 0.22745098, g: 0.22745098, b: 0.49411765, a: 1}

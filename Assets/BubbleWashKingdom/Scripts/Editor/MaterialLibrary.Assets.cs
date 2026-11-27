@@ -95,7 +95,8 @@ namespace BubbleWash.EditorTools
             // (pass 7 v3 URP/Lit version: matte albedo + _EMISSION keyword + _EmissionColor = glow, no specular / env)
             // v3 albedo ~55 % of the colour, glow ~ the colour (pink / light tip / white / cyan of the reference roller)
             Bristle("M_BristlePink_s2", "#8A2458", "#C83A88");
-            Bristle("M_BristlePinkTip_s2", "#9A5078", "#EC80BC");
+            // pass 10 (crop 02 "long soft pink strands with WHITE tips"): lighter, whiter tips
+            Bristle("M_BristlePinkTip_s2", "#B07898", "#F8C0E0");
             Bristle("M_BristleWhite_s2", "#888088", "#E6DCE8");
             Bristle("M_BristleCyan_s2", "#3C6E88", "#66B8E0");
 
@@ -115,6 +116,20 @@ namespace BubbleWash.EditorTools
                 F(m, "_Sparkle", 0.25f); F(m, "_SparkleScale", 16f); F(m, "_FogAmount", 0.45f);
                 F(m, "_HighlightSize", 6f); F(m, "_BandSharpness", 16f); F(m, "_LightInfluence", 0.35f);
                 F(m, "_StreakStrength", 0.3f); F(m, "_StreakHeight", 0.6f);
+            });
+
+            // pass 10 (judge gap #1 "narrow violet inner rim with a BRIGHT crest"): thin pale-lilac crest bead of
+            // SM_DoorHatch_s2 v3 (build_s2_p10.py) = the long highlight line along the reference's violet rim crest
+            Mat("M_HatchCrest_s2", "BWK/Gold", m =>
+            {
+                C(m, "_HighColor", "#FFF4FF"); C(m, "_MidColor", "#D2B0FF"); C(m, "_LowColor", "#7A50C8");
+                C(m, "_RimColor", "#F0D8FF"); C(m, "_BandColor", "#E8D0FF");
+                F(m, "_Brightness", 1.0f); F(m, "_Emission", 0.35f); F(m, "_Contrast", 1.3f); F(m, "_ViewGradient", 1f);
+                F(m, "_EnvReflect", 0.4f); F(m, "_EnvTint", 0.5f); F(m, "_EnvRoughness", 0.15f);
+                F(m, "_SpecPower", 90f); F(m, "_SpecStrength", 1.6f); F(m, "_GlintStrength", 0.8f);
+                F(m, "_Sparkle", 0.1f); F(m, "_SparkleScale", 16f); F(m, "_FogAmount", 0.3f);
+                F(m, "_HighlightSize", 6f); F(m, "_BandSharpness", 16f); F(m, "_LightInfluence", 0.3f);
+                F(m, "_StreakStrength", 0.1f); F(m, "_StreakHeight", 0.6f);
             });
 
             // ---------------------------------------------------------------- 02 striped fluffy washing roller

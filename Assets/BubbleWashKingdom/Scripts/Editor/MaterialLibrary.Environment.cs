@@ -122,6 +122,22 @@ namespace BubbleWash.EditorTools
                 m.SetColor("_FarGlowColor", new Color(0.13f, 0.12f, 0.24f));   // v3: v2 (.10/.08/.16 from 80 m) far end 158/126/178 vs ref 152/110/190 (bluer, brighter core)
                 F(m, "_FarGlowNear", 35f); F(m, "_FarGlowFar", 70f); F(m, "_FarGlowEnd", 150f);
                 F(m, "_DoorPanelCurve", 0.22f); F(m, "_DoorDesat", 0.16f); F(m, "_DoorHole", 0.24f);   // v4: desat .22 -> .16 (keep the violet)
+                // Screen S2 pass 10 (judge gap #3 "flat grey-violet matte plastic; the approved drum glows violet / magenta / blue
+                // with specular chrome highlights", wallR2 rgb 113/76/159 L p90 113 vs ref 134/98/180 p90 153): the door drum
+                // MIRRORS the tunnel (reflected ray intersected with the drum cylinder): warm gold rings, pink-magenta LED rims,
+                // turquoise water on the upper drum, the luminous far end, deep blue metal between; the old far-end-only sheen
+                // drops to ~45 %, the lit metal a little bluer / darker so the reflections carry the value contrast
+                m.SetColor("_MirrorGold", new Color(1.0f, 0.62f, 0.30f)); m.SetColor("_MirrorRim", new Color(1.0f, 0.42f, 0.88f));
+                m.SetColor("_MirrorWall", new Color(0.10f, 0.10f, 0.30f)); m.SetColor("_MirrorFloor", new Color(0.25f, 0.62f, 0.85f));
+                m.SetColor("_MirrorCore", new Color(0.42f, 0.38f, 0.80f)); F(m, "_MirrorF0", 0.55f);
+                // far end: ours 172/135/173 (bg) vs ref 154/111/192 - bluer / darker deep drum, the flat far glow halves
+                m.SetColor("_FarGlowColor", new Color(0.07f, 0.065f, 0.15f));
+                F(m, "_MirrorRingA", 50.5f); F(m, "_MirrorRingB", 61.7f); F(m, "_MirrorRingWidth", 0.45f);
+                F(m, "_MirrorCoreStart", 25f); F(m, "_MirrorCoreEnd", 80f);
+                m.SetColor("_DoorSheenColor", new Color(0.16f, 0.13f, 0.26f));
+                m.SetColor("_DoorTint", new Color(0.92f, 0.90f, 1.10f));
+                // crop 07: near ovals bigger and ~2:1 (ours 1.35:1)
+                F(m, "_DoorSlotNear", 1.25f); F(m, "_DoorSlotAspect", 1.3f);
             });
             // polished lavender drum lips between the gold rings (SM_DrumRim, m1: fat rolled lip): the stylised BWK/Gold
             // environment shading with a lavender palette - violet body, magenta-pink fresnel edge, soft pink-lavender
