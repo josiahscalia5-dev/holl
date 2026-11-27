@@ -4,6 +4,22 @@ A brand-new Unity mobile water-slide adventure: a fluffy hot-pink mascot slides 
 of one enormous magical washing machine. These instructions come only from the owner's brief
 (`Docs/ProjectBrief.md`) and the approved Google Flow video `25982.mp4`.
 
+## Owner standing rules (2026-11-27, follow in every session)
+- QUALITY FIRST, NOT CREDIT CONSERVATION: use the whole subscription allowance; never pick inferior methods, simplify 3D
+  assets or compromise visual accuracy to save credits; rebuild inadequate assets properly. Do not voluntarily stop at
+  72/80/85/90/95 % usage - keep working until the real limit (respect hardware stability, disk safety; no paid charges,
+  no paid Fast Mode, no purchases). Multiple specialists may work concurrently when their files do not conflict; heavy
+  Unity / Blender runs stay staggered through Tools/heavy_lock.sh.
+- ONE SCREEN AT A TIME: S2 (video 3.00 s, golden tunnel entrance at the washing-machine door) until the owner has
+  reviewed the improved S2 gameplay; aim 9/10+. Private plan: Captures/agents/_shared/S2_FOCUS_PLAN.md; the owner's
+  annotated corrections: Reference/s2_corrections/.
+- Gameplay: real interactive 3D; the pink mascot sits upright on his bottom while sliding; the gameplay camera always
+  follows behind his back (portrait). The matched comparison camera (R2) is for evaluation only - never change the
+  gameplay perspective to improve a comparison score.
+- Exactly ONE five-minute autosave loop (`Tools/autosave.sh 300`); private references, chat history and credentials stay
+  out of public GitHub (BWK_PUBLISH_CHAT=0 default). Never interrupt running specialists, builds or workflows; keep the
+  private handoff (Captures/handoff/NEXT_ACCOUNT_START.md) updated so any authorized session can resume.
+
 ## Current handoff (read first)
 - NEXT ACCOUNT START (2026-11-26 13:45): the private `Captures/handoff/NEXT_ACCOUNT_START.md` (state, private reference
   paths, the exact next steps) and the "Round 7 status" block at the top of `Docs/HANDOFF.md`.

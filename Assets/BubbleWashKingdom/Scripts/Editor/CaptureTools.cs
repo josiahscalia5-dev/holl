@@ -342,7 +342,7 @@ namespace BubbleWash.EditorTools
         /// height / lateral (m) from the runner, yaw / pitch (deg) on the flat track heading, vertical FOV. Solved 2026-11-26
         /// 20:25 by S2CameraSolveBatch (door ring both sides + mascot, rms 8.4 px). Re-solve after any S2 geometry change
         /// (2026-11-27: tunnel bend right inside the door) with -bwkSolveVP so the vanishing point counts too.</summary>
-        public static float R2Back = 2.75f, R2Height = 1.0f, R2Lat = 0.3f, R2Yaw = -9f, R2Pitch = 6f, R2Fov = 58f;
+        public static float R2Back = 2.5f, R2Height = 1.1f, R2Lat = 0.3f, R2Yaw = -8f, R2Pitch = 10f, R2Fov = 58f;   // re-solved 2026-11-27 06:13 on the bent tunnel (door ring both sides + mascot + VP, rms 35.9 px; VP (780,299) vs ref (760,205))
 
         public static void S2CameraSolveBatch()
         {

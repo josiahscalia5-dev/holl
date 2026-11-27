@@ -79,6 +79,16 @@ namespace BubbleWash.EditorTools
         public static readonly bool S2TunnelBendRight = true;
         static readonly float[] S2BentX = { -4.4f, -5.4f, -5.6f, -6.0f };   // knots 4-7, mirrored world x (was -5.6 / -10.4 / -15.6 / -20)
 
+        /// <summary>Lead 2026-11-27 06:20 (owner's annotated S2 comparison, item 01 "match the RISING rightward vanishing point
+        /// ... preserve the playable spline"): after the bend the S2 comparison camera put the vanishing point ~94 px BELOW
+        /// the reference's (780,299 vs 760,205) because the slide kept dropping ~5 m between the door and 82 m. Knots 4-7 now
+        /// run nearly level with a ~1 deg rise into the tunnel (y -3.0 / -2.9 / -2.7 / -2.6, was -4.3 / -5.6 / -6.6 / -7.8),
+        /// every later knot is lifted by the same +5.2 m (the 82 -> 96 m drop and everything after keep their shape). The
+        /// runner loses a little downhill acceleration there (RunnerController slopeFactor) - Play Mode test checks the run.
+        /// false = the bend without the rise.</summary>
+        public static readonly bool S2TunnelRise = true;
+        static readonly float[] S2RiseY = { -3.0f, -2.9f, -2.7f, -2.6f };   // knots 4-7 y
+
         static Vector3[] LayoutKnots()
         {
             var k = (Vector3[])Knots.Clone();
@@ -98,6 +108,12 @@ namespace BubbleWash.EditorTools
                 float s2Shift = k[7].x + step78 - k[8].x;
                 for (int i = 8; i < k.Length; i++) k[i].x += s2Shift;
             }
+            if (S2TunnelRise)
+            {
+                float rise = S2RiseY[3] - k[7].y;                  // the 7 -> 8 drop and everything after keep their shape
+                for (int i = 4; i <= 7; i++) k[i].y = S2RiseY[i - 4];
+                for (int i = 8; i < k.Length; i++) k[i].y += rise;
+            }
             return k;
         }
 
@@ -112,7 +128,7 @@ namespace BubbleWash.EditorTools
         /// <summary>Lead 2026-11-26 20:40 (owner takeover brief item 5): the reference hero frame f_03.00s is taken AT the
         /// washing-machine door (SM_MouthRing_r7, 40 m), not 65 m past it like HeroDistance. S2 comparison stills
         /// (R2_rear_S2_like_3s + hero_mouth, CaptureTools.CaptureHero) put the mascot here. Comparison only, never gameplay.</summary>
-        public const float HeroMouthDistance = 35f;
+        public const float HeroMouthDistance = 34.5f;   // 2026-11-27 R2 re-solve on the bent tunnel (was 35)
 
         /// <summary>Owner-approved portrait gameplay camera: back, height, pitch, FOV. Applied in BuildCameras and (for
         /// previews, which load the saved scene) in PreviewRefreshDomains. Change only with the owner's explicit approval.
