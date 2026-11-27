@@ -377,10 +377,11 @@ namespace BubbleWash.EditorTools
             // corner (lead build: bottom edge y ~100 vs reference ~160); with the bristle sleeve its centre sits at v -0.10
             // v3: v2 (u 0, corridor 4.5) still lifted 0.62 m (its right end reached 3.5 m from the centre line) -> u -0.08
             // (whole roller >= 4.3 m to the side, the corner coverage comes from the body + bristles), corridor 4.0
-            // pass 7: the end facing R2 read as a pink DONUT (open annulus end cap, violet wall through the hole) -> the
-            // bristle master now has closed, bristled ends (build_s2_roller_p6.py v3); u -0.08 -> -0.05 / v -0.12 -> -0.11
-            // so the rounded pink end reaches the reference's x ~250-290 (whole roller still >= 4.3 m to the side)
-            HallRoller(holder, HallRollerClear(HallScreenPoint(r2, -0.05f, -0.11f, 6.3f), dRot, 1.6f, 2.6f, "door/S2", 4.0f), dRot, 1.6f, -36f,
+            // pass 7: the end facing R2 reads as a pink DONUT (open annulus end cap of the body, violet wall through the
+            // hole; R2 sees the roller ~49 deg off-axis, so that end face is visible). Tried: closed bristled ends + u -0.05 /
+            // v -0.11 (previews v1-v3) -> a dark navy spiky starburst (corner pink 35 -> 20 %) = REJECTED, pass-6 geometry and
+            // placement kept (the fix needs a new roller body master with a closed fur end cap, see NOTES.md)
+            HallRoller(holder, HallRollerClear(HallScreenPoint(r2, -0.08f, -0.12f, 6.3f), dRot, 1.6f, 2.6f, "door/S2", 4.0f), dRot, 1.6f, -36f,
                        "SM_BrushRoller_s2");
             // blue machine housing + gold pipe (SM_DoorMachine_s2, build_door_machinery_s2.py): front parallel to the door
             // wall, flange end (asset -X) at the rim; centre at R2 (u .06, v .32), 7 m deep = in front of the wall (40.35 m)
