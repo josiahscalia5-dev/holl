@@ -12,8 +12,18 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: M_RimGlow_s2
+    second: {fileID: 2100000, guid: 38fc6e62e33f2f74ea46223f68834261, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: M_RimLight
     second: {fileID: 2100000, guid: b95ca930e0172554489000f09990991d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_RimSpark_s2
+    second: {fileID: 2100000, guid: 9ee454bcfa134ab49918b79b6b58ec97, type: 2}
   materials:
     materialImportMode: 2
     materialName: 1
