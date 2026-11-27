@@ -10,3 +10,5 @@ C--Users-josia--unity/72ca2928-5a7e-48f2-8531-d8f51d995142
 C--Users-josia--unity/84b218d4-fe4c-47b8-ab7c-680278d1e853
 # 2026-11-27 12:08 lead takeover session (thirteenth account), opened in C:\Users\josia\.unity:
 C--Users-josia--unity/ffbcca5a-82ca-4584-a10f-e8d29f749b0b
+# 2026-11-27 12:48 lead takeover session (fourteenth account), opened in C:\Users\josia\.unity:
+C--Users-josia--unity/3c2b09a2-f75d-40e7-bfb4-ad9568beed21
