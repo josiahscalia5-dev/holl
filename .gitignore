@@ -72,3 +72,6 @@ __pycache__/
 
 # third-party Python libraries for hosted-demo API clients (never published)
 Tools/.pylibs_gradio/
+
+# Playwright MCP browser output (screenshots / snapshots may show private reference art) - never publish
+.playwright-mcp/
