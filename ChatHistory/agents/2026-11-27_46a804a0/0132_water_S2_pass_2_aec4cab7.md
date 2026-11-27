@@ -215,3 +215,75 @@ Now the foam banks at the door.
 **Agent (2026-11-27 01:41 UTC):**
 
 > _tool: Bash - Run agent preview 1 for the S2 water pass_
+
+**Agent (2026-11-27 01:44 UTC):**
+
+> _tool: Bash - Check preview outputs and log errors_
+
+**Agent (2026-11-27 01:44 UTC):**
+
+> _tool: Bash - List BWK log lines from preview 1_
+
+**Agent (2026-11-27 01:44 UTC):**
+
+> _tool: Bash - Check how unity_run.sh handles the output argument_
+
+**Agent (2026-11-27 01:44 UTC):**
+
+> _tool: Bash - Read preview batching logic_
+
+**Agent (2026-11-27 01:44 UTC):**
+
+> _tool: Bash - Read the shared preview batch script_
+
+**Agent (2026-11-27 01:44 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_S2_p2/p1/R2_rear_S2_like_3s_16x9.png_
+
+**Agent (2026-11-27 01:44 UTC):**
+
+> _tool: Bash - Measure preview 1 against reference and before_
+
+**Agent (2026-11-27 01:44 UTC):**
+
+> _tool: Bash - Build crown crop comparison sheet_
+
+**Agent (2026-11-27 01:44 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_S2_p2/crowns_ref_before_p1.png_
+
+**Agent (2026-11-27 01:45 UTC):**
+
+> _tool: Bash - Append preview 1 notes_
+
+**Agent (2026-11-27 01:45 UTC):**
+
+Now batch 2: milkier crowns, less hue overshoot, exact S2-camera bubble placement.
+
+**Agent (2026-11-27 01:45 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Art/Shaders/BWK_Soft.shader_
+
+**Agent (2026-11-27 01:45 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/MaterialLibrary.WaterFX.cs_
+
+**Agent (2026-11-27 01:45 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/MaterialLibrary.WaterFX.cs_
+
+**Agent (2026-11-27 01:45 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.WaterFX.cs_
+
+**Agent (2026-11-27 01:45 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.WaterFX.cs_
+
+**Agent (2026-11-27 01:45 UTC):**
+
+> _tool: Bash - Verify runner API and compile check_
+
+**Agent (2026-11-27 01:46 UTC):**
+
+> _tool: Bash - Run agent preview 2 with the water gate enabled_

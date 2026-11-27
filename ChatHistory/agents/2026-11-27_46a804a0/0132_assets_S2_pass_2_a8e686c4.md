@@ -173,3 +173,67 @@ _Text-only export: the lead's brief, the agent's statements and one line per too
 **Agent (2026-11-27 01:43 UTC):**
 
 > _tool: Bash - Measure crops: reference, before, v1_
+
+**Agent (2026-11-27 01:43 UTC):**
+
+> _tool: Bash - Inspect roller r8 build entry points_
+
+**Agent (2026-11-27 01:43 UTC):**
+
+> _tool: Bash - Read roller r8 export and entry code_
+
+**Agent (2026-11-27 01:44 UTC):**
+
+> _tool: Bash - Check roller material slot names_
+
+**Agent (2026-11-27 01:44 UTC):**
+
+Now I'll parametrize the roller builder for a pink-dominant S2 variant.
+
+**Agent (2026-11-27 01:44 UTC):**
+
+> _tool: Bash - Add pink-dominant roller variant entry to hall script_
+
+**Agent (2026-11-27 01:44 UTC):**
+
+> _tool: Bash - Build pink-dominant S2 roller variant in Blender_
+
+**Agent (2026-11-27 01:44 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.Hall.cs_
+
+**Agent (2026-11-27 01:44 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.Hall.cs_
+
+**Agent (2026-11-27 01:44 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/MaterialLibrary.Assets.cs_
+
+**Agent (2026-11-27 01:44 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/MaterialLibrary.Assets.cs_
+
+**Agent (2026-11-27 01:44 UTC):**
+
+> _tool: Bash - Append notes and compile-check_
+
+**Agent (2026-11-27 01:45 UTC):**
+
+> _tool: Bash - Run preview v2 with hall rebuild and stills_
+
+**Agent (2026-11-27 01:48 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/assets/screen_S2_p2/v2/R2_rear_S2_like_3s_16x9.png_
+
+**Agent (2026-11-27 01:48 UTC):**
+
+> _tool: Bash - List v2 outputs and measure crops_
+
+**Agent (2026-11-27 01:48 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/assets/screen_S2_p2/v2/stills/01_hall_start_16x9.png_
+
+**Agent (2026-11-27 01:48 UTC):**
+
+> _tool: Bash - Build ref/before/after comparison sheets_

@@ -151,12 +151,15 @@ namespace BubbleWash.EditorTools
         }
 
         /// <summary>Brush roller = spinning bristle body (about its own X axis, like the video) + static gold hub and arm.</summary>
-        static void HallRoller(GameObject parent, Vector3 pos, Quaternion rot, float scale, float spin)
+        static void HallRoller(GameObject parent, Vector3 pos, Quaternion rot, float scale, float spin, string bodyVariant = null)
         {
             // r8 (asset artist): smooth plush band body + BWK/Fur shells (M_RollerFur_r8) instead of the r7 box blades;
-            // same axis / origin / size, so only the model reference changes (r7 stays the fallback)
+            // same axis / origin / size, so only the model reference changes (r7 stays the fallback).
+            // S2 pass 2: optional body variant (SM_BrushRoller_s2 = same body, pink-dominant bands), materials by slot name.
             string bodyName = ModelPrefab("Machinery", "SM_BrushRoller_r8") != null ? "SM_BrushRoller_r8" : "SM_BrushRoller_r7";
+            if (bodyVariant != null && ModelPrefab("Machinery", bodyVariant) != null) bodyName = bodyVariant;
             var body = HallPlace(parent, "Machinery", bodyName, pos, rot, scale, default, false);
+            if (body != null) HallOwnMaterials(body);
             HallPlace(parent, "Machinery", "SM_BrushRollerArm_r7", pos, rot, scale);
             if (body == null) return;
             var sp = body.AddComponent<Spinner>();
@@ -291,10 +294,13 @@ namespace BubbleWash.EditorTools
             // slide corridor (HallRollerClear: >= 2.6 m wherever it is within 3 m of the centre line, logged).
             var r2 = R2Cam();
             var dRot = HallRollerRot(r2.rot * new Vector3(-1f, 0.1f, 0.25f));
-            HallRoller(holder, HallRollerClear(HallScreenPoint(r2, 0.035f, -0.06f, 5.6f), dRot, 1.45f, 2.6f, "door/S2"), dRot, 1.45f, -36f);
+            // v1: the r8 layout showed its blue / white non-hub half here (corner 78 % blue) -> pink-dominant s2 body
+            HallRoller(holder, HallRollerClear(HallScreenPoint(r2, 0.035f, -0.06f, 5.6f), dRot, 1.45f, 2.6f, "door/S2"), dRot, 1.45f, -36f,
+                       "SM_BrushRoller_s2");
             // blue machine housing + gold pipe (SM_DoorMachine_s2, build_door_machinery_s2.py): front parallel to the door
-            // wall, flange end (asset -X) at the rim; centre at R2 (u .03, v .29), 7 m deep = in front of the wall (40.35 m)
-            var mp = HallScreenPoint(r2, 0.03f, 0.29f, 7.0f);
+            // wall, flange end (asset -X) at the rim; centre at R2 (u .06, v .32), 7 m deep = in front of the wall (40.35 m)
+            // (v1 u .03 / v .29: pipe at y ~190 and flange at x ~165; reference pipe y 195-235 reaching the rim at x ~245)
+            var mp = HallScreenPoint(r2, 0.06f, 0.32f, 7.0f);
             var mach = HallPlace(holder, "Machinery", "SM_DoorMachine_s2", mp, fm.FlatRotation, 1.0f);
             if (mach != null)
             {

@@ -57,6 +57,10 @@ namespace BubbleWash.EditorTools
                 C(m, "_DeepColor", "#0C74BE"); C(m, "_ShallowColor", "#16A2D4"); C(m, "_TurquoiseColor", "#20CCDC"); F(m, "_PatchAmount", 0.5f);
                 F(m, "_Smoothness", 0.62f); F(m, "_ReflectBoost", 0.55f); C(m, "_ReflectTint", "#7FF0FF");
                 C(m, "_StreakColor", "#E6FCFF"); F(m, "_StreakAmount", 0.42f); F(m, "_CausticAmount", 0.4f); F(m, "_Glow", 0.16f);
+                // p2 (p1 lane #4EBED9 hue 192 vs reference #7ABADE hue 202 = overshoot, too saturated / green): hue target 203,
+                // bluer turquoise patches, a little more white flow and near-camera translucency
+                F(m, "_HueTarget", 203f); F(m, "_HueLock", 0.85f); C(m, "_TurquoiseColor", "#2AC0E2"); C(m, "_ShallowColor", "#1E9ED8");
+                F(m, "_StreakAmount", 0.52f); F(m, "_NearBrighten", 0.16f);
                 // light halos around the decor chevrons: same period / geometry / runway offset as SceneBuilder.BuildDecorChevrons
                 F(m, "_ChevronStart", SceneBuilder.ChevronStart); F(m, "_ChevronSpacing", SceneBuilder.ChevronSpacing);
                 // (v2 notch measured #55B8E5 vs reference deep #3386CC: the arrows now bloom on their own -> fainter, tighter pool)
@@ -169,6 +173,9 @@ namespace BubbleWash.EditorTools
                 F(m, "_MilkGlass", 1f); C(m, "_MilkThin", "#A4E6F4"); F(m, "_MilkEdgeAlpha", 0.24f); F(m, "_MilkAlpha", 0.96f);
                 F(m, "_RimPower", 2.4f); F(m, "_BumpScale", 11f); F(m, "_BumpStrength", 0.9f); F(m, "_SpecStrength", 1.4f);
                 F(m, "_ReflectBoost", 0.6f); F(m, "_Glow", 0.05f); C(m, "_ColorB", "#3CC8E0"); C(m, "_ColorA", "#F2FCFF");
+                // p2 (p1 crowns white 9.6 % vs ref 11.2, edge gradient 3.7 vs 2.5 = glassy; the reference strands are milky):
+                // milkier film (alpha .24 -> .4, lighter #C2EEF8) + the _MilkSoft milk floor in the shader
+                C(m, "_MilkThin", "#C2EEF8"); F(m, "_MilkEdgeAlpha", 0.4f);
             }, (int)RenderQueue.Transparent);
             Mat("M_Foam_v2", "BWK/Soft", m =>
             {

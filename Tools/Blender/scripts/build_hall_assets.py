@@ -399,8 +399,8 @@ R8_LC = 6.0                        # UV.x * 2 spans 0..6 around (integer strand 
 R8_COLS = {"brp": "#FF74BA", "lav": "#7A4A9A", "brw": "#FFF3FA", "brb": "#7CCFF2"}
 
 
-def build_roller_r8(M):
-    bands = [("brp", 0.38), ("lav", 0.1), ("brp", 0.36), ("brw", 0.34), ("brb", 0.4), ("brw", 0.3), ("brp", 0.4), ("brb", 0.34)]
+def build_roller_r8(M, bands=None, name="SM_BrushRoller_r8"):
+    bands = bands or [("brp", 0.38), ("lav", 0.1), ("brp", 0.36), ("brw", 0.34), ("brb", 0.4), ("brw", 0.3), ("brp", 0.4), ("brb", 0.34)]
     total = sum(w for _, w in bands)
     R_PEAK, R_GROOVE, R_LAV = 0.98, 0.84, 0.86
     # profile rows (x, r, nx, nr, band key, fur mask)
@@ -492,7 +492,7 @@ def build_roller_r8(M):
     cyl(M["lav"], 0.78, 0.12, (hx - 0.08, 0, 0), rot=(0, PI / 2, 0), verts=40)
     tor(M["gold"], 0.44, 0.06, (hx - 0.12, 0, 0), rot=(0, PI / 2, 0), seg=32, mseg=8)
     cyl(M["gold"], 0.16, 0.25, (total / 2 + 0.1, 0, 0), rot=(0, PI / 2, 0))
-    return finish("SM_BrushRoller_r8", smooth=0.0)
+    return finish(name, smooth=0.0)
 
 
 # ------------------------------------------------------------------ r8 v2 (asset artist): soft golden starburst, asset 24
@@ -676,7 +676,35 @@ def main():
     print("DONE hall r7 assets")
 
 
-if os.environ.get("BWK_HALL_ONLY") == "roller_r8":
+
+
+# Screen S2 pass 2 (asset artist, 2026-11-26): the door roller seen by the S2 camera shows its NON-hub half end-on; the r8
+# layout puts blue / white there (rendered 78 % blue in the S2 corner crop vs reference 68 % pink). Same body / size / axis
+# as r8 (the r7 arm still fits), pink-dominant bands: pink 71 %, white 19 %, cyan 6 %, lilac 4 % of the length.
+S2_ROLLER_BANDS = [("brp", 0.38), ("lav", 0.1), ("brp", 0.36), ("brw", 0.3), ("brp", 0.42), ("brb", 0.16), ("brp", 0.4),
+                   ("brw", 0.2), ("brp", 0.3)]
+
+
+def roller_s2_only():
+    """BWK_HALL_ONLY=roller_s2: build + export only SM_BrushRoller_s2 (pink-dominant r8 variant) and its preview."""
+    C.reset_scene()
+    M = make_materials()
+    body = build_roller_r8(M, bands=S2_ROLLER_BANDS, name="SM_BrushRoller_s2")
+    try:
+        bpy.context.scene.eevee.taa_render_samples = 16
+    except Exception:
+        pass
+    body.location = (0, 0, 0)
+    body.rotation_euler = (0, 0, math.radians(-35))
+    out = os.path.join(C.ROOT, "Captures", "agents", "assets", "screen_S2_p2", "pv_roller_s2.png")
+    C.ensure_dir(os.path.dirname(out))
+    lineup_preview([body], out, (2.2, 6.2, 1.2), (0.0, 0.0, 0.0), 40.0, (960, 640))
+    print("DONE roller s2")
+
+
+if os.environ.get("BWK_HALL_ONLY") == "roller_s2":
+    roller_s2_only()
+elif os.environ.get("BWK_HALL_ONLY") == "roller_r8":
     roller_r8_only()
 elif os.environ.get("BWK_HALL_ONLY") == "starburst_r8":
     starburst_r8_only()

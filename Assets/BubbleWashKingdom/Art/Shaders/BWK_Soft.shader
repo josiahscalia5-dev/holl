@@ -329,7 +329,8 @@ Shader "BWK/Soft"
                         half rib = saturate((g1 * 0.65 + g2 * 0.35 - 0.5) * 3.2 + 0.45) * saturate(_BumpStrength);
                         half3 film = _MilkThin.rgb * (0.7 + 0.45 * lum);
                         half3 milkC = lerp(_ShadowColor.rgb, _ColorA.rgb, smoothstep(0.0, 0.8, lum + 0.25));
-                        half body = saturate(rib * 0.75 + gfr * 1.1);
+                        // (p1: too glassy vs the reference's milky strands -> _MilkSoft = milk floor in the crowns; droplets stay clear)
+                        half body = saturate(rib * 0.85 + gfr * 1.1 + _MilkSoft * 0.22);
                         half3 gcol = lerp(film, milkC, body);
                         half3 gdown = _ColorB.rgb * saturate(-n.y * 0.8 + 0.1) * 0.35;        // turquoise bounce from the water
                         gcol += gdown * (1.0 - body);

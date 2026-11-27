@@ -81,7 +81,32 @@ namespace BubbleWash.EditorTools
         {
             float ty = Mathf.Tan(29f * Mathf.Deg2Rad);
             var dir = new Vector3((px / 1280f - 0.5f) * 2f * ty * (16f / 9f), (0.5f - py / 720f) * 2f * ty, 1f);
-            return new Vector3(0.3f, 1.0f, -2.75f) + Quaternion.Euler(6f, -9f, 0f) * (dir * z);
+            return s2CamPos + s2CamRot * (dir * z);
+        }
+        // runner-local S2 camera (p1 used the flat model below and landed ~60 px off: the runner frame is sloped at 35 m)
+        static Vector3 s2CamPos = new Vector3(0.3f, 1.0f, -2.75f);
+        static Quaternion s2CamRot = Quaternion.Euler(6f, -9f, 0f);
+
+        /// <summary>Measures the S2 comparison camera exactly like CaptureTools (world space at HeroMouthDistance) and stores
+        /// it in the runner's local space; the runner is put back where it was.</summary>
+        static void MeasureS2Cam(RunnerController runner)
+        {
+            if (runner == null || runner.track == null) return;
+            float d0 = runner.Distance, lat0 = runner.Lateral;
+            try
+            {
+                runner.TeleportTo(HeroMouthDistance, 0f);
+                var f = runner.Frame;
+                Vector3 fwd = Vector3.ProjectOnPlane(f.forward, Vector3.up).normalized, right = Vector3.Cross(Vector3.up, fwd);
+                var rt = runner.transform;
+                Vector3 cp = rt.position - fwd * 2.75f + Vector3.up * 1.0f + right * 0.3f;
+                var rot = Quaternion.LookRotation(fwd, Vector3.up) * Quaternion.Euler(6f, -9f, 0f);
+                s2CamPos = rt.InverseTransformPoint(cp);
+                s2CamRot = Quaternion.Inverse(rt.rotation) * rot;
+                Debug.Log($"[BWK] waterfx S2 cam (runner-local) pos {s2CamPos:F3} euler {s2CamRot.eulerAngles:F2}");
+            }
+            catch (System.Exception ex) { Debug.LogWarning("[BWK] waterfx S2 camera measurement failed: " + ex.Message); }
+            finally { runner.TeleportTo(d0, lat0); }
         }
 
         /// <summary>Diameter (m) of a sphere of radius rPx pixels at camera depth z in the S2 comparison camera (720 px tall).</summary>
@@ -555,6 +580,7 @@ namespace BubbleWash.EditorTools
                 // placed through the S2 comparison camera (CaptureTools R2: 2.75 back, 1.0 up, 0.3 right, pitch 6, yaw -9,
                 // vFOV 58, 16:9) in runner space. The big pair floats outside the 9:16 hero frame (x +2.5 / -3.6 m, beside
                 // the slide, never over the lanes); SplashFX bobs / drifts / pops them like the other hero bubbles.
+                MeasureS2Cam(runner);
                 for (int i = 0; i < S2BubbleSpots.Length; i++)
                 {
                     var s = S2BubbleSpots[i];
