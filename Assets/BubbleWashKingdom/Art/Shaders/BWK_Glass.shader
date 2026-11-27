@@ -96,7 +96,13 @@ Shader "BWK/Glass"
                     half win = smoothstep(0.2, 0.08, length((nv.xy - half2(-0.22, 0.5)) * half2(1.0, 1.35)));
                     win += smoothstep(0.07, 0.02, length(nv.xy - half2(-0.42, 0.3))) * 0.8;
                     win += smoothstep(0.16, 0.06, length((nv.xy - half2(0.45, -0.5)) * half2(1.6, 1.0))) * 0.45;
+                    // S2 pass 9 p4 (crop 19 / f_03.00s upper-right bubble: SEVERAL soft studio-window highlights around the
+                    // ball - top, left, lower right - not one spot): a soft left window
+                    win += smoothstep(0.14, 0.05, length((nv.xy - half2(-0.64, -0.12)) * half2(1.7, 1.0))) * 0.5;
                     win *= step(0.0, nv.z);
+                    // warm pink-gold glow low in the film + a faint cyan sheen in the middle (crop 19)
+                    half warmSpot = smoothstep(0.26, 0.08, length((nv.xy - half2(0.08, -0.7)) * half2(0.8, 1.6))) * step(0.0, nv.z);
+                    half cyanSpot = smoothstep(0.3, 0.05, length(nv.xy - half2(0.12, 0.06))) * step(0.0, nv.z);
                     half haze = (1.0 - rim) * 0.1;                                        // faint milky body
                     // S2 pass 9 (owner 06:58 "transparent iridescent bubbles"; crop 19 + f_03.00s upper-right bubble: saturated
                     // pink / cyan / yellow / violet thin-film swirls, strongest in the outer ring, a clear violet-tinted centre and
@@ -109,10 +115,13 @@ Shader "BWK/Glass"
                     half filmR = 0.06 + 0.94 * edge * edge;
                     half patchy = 0.3 + 0.7 * smoothstep(0.25, 0.7, BWK_ValueNoise3(fp * 1.1 + 7.3));
                     half3 filmC = irid * filmR * patchy * 1.3 * _FilmStrength;
-                    half3 bc = lerp(half3(1, 1, 1), irid, 0.4) * rim * 0.6 + half3(0.85, 0.8, 1.0) * haze
+                    // p4 (p3: rim faint vs the reference's bright pink-white ring): a brighter PINK-WHITE rim band
+                    half3 bc = lerp(half3(1.0, 0.86, 0.97), irid, 0.35) * rim * 0.95 + half3(0.85, 0.8, 1.0) * haze
                              + refl * _Reflectivity * (0.05 + rim * 0.4) + _Tint.rgb * _Glow * rim + filmC;
                     bc += half3(1, 1, 1) * (win * _WindowStrength + spec * 0.4);
-                    half ba = saturate(_Alpha + haze + rim * 0.6 + win * _WindowStrength * 0.8 + dot(filmC, half3(0.3, 0.4, 0.3)) * 0.7);
+                    bc += half3(1.0, 0.72, 0.62) * warmSpot * 0.32 * _FilmStrength + half3(0.35, 0.85, 1.0) * cyanSpot * 0.16 * _FilmStrength;
+                    half ba = saturate(_Alpha + haze + rim * 0.85 + win * _WindowStrength * 0.8 + dot(filmC, half3(0.3, 0.4, 0.3)) * 0.7
+                                       + (warmSpot * 0.2 + cyanSpot * 0.08) * _FilmStrength);
                     c = lerp(c, bc, _Bubble);
                     alpha = lerp(alpha, ba, _Bubble);
                 }

@@ -68,6 +68,9 @@ namespace BubbleWash.EditorTools
                 // streaks .62 -> .2 (and meandering / broken in BWK_Water), livelier ripple normals, stronger rail-pink pickup
                 F(m, "_StreakAmount", 0.2f); F(m, "_StreakDensity", 1.15f); F(m, "_RippleStrength", 1.3f); F(m, "_DetailStrength", 0.85f);
                 F(m, "_EdgeTintAmount", 0.42f); F(m, "_SparkleAmount", 0.7f); F(m, "_CausticAmount", 0.26f);   // p1: the caustic web read as a cell grid once the streaks were gone
+                // S2 pass 9 p4 (R2 lower water ref p10 #3189C8 / p90 #ACDEEF vs ours #3B8ABA / #7AE4E7: the reference's deep
+                // water is a richer saturated blue and carries bright glossy ripple glints): deeper saturated body, more glints
+                C(m, "_DeepColor", "#0A68C8"); F(m, "_SparkleAmount", 1.05f); F(m, "_RippleStrength", 1.45f);
                 // light halos around the decor chevrons: same period / geometry / runway offset as SceneBuilder.BuildDecorChevrons
                 F(m, "_ChevronStart", SceneBuilder.ChevronStart); F(m, "_ChevronSpacing", SceneBuilder.ChevronSpacing);
                 // (v2 notch measured #55B8E5 vs reference deep #3386CC: the arrows now bloom on their own -> fainter, tighter pool)
@@ -123,6 +126,9 @@ namespace BubbleWash.EditorTools
                 // S2 pass 7 (owner 06:58 s16 + 26480: "SOLID glowing cyan chevrons", not thin outlines; reference f_03.00s arm
                 // #A6FBF3 bright aqua fill, #7AE3E8 turquoise edges): bright opaque aqua fill, edge band DARKER turquoise
                 C(m, "_ColorA", "#52E4EC"); C(m, "_ColorC", "#1FC2DC"); F(m, "_ArrowEdge", 1.0f); F(m, "_ArrowFillAlpha", 0.96f);
+                // S2 pass 9 p4 (crop 20 + f_03.00s arrow measured p50 #8BDEEA / p75 #B3F8F3 / p95 #C6FCF8 vs ours p50 #65D1DC /
+                // p75 #7BECEF = flat saturated aqua slab): a PALE MINT solid fill inside a saturated cyan edge that glows
+                C(m, "_ColorA", "#A4F2EA"); C(m, "_ColorB", "#1ED2EE"); C(m, "_ColorC", "#10C6F0"); F(m, "_ArrowEdge", 1.45f);
                 F(m, "_SrcBlend", (float)BlendMode.SrcAlpha); F(m, "_DstBlend", (float)BlendMode.OneMinusSrcAlpha); F(m, "_ZWrite", 1f);
             }, (int)RenderQueue.Transparent);
             Mat("M_Foam", "BWK/Soft", m =>
@@ -298,6 +304,9 @@ namespace BubbleWash.EditorTools
                 // S2 pass 9: BWK_Glass bubble branch now does real thin-film interference (Fresnel-weighted, 2-3 hue cycles);
                 // film 1.3 = saturated pink / cyan / yellow ring with a clear centre (crop 19), thinner white rim
                 F(m, "_FilmStrength", 1.3f); F(m, "_RimWidth", 3.0f);
+                // p4 (p3 rim faint / grey vs crop 19's bright pink-white ring + several soft windows): pale pink rim glow,
+                // a slightly wider rim band, stronger studio-window highlights
+                C(m, "_Tint", "#FFE2F4"); F(m, "_Glow", 0.32f); F(m, "_RimWidth", 2.6f); F(m, "_WindowStrength", 2.3f);
             }, (int)RenderQueue.Transparent);
         }
     }

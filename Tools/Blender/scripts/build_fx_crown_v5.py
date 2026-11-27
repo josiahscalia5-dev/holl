@@ -30,7 +30,7 @@ from mathutils import Vector  # noqa: E402
 GROUP = "FX"
 QUICK = os.environ.get("BWK_FX_QUICK", "") == "1"
 K_VIS = 0.575          # visible radius / metaball radius (isolated element, stiffness 2, threshold 0.6)
-RES = 0.0075           # polygonizer cell (m): finger tips ~2.4 cm across get 3+ cells, bulbs 5 cm get 6-7
+RES = 0.009            # polygonizer cell (m): v5b fingers 5-8 cm across get 6-9 cells, bulbs 8-9 cm get 9-10
 MAX_TRIS = 12500
 GRAV = 0.11            # downward bend per segment (x u)
 
@@ -82,41 +82,59 @@ class Elems:
         self.items.append(("CAPSULE", c, r, hl, norm(d)))
 
 
-def finger(E, rng, p, d, L, r, fork=0.0, drops=True, grav=GRAV, curl=0.0):
-    """One smooth milk finger from p along d: 7 tapering capsules on a gravity arc with a gentle sideways sweep, a round
-    bulb on the tip, an optional short Y fork near the end (probability fork), separate droplets flung on along the arc.
-    curl > 0 lifts the far end (low skimming arms that flick up at the tip)."""
+def finger(E, rng, p, d, L, r, fork=0.0, drops=True, grav=GRAV, curl=0.0, taper=0.3, path=None):
+    """One smooth milk finger from p along d: 7 gently tapering capsules (v5b: 1 -> .7, the reference's fat cartoon fingers)
+    on a gravity arc with a gentle sideways sweep, a round bulb on the tip, an optional short stubby side finger near the
+    end (probability fork), a few separate droplets flung on along the arc. curl > 0 lifts the far end. path (list) receives
+    (point, radius) per segment end so neighbouring fingers can be webbed together."""
     n = 7
     seg = L / n
     side_w = rng.uniform(-0.28, 0.28)
-    fork_at = rng.randint(4, 5) if rng.random() < fork else -1
+    fork_at = rng.randint(3, 5) if rng.random() < fork else -1
     a = p
     rr = r
     for k in range(n):
         u = (k + 1) / n
-        rr = r * (1.0 - 0.5 * u)
+        rr = r * (1.0 - taper * u)
         d = norm(add(add(add(d, (0.0, -1.0, 0.0), grav * u), (0.0, 1.0, 0.0), curl * u * u),
                      rot_y((d[0], 0.0, d[2]), 90.0), side_w * 0.2))
         b = add(a, d, seg)
         if b[1] < 0.006:
             b = (b[0], 0.006, b[2])
         E.capsule(a, b, rr)
+        if path is not None:
+            path.append((b, rr))
         if k == fork_at:
             sgn = rng.choice((-1.0, 1.0))
-            fd = norm(add(rot_y(d, sgn * rng.uniform(28.0, 48.0)), (0.0, 1.0, 0.0), rng.uniform(0.0, 0.3)))
-            finger(E, rng, b, fd, L * rng.uniform(0.28, 0.42), rr * 0.95, 0.0, drops and rng.random() < 0.4, grav)
+            fd = norm(add(rot_y(d, sgn * rng.uniform(30.0, 55.0)), (0.0, 1.0, 0.0), rng.uniform(0.05, 0.35)))
+            finger(E, rng, b, fd, L * rng.uniform(0.2, 0.32), rr * 0.9, 0.0, False, grav, 0.0, 0.15)
         a = b
-    bulb = rr * rng.uniform(1.8, 2.1)
-    E.ball(add(a, d, rr * 0.55), bulb)                      # round bulb tip (crop 18)
+    bulb = rr * rng.uniform(1.4, 1.65)
+    E.ball(add(a, d, rr * 0.5), bulb)                       # round bulb tip (crop 18)
     if drops:
-        q, dd = add(a, d, rr * 0.55), d
-        gap = bulb * rng.uniform(2.2, 3.2)
+        q, dd = add(a, d, rr * 0.5), d
+        gap = bulb * rng.uniform(2.4, 3.4)
         for j in range(rng.choice((0, 0, 1, 1, 2))):
             dd = norm(add(dd, (0.0, -1.0, 0.0), 0.2))
             q = add(q, dd, gap * (1.0 + 0.5 * j))
             if q[1] < 0.015:
                 break
-            E.ball(q, bulb * rng.uniform(0.45, 0.75) * (1.0 - 0.2 * j))
+            E.ball(q, bulb * rng.uniform(0.5, 0.8) * (1.0 - 0.2 * j))
+
+
+def web(E, pa, pb, upto=3):
+    """Milk webbing between two neighbouring fingers' first segments (crop 18: the fingers grow out of one connected sheet,
+    scalloped between them): rows of overlapping balls bridging the two paths, dipping between the fingers."""
+    for k in range(min(upto, len(pa), len(pb))):
+        (a, ra), (b, rb) = pa[k], pb[k]
+        gapl = math.sqrt(sum((a[i] - b[i]) ** 2 for i in range(3)))
+        rw = 0.85 * min(ra, rb) * (1.0 - 0.18 * k)
+        m = max(1, int(gapl / (rw * 1.1)))
+        for t in range(1, m):
+            f = t / m
+            sag = math.sin(math.pi * f) * 0.35 * rw * (k + 1)       # scalloped edge: the web dips between the fingers
+            c = (a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f - sag, a[2] + (b[2] - a[2]) * f)
+            E.ball(c, rw)
 
 
 def base_band(E, rng, s, cx, cz, rad, a0, a1, h0, h1, n, r):
@@ -140,54 +158,67 @@ def crown_side(s, seed, big):
     E = Elems()
     k = 1.0 if big else 0.82
     fx, fz = s * 0.22, 0.10                                  # foot centre (sole pads face the rear camera)
-    rim = base_band(E, rng, s, fx, fz, 0.17, 20.0, 175.0, 0.05, 0.16 * k, 13, 0.032)
+    # v5b (p3 12:15 + Blender v5 preview 12:26: thin coral / antler twigs vs crop 18's FAT webbed cartoon splat): a taller,
+    # thicker connected milk wall round the outer side of the foot, from which a few fat fingers fan out, webbed at the base
+    rim = base_band(E, rng, s, fx, fz, 0.17, 18.0, 172.0, 0.06, 0.2 * k, 16, 0.038)
 
     def rim_at(u):
         return rim[max(0, min(len(rim) - 1, int(round(u * (len(rim) - 1)))))]
 
-    # 1) outer fan: fingers from the band fanning sideways, rising 18-60 deg and arcing back down, Y forks near the ends
-    n_main = 8 if big else 6
+    # 1) outer fan: fat fingers from the band fanning sideways, rising 20-62 deg and arcing back down, webbed together
+    n_main = 7 if big else 5
+    paths = []
     for i in range(n_main):
-        top, o, ang = rim_at((i + rng.uniform(0.2, 0.8)) / n_main)
-        az = s * (ang + rng.uniform(-14.0, 14.0))
-        el = rng.uniform(18.0, 60.0)
-        L = rng.uniform(0.34, 0.6) * k * (1.12 if 55.0 < ang < 140.0 else 0.92)
-        finger(E, rng, top, dir_from(az, el), L, rng.uniform(0.024, 0.031), fork=0.5)
+        top, o, ang = rim_at((i + rng.uniform(0.3, 0.7)) / n_main)
+        az = s * (ang + rng.uniform(-10.0, 10.0))
+        el = rng.uniform(20.0, 62.0)
+        L = rng.uniform(0.3, 0.5) * k * (1.12 if 55.0 < ang < 140.0 else 0.92)
+        pth = [(top, 0.04)]
+        finger(E, rng, top, dir_from(az, el), L, rng.uniform(0.034, 0.042), fork=0.45, path=pth)
+        paths.append(pth)
+    for i in range(len(paths) - 1):
+        web(E, paths[i], paths[i + 1], 3)
     # 2) tall risers beside the body (rear camera: the reference spray rises beside him to arm height), roots joined to the
-    #    band by a low milk bridge so the splash stays one connected body
-    n_r = 4 if big else 3
-    prev = (fx + s * 0.16, 0.012, fz - 0.02)
+    #    band by a fat low milk bridge so the splash stays one connected body; webbed to each other
+    n_r = 3 if big else 2
+    prev = (fx + s * 0.16, 0.014, fz - 0.02)
+    rpaths = []
     for j in range(n_r):
         u = (j + 0.5) / n_r
         root = (s * (0.40 + 0.16 * u * k), 0.0, 0.03 - 0.22 * u)
-        E.capsule(prev, (root[0], 0.014, root[2]), 0.028 * (1.0 - 0.25 * u))
-        prev = (root[0], 0.014, root[2])
-        h = 0.07 + 0.04 * rng.random()
-        E.capsule((root[0], 0.008, root[2]), (root[0] + s * 0.02, h, root[2]), 0.03)
-        finger(E, rng, (root[0] + s * 0.02, h, root[2]), dir_from(s * rng.uniform(70.0, 125.0), rng.uniform(52.0, 74.0)),
-               rng.uniform(0.42, 0.62) * k, rng.uniform(0.024, 0.03), fork=0.55)
-    # 3) long low arms skimming the water outward + back toward the rear camera, flicking up at the tip (crop 18 lower arms)
-    n_w = 4 if big else 3
+        E.capsule(prev, (root[0], 0.016, root[2]), 0.034 * (1.0 - 0.2 * u))
+        prev = (root[0], 0.016, root[2])
+        h = 0.08 + 0.04 * rng.random()
+        E.capsule((root[0], 0.008, root[2]), (root[0] + s * 0.02, h, root[2]), 0.038)
+        pth = [((root[0] + s * 0.02, h, root[2]), 0.038)]
+        finger(E, rng, (root[0] + s * 0.02, h, root[2]), dir_from(s * rng.uniform(70.0, 120.0), rng.uniform(50.0, 72.0)),
+               rng.uniform(0.4, 0.58) * k, rng.uniform(0.034, 0.04), fork=0.5, path=pth)
+        rpaths.append(pth)
+    for i in range(len(rpaths) - 1):
+        web(E, rpaths[i], rpaths[i + 1], 2)
+    # 3) long low arms skimming the water outward + back toward the rear camera, flicking up at the tip (crop 18 lower arms;
+    #    the reference's right spray reaches the lower right of the frame)
+    n_w = 3 if big else 2
     for j in range(n_w):
         top, o, ang = rim_at(rng.uniform(0.62, 1.0))
-        az = s * rng.uniform(118.0, 158.0)
-        finger(E, rng, top, dir_from(az, rng.uniform(4.0, 14.0)), rng.uniform(0.55, 0.85) * k, rng.uniform(0.022, 0.027),
-               fork=0.45, grav=0.05, curl=0.22)
+        az = s * rng.uniform(120.0, 156.0)
+        finger(E, rng, top, dir_from(az, rng.uniform(5.0, 14.0)), rng.uniform(0.65, 0.95) * k, rng.uniform(0.03, 0.036),
+               fork=0.6, grav=0.05, curl=0.26, taper=0.25)
     # 4) small forward bow (front comparison cameras): fingers fanning forward-outward from the toes
-    n_b = 4 if big else 3
+    n_b = 3 if big else 2
     for j in range(n_b):
         top, o, ang = rim_at(rng.uniform(0.0, 0.25))
-        finger(E, rng, top, dir_from(s * rng.uniform(22.0, 62.0), rng.uniform(16.0, 42.0)), rng.uniform(0.26, 0.42) * k,
-               rng.uniform(0.021, 0.027), fork=0.35)
-    # 5) a few loose droplets of varied size around the spray (never over the lane centre)
-    for _ in range(10 if big else 7):
+        finger(E, rng, top, dir_from(s * rng.uniform(22.0, 62.0), rng.uniform(16.0, 42.0)), rng.uniform(0.24, 0.38) * k,
+               rng.uniform(0.028, 0.034), fork=0.3)
+    # 5) a few loose rounded droplets of varied size around the spray (never over the lane centre)
+    for _ in range(9 if big else 6):
         az = s * rng.uniform(30.0, 165.0)
-        dist = rng.uniform(0.35, 0.9) * k
+        dist = rng.uniform(0.4, 0.95) * k
         o = dir_from(az, 0.0)
-        c = (fx + o[0] * dist, rng.uniform(0.08, 0.55) * k, fz + o[2] * dist)
+        c = (fx + o[0] * dist, rng.uniform(0.1, 0.55) * k, fz + o[2] * dist)
         if abs(c[0]) < 0.3:
             continue
-        E.ball(c, rng.uniform(0.011, 0.03))
+        E.ball(c, rng.uniform(0.014, 0.034))
     return E
 
 

@@ -848,16 +848,15 @@ namespace BubbleWash.EditorTools
             Debug.Log("[BWK] Stills written to " + Path.GetFullPath(outDir) + " (+ bg/ with the mascot hidden)");
         }
 
-        /// <summary>Rear stills place the mascot without playing the level, so coins / gems it would already have collected in
-        /// its own lane (between the camera and the mascot) float in front of the lens - lead 2026-11-26 21:10: 07_chambers
-        /// showed one filling the portrait frame. Hides those for the still (re-enable the returned renderers afterwards);
-        /// items in the other lanes, which the player really sees passing by, stay visible.</summary>
         /// <summary>
-        /// Lead 84b218d4 2026-11-27 (owner 10:48: "show the scenery from additional angles to prove it is genuine 3D"): renders
-        /// the S2 door area of the SAVED scene (nothing is saved) with the mascot at HeroMouthDistance from extra camera angles,
-        /// plus CLAY copies (every renderer's materials swapped in memory for one neutral grey URP Lit material) that show the
-        /// bare 3D geometry without textures or glow. Run via:
-        ///   Tools/unity_run.sh BubbleWash.EditorTools.CaptureTools.S2ProofViewsBatch lead_s2proof -bwkOut Captures/proof_s2p9a
+        /// Lead 84b218d4 / ffbcca5a 2026-11-27 (owner 10:48 + 12:30: "prove it is real 3D"): renders the S2 door area of the SAVED
+        /// scene (nothing is saved) with the mascot at HeroMouthDistance from 5 camera angles (A matched gameplay-rear comparison
+        /// camera R2, B high rear, C side, D inside the door looking back, E wide hall view): colour with the mascot, colour with
+        /// the mascot hidden (_nomascot), and NEUTRAL CLAY (_clay: every material = one grey URP Lit, all scene lights / fog /
+        /// volumes off, one white key light + flat grey ambient, camera-facing particle sprites hidden). Plus the mascot ALONE
+        /// (everything else hidden) from 4 sides in colour and clay (M1..M4), and geometry_audit.txt / .csv: every renderer seen
+        /// by the 5 cameras within 90 m, its mesh / triangle count / size, and whether it is a flat card or a billboard sprite.
+        ///   Tools/unity_run.sh BubbleWash.EditorTools.CaptureTools.S2ProofViewsBatch lead_s2proof -bwkOut Captures/proof_s2p9
         /// </summary>
         public static void S2ProofViewsBatch()
         {
@@ -882,60 +881,212 @@ namespace BubbleWash.EditorTools
                 if (slide != null) slide.SampleAnimation(animator.gameObject, 0.25f);
                 SimulateSlideFX(runner);
                 HideCollectedItems(runner);   // as in play: coins just collected in his lane are gone
+                var mascot = MascotRenderers(runner);
+                var mset = new HashSet<Renderer>(mascot);
                 var fr = runner.Frame;
                 Vector3 fwd = Vector3.ProjectOnPlane(fr.forward, Vector3.up).normalized, right = Vector3.Cross(Vector3.up, fwd), up = Vector3.up;
                 Vector3 p = runner.transform.position;
                 Quaternion r2 = Quaternion.LookRotation(fwd, up) * Quaternion.Euler(R2Pitch, R2Yaw, 0f);
-                var views = new (string name, Vector3 pos, Vector3 look, float fov, bool clay)[]
+                var views = new (string name, Vector3 pos, Vector3 look, float fov)[]
                 {
-                    ("A_matched_R2", p - fwd * R2Back + up * R2Height + right * R2Lat, Vector3.zero, R2Fov, true),
+                    ("A_matched_R2", p - fwd * R2Back + up * R2Height + right * R2Lat, Vector3.zero, R2Fov),
                     // s2p9a: B at -6.5 / 4.2 / -3.2 m sat behind pale hall panels -> moved into the open hall (E's side)
-                    ("B_high_rear_right", p - fwd * 8f + up * 3.2f + right * 1.0f, p + fwd * 6f + up * 0.8f, 60f, true),
-                    ("C_side_right_low", p - fwd * 1.0f + up * 1.3f + right * 3.4f, p + fwd * 2.5f - right * 0.8f + up * 0.5f, 70f, true),
-                    ("D_ahead_looking_back", p + fwd * 7f + up * 1.6f + right * 0.4f, p - fwd * 3f + up * 0.6f, 62f, true),
-                    ("E_hall_wide_from_behind", p - fwd * 14f + up * 5.5f + right * 1.5f, p + fwd * 4f + up * 1.2f, 58f, false),
+                    ("B_high_rear_right", p - fwd * 8f + up * 3.2f + right * 1.0f, p + fwd * 6f + up * 0.8f, 60f),
+                    ("C_side_right_low", p - fwd * 1.0f + up * 1.3f + right * 3.4f, p + fwd * 2.5f - right * 0.8f + up * 0.5f, 70f),
+                    ("D_ahead_looking_back", p + fwd * 7f + up * 1.6f + right * 0.4f, p - fwd * 3f + up * 0.6f, 62f),
+                    ("E_hall_wide_from_behind", p - fwd * 14f + up * 5.5f + right * 1.5f, p + fwd * 4f + up * 1.2f, 58f),
                 };
-                foreach (var v in views)
+                // 1) colour, mascot visible + hidden
+                foreach (var v in views) { PlaceProofCam(cam, v, r2, up); Render(cam, 1280, 720, $"{outDir}/{v.name}.png"); }
+                foreach (var r in mascot) r.enabled = false;
+                try { foreach (var v in views) { PlaceProofCam(cam, v, r2, up); Render(cam, 1280, 720, $"{outDir}/{v.name}_nomascot.png"); } }
+                finally { foreach (var r in mascot) r.enabled = true; }
+                // 2) geometry audit of everything the 5 cameras see (before any material swap)
+                WriteGeometryAudit(cam, views, r2, up, p, mset, outDir);
+                // 3) the mascot alone (separate skinned asset): everything else hidden, neutral backdrop
+                var mviews = new List<(string name, Vector3 pos, Vector3 look)>();
+                if (mascot.Count > 0)
                 {
-                    cam.transform.SetPositionAndRotation(v.pos, v.name.StartsWith("A_") ? r2 : Quaternion.LookRotation(v.look - v.pos, up));
-                    cam.fieldOfView = v.fov;
-                    Render(cam, 1280, 720, $"{outDir}/{v.name}.png");
+                    var mb = mascot[0].bounds;
+                    foreach (var r in mascot) mb.Encapsulate(r.bounds);
+                    Vector3 mc = mb.center; float mh = Mathf.Max(mb.size.y, 0.4f), md = mh * 2.5f;
+                    mviews.Add(("M1_mascot_rear", mc - fwd * md + up * mh * 0.35f, mc));
+                    mviews.Add(("M2_mascot_side_right", mc + right * md + up * mh * 0.15f, mc));
+                    mviews.Add(("M3_mascot_front", mc + fwd * md + up * mh * 0.2f, mc));
+                    mviews.Add(("M4_mascot_three_quarter", mc + (fwd - right).normalized * md + up * mh * 0.3f, mc));
                 }
-                // clay pass: same cameras, all materials replaced in memory by one neutral grey lit material (geometry only)
+                RenderMascotAlone(cam, mset, mviews, up, outDir, "");
+                // 4) NEUTRAL CLAY (s2p9 clay was still tinted pink / lavender by the coloured scene lights + probes)
                 var clay = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-                clay.SetColor("_BaseColor", new Color(0.80f, 0.78f, 0.76f));
-                clay.SetFloat("_Smoothness", 0.35f);
-                clay.EnableKeyword("_EMISSION");
-                clay.SetColor("_EmissionColor", new Color(0.10f, 0.10f, 0.11f));
+                clay.SetColor("_BaseColor", new Color(0.72f, 0.72f, 0.72f));
+                clay.SetFloat("_Smoothness", 0.15f);
+                clay.SetFloat("_EnvironmentReflections", 0f); clay.EnableKeyword("_ENVIRONMENTREFLECTIONS_OFF");
+                clay.SetFloat("_SpecularHighlights", 0f); clay.EnableKeyword("_SPECULARHIGHLIGHTS_OFF");
                 var all = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);
                 var saved = all.Select(r => r.sharedMaterials).ToArray();
-                // neutral clay: no fog / colour grade / bloom (s2p9a clay renders were tinted pink by the fog + grade)
+                var sprites = all.Where(r => r.enabled && IsBillboard(r)).ToList();
                 var vols = Object.FindObjectsByType<UnityEngine.Rendering.Volume>(FindObjectsSortMode.None).Where(v => v.enabled).ToArray();
+                var lights = Object.FindObjectsByType<Light>(FindObjectsSortMode.None).Where(l => l.enabled).ToList();
                 bool fog = RenderSettings.fog;
+                var ambMode = RenderSettings.ambientMode; var ambCol = RenderSettings.ambientLight; var probe = RenderSettings.ambientProbe;
+                GameObject key = null;
                 try
                 {
                     RenderSettings.fog = false;
                     foreach (var v in vols) v.enabled = false;
+                    foreach (var l in lights) l.enabled = false;
+                    key = new GameObject("BWK_ClayKeyLight");
+                    var kl = key.AddComponent<Light>();
+                    kl.type = LightType.Directional; kl.color = Color.white; kl.intensity = 1.25f; kl.shadows = LightShadows.Soft;
+                    key.transform.rotation = Quaternion.LookRotation((fwd * 0.55f - up + right * 0.45f).normalized, up);
+                    RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+                    RenderSettings.ambientLight = new Color(0.46f, 0.46f, 0.48f);
+                    var sh = new UnityEngine.Rendering.SphericalHarmonicsL2();
+                    sh.AddAmbientLight(new Color(0.46f, 0.46f, 0.48f));
+                    RenderSettings.ambientProbe = sh;
+                    foreach (var r in sprites) r.enabled = false;
                     foreach (var r in all) r.sharedMaterials = Enumerable.Repeat(clay, Mathf.Max(1, r.sharedMaterials.Length)).ToArray();
-                    foreach (var v in views.Where(v => v.clay))
-                    {
-                        cam.transform.SetPositionAndRotation(v.pos, v.name.StartsWith("A_") ? r2 : Quaternion.LookRotation(v.look - v.pos, up));
-                        cam.fieldOfView = v.fov;
-                        Render(cam, 1280, 720, $"{outDir}/{v.name}_clay.png");
-                    }
+                    foreach (var v in views) { PlaceProofCam(cam, v, r2, up); Render(cam, 1280, 720, $"{outDir}/{v.name}_clay.png"); }
+                    RenderMascotAlone(cam, mset, mviews, up, outDir, "_clay");
                 }
                 finally
                 {
                     for (int i = 0; i < all.Length; i++) if (all[i] != null) all[i].sharedMaterials = saved[i];
+                    foreach (var r in sprites) if (r != null) r.enabled = true;
+                    if (key != null) Object.DestroyImmediate(key);
+                    foreach (var l in lights) if (l != null) l.enabled = true;
                     RenderSettings.fog = fog;
+                    RenderSettings.ambientMode = ambMode; RenderSettings.ambientLight = ambCol; RenderSettings.ambientProbe = probe;
                     foreach (var v in vols) v.enabled = true;
                 }
-                Debug.Log("[BWK] S2 proof views written to " + Path.GetFullPath(outDir));
+                Debug.Log("[BWK] S2 proof views + geometry audit written to " + Path.GetFullPath(outDir));
                 EditorApplication.Exit(0);
             }
             catch (System.Exception e) { Debug.LogError("[BWK] S2 proof views failed: " + e); EditorApplication.Exit(1); }
         }
 
+        static void PlaceProofCam(Camera cam, (string name, Vector3 pos, Vector3 look, float fov) v, Quaternion r2, Vector3 up)
+        {
+            cam.transform.SetPositionAndRotation(v.pos, v.name.StartsWith("A_") ? r2 : Quaternion.LookRotation(v.look - v.pos, up));
+            cam.fieldOfView = v.fov;
+        }
+
+        /// <summary>Camera-facing sprites (billboard / stretched particles, line / trail / sprite / billboard renderers).</summary>
+        static bool IsBillboard(Renderer r)
+        {
+            if (r is ParticleSystemRenderer psr) return psr.renderMode != ParticleSystemRenderMode.Mesh;
+            return r is LineRenderer || r is TrailRenderer || r is SpriteRenderer || r is BillboardRenderer;
+        }
+
+        /// <summary>Renders only the mascot's own renderers (everything else disabled) on a neutral backdrop.</summary>
+        static void RenderMascotAlone(Camera cam, HashSet<Renderer> mset, List<(string name, Vector3 pos, Vector3 look)> mviews,
+                                      Vector3 up, string outDir, string suffix)
+        {
+            if (mviews.Count == 0) return;
+            var off = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None).Where(r => r.enabled && !mset.Contains(r)).ToList();
+            var flags = cam.clearFlags; var bg = cam.backgroundColor; float fov = cam.fieldOfView;
+            foreach (var r in off) r.enabled = false;
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.16f, 0.16f, 0.19f);
+            try
+            {
+                foreach (var mv in mviews)
+                {
+                    cam.transform.SetPositionAndRotation(mv.pos, Quaternion.LookRotation(mv.look - mv.pos, up));
+                    cam.fieldOfView = 30f;
+                    Render(cam, 1280, 720, $"{outDir}/{mv.name}{suffix}.png");
+                }
+            }
+            finally
+            {
+                foreach (var r in off) if (r != null) r.enabled = true;
+                cam.clearFlags = flags; cam.backgroundColor = bg; cam.fieldOfView = fov;
+            }
+        }
+
+        static string ProofCategory(string k)
+        {
+            if (k.Contains("coin") || k.Contains("gem")) return "coins / gems";
+            if (k.Contains("bubble")) return "bubbles";
+            if (k.Contains("foam") || k.Contains("puff") || k.Contains("mound")) return "foam banks";
+            if (k.Contains("splash") || k.Contains("crown") || k.Contains("spray") || k.Contains("droplet") || k.Contains("sparkle") || k.Contains("trail")) return "splash / sparkle FX";
+            if (k.Contains("star")) return "neon stars";
+            if (k.Contains("chevron") || k.Contains("arrow") || k.Contains("boost")) return "boost arrows";
+            if (k.Contains("water") || k.Contains("flow")) return "water lane";
+            if (k.Contains("rail") || k.Contains("slide") || k.Contains("track")) return "slide + rails";
+            if (k.Contains("hatch") || k.Contains("door")) return "hatch";
+            if (k.Contains("marquee") || k.Contains("ring") || k.Contains("bulb") || k.Contains("led")) return "gold light rings";
+            if (k.Contains("roller") || k.Contains("bristle") || k.Contains("brush")) return "rollers";
+            if (k.Contains("machin") || k.Contains("pipe") || k.Contains("gear") || k.Contains("valve") || k.Contains("console") || k.Contains("panel")) return "side machinery";
+            if (k.Contains("drum") || k.Contains("tunnel") || k.Contains("wall") || k.Contains("mouth")) return "tunnel";
+            return "other";
+        }
+
+        static string ProofPath(Transform t)
+        {
+            var parts = new List<string>();
+            for (int i = 0; t != null && i < 4; i++, t = t.parent) parts.Insert(0, t.name);
+            return string.Join("/", parts).Replace(",", " ");
+        }
+
+        /// <summary>geometry_audit.csv / .txt: every enabled renderer inside any of the 5 proof frustums (within 90 m), with its
+        /// mesh, triangle count, local size and a FLAT flag (camera-facing sprite, a mesh of <= 4 triangles, or thinner than 2 %
+        /// of its largest side) - so the owner sees honestly what is modelled geometry and what is a card / sprite.</summary>
+        static void WriteGeometryAudit(Camera cam, (string name, Vector3 pos, Vector3 look, float fov)[] views, Quaternion r2, Vector3 up,
+                                       Vector3 center, HashSet<Renderer> mset, string outDir)
+        {
+            var planes = new List<Plane[]>();
+            foreach (var v in views) { PlaceProofCam(cam, v, r2, up); cam.aspect = 1280f / 720f; planes.Add(GeometryUtility.CalculateFrustumPlanes(cam)); }
+            cam.ResetAspect();
+            var csv = new List<string> { "category,flat,component,mode,mesh,triangles,size_x,size_y,size_z,material,shader,path" };
+            var stats = new SortedDictionary<string, (int n, long tris, int flat, List<string> flatNames)>();
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            foreach (var r in Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+            {
+                if (!r.enabled || !r.gameObject.activeInHierarchy) continue;
+                var b = r.bounds;
+                if ((b.center - center).magnitude > 90f) continue;
+                if (!planes.Any(pl => GeometryUtility.TestPlanesAABB(pl, b))) continue;
+                Mesh mesh = null; string mode = "mesh";
+                if (r is SkinnedMeshRenderer smr) { mesh = smr.sharedMesh; mode = "skinned mesh"; }
+                else if (r is ParticleSystemRenderer psr) { mode = "particles " + psr.renderMode; if (psr.renderMode == ParticleSystemRenderMode.Mesh) mesh = psr.mesh; }
+                else if (r is MeshRenderer) { var mf = r.GetComponent<MeshFilter>(); mesh = mf ? mf.sharedMesh : null; }
+                else mode = r.GetType().Name;
+                long tris = 0;
+                if (mesh != null) for (int s = 0; s < mesh.subMeshCount; s++) tris += mesh.GetIndexCount(s) / 3;
+                Vector3 sz = mesh != null && !(r is ParticleSystemRenderer) ? Vector3.Scale(mesh.bounds.size, r.transform.lossyScale) : b.size;
+                sz = new Vector3(Mathf.Abs(sz.x), Mathf.Abs(sz.y), Mathf.Abs(sz.z));
+                float mx = Mathf.Max(sz.x, Mathf.Max(sz.y, sz.z)), mn = Mathf.Min(sz.x, Mathf.Min(sz.y, sz.z));
+                bool sprite = IsBillboard(r);
+                bool flat = sprite || (mesh != null && !(r is ParticleSystemRenderer) && (tris <= 4 || (mx > 0.05f && mn / mx < 0.02f)));
+                var m0 = r.sharedMaterial;
+                string mat = m0 ? m0.name : "-", shader = m0 && m0.shader ? m0.shader.name : "-";
+                string path = ProofPath(r.transform);
+                string cat = mset.Contains(r) ? "mascot" : ProofCategory((path + " " + (mesh ? mesh.name : "") + " " + mat).ToLowerInvariant());
+                csv.Add(string.Join(",", cat, flat ? (sprite ? "SPRITE" : "FLAT") : "3D", r.GetType().Name, mode, mesh ? mesh.name.Replace(",", " ") : "-",
+                    tris.ToString(inv), sz.x.ToString("F2", inv), sz.y.ToString("F2", inv), sz.z.ToString("F2", inv), mat.Replace(",", " "), shader.Replace(",", " "), path));
+                stats.TryGetValue(cat, out var st);
+                if (st.flatNames == null) st.flatNames = new List<string>();
+                st.n++; st.tris += tris;
+                if (flat) { st.flat++; if (st.flatNames.Count < 10) st.flatNames.Add($"{path} [{mode}, {(mesh ? mesh.name : "-")}, {sz.x:F2} x {sz.y:F2} x {sz.z:F2} m, {mat}]"); }
+                stats[cat] = st;
+            }
+            File.WriteAllLines($"{outDir}/geometry_audit.csv", csv);
+            var txt = new List<string> { "S2 GEOMETRY AUDIT - every renderer the 5 proof cameras see (within 90 m of the mascot). 3D = modelled mesh;",
+                "FLAT = a mesh of <= 4 triangles or thinner than 2 % of its largest side (card / plane); SPRITE = camera-facing particles / lines.", "" };
+            foreach (var kv in stats)
+            {
+                txt.Add($"{kv.Key}: {kv.Value.n} renderers, {kv.Value.tris:N0} triangles, flat / sprite: {kv.Value.flat}");
+                foreach (var f in kv.Value.flatNames) txt.Add("    flat: " + f);
+            }
+            File.WriteAllLines($"{outDir}/geometry_audit.txt", txt);
+            Debug.Log("[BWK] geometry audit: " + string.Join(" | ", stats.Select(kv => $"{kv.Key} {kv.Value.n} ({kv.Value.flat} flat)")));
+        }
+
+        /// <summary>Rear stills place the mascot without playing the level, so coins / gems it would already have collected in
+        /// its own lane (between the camera and the mascot) float in front of the lens - lead 2026-11-26 21:10: 07_chambers
+        /// showed one filling the portrait frame. Hides those for the still (re-enable the returned renderers afterwards);
+        /// items in the other lanes, which the player really sees passing by, stay visible.</summary>
         static List<Renderer> HideCollectedItems(RunnerController runner)
         {
             var hidden = new List<Renderer>();

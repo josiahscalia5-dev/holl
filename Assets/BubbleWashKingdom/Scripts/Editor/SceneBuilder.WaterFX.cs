@@ -424,7 +424,9 @@ namespace BubbleWash.EditorTools
                         {
                             if (rm.NextDouble() < 0.25) continue;                                 // natural gaps
                             float near = Mathf.InverseLerp(d0 + 8.4f, d0 - 2.6f, dm);              // 1 = nearest the camera
-                            MouthBank(dm + RM(-0.2f, 0.2f), -(FLB + RM(0.48f, 0.68f)), FHL + RM(0.64f, 0.72f), Mathf.Lerp(1.35f, 1.75f, near) * RM(0.92f, 1.08f), 1);   // p1: top y 293 vs ref ~278 -> +0.08 m
+                            // p4 (p3 left box white 38.7 % vs ref 50.9 %, top y ~290 vs ~278, puffs smaller / flatter than the
+                            // reference's big round domes): front row +0.05 m and ~12 % bigger
+                            MouthBank(dm + RM(-0.2f, 0.2f), -(FLB + RM(0.48f, 0.68f)), FHL + RM(0.69f, 0.77f), Mathf.Lerp(1.5f, 1.95f, near) * RM(0.92f, 1.08f), 1);   // p1: top y 293 vs ref ~278 -> +0.08 m
                         }
                         for (float dm = d0 - 2.0f; dm < d0 + 7.0f; dm += 1.6f)
                         {
@@ -432,23 +434,28 @@ namespace BubbleWash.EditorTools
                             MouthBank(dm + RM(-0.3f, 0.3f), -(FLB + RM(1.03f, 1.43f)), FHL + RM(0.48f, 0.56f), RM(1.2f, 1.45f), 0);
                         }
                         // left rail top: small round puffs sitting on the tube (crop 17), not flat pillows
-                        for (float dm = d0 - 1.5f; dm < d0 + 6.0f; dm += 1.9f)
+                        // p4: denser + rounder on the tube top (reference: the left foam spills over the rail top down to y ~440)
+                        for (float dm = d0 - 1.5f; dm < d0 + 6.0f; dm += 1.3f)
                         {
-                            if (rm.NextDouble() < 0.4) continue;
-                            MouthBank(dm + RM(-0.3f, 0.3f), -(SlideProfile.RailX + RM(0.0f, 0.12f)), railTopHi + RM(-0.02f, 0.02f), RM(0.75f, 0.95f), 1);
+                            if (rm.NextDouble() < 0.25) continue;
+                            MouthBank(dm + RM(-0.3f, 0.3f), -(SlideProfile.RailX + RM(0.02f, 0.12f)), railTopHi + RM(-0.02f, 0.03f), RM(0.85f, 1.05f), 1);
                         }
                         // right (reference x 900-1150, y 330-440): a low row of rounded puffs right behind the rail tube
                         // p1: right puffs 63 % milky vs ref 20 %, bright #F9E3EB vs the reference's shaded lilac #ADA1CF (that bank sits in
                         // the hatch's shadow) -> smaller, lower, on the shaded foam variant
+                        // p4 (p3 right box white 16.8 % vs ref 7.3 %: a tall blocky white puff far up at y ~305-350 vs the
+                        // reference's ROUND lilac cluster on the rail at y 340-450 = nearer the camera): the shaded cluster
+                        // ~0.8 m nearer, hugging the tube's outer edge, a little lower; the rail-top puffs on that side shaded
+                        // + smaller (no bright white block)
                         shadeSide = true;
-                        foreach (float dm in new[] { d0 + 1.0f, d0 + 1.9f, d0 + 2.9f, d0 + 4.2f })
-                            MouthBank(dm + RM(-0.15f, 0.15f), FLB + RM(0.23f, 0.35f), FHL + RM(0.62f, 0.68f), RM(0.62f, 0.8f), 1);
-                        MouthBank(d0 + 1.4f, FLB + RM(0.48f, 0.58f), FHL + RM(0.66f, 0.70f), RM(0.6f, 0.72f), 1);
-                        MouthBank(d0 + 3.4f, FLB + RM(0.48f, 0.58f), FHL + RM(0.66f, 0.70f), RM(0.6f, 0.72f), 1);
-                        shadeSide = false;
+                        foreach (float dm in new[] { d0 + 0.2f, d0 + 1.0f, d0 + 1.8f, d0 + 2.7f })
+                            MouthBank(dm + RM(-0.15f, 0.15f), FLB + RM(0.18f, 0.3f), FHL + RM(0.64f, 0.7f), RM(0.68f, 0.84f), 1);
+                        MouthBank(d0 + 0.6f, FLB + RM(0.42f, 0.52f), FHL + RM(0.66f, 0.70f), RM(0.62f, 0.74f), 1);
+                        MouthBank(d0 + 2.2f, FLB + RM(0.42f, 0.52f), FHL + RM(0.66f, 0.70f), RM(0.6f, 0.7f), 1);
                         // small puffs spilling onto both rail tops (the old water-edge mounds at |lat| 2.0 sit inside the new tube)
                         foreach (float dm in new[] { d0 + 1.2f, d0 + 2.2f, d0 + 3.3f })
-                            MouthBank(dm + RM(-0.15f, 0.15f), SlideProfile.RailX + RM(0.0f, 0.1f), railTop + RM(-0.01f, 0.03f), RM(0.5f, 0.7f), 1);
+                            MouthBank(dm + RM(-0.15f, 0.15f), SlideProfile.RailX + RM(0.02f, 0.1f), railTop + RM(-0.02f, 0.01f), RM(0.42f, 0.56f), 1);
+                        shadeSide = false;
                         foreach (float dm in new[] { d0 + 0.3f, d0 + 1.3f, d0 + 2.6f })
                             MouthBank(dm + RM(-0.15f, 0.15f), -(SlideProfile.RailX + RM(0.03f, 0.13f)), railTop + RM(-0.01f, 0.03f), RM(0.6f, 0.8f), 1);
                     }
