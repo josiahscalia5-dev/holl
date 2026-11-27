@@ -146,3 +146,99 @@ _Text-only export: the lead's brief, the agent's statements and one line per too
 **Agent (2026-11-27 02:43 UTC):**
 
 > _tool: Bash - Read metaball meshing and export code_
+
+**Agent (2026-11-27 02:45 UTC):**
+
+> _tool: Bash - Read BWK_Soft mode 6 milk shading code_
+
+**Agent (2026-11-27 02:45 UTC):**
+
+> _tool: Bash - Read preview render helpers and blender_run_
+
+**Agent (2026-11-27 02:46 UTC):**
+
+> _tool: Write - C:/Users/josia/thanksgiving/Tools/Blender/scripts/build_fx_crown_v3.py_
+
+**Agent (2026-11-27 02:46 UTC):**
+
+> _tool: Bash - Check preview_path and locate junk line_
+
+**Agent (2026-11-27 02:46 UTC):**
+
+> _tool: Bash - Fix script lines and run Blender crown build_
+
+**Agent (2026-11-27 02:47 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Docs/AssetPreviews/FX_CrownV3_front.png_
+
+**Agent (2026-11-27 02:47 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Docs/AssetPreviews/FX_CrownV3_rear.png_
+
+**Agent (2026-11-27 02:47 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Tools/Blender/scripts/build_fx_crown_v3.py_
+
+**Agent (2026-11-27 02:47 UTC):**
+
+Now make everything chunkier to match the reference proportions (thick band, short fat fingers, big bulbs) and turn the riser into a connected sheet.
+
+**Agent (2026-11-27 02:47 UTC):**
+
+> _tool: Bash - Thicken crown band, fingers and bulbs in Blender script_
+
+**Agent (2026-11-27 02:48 UTC):**
+
+> _tool: Bash - Rewrite riser as sheet and rebuild crowns in Blender_
+
+**Agent (2026-11-27 02:48 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Docs/AssetPreviews/FX_CrownV3_front.png_
+
+**Agent (2026-11-27 02:48 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Docs/AssetPreviews/FX_CrownV3_rear.png_
+
+**Agent (2026-11-27 02:48 UTC):**
+
+> _tool: Bash - Check FBX importer settings and ModelParts helper_
+
+**Agent (2026-11-27 02:48 UTC):**
+
+> _tool: Bash - Read foam v2 element generators_
+
+**Agent (2026-11-27 02:49 UTC):**
+
+> _tool: Bash - Check build_fx_v2 env switches and preview tail_
+
+**Agent (2026-11-27 02:49 UTC):**
+
+Now the foam master: switch the bank / mound from many small bubbles to a few big cumulus lobes (same footprints, so every placed bank in all sections picks it up).
+
+**Agent (2026-11-27 02:49 UTC):**
+
+> _tool: Bash - Switch foam masters to big cumulus lobes and rebuild_
+
+**Agent (2026-11-27 02:49 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Docs/AssetPreviews/FX_Foam_v2.png_
+
+**Agent (2026-11-27 02:49 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Reference/asset_library/Individual_References/17_Soft_soap_foam_banks.png_
+
+**Agent (2026-11-27 02:49 UTC):**
+
+> _tool: Bash - Make foam lobes distinct spheres and rebuild_
+
+**Agent (2026-11-27 02:50 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Docs/AssetPreviews/FX_Foam_v2.png_
+
+**Agent (2026-11-27 02:50 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.WaterFX.cs_
+
+**Agent (2026-11-27 02:50 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/MaterialLibrary.WaterFX.cs_

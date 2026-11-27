@@ -76,7 +76,11 @@ namespace BubbleWash.EditorTools
                         if (o != null) Object.DestroyImmediate(o.gameObject);
                     }
                     Rebuild("SideChambers", () => BuildPortholes(env));
-                    Debug.Log("[BWK] preview: side chambers rebuilt in memory (-bwkEnvChambers)");
+                    // pass 4 (asset artist): the pink risers follow the door-pair layout -> rebuild them too (deterministic,
+                    // no shared rng; the cyan wall pipe comes back unchanged)
+                    Rebuild("ChamberPipes", () => BuildPipes(env, L));
+                    PlacePortalChamber(env);   // S7 chamber (SceneBuilder.Hall.cs), moved into the finale camera's view
+                    Debug.Log("[BWK] preview: side chambers + chamber pipes + S7 chamber rebuilt in memory (-bwkEnvChambers)");
                     return;
                 }
                 Rebuild("Rings", () => BuildRings(env, L));
@@ -324,22 +328,40 @@ namespace BubbleWash.EditorTools
         const float CyanPipeEnd = 312f;          // the hall agent's portal set (318-351 m) has its own curved cyan pipe (travel-left)
         static readonly bool PreviewRebuildsEnvironment = false;   // r7: agent previews keep the saved scene's environment
 
-        /// <summary>Chamber windows (track distance, side +1 = travel-right). In-gap offsets put the near window of the front
-        /// comparison stills C4 / C2 / C5 6-9 m from their camera (reference 6.75 / 8.25 / 11.0 s: big window at the left).</summary>
-        static List<(float d, int side)> ChamberWindows()
+        // Screen ALL pass 4 (asset artist, owner 21:33 sheets 11 + 12, judge gap #2): ONE door per spot could only face one
+        // camera - the -26 deg door showed the front comparison cameras R4-R6 (video 6.75 / 8.25 / 11.25 s) its lilac back.
+        // Every chamber spot is now a PAIR of master doors meeting in a shallow wedge: door A turned -26 deg toward the
+        // oncoming REAR gameplay camera (as before), door B turned +26 deg toward the FRONT cameras, both with their latch edge
+        // at the same 2.32 m clearance from the axis. CONVEX pair (A upstream of B): each camera sees the door facing it
+        // first and the other door's back is hidden behind that face. Centre distance = 2 x 2.36 cos 26 + latch room.
+        const float DoorWedgeSpacing = 4.6f;
+        // pink glass riser just DOWNSTREAM of the front-facing door (ref 8.25 s: the pink column stands between the porthole
+        // and the front camera, at the frame's far left); was 3 m upstream, where door A now stands
+        const float PinkRiserAfterDoor = 3.1f;
+
+        /// <summary>Chamber door pairs (track distance of the FRONT-facing door B, of the REAR-facing door A, side +1 =
+        /// travel-right). B is placed on the reference front frames: R4 / R5 / R6 see their near B 8.8-10.6 m away at the
+        /// screen-left (ref porthole centres x 165 / 235 / 260, 370-390 px tall, ellipse 0.6-0.75); default pairs sit centred
+        /// in their ring gap (A g + 4.07, B g + 8.67). The R5 pair (gap 211.75) is CONCAVE (A downstream of B) so it stays
+        /// inside its gap. S6 travel-left pairs only where the R6 frame (ref 11.25 s: stars, no window) does not see them.</summary>
+        static List<(float dB, float dA, int side)> ChamberDoors()
         {
-            var list = new List<(float d, int side)>();
+            var list = new List<(float dB, float dA, int side)>();
             foreach (float g in ChamberGaps())
             {
-                float off = 6.4f;
-                if (Mathf.Abs(g - 173.5f) < 0.2f) off = 10.1f;        // C4 (190 m)
-                else if (Mathf.Abs(g - 211.75f) < 0.2f) off = 4.3f;   // C2 (220 m)
-                else if (Mathf.Abs(g - 275.5f) < 0.2f) off = 2.7f;    // C5 (280 m)
-                list.Add((g + off, 1));
-                if (g >= 236f && g < 300f) list.Add((g + 9.5f, -1)); // S6: windows on both walls
+                float offB = 8.67f, offA = 8.67f - DoorWedgeSpacing;
+                if (Mathf.Abs(g - 173.5f) < 0.2f) { offB = 9.23f; offA = offB - DoorWedgeSpacing; }        // R4 (192.6 m cam)
+                else if (Mathf.Abs(g - 211.75f) < 0.2f) { offB = 2.05f; offA = offB + 6.2f; }             // R5 (222.6 m cam), concave
+                else if (Mathf.Abs(g - 262.75f) < 0.2f) { offB = 9.23f; offA = offB - DoorWedgeSpacing; }  // R6 (282.6 m cam)
+                list.Add((g + offB, g + offA, 1));
+                bool leftWall = g >= 236f && g < 300f && !(g > 260f && g < 280f);   // S6 both walls, not in the R6 frame
+                if (leftWall) list.Add((g + 8.67f, g + 8.67f - DoorWedgeSpacing, -1));
             }
             return list;
         }
+
+        /// <summary>Front-facing chamber doors (track distance, side): anchors for the pink risers.</summary>
+        static List<(float d, int side)> ChamberWindows() => ChamberDoors().Select(c => (c.dB, c.side)).ToList();
 
         /// <summary>True when p lies inside the fixed hero camera's (16:9-wide) frustum closer than maxDepth: the hero frame
         /// (S2) keeps its designed layout, so round-7 dressing skips those spots.</summary>
@@ -370,23 +392,31 @@ namespace BubbleWash.EditorTools
             if (door != null)
             {
                 int nd = 0;
-                foreach (var (d, side) in ChamberWindows())
+                // facing = -1: door A toward the oncoming rear gameplay camera (yaw side * WindowYaw, as r8); +1: door B toward
+                // the front comparison cameras (mirror yaw + mirrored hinge, so both hinges sit on their own camera's side)
+                void PlaceDoor(float d, int side, int facing)
                 {
                     var f = track.Evaluate(d);
                     float ang = side * WindowAngle * Mathf.Deg2Rad;
                     var radial = f.flatRight * Mathf.Sin(ang) + f.flatUp * Mathf.Cos(ang);
                     var pos = f.FlatPoint(0, TunnelCenter) + radial * ChamberWindowPlaneRadius - Vector3.up * WindowDrop;
                     var inward = Vector3.ProjectOnPlane(-radial, Vector3.up).normalized;
-                    var rot = Quaternion.AngleAxis(side * WindowYaw, Vector3.up) * Quaternion.LookRotation(inward, Vector3.up);
+                    var rot = Quaternion.AngleAxis(-facing * side * WindowYaw, Vector3.up) * Quaternion.LookRotation(inward, Vector3.up);
                     var go = (GameObject)PrefabUtility.InstantiatePrefab(door);
-                    go.name = $"WashDoor_{d:000}_{(side > 0 ? "R" : "L")}";
+                    go.name = $"WashDoor_{d:000}_{(side > 0 ? "R" : "L")}{(facing < 0 ? "_rear" : "_front")}";
                     go.transform.SetParent(holder.transform, false);
                     go.transform.SetPositionAndRotation(pos, rot);
-                    // the travel-right door is mirrored (hinge on the camera side, as v2)
-                    go.transform.localScale = new Vector3(side > 0 ? -WindowScale : WindowScale, WindowScale, WindowScale);
+                    // the travel-right rear-facing door is mirrored (hinge on the camera side, as v2); front-facing = opposite
+                    bool mirror = (side > 0) == (facing < 0);
+                    go.transform.localScale = new Vector3(mirror ? -WindowScale : WindowScale, WindowScale, WindowScale);
                     nd++;
                 }
-                Debug.Log($"[BWK] r8 master doors: {nd} PF_WashDoor_Master between {ChamberStart} and {ChamberEnd} m");
+                foreach (var (dB, dA, side) in ChamberDoors())
+                {
+                    PlaceDoor(dA, side, -1);
+                    PlaceDoor(dB, side, 1);
+                }
+                Debug.Log($"[BWK] pass-4 master door pairs: {nd} PF_WashDoor_Master (rear + front facing) between {ChamberStart} and {ChamberEnd} m");
                 BuildTunnelStarsV2(env);
                 BuildWallCoins(env);
                 return;
@@ -566,7 +596,9 @@ namespace BubbleWash.EditorTools
             var quad = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
             var tinted = mats.Select(m => star.Select(p => new Part(p.mesh, Enumerable.Repeat(m, Mathf.Max(1, p.mesh.subMeshCount)).ToArray(), p.local)).ToList()).ToArray();
             var legacy = LegacyTunnelStarPositions();
-            var windows = ChamberWindows();
+            // pass 4: both doors of every chamber pair block stars (front-facing B and rear-facing A)
+            var windows = ChamberDoors().SelectMany(c => new[] { (d: c.dB, side: c.side), (d: c.dA, side: c.side) }).ToList();
+            var risers = ChamberWindows();
             var inHero = HeroViewTest(30f);   // far stars (>30 m) may show small deep in the hero tunnel
             var holder = Child(env, "TunnelStarsV2");
             var comb = new EnvCombiner();
@@ -593,9 +625,9 @@ namespace BubbleWash.EditorTools
                 bool blocked = false;
                 foreach (var w in windows)
                     if (Mathf.Abs(d - w.d) < 2.7f && Mathf.Abs(angDeg - w.side * WindowAngle) < 42f) { blocked = true; break; }
-                if (d > 184f && d < 240f && angDeg > 40f)   // pink risers 3 m before the S4-S5 windows
-                    foreach (var w in windows)
-                        if (w.side > 0 && Mathf.Abs(d - (w.d - 3f)) < 1.0f) { blocked = true; break; }
+                if (d > 184f && d < 240f && angDeg > 40f)   // pink risers beside the S4-S5 front-facing doors
+                    foreach (var w in risers)
+                        if (w.side > 0 && Mathf.Abs(d - (w.d + PinkRiserAfterDoor)) < 1.0f) { blocked = true; break; }
                 if (d > CyanPipeStart - 1f && d < CyanPipeEnd + 1f && Mathf.Abs(angDeg - CyanPipeAngle) < 22f) blocked = true;
                 if (d > portalD - 10f && angDeg < -35f) blocked = true;   // hall agent: portal chamber window + cyan pipe curve (travel-left)
                 if (d > 173f && d < 237f && ph > 1.3f && ph < 9.6f && angDeg < -72f) blocked = true;   // wall coin rows
@@ -674,7 +706,7 @@ namespace BubbleWash.EditorTools
                 foreach (var (d, side) in ChamberWindows())
                 {
                     if (side < 0 || d < 185f || d > 240f) continue;
-                    float dp = d - 3f;
+                    float dp = d + PinkRiserAfterDoor;
                     var f = track.Evaluate(dp);
                     var inward = Vector3.ProjectOnPlane(-f.flatRight * side, Vector3.up).normalized;
                     var go = Spawn(pink);

@@ -261,7 +261,7 @@ def foam_bank_elems(rng, length, depth, height, n_bub, rmin, rmax):
         dirv = Vector((math.sin(ph) * math.cos(th), math.sin(ph) * math.sin(th) * (depth / length + 0.55), math.cos(ph)))
         dirv.normalize()
         up = max(0.0, dirv.z)
-        r = rng.uniform(rmin, rmax) * (1.0 - 0.45 * up)    # smaller bubbles on the crest
+        r = rng.uniform(rmin, rmax) * (1.0 - (0.15 if rmax >= 0.17 else 0.45) * up)    # smaller bubbles on the crest (cumulus: big lobes on top too)
         pos = c + dirv * (R - 0.15 * r)
         if pos.z < r * 0.25:
             pos.z = r * 0.25
@@ -375,8 +375,13 @@ def build_foam_v2(mat):
     objs = []
     # round 8 masters (library 17 + owner sheet 01 item 4 'small soft ROUNDED foam bubbles'; lead: fewer, bigger, softer
     # lumps and far fewer level triangles): ~1/3 of the bubbles at ~1.8x the radius, ~40 % of the triangles
-    specs = (("SM_Foam_v2_Bank", lambda: foam_bank_elems(rng, 1.6, 0.55, 0.32, 64, 0.065, 0.13), 3600, {}),
-             ("SM_Foam_v2_Mound", lambda: foam_bank_elems(rng, 0.8, 0.45, 0.26, 30, 0.055, 0.11), 2000, {}),
+    # Screen ALL pass 4 (owner 21:33 sheet 17 "big puffy cumulus mounds of LARGE ROUND LOBES", judge #3: ours = a flat wall
+    # of small bumps): a few big lobes (r .13-.24 m, 2x) piled on a taller core instead of 64 / 30 small bubbles; same
+    # footprints + pivots, so every placed bank / mound in all sections picks it up without new placement
+    # (p4 v1 preview: lobes melted into one smooth cloud blob = sheet 17 "never huge opaque cloud blobs" -> stiffness 5 keeps
+    # every lobe a distinct sphere with a crease (visible radius .71 x field radius, k .8 keeps the visible size), more lobes)
+    specs = (("SM_Foam_v2_Bank", lambda: foam_bank_elems(rng, 1.6, 0.6, 0.40, 24, 0.09, 0.22), 3200, {"stiff": 5.0, "k": 0.8}),
+             ("SM_Foam_v2_Mound", lambda: foam_bank_elems(rng, 0.8, 0.5, 0.33, 13, 0.08, 0.18), 1900, {"stiff": 5.0, "k": 0.8}),
              ("SM_Foam_v2_Puffs", lambda: foam_pillows_elems(rng, 4), 1600, {"zscale": 0.62, "k": 0.95}))
     for i, (name, make, tris, kw) in enumerate(specs):
         elems = make()

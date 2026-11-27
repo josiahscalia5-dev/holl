@@ -386,8 +386,27 @@ namespace BubbleWash.EditorTools
                 ring.transform.localRotation = Quaternion.identity;
             }
 
-            // rainbow sock chamber on the left wall before the portal + the transparent cyan pipe curving down from it
-            var fwin = track.Evaluate(portalD - 11f);
+            PlacePortalChamber(env);
+            Debug.Log("[BWK] portal r7: starburst, bulb ring, chamber window and cyan pipe placed");
+        }
+
+        // Screen ALL pass 4 (asset artist, judge gap #2 S7): the chamber stood at portalD - 11 m, 1.3 m BEHIND the finale
+        // camera (rest portalD - 5.5, camera back 2.75 + 1.4 => ~portalD - 9.7), so 10_finale showed none of it (crop
+        // (0,0,360,510): gold 0.6 % / rainbow 0.3 % vs ref f_14.25s 8.7 / 30.9). Reference: the big porthole fills the
+        // screen-left (centre ~x 150, 510 px tall, vfov 57) => centre ~4.7 m ahead of the camera at 3.45 m lateral =
+        // portalD - 5.0, still turned 37 deg toward the oncoming camera; the cyan pipe leaves its downstream (portal) side.
+        const float PortalChamberBefore = 5.0f;
+
+        /// <summary>S7 rainbow sock chamber on the travel-left wall beside the resting mascot + the cyan pipe curving down
+        /// from it (replaces earlier copies; also called by the -bwkEnvChambers preview).</summary>
+        static void PlacePortalChamber(GameObject env)
+        {
+            foreach (var n in new[] { "PortalChamber_r8", "PortalChamber_r7", "PortalCyanPipe_r8", "SM_CyanPipeCurve_r7" })
+            {
+                var old = env.transform.Find(n);
+                if (old != null) Object.DestroyImmediate(old.gameObject);
+            }
+            var fwin = track.Evaluate(portalD - PortalChamberBefore);
             // r8 masters (asset artist): the master door prefab replaces the v2 window here too (v2 = fallback)
             var door = WashDoorMasterPrefab();
             var win = door != null ? null : ModelPrefab("Machinery", "SM_ChamberWindow_v2");
@@ -400,9 +419,9 @@ namespace BubbleWash.EditorTools
                     Quaternion.LookRotation(Vector3.ProjectOnPlane(fwin.flatRight - fwin.forward * 0.75f, Vector3.up).normalized, Vector3.up));
                 foreach (var r in go.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
             }
-            var fp = track.Evaluate(portalD - 9.2f);
-            HallPlace(env, "Machinery", "SM_CyanPipeCurve_r7", fp.FlatPoint(-3.7f, 0.5f), fp.FlatRotation, 1.0f);
-            Debug.Log("[BWK] portal r7: starburst, bulb ring, chamber window and cyan pipe placed");
+            var fp = track.Evaluate(portalD - PortalChamberBefore + 1.8f);
+            var pipe = HallPlace(env, "Machinery", "SM_CyanPipeCurve_r7", fp.FlatPoint(-3.7f, 0.5f), fp.FlatRotation, 1.0f);
+            if (pipe != null) pipe.name = "PortalCyanPipe_r8";
         }
     }
 }

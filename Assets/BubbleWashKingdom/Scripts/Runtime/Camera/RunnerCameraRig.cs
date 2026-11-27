@@ -22,16 +22,16 @@ namespace BubbleWash
 
         [Header("Portrait 9:16 framing")]
         [Tooltip("Owner requirement: rear follow camera slightly above and behind; back of hat, pom-pom, arms and paws visible, route and tunnel visible ahead above the pom-pom. " +
-                 "Owner-approved hero camera (2026-11-25): 2.75 back / 1.3 up / pitch 10 / FOV 58 - the reference sees the hat nearly side-on. Change only with the owner's explicit approval.")]
-        public float distanceBackPortrait = 2.75f;
-        public float heightPortrait = 1.3f;
-        public float fovPortrait = 58f;
+                 "Owner-approved camera: 2026-11-25 2.75 back / 1.3 up / pitch 10 / FOV 58; 2026-11-26 21:50 (owner: reveal more scenery, keep portrait) 3.1 / 1.45 / 7 / 70 = SceneBuilder.HeroCam*. Change only with the owner's explicit approval.")]
+        public float distanceBackPortrait = 3.1f;
+        public float heightPortrait = 1.45f;
+        public float fovPortrait = 70f;
 
         [Header("Aim")]
         public float lookAhead = 10f;
         [Tooltip("Downward pitch from the track direction (reference: about 8.5 degrees at 16:9).")]
         public float pitchDown = 9f;
-        public float pitchDownPortrait = 10f;
+        public float pitchDownPortrait = 7f;
         public float lookHeight = 0.6f;
         [Range(0f, 1f)] public float lookAtRunnerWeight = 0.08f;
         [Range(0f, 1f)] public float lateralFollow = 0.55f;

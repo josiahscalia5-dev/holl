@@ -139,3 +139,103 @@ _Text-only export: the lead's brief, the agent's statements and one line per too
 **Agent (2026-11-27 02:44 UTC):**
 
 > _tool: Bash - Check time and the master door Blender script header_
+
+**Agent (2026-11-27 02:46 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Environment.cs_
+
+**Agent (2026-11-27 02:46 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Environment.cs_
+
+**Agent (2026-11-27 02:46 UTC):**
+
+> _tool: Grep - FinishRestDistance\s*(=>|=)|finaleOffset|finaleBack|finaleHeight|void SnapFinale|finaleFov|FinaleOffset_
+
+**Agent (2026-11-27 02:46 UTC):**
+
+> _tool: Bash - Locate hall/portal functions and finale camera offsets_
+
+**Agent (2026-11-27 02:46 UTC):**
+
+> _tool: Bash - Show hall extras structure and finale rig math_
+
+**Agent (2026-11-27 02:48 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Environment.cs_
+
+**Agent (2026-11-27 02:48 UTC):**
+
+Now let me write the chamber wedge layout.
+
+**Agent (2026-11-27 02:48 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Environment.cs_
+
+**Agent (2026-11-27 02:48 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Environment.cs_
+
+**Agent (2026-11-27 02:48 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Environment.cs_
+
+**Agent (2026-11-27 02:48 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Environment.cs_
+
+**Agent (2026-11-27 02:48 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Environment.cs_
+
+**Agent (2026-11-27 02:48 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Environment.cs_
+
+**Agent (2026-11-27 02:48 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Environment.cs_
+
+**Agent (2026-11-27 02:48 UTC):**
+
+> _tool: Bash - Compile check and find rail/roller materials_
+
+**Agent (2026-11-27 02:49 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\MaterialLibrary.Assets.cs_
+
+**Agent (2026-11-27 02:49 UTC):**
+
+> _tool: Bash - Show usage of image stat and triptych tools_
+
+**Agent (2026-11-27 02:49 UTC):**
+
+> _tool: Bash - Read the previous measurement script_
+
+**Agent (2026-11-27 02:49 UTC):**
+
+> _tool: Bash - Write and run baseline crop metrics vs reference_
+
+**Agent (2026-11-27 02:49 UTC):**
+
+> _tool: Bash - Find finale camera rig values and portal distance_
+
+**Agent (2026-11-27 02:50 UTC):**
+
+> _tool: Bash - Read HallPlace helper and portal extras header_
+
+**Agent (2026-11-27 02:50 UTC):**
+
+Now factor the S7 chamber placement into its own function (moved to the measured spot) so the chambers preview can re-place it.
+
+**Agent (2026-11-27 02:50 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Hall.cs_
+
+**Agent (2026-11-27 02:50 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Environment.cs_
+
+**Agent (2026-11-27 02:50 UTC):**
+
+> _tool: Bash - Compile check after chamber changes_

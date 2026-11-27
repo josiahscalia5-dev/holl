@@ -180,6 +180,21 @@ namespace BubbleWash.EditorTools
                 // milkier film (alpha .24 -> .4, lighter #C2EEF8) + the _MilkSoft milk floor in the shader
                 C(m, "_MilkThin", "#C2EEF8"); F(m, "_MilkEdgeAlpha", 0.4f);
             }, (int)RenderQueue.Transparent);
+            // Screen ALL pass 4 (owner 21:33 sheet 18 + judge #1: the reference crowns in S2-S7 are OPAQUE MILKY WHITE, ours
+            // read as clear glass shards): the v3 master crowns (build_fx_crown_v3.py) use the round-8 milk VOLUME shading
+            // (_MilkSoft) without the see-through liquid film: creamy white body (reference core #E9F9F9), soft blue-grey
+            // roll-off (shade #B0C5D6), water-lit translucency only in a thin silhouette band, little thickness noise,
+            // wet glints from the key + sun
+            Mat("M_FX_Milk_v3", "BWK/Soft", m =>
+            {
+                F(m, "_Mode", 6); C(m, "_ColorA", "#EEFAFC"); C(m, "_ShadowColor", "#A8BED8"); C(m, "_ColorB", "#86C8EC");
+                F(m, "_Wrap", 0.5f); F(m, "_RimPower", 2.6f); F(m, "_RimStrength", 0.3f); F(m, "_SpecStrength", 1.25f);
+                F(m, "_ReflectBoost", 0.35f); F(m, "_Glow", 0.07f); F(m, "_Wobble", 0.004f); F(m, "_WobbleFreq", 6f);
+                F(m, "_MilkSoft", 1f); F(m, "_MilkGlass", 0f); C(m, "_MilkThin", "#B4DCF0");
+                F(m, "_BumpScale", 8f); F(m, "_BumpStrength", 0.25f);
+                F(m, "_MilkAlpha", 1f); F(m, "_MilkEdgeAlpha", 0.6f);
+                F(m, "_SrcBlend", (float)BlendMode.SrcAlpha); F(m, "_DstBlend", (float)BlendMode.OneMinusSrcAlpha); F(m, "_ZWrite", 1f);
+            }, (int)RenderQueue.Transparent);
             Mat("M_Foam_v2", "BWK/Soft", m =>
             {
                 // reference foam (4K f_08.00s crops): bright white bubble tops #F3F5FB, faint blue-lavender crevices #B8BEDC,

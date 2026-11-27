@@ -97,10 +97,14 @@ namespace BubbleWash.EditorTools
         /// (R2_rear_S2_like_3s + hero_mouth, CaptureTools.CaptureHero) put the mascot here. Comparison only, never gameplay.</summary>
         public const float HeroMouthDistance = 35f;
 
-        /// <summary>Owner-approved portrait hero camera (2026-11-25, replaces 2.55 / 1.5): back, height, pitch, FOV.
-        /// Frozen: change only with the owner's explicit approval. Applied in BuildCameras and (for previews, which load the
-        /// saved scene) in PreviewRefreshDomains.</summary>
-        public const float HeroCamBack = 2.75f, HeroCamHeight = 1.3f, HeroCamPitch = 10f, HeroCamFov = 58f;
+        /// <summary>Owner-approved portrait gameplay camera: back, height, pitch, FOV. Applied in BuildCameras and (for
+        /// previews, which load the saved scene) in PreviewRefreshDomains. Change only with the owner's explicit approval.
+        /// 2026-11-25: 2.75 / 1.3 / 10 / 58 (replaced 2.55 / 1.5). 2026-11-26 21:50 (owner 21:25: "keep portrait, optimise the
+        /// camera framing to reveal more scenery without making the mascot excessively small"): lead variant test at the
+        /// door / tunnel / chambers (Captures/agents/_lead_cam_2140/sheet_d035|d106|d215.png, v0 = old, v3 = this) -> 3.1 / 1.45
+        /// / 7 / 70: the mascot keeps ~70 % of its old on-screen size, sits lower, and the rings, neon stars, coins and
+        /// chamber doors open up around it. Revert = the old four values here + RunnerCameraRig portrait defaults.</summary>
+        public const float HeroCamBack = 3.1f, HeroCamHeight = 1.45f, HeroCamPitch = 7f, HeroCamFov = 70f;
 
         internal static void ApplyHeroCamera(RunnerCameraRig rig)
         {
