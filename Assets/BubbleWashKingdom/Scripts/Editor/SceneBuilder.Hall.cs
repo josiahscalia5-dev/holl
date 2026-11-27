@@ -258,7 +258,13 @@ namespace BubbleWash.EditorTools
 
             // ---- tunnel mouth at 40 m: thick gold bulb door ring, lavender machine front wall (two sizes close the hall)
             var fm = track.Evaluate(HallMouthD);
-            HallPlace(holder, "Machinery", "SM_MouthRing_r7", fm.FlatPoint(0f, TunnelCenter), fm.FlatRotation, 1.0f);
+            // Screen S2 pass 6 (asset artist, owner sheet S2/03 "Gold & drum" + judge gap #2): reference f_03.00s left of the
+            // door = gold hatch band ~0.76 m | copper bead ~0.31 m | thick glossy VIOLET drum rim ~0.9 m, big warm bulbs all
+            // round; ours was one fat gold torus with no violet rim. -> layered master SM_DoorHatch_s2
+            // (build_s2_door_p6.py, LOD0 24k / LOD1 7k tris); SM_MouthRing_r7 stays the fallback.
+            var hatch = HallPlace(holder, "Machinery", "SM_DoorHatch_s2", fm.FlatPoint(0f, TunnelCenter), fm.FlatRotation, 1.0f);
+            if (hatch != null) { HallOwnMaterials(hatch); HallLods(hatch, "DoorHatch_LOD0", "DoorHatch_LOD1"); }
+            else HallPlace(holder, "Machinery", "SM_MouthRing_r7", fm.FlatPoint(0f, TunnelCenter), fm.FlatRotation, 1.0f);
             var fw = track.Evaluate(HallMouthD + 0.35f);
             HallPlace(holder, "Machinery", "SM_MouthWall_r7", fw.FlatPoint(0f, TunnelCenter), fw.FlatRotation, 0.85f);
             fw = track.Evaluate(HallMouthD + 0.7f);
@@ -268,8 +274,27 @@ namespace BubbleWash.EditorTools
             var tpart = tunnel.Count > 0 ? tunnel[0]
                 : new Part(ProceduralModules.TunnelModule(TunnelRadius, TunnelCenter), new[] { Mat("M_DrumWall") }, Matrix4x4.identity);
             BendChunks(holder, "MouthDrum_r7", tpart, HallMouthD + 0.2f, tunnelStart, false, Vector3.one, 0f, 0f, 4f, castShadows: false);
+            // Screen S2 pass 6 (judge gap #2 "inner rings = thick identical arches with sparse bulbs"): the reference inside
+            // the door (R2 camera ~31.75 m) shows a violet LED drum rim (on-screen r ~211 px = ~46 m), then THIN gold marquee
+            // rings with distinct warm bulbs (~147 px = ~52 m; ~93 px = the 61.7 m entrance gate). Ours had four fat SM_Ring
+            // arches at 41 / 46 / 54.5 / 63 m (+ the gate). -> the hatch's own violet rim replaces the 41 m ring, SM_DrumRim
+            // (24 pink LEDs) at 46 m, the thin master SM_MarqueeRing_s2 (40 bulbs) at 52.5 m; 63 m dropped (it doubled the
+            // 61.7 m gate, which BuildRings now builds from the same master). Old set = fallback.
             var ringPrefab = ModelPrefab("Track", "SM_Ring");
-            if (ringPrefab != null)
+            var rimPrefab = ModelPrefab("Track", "SM_DrumRim");
+            if (ModelPrefab("Machinery", "SM_MarqueeRing_s2") != null && rimPrefab != null)
+            {
+                var frm = track.Evaluate(HallMouthD + 6f);
+                var rimGo = Spawn(rimPrefab);
+                rimGo.name = "MouthDrumRim_s2";
+                rimGo.transform.SetParent(holder.transform, false);
+                rimGo.transform.SetPositionAndRotation(frm.FlatPoint(0f, TunnelCenter), frm.FlatRotation);
+                HallOwnMaterials(rimGo);
+                var fmr = track.Evaluate(HallMouthD + 12.5f);
+                var mq = HallPlace(holder, "Machinery", "SM_MarqueeRing_s2", fmr.FlatPoint(0f, TunnelCenter), fmr.FlatRotation, 1.0f);
+                if (mq != null) { mq.name = "MouthDrumRing_s2"; HallOwnMaterials(mq); HallLods(mq, "MarqueeRing_LOD0", "MarqueeRing_LOD1"); }
+            }
+            else if (ringPrefab != null)
                 foreach (float dr in new[] { HallMouthD + 1.0f, HallMouthD + 6f, HallMouthD + 14.5f, HallMouthD + 23f })
                 {
                     var frg = track.Evaluate(dr);

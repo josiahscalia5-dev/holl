@@ -131,7 +131,8 @@ Shader "BWK/Character"
                     n = normalize(n + nb * _BumpStrength);
                     occlusion = lerp(0.5, 1.0, ribH);
                     float yarn = BWK_ValueNoise(float2(i.uv.x * _StitchU * 4.0, i.uv.y * _StitchV * 2.0));
-                    albedo *= lerp(0.74, 1.06, bump) * lerp(0.94, 1.04, yarn);
+                    // S2 p6: deeper purl valleys (reference knit luminance spread ~3x ours: Lstd 10 vs 3; v4 lerp 0.74-1.06)
+                    albedo *= lerp(0.58, 1.1, bump) * lerp(0.92, 1.05, yarn);
                     half fuzz = BWK_Fresnel(n, v, 2.0) * 0.3;
                     emission = albedo * (_Glow + fuzz);
                 }

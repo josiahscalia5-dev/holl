@@ -218,6 +218,7 @@ namespace BubbleWash.EditorTools
         const float RimLamps = 24f;                           // SM_DrumRim pink LED lamps (build_track RIM_LEDS, r4: was 32)
         internal const float RimPhase = 0.40f;
         internal const float GoldRingSpacing = 12.75f;
+        const float MarqueeRingsUntil = 90f;                  // S2 pass 6: gate + rings 71.5 / 84.25 m = SM_MarqueeRing_s2
         const float ChamberStart = 160f, ChamberEnd = 314f;   // r7: window gaps 160.75-301 m (S4-S6), 1-2 windows / gap
         const float ChamberPlaneRadius = 3.62f;               // SM_Porthole fallback: window plane distance from the axis
         const float ChamberWindowPlaneRadius = 3.40f;         // SM_ChamberWindow (build_machinery CW_PLANE_R, 1.4x porthole)
@@ -267,8 +268,30 @@ namespace BubbleWash.EditorTools
             float Hash(float d) => Mathf.Abs(Mathf.Sin(d * 12.9898f + 78.233f) * 43758.5453f) % 1f;
             Matrix4x4 Vary(float d, float pitchDeg) =>
                 Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(0f, 0f, (Hash(d) - 0.5f) * pitchDeg), Vector3.one * (1f + (Hash(d + 3.7f) - 0.5f) * 0.02f));
+            // Screen S2 pass 6 (asset artist, judge gap #2 / owner sheet S2/03 "smaller inner arches, distinct warm bulbs"):
+            // the entrance gate and the first tunnel rings (< MarqueeRingsUntil, the far rings of the S2 door view) use the
+            // thin layered marquee master SM_MarqueeRing_s2 (build_s2_door_p6.py: 0.39 m band, 40 bulbs in cups, LODGroup
+            // instance instead of the combined fat SM_Ring). The gate keeps a slightly larger ring (x1.08) over the seam.
+            // SM_Ring stays everywhere else (other screens unchanged) and is the fallback.
+            var marquee = ModelPrefab("Machinery", "SM_MarqueeRing_s2");
+            bool PlaceMarquee(float d, float scale)
+            {
+                if (marquee == null || d >= MarqueeRingsUntil) return false;
+                var f = track.Evaluate(d);
+                var go = Spawn(marquee);
+                go.name = "MarqueeRing_s2";
+                go.transform.SetParent(holder.transform, false);
+                go.transform.SetPositionAndRotation(f.FlatPoint(0, TunnelCenter), f.FlatRotation * Quaternion.Euler(0f, 0f, (Hash(d) - 0.5f) * 9f));
+                go.transform.localScale = Vector3.one * Mathf.Min(scale, 1.08f);
+                HallOwnMaterials(go);
+                HallLods(go, "MarqueeRing_LOD0", "MarqueeRing_LOD1");
+                foreach (var r in go.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
+                rings++;
+                return true;
+            }
             void PlaceRing(float d, float scale)
             {
+                if (PlaceMarquee(d, scale)) return;
                 var world = World(d, scale) * Vary(d, 360f / BulbsPerRing);
                 comb.Add(ring, world);
                 rings++;
