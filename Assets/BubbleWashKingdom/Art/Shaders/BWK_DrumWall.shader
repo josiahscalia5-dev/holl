@@ -157,6 +157,11 @@ Shader "BWK/DrumWall"
         _DoorRampNear ("Door ramp: deeper from camera distance (m)", Float) = 12
         _DoorRampFarDist ("Door ramp: deepest at camera distance (m)", Float) = 40
         _DoorRampCap ("Door ramp: max x (body never brighter than this; gloss comes from the reflections)", Range(0, 1)) = 1
+        // Screen S2 pass 10 v6 (reference inner-drum ceiling = cobalt blue ~ 95/100/195, side walls violet ~ 134/98/180):
+        // a bluer body on the ceiling bays, and the deep door drum keeps its thin slot rows (sub-2-px dashes)
+        [HDR] _DoorRampCeil ("Door ramp: body on the ceiling bays (blue)", Color) = (0.20, 0.12, 0.54, 1)
+        _DoorRampCeilAmount ("Door ramp: ceiling body amount (0 = off)", Range(0, 1)) = 0
+        _DoorThinSlots ("Door drum: keep thin far slot rows visible (0 = old 1.5 px fade)", Range(0, 1)) = 0
     }
     SubShader
     {
@@ -204,6 +209,8 @@ Shader "BWK/DrumWall"
             half _DoorRampAmount, _DoorRampFar;
             half4 _DoorRampDark, _DoorRampMid, _DoorRampHigh;
             float _DoorRampScale, _DoorRampNear, _DoorRampFarDist, _DoorRampCap;
+            half4 _DoorRampCeil;
+            half _DoorRampCeilAmount, _DoorThinSlots;
         CBUFFER_END
 
         // Screen S2 pass 7: weight of the S2 door-drum grade at a distance along the tunnel (1 at the door, 0 beyond
@@ -399,6 +406,15 @@ Shader "BWK/DrumWall"
                     // fade the perforation out where a slot gets thinner than ~1.5 px (no shimmer far down the tunnel)
                     float px = max(fwidth(m.x), fwidth(m.y));
                     detail = saturate((hw / max(px, 1e-5) - 0.75) * 0.8);
+                    // Screen S2 pass 10 v6 (owner 13:25 (5) "many rows of small dark pill slots, smaller deeper"): the deep
+                    // door-drum dashes are long AROUND the drum but foreshortened ALONG it (grazing walls ~8 deg) to ~1 px, so
+                    // the 1.5 px fade removed every slot row beyond the first gold ring. In the door drum only, judge the
+                    // width against the along-axis footprint and keep ~1 px dashes (antialiased by the sdf aa below)
+                    if (_DoorThinSlots > 0.001)
+                    {
+                        float thin = saturate((hw / max(fwidth(m.y), 1e-5)) * 1.4 - 0.3) * saturate(hw * 6.0 / max(fwidth(m.x), 1e-5) - 1.0);
+                        detail = lerp(detail, max(detail, thin), _DoorThinSlots * BWK_DoorW(m.y));
+                    }
                     hole = (1.0 - smoothstep(-aa, aa, sdf)) * band * detail;
                     lip = (1.0 - smoothstep(0.0, _LipWidth, sdf)) * (1.0 - hole) * band * detail;
                     dir = ql > 1e-5 ? q / ql : float2(0.0, 0.0);                    // countersunk: sloping into the hole
@@ -545,8 +561,10 @@ Shader "BWK/DrumWall"
                     half lumL = dot(lit.rgb, half3(0.2126, 0.7152, 0.0722));
                     half deepK = lerp(1.0, _DoorRampFar, smoothstep(_DoorRampNear, _DoorRampFarDist, camDist));
                     half x = min((1.0 - exp(-lumL * _DoorRampScale)) * deepK, _DoorRampCap);   // v5: cap
-                    half3 rampC = x < 0.5 ? lerp(_DoorRampDark.rgb, _DoorRampMid.rgb, x * 2.0)
-                                          : lerp(_DoorRampMid.rgb, _DoorRampHigh.rgb, x * 2.0 - 1.0);
+                    // v6: cobalt-blue body on the ceiling bays, violet on the side walls (reference inner drum)
+                    half3 midC = lerp(_DoorRampMid.rgb, _DoorRampCeil.rgb, _DoorRampCeilAmount * smoothstep(_CeilingWidth, 0.0, around));
+                    half3 rampC = x < 0.5 ? lerp(_DoorRampDark.rgb, midC, x * 2.0)
+                                          : lerp(midC, _DoorRampHigh.rgb, x * 2.0 - 1.0);
                     lit.rgb = lerp(lit.rgb, rampC, _DoorRampAmount * doorW * (1.0 - hole));
                 }
                 // Screen ALL pass 5 (judge gap #5): S3-S6 walls read as flat light lilac plates; the video's deep tunnel is

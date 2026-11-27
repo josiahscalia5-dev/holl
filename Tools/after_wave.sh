@@ -16,7 +16,9 @@ heavy_running() {
   # lead 84b218d4 2026-11-27: only a real Unity EDITOR counts - the Unity CLI MCP server (AppData/Local/Unity/bin/unity.exe mcp)
   # has the same image name and would keep this watcher waiting forever (same fix as heavy_lock.sh orphan()).
   powershell.exe -NoProfile -Command 'if (Get-Process -Name Unity -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "*\Editor\Unity.exe" }) { exit 0 } else { exit 1 }' && return 0
-  tasklist //FI "IMAGENAME eq blender.exe" //NH 2>/dev/null | grep -qi "^blender.exe" && return 0
+  # lead 5190fd9a 2026-11-27 (owner: reconnect the Blender MCP): only a HEADLESS Blender (--background) counts - an open
+  # Blender window running the MCP add-on (localhost:9876) is not a build job and must not stall the queue
+  powershell.exe -NoProfile -Command 'if (Get-CimInstance Win32_Process | Where-Object { $_.Name -eq "blender.exe" -and $_.CommandLine -match "--background" }) { exit 0 } else { exit 1 }' && return 0
   return 1
 }
 say "watching $DIR for $N agent results (idle limit ${IDLE_MIN} min)"
