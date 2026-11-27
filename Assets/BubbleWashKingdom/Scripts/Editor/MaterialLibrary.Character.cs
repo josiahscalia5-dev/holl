@@ -108,6 +108,9 @@ namespace BubbleWash.EditorTools
                 C(m, "_ColorA", "#7A2098"); F(m, "_StitchU", 88); F(m, "_StitchV", 60); F(m, "_BumpStrength", 1.0f);
                 F(m, "_Smoothness", 0.05f); F(m, "_YarnRelief", 1.0f);
                 F(m, "_WoolAbsorb", 0.68f); F(m, "_RimStrength", 0.6f);   // prev3 crown 131/83/158 L43.8 vs ref 120/54/156 L36.2: env grey + flat flanks
+                // p10g: s2p10f crown box (600,294)-(690,312) 113/60/143 a38 b-37 vs reference 122/50/164 a50 b-48 = same L but
+                // greyer -> more saturated violet yarn (linear R x1.2, B x1.35), less env grey
+                C(m, "_ColorA", "#8420AF"); F(m, "_WoolAbsorb", 0.55f);
             });
             Mat("M_HatCuff_v5", "BWK/Character", m =>
             {
@@ -121,6 +124,9 @@ namespace BubbleWash.EditorTools
                 C(m, "_ColorA", "#B456C2"); C(m, "_ColorB", "#B456C2"); F(m, "_StitchU", 66); F(m, "_StitchV", 52);   // prev2: ref cuff ribs 1.7x wider -> 72 ribs
                 F(m, "_BumpStrength", 1.2f); F(m, "_Smoothness", 0.05f); F(m, "_Glow", 0.08f); F(m, "_YarnRelief", 1.0f);
                 F(m, "_WoolAbsorb", 0.72f); F(m, "_RimStrength", 0.6f);   // prev3 cuff centre L39.6 vs ref 32.2, reference flanks lighter
+                // p10g: s2p10f cuff (600,356)-(690,394) 130/61/154 L38.9 vs reference 108/45/157 L33.2 -> darker, bluer violet
+                // (linear x.67/.56/1.04), less env grey and self-glow
+                C(m, "_ColorA", "#9640C5"); C(m, "_ColorB", "#9640C5"); F(m, "_WoolAbsorb", 0.6f); F(m, "_Glow", 0.06f);
             });
             Mat("M_HatStripe_v5", "BWK/Character", m =>
             {
@@ -131,6 +137,8 @@ namespace BubbleWash.EditorTools
                 // p10f: cream-pink knitted band with visible V stitches (yarn relief, softer than the purple ribs)
                 C(m, "_ColorA", "#F6E6F0"); C(m, "_ColorB", "#F6E6F0"); F(m, "_StitchU", 66); F(m, "_StitchV", 58);
                 F(m, "_BumpStrength", 0.8f); F(m, "_Smoothness", 0.06f); F(m, "_Glow", 0.46f); F(m, "_YarnRelief", 0.75f);   // prev2 stripe L60.6 vs ref 66.7
+                // p10g: s2p10f stripe (600,328)-(690,342) 209/159/202 L71.5 vs reference 222/179/216 L77.8 -> lighter, less magenta
+                C(m, "_ColorA", "#F8F0F2"); C(m, "_ColorB", "#F8F0F2"); F(m, "_Glow", 0.52f);
             });
             Mat("M_PawPad_v5", "BWK/Character", m =>
             {
@@ -174,6 +182,20 @@ namespace BubbleWash.EditorTools
                 F(m, "_TuftScale", 18f); F(m, "_TuftAmount", 0.55f); F(m, "_StrandContrast", 0.45f); F(m, "_AO", 0.34f);
                 F(m, "_TuftDepth", 0.45f); F(m, "_LenNoise", 0.6f); F(m, "_LenNoiseScale", 0.5f); F(m, "_SilhouetteFade", 0.3f);
                 C(m, "_RimColor", "#FFD6D6"); F(m, "_Glow", 0.2f); F(m, "_RimStrength", 0.55f); F(m, "_RimSelf", 0.25f);
+                // p10g (lead 16:40: the p10f coat = round light CELLS + dark partings = quilted / PINECONE at R2 and gameplay
+                // distance, dark red-pink): BWK_Fur _PlushMode 2 = SMALL irregular clumps (4 cm, were 8.7 cm) radiating from a
+                // whorl on the back, strands combed along that flow, frayed clump borders instead of closed outlines, clumping
+                // strength varying in patches. Measured s2p10f vs reference (R2 boxes): mid-back 194/103/146 vs 207/103/144
+                // (warmer salmon: R up, G/B kept), lower back 180/98/144 vs 172/134/174 (cream-pink seat), right under the
+                // brim 191/99/141 vs 173/73/115 (contact shade)
+                F(m, "_PlushMode", 2f); F(m, "_TuftScale", 38f); F(m, "_TuftAmount", 0.5f); F(m, "_TuftLean", 0.55f);
+                F(m, "_FlowRadial", 0.85f); m.SetVector("_FlowCentre", new Vector4(0.92f, 0.52f, 0f, 0f));
+                F(m, "_StrandFlow", 2.5f); F(m, "_Fray", 0.45f); F(m, "_TuftDepth", 0.3f); F(m, "_StrandContrast", 0.6f);
+                F(m, "_AO", 0.3f); F(m, "_Density", 260f); F(m, "_LenNoiseScale", 0.35f); F(m, "_SilhouetteFade", 0.2f);
+                C(m, "_RootColor", "#F46262"); C(m, "_BaseColor", "#FF9976"); C(m, "_TipColor", "#FFD4BD");
+                F(m, "_SeatLight", 0.85f); C(m, "_SeatColor", "#FFE2E6"); m.SetVector("_SeatRange", new Vector4(0.42f, 0.30f, 0f, 0f));
+                F(m, "_BrimShade", 0.5f); m.SetVector("_BrimRange", new Vector4(0.614f, 0.07f, 0.0333f, 0f));
+                F(m, "_RimPower", 3.0f); F(m, "_RimSelf", 0.35f);
             }, (int)RenderQueue.AlphaTest);
             Mat("M_PomPom_v5", "BWK/Fur", m =>
             {

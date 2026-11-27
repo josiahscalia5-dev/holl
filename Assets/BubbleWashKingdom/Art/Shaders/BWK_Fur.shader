@@ -32,12 +32,23 @@ Shader "BWK/Fur"
         _PawGlow ("Paw Coat Self Glow", Range(0, 1)) = 0
         _TuftScale ("Tuft Cells per UV unit", Float) = 24
         _TuftAmount ("Tuft Clumping (0 = off)", Range(0, 0.9)) = 0
-        _PlushMode ("Irregular Voronoi Tufts (0 = v4 cells)", Range(0, 1)) = 0
+        _PlushMode ("Tufts: 0 = v4 cells, 1 = Voronoi locks (p7), 2 = fine radial clumps (p10g)", Range(0, 2)) = 0
         _StrandContrast ("Extra Strand / Tuft Contrast (0 = v4)", Range(0, 1)) = 0
         _TuftDepth ("Tuft Depth Shading (0 = off)", Range(0, 1)) = 0
         _LenNoise ("Per-Tuft Pile Length Variation (0 = off)", Range(0, 1)) = 0
         _LenNoiseScale ("Length Variation Scale (x tuft cells)", Float) = 0.5
         _RimSelf ("Unlit Soft Rim (0 = off)", Range(0, 1)) = 0
+        // S2 p10g (SK_Mascot_v5 only; defaults = off, v4 / older materials unchanged)
+        _FlowRadial ("Mode 2: radial lean from the back whorl (0 = straight down)", Range(0, 1)) = 0
+        _FlowCentre ("Mode 2: whorl position (base UV x, y)", Vector) = (0.92, 0.52, 0, 0)
+        _TuftLean ("Mode 2: lock tip lean along the flow (clump cells)", Range(0, 1.5)) = 0
+        _StrandFlow ("Mode 2: strands combed along the flow (strand cells)", Range(0, 4)) = 0
+        _Fray ("Mode 2: frayed lock borders", Range(0, 1)) = 0
+        _SeatLight ("Lower body toward the seat colour (0 = off)", Range(0, 1)) = 0
+        _SeatColor ("Seat / lower belly colour", Color) = (1, 0.9, 0.92, 1)
+        _SeatRange ("Seat gradient: body v from (x) to (y)", Vector) = (0.42, 0.3, 0, 0)
+        _BrimShade ("Contact shade under the beanie brim (0 = off)", Range(0, 1)) = 0
+        _BrimRange ("Brim line v (x) - cos(phi) * (z), shade band width (y)", Vector) = (0.614, 0.07, 0.0333, 0)
     }
     SubShader
     {
@@ -54,6 +65,9 @@ Shader "BWK/Fur"
             half _PlushMode, _StrandContrast;
             half _TuftDepth, _LenNoise, _RimSelf;
             float _LenNoiseScale;
+            half _FlowRadial, _TuftLean, _StrandFlow, _Fray, _SeatLight, _BrimShade;
+            float4 _FlowCentre, _SeatRange, _BrimRange;
+            half4 _SeatColor;
         CBUFFER_END
         ENDHLSL
 
@@ -144,7 +158,44 @@ Shader "BWK/Fur"
                 half tRnd, parting;
                 half tuftShade = 0.5;
                 float pull;
-                if (_PlushMode > 0.5)
+                float over = 0.0;                 // mode 2: how far the strand root lies past its clump border (frayed below)
+                float2 fdir = float2(0.0, -1.0);  // mode 2: fur flow direction in base UV (v runs up the body)
+                if (_PlushMode > 1.5)
+                {
+                    // S2 p10g (SK_Mascot_v5, _PlushMode 2): pass 10f's 9 cm Voronoi locks read as a QUILTED / PINECONE
+                    // pattern of round light cells (lead 16:40). The approved coat = fine strands gathered in SMALL irregular
+                    // clumps whose tips radiate from a whorl on the back: small fully jittered clumps, clumping strength
+                    // varying in patches (locks here, smooth plush there), lock tips + strands combed along that radial flow,
+                    // frayed lock borders (per strand, below) instead of closed dark outlines.
+                    float2 dw = base - _FlowCentre.xy;
+                    float dl = length(dw);
+                    fdir = normalize(lerp(float2(0.0, -1.0), dw / max(dl, 1e-4), _FlowRadial * saturate(dl * 5.0)) + float2(0.0, -0.25));
+                    tuv += (float2(BWK_ValueNoise(tuv * 0.5 + 3.1), BWK_ValueNoise(tuv * 0.5 + 17.9)) - 0.5) * 0.9;
+                    float2 ipw = floor(tuv);
+                    float g1 = 8.0, g2 = 8.0;
+                    tc = ipw + 0.5; tcell = ipw;
+                    [unroll] for (int wy = -1; wy <= 1; wy++)
+                    {
+                        [unroll] for (int wx = -1; wx <= 1; wx++)
+                        {
+                            float2 cw = ipw + float2(wx, wy);
+                            float2 pw = cw + 0.08 + float2(BWK_Hash21(cw + 21.7), BWK_Hash21(cw + 4.3)) * 0.84;
+                            float dw2 = length(tuv - pw);
+                            if (dw2 < g1) { g2 = g1; g1 = dw2; tc = pw; tcell = cw; }
+                            else if (dw2 < g2) { g2 = dw2; }
+                        }
+                    }
+                    tRnd = BWK_Hash21(tcell + 11.9);
+                    tuftShade = saturate((g2 - g1) * 2.2);
+                    float patchK = BWK_ValueNoise(base * 6.0 + 2.3);
+                    pull = _TuftAmount * h * (0.5 + 0.7 * tRnd) * lerp(0.35, 1.3, patchK);
+                    tc += fdir * (h * _TuftLean);                          // the clump's tips lean along the flow
+                    relSkin = tuv - tc;
+                    rel = relSkin / max(1.0 - pull, 0.2);
+                    over = g1 * pull / max(1.0 - pull, 0.2) - 0.5 * (g2 - g1);
+                    parting = 1.0;                                         // frayed per strand below
+                }
+                else if (_PlushMode > 0.5)
                 {
                     // S2 pass 7 (SK_Mascot_v5 only, _PlushMode 1): IRREGULAR Voronoi tufts. The v4 cells (one jittered
                     // centre per square cell) still read as a quilted lattice of round bumps on the v5 metric UVs; here
@@ -194,13 +245,16 @@ Shader "BWK/Fur"
                 }
                 parting = lerp(1.0, parting, saturate(h * 1.6));           // partings only open toward the tips
                 float2 rootUV = base + (rel - relSkin) / _TuftScale;      // = base on the skin; expands toward the tips
+                rootUV -= fdir * (h * _StrandFlow) / _Density;            // p10g: strands combed along the flow (0 = off)
                 float2 suv = rootUV * _Density;
                 float2 cell = floor(suv);
                 float2 jit = float2(BWK_Hash21(cell), BWK_Hash21(cell + 17.3)) - 0.5;
                 float2 lean = (float2(BWK_Hash21(cell + 5.7), BWK_Hash21(cell + 9.1)) - 0.5) * 0.8 * h;
                 float d = length(frac(suv) - 0.5 - jit * 0.4 - lean);
                 half rnd = BWK_Hash21(cell + 3.1);
-                half clump = BWK_ValueNoise(float2(i.uv.x * 2.0, i.uv.y) * _ClumpScale);
+                if (_PlushMode > 1.5 && _TuftAmount > 0.001 && h > 0.001)   // p10g: frayed clump borders, strand by strand
+                    parting = lerp(1.0, saturate(1.0 - (over - (rnd - 0.5) * _Fray) * 3.0), saturate(h * 1.6));
+                half clump =BWK_ValueNoise(float2(i.uv.x * 2.0, i.uv.y) * _ClumpScale);
                 half lenVar = lerp(1.0, 0.55 + clump * 0.9, _ClumpAmount) * (0.72 + 0.28 * rnd);
                 lenVar *= lerp(1.0, 0.62 + 0.62 * tRnd, saturate(_TuftAmount * 1.6));   // every tuft has its own length
                 half guard = saturate(1.0 - d * 1.75) * lenVar;
@@ -229,6 +283,15 @@ Shader "BWK/Fur"
                 half3 pawC = lerp(_PawRootColor.rgb, _PawTipColor.rgb, saturate(h * 1.4 + 0.2));
                 half coat = lerp(1.0, i.color.a, _UseVertexTint);
                 half3 col = lerp(pawC, pinkC, coat) * lerp(half3(1, 1, 1), i.color.rgb, _UseVertexTint);
+                // p10g (v5 body UV: base.y = polar angle / pi from the seat pole, arms start at v 3.3): the approved coat turns a
+                // soft cream-pink toward the seat, and the beanie brim (hat_alpha 69.5 deg about the 6-deg back-tilted hat axis =
+                // polar angle 110.5 - 6 cos(phi)) shades the fur right under it (contact occlusion; no SSAO on mobile)
+                half bodyK = coat * step(base.y, 1.2);
+                half seatK = (1.0 - smoothstep(_SeatRange.y, _SeatRange.x, base.y)) * _SeatLight * bodyK;   // edges ascending (GLSL)
+                col = lerp(col, _SeatColor.rgb * lerp(0.9, 1.04, h), seatK);
+                float brimV = _BrimRange.x - _BrimRange.z * cos((base.x / 1.84 - 0.5) * 6.2831853);
+                half brimK = smoothstep(brimV - _BrimRange.y, brimV, base.y) * _BrimShade * bodyK;
+                half shade = 1.0 - brimK;
                 // low strand contrast: plush, not needles (v5 _StrandContrast 1: reference R2 body Lstd 11.3 vs ours 6.2)
                 col *= lerp(lerp(0.86, 0.74, _StrandContrast), lerp(1.06, 1.12, _StrandContrast), strand);
                 col *= lerp(1.0, lerp(lerp(0.92, 0.86, _StrandContrast), lerp(1.04, 1.07, _StrandContrast), tRnd),
@@ -239,8 +302,9 @@ Shader "BWK/Fur"
                 half3 light = BWK_WrapLight(i.positionWS, n, _Wrap);
                 half ao = lerp(1.0 - _AO, 1.0, h);
                 half rim = BWK_Fresnel(n, v, _RimPower) * _RimStrength * (0.4 + 0.6 * h);
-                half3 c = col * light * ao + _RimColor.rgb * rim * light + col * (_Glow + _PawGlow * (1.0 - coat));
-                c += _RimColor.rgb * rim * _RimSelf;   // p10f: soft white-pink halo on the backlit silhouette tips
+                half3 c = (col * light * ao + _RimColor.rgb * rim * light) * shade
+                        + col * (_Glow + _PawGlow * max(1.0 - coat, seatK * 0.6)) * lerp(1.0, shade, 0.7);
+                c += _RimColor.rgb * rim * _RimSelf * shade;   // p10f: soft white-pink halo on the backlit silhouette tips
                 c = MixFog(c, i.fog);
                 return half4(c, alpha);
             }
