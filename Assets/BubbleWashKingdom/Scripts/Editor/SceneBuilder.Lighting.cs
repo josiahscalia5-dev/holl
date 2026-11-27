@@ -143,7 +143,10 @@ namespace BubbleWash.EditorTools
             // v2 (threshold .9 / intensity 1.4) lifted every wall into a flat pastel lavender (frame L50 .60 vs .56): v3 keeps
             // the threshold at 1.0 (only emissives + hot glints bloom) and widens the halo instead
             // round 5: bulbs x6 -> x5 (peach cores, no lemon) -> a little more bloom intensity keeps their soft amber halos
-            bloom.threshold.Override(1.0f); bloom.intensity.Override(1.38f); bloom.scatter.Override(0.78f);
+            // OWNER 2026-11-27 05:28 "Yes, apply it" (the video-measured grade + controlled soft glow previewed 2026-11-26 22:30,
+            // Captures/look/GRADE_preview_p4_16x9.png / _9x16.png, lead tool GradePreview.Batch -bwkGlow 0.5): 1.0 / 1.38 / 0.78
+            // -> threshold 0.90 / intensity 1.93 / scatter 0.82 (softer, wider halos on the bulbs and neon stars).
+            bloom.threshold.Override(0.90f); bloom.intensity.Override(1.93f); bloom.scatter.Override(0.82f);
             bloom.tint.Override(Color.white); bloom.highQualityFiltering.Override(true);
             bloom.maxIterations.Override(8);
             // Neutral keeps saturated hues far better than ACES (which pushes bright yellow / cyan to white).
@@ -185,6 +188,20 @@ namespace BubbleWash.EditorTools
             // bottom corners turned violet (hue 225 / 210 vs reference 205 / 193). Weaker and a neutral deep blue (G ~ B / 2).
             var vg = profile.Add<Vignette>(true); vg.intensity.Override(0.22f); vg.smoothness.Override(0.48f); vg.color.Override(new Color(0.10f, 0.20f, 0.40f));
             var wb = profile.Add<WhiteBalance>(true); wb.temperature.Override(0f); wb.tint.Override(0f);
+            // OWNER 2026-11-27 05:28 approved the VIDEO LOOK grade: a 32^3 URP Color Lookup fitted by Tools/look_lut.py (Lab
+            // quantile match of the owner's frames 0.75 / 4.50 / 6.75 / 11.25 s vs our matched stills of build p4, strength
+            // 0.85; judged on the other sections: palette dE R2 12.0 -> 10.1, R5 11.3 -> 6.1, finale 5.7 -> 2.9). URP applies it
+            // after tonemapping (sRGB in -> sRGB out), cheap on mobile (part of the uber post pass). Refit = run look_lut.py on
+            // new stills and copy its lut_video_look.png over this file; remove = contribution 0.
+            var videoLut = LoadVideoLookLut();
+            if (videoLut != null)
+            {
+                var lookup = profile.Add<ColorLookup>(true);
+                lookup.texture.Override(videoLut);
+                lookup.contribution.Override(1f);
+                Debug.Log($"[BWK] video look grade: Color Lookup {VideoLookLutPath} ({videoLut.width}x{videoLut.height}, valid {lookup.ValidateLUT()})");
+            }
+            else Debug.LogWarning("[BWK] video look grade: " + VideoLookLutPath + " missing - no Color Lookup");
             // soft far tunnel (premium film depth): mascot, coins and near rings stay crisp
             var dof = profile.Add<DepthOfField>(true);
             // round 3: a little softer far tunnel (reference is dreamier / softer behind the second ring)
@@ -796,6 +813,27 @@ namespace BubbleWash.EditorTools
             go.transform.localPosition = local;
             var l = go.AddComponent<Light>();
             l.type = LightType.Point; l.color = c; l.intensity = intensity; l.range = range; l.shadows = LightShadows.None;
+        }
+
+        /// <summary>Owner-approved video look LUT (2026-11-27 05:28): 1024 x 32 URP strip from Tools/look_lut.py. No reference
+        /// pixels, only a colour mapping, so it is tracked like any other texture.</summary>
+        public const string VideoLookLutPath = "Assets/BubbleWashKingdom/Art/Textures/Post/LUT_VideoLook_p4.png";
+
+        /// <summary>Loads the LUT with the import settings URP Color Lookup needs (linear data, no mips, clamp, uncompressed).</summary>
+        static Texture2D LoadVideoLookLut()
+        {
+            if (!File.Exists(VideoLookLutPath)) return null;
+            AssetDatabase.ImportAsset(VideoLookLutPath);
+            if (AssetImporter.GetAtPath(VideoLookLutPath) is TextureImporter ti &&
+                (ti.sRGBTexture || ti.mipmapEnabled || ti.wrapMode != TextureWrapMode.Clamp || ti.filterMode != FilterMode.Bilinear ||
+                 ti.textureCompression != TextureImporterCompression.Uncompressed || ti.npotScale != TextureImporterNPOTScale.None))
+            {
+                ti.textureType = TextureImporterType.Default;
+                ti.sRGBTexture = false; ti.mipmapEnabled = false; ti.wrapMode = TextureWrapMode.Clamp; ti.filterMode = FilterMode.Bilinear;
+                ti.textureCompression = TextureImporterCompression.Uncompressed; ti.npotScale = TextureImporterNPOTScale.None;
+                ti.SaveAndReimport();
+            }
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(VideoLookLutPath);
         }
     }
 }
