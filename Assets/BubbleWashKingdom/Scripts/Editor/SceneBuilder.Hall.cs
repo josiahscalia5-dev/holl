@@ -385,7 +385,10 @@ namespace BubbleWash.EditorTools
             // axis (-1, .1, -.2) sat 54 deg off it, so the open end face filled the corner. Axis now perpendicular to that
             // ray (hub end left + toward the camera, out of frame): R2 sees the bristle sleeve along its length (radiating
             // bristles, pink / white / cyan bands), both end faces turned away; far end ~x 230 px, lower edge y ~150-180
-            var dRot = HallRollerRot(r2.rot * new Vector3(-0.66f, 0.05f, -0.75f));
+            // v3 preview (11:53): the side-on SM_RollerDrum_s2 showed only its sparse bristle tips in the corner (centre off
+            // frame; pink 7 % vs ref 66, before 38) -> OFF until a denser / longer-tufted drum is placed further into the frame
+            const bool S2DrumRollerP9 = false;
+            var dRot = HallRollerRot(r2.rot * (S2DrumRollerP9 ? new Vector3(-0.66f, 0.05f, -0.75f) : new Vector3(-1f, 0.1f, -0.2f)));
             // v1: the r8 layout showed its blue / white non-hub half here (corner 78 % blue) -> pink-dominant s2 body
             // pass 6: the 2.6 m clearance is checked within 4.5 m of the centre line (lanes + 2.38 m rails + 2 m margin)
             // instead of 12 m: this roller hangs >= 4 m to the side of the slide, and the 12 m literal lifted it out of the
@@ -398,7 +401,7 @@ namespace BubbleWash.EditorTools
             // placement kept (the fix needs a new roller body master with a closed fur end cap, see NOTES.md)
             // pass 9: body = the new bristle drum master SM_RollerDrum_s2 (the s2 body + sleeve stay the fallback)
             HallRoller(holder, HallRollerClear(HallScreenPoint(r2, -0.08f, -0.12f, 6.3f), dRot, 1.6f, 2.6f, "door/S2", 4.0f), dRot, 1.6f, -36f,
-                       ModelPrefab("Machinery", "SM_RollerDrum_s2") != null ? "SM_RollerDrum_s2" : "SM_BrushRoller_s2");
+                       S2DrumRollerP9 && ModelPrefab("Machinery", "SM_RollerDrum_s2") != null ? "SM_RollerDrum_s2" : "SM_BrushRoller_s2");
             // blue machine housing + gold pipe (SM_DoorMachine_s2, build_door_machinery_s2.py): front parallel to the door
             // wall, flange end (asset -X) at the rim; centre at R2 (u .06, v .32), 7 m deep = in front of the wall (40.35 m)
             // (v1 u .03 / v .29: pipe at y ~190 and flange at x ~165; reference pipe y 195-235 reaching the rim at x ~245)
