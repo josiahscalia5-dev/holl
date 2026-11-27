@@ -164,6 +164,20 @@ namespace BubbleWash.EditorTools
             if (bodyVariant != null && ModelPrefab("Machinery", bodyVariant) != null) bodyName = bodyVariant;
             var body = HallPlace(parent, "Machinery", bodyName, pos, rot, scale, default, false);
             if (body != null) HallOwnMaterials(body);
+            // Screen S2 pass 6 (owner sheet S2/03 "dense soft pink bristles"): the S2 body gets the bristle sleeve
+            // SM_RollerBristle_s2 (build_s2_roller_p6.py, same asset frame) as a child, so it spins with the body
+            if (body != null && bodyName == "SM_BrushRoller_s2")
+            {
+                var br = HallPlace(body, "Machinery", "SM_RollerBristle_s2", pos, rot, 1f, default, false);
+                if (br != null)
+                {
+                    br.transform.localPosition = Vector3.zero;
+                    br.transform.localRotation = Quaternion.identity;
+                    br.transform.localScale = Vector3.one;
+                    HallOwnMaterials(br);
+                    HallLods(br, "RollerBristle_LOD0", "RollerBristle_LOD1");
+                }
+            }
             HallPlace(parent, "Machinery", "SM_BrushRollerArm_r7", pos, rot, scale);
             if (body == null) return;
             var sp = body.AddComponent<Spinner>();
@@ -336,12 +350,18 @@ namespace BubbleWash.EditorTools
             // BODY, and u .035 -> 0 keeps the body in the reference corner (0-280 px) instead of the end
             var dRot = HallRollerRot(r2.rot * new Vector3(-1f, 0.1f, -0.2f));
             // v1: the r8 layout showed its blue / white non-hub half here (corner 78 % blue) -> pink-dominant s2 body
-            HallRoller(holder, HallRollerClear(HallScreenPoint(r2, 0.0f, -0.08f, 6.3f), dRot, 1.6f, 2.6f, "door/S2", 12f), dRot, 1.6f, -36f,
+            // pass 6: the 2.6 m clearance is checked within 4.5 m of the centre line (lanes + 2.38 m rails + 2 m margin)
+            // instead of 12 m: this roller hangs >= 4 m to the side of the slide, and the 12 m literal lifted it out of the
+            // corner (lead build: bottom edge y ~100 vs reference ~160); with the bristle sleeve its centre sits at v -0.10
+            HallRoller(holder, HallRollerClear(HallScreenPoint(r2, 0.0f, -0.10f, 6.3f), dRot, 1.6f, 2.6f, "door/S2", 4.5f), dRot, 1.6f, -36f,
                        "SM_BrushRoller_s2");
             // blue machine housing + gold pipe (SM_DoorMachine_s2, build_door_machinery_s2.py): front parallel to the door
             // wall, flange end (asset -X) at the rim; centre at R2 (u .06, v .32), 7 m deep = in front of the wall (40.35 m)
             // (v1 u .03 / v .29: pipe at y ~190 and flange at x ~165; reference pipe y 195-235 reaching the rim at x ~245)
-            var mp = HallScreenPoint(r2, 0.06f, 0.32f, 7.0f);
+            // pass 6: (u .06, v .32) put the pipe at y ~215-230 = the reference height, but our left foam bank tops out at
+            // y ~165-190 (water agent gap #6) and hid it, and the housing covered the hatch's widened gold band -> u .045,
+            // v .27 (pipe just above today's foam line, housing left of the gold); back to v .32 once the foam is lowered
+            var mp = HallScreenPoint(r2, 0.045f, 0.27f, 7.0f);
             var mach = HallPlace(holder, "Machinery", "SM_DoorMachine_s2", mp, fm.FlatRotation, 1.0f);
             if (mach != null)
             {

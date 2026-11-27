@@ -92,6 +92,10 @@ FOOT_FLOOR = 0.045        # lowest paw point in the seated pose (round 3: heels 
                           # so the white soles show fully above the water as in the reference; the body still sits)
 FOOT_MIN_Z = 0.006        # floor clamp for animated paws
 ARM_RAISE_MAX = 26.0      # extra raise above the modelled 30 deg: soft cap + per-frame cuff collision solve
+# cuff solve trigger: lower the arm once a probe point is within this depth of the beanie's outer surface (-4 mm =
+# v3 / v4 unchanged). Optional contract key 'arm_cuff_tol' (v5: the soft plush mitt may press up to 1.5 cm into
+# the brim's rib / fur zone, like the reference's mitts that touch the brim side, instead of dropping 28 deg)
+ARM_CUFF_TOL = float(CONTRACT.get('arm_cuff_tol', -0.004))
 TILT_RADIUS = 0.40        # effective bottom radius: lift that keeps the bottom on the surface when leaning
 
 # head pivot = ball centre (rotations slide the face over the near-spherical body); hat chain along the hat axis
@@ -952,11 +956,11 @@ class Rig:
                            for v, w in self.arm_probe[tag])
 
             ga, gh = arm_pose(ra)
-            if cuff_depth(ga, gh) > -0.004:          # arm would touch the beanie cuff: lower it until clear
+            if cuff_depth(ga, gh) > ARM_CUFF_TOL:    # arm would touch the beanie cuff: lower it until clear
                 lo, hi = ra - 50.0, ra
                 for _ in range(8):
                     mid = 0.5 * (lo + hi)
-                    if cuff_depth(*arm_pose(mid)) > -0.004:
+                    if cuff_depth(*arm_pose(mid)) > ARM_CUFF_TOL:
                         hi = mid
                     else:
                         lo = mid

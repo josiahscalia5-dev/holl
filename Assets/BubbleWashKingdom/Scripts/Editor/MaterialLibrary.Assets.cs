@@ -65,6 +65,25 @@ namespace BubbleWash.EditorTools
                 m.DisableKeyword("_EMISSION");
             });
 
+            // ---------------------------------------------------------------- S2 roller bristles (pass 6)
+            // SM_RollerBristle_s2 (build_s2_roller_p6.py): tapered bristle spikes over the S2 door roller body (owner sheet
+            // S2/03 "dense soft pink bristles"). Same self-light idea as the roller fur (the hall light reaching the roller
+            // is almost pure blue, r8 v2 pixel solve): soft matte albedo + colour-true emission so pink stays pink; deep pink
+            // root, light pink tip, white and cyan bands like SM_BrushRoller_s2.
+            void Bristle(string name, string albedo, string glow)
+            {
+                Mat(name, "Universal Render Pipeline/Lit", m =>
+                {
+                    C(m, "_BaseColor", albedo); F(m, "_Metallic", 0f); F(m, "_Smoothness", 0.38f);
+                    m.EnableKeyword("_EMISSION"); m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+                    C(m, "_EmissionColor", glow);
+                });
+            }
+            Bristle("M_BristlePink_s2", "#E2368C", "#6A1240");
+            Bristle("M_BristlePinkTip_s2", "#FF8CC8", "#8A3A68");
+            Bristle("M_BristleWhite_s2", "#FFF0FA", "#6E6278");
+            Bristle("M_BristleCyan_s2", "#7CD0F4", "#1E5470");
+
             // ---------------------------------------------------------------- S2 door hatch + LED rim (pass 6)
             // Violet torus rims of the new masters SM_DoorHatch_s2 / SM_LedRim_s2 (build_s2_door_p6.py). Reference f_03.00s
             // right of the door: a fat glossy violet rim, low #4C326B / mid #8059A3 / high #B07CCD with one long highlight

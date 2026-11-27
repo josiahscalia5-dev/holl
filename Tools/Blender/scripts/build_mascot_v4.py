@@ -1945,9 +1945,10 @@ V5_POM_TIP_R = 0.222      # yarn tip radius (reference rear: pom-pom diameter ~0
 V5_POM_CORE_R = 0.150     # core sphere (v4 0.148): its shells fill between the locks
 V5_POM_SINK = 0.36        # fraction of the tip radius sunk into the crown (reference: ball sits ON the crown)
 V5_YARN_N = 300           # Fibonacci directions; locks pointing into the crown are skipped (never seen)
-V5_ARM_UPPER = 25.0       # deg elevation of the upper arm (runs out under the brim; v4 straight arm 40.5)
+V5_ARM_UPPER = 18.0       # deg elevation of the upper arm (runs out under the brim; v4 straight arm 40.5)
 V5_ARM_FORE = 70.0        # deg elevation of the forearm + mitt beside the brim (reference rear: paws at brim/stripe height)
-V5_ARM_EXTRA = 0.094      # m added to the shoulder->mitt segment only (v4 0.13 m stub): mitts clear the brim edge
+V5_ARM_EXTRA = 0.110      # m added to the shoulder->mitt segment only (v4 0.13 m stub): mitts clear the brim edge
+V5_ARM_CUFF_TOL = 0.015   # rig cuff-solve tolerance (contract 'arm_cuff_tol'; v4 default -0.004)
 V5_SOLE_FUR = 0.18        # rig (contract 'sole_fur'): sole-side paw fur scaled to 18 % -> smooth white sole + pink pads
 V5_CUFF_ROLL = 0.012      # folded brim: outer rib surface pushed out up to 1.2 cm mid-height = thicker rolled cuff
 GAME5_BLEND = os.path.join(OUT, "mascot_v5_game.blend")
@@ -2104,6 +2105,7 @@ def export_game_model_v5():
             moved += 1
     me.update()
     contract["sole_fur"] = V5_SOLE_FUR
+    contract["arm_cuff_tol"] = V5_ARM_CUFF_TOL
     objs = [o for o in bpy.data.objects if o.type == 'MESH']
     contract["counts"] = {o.name: len(o.data.vertices) for o in objs}
     contract["source"] = ("build_mascot_v4.py BWK_V4_MODE=gamemodel_v5 (SK_Mascot_v5: rebuilt yarn pom-pom, raised "

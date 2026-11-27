@@ -29,32 +29,32 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AO: 0.35
-    - _ClumpAmount: 0.55
+    - _AO: 0.5
+    - _ClumpAmount: 0.3
     - _ClumpScale: 7
-    - _Curl: 0.25
-    - _Density: 150
+    - _Curl: 0.12
+    - _Density: 170
     - _EdgeSoft: 0.16
-    - _FurLength: 0.056
-    - _Glow: 0.06
+    - _FurLength: 0.034
+    - _Glow: 0.03
     - _Gravity: 0
     - _PawGlow: 0
     - _RimPower: 2.6
     - _RimStrength: 0.4
     - _SilhouetteFade: 0.3
     - _StaticMode: 0
-    - _Thinning: 0.7
+    - _Thinning: 0.8
     - _TuftAmount: 0
     - _TuftScale: 24
     - _Underfur: 0.8
     - _UseVertexTint: 1
     - _Wrap: 0.6
     m_Colors:
-    - _BaseColor: {r: 0.5411765, g: 0.23529412, b: 0.78431374, a: 1}
+    - _BaseColor: {r: 0.36078432, g: 0.14901961, b: 0.44705883, a: 1}
     - _PawRootColor: {r: 0.86, g: 0.8, b: 0.8399999, a: 1}
     - _PawTipColor: {r: 1, g: 0.97999996, b: 0.97999996, a: 1}
-    - _RimColor: {r: 0.8392157, g: 0.7058824, b: 1, a: 1}
-    - _RootColor: {r: 0.22745098, g: 0.078431375, b: 0.40784314, a: 1}
-    - _TipColor: {r: 0.7372549, g: 0.54901963, b: 0.9411765, a: 1}
+    - _RimColor: {r: 0.78431374, g: 0.65882355, b: 0.9411765, a: 1}
+    - _RootColor: {r: 0.18039216, g: 0.0627451, b: 0.2509804, a: 1}
+    - _TipColor: {r: 0.6039216, g: 0.36078432, b: 0.6901961, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
