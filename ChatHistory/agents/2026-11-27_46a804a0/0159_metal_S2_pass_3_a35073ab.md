@@ -59,3 +59,103 @@ _Text-only export: the lead's brief, the agent's statements and one line per too
 **Agent (2026-11-27 01:59 UTC):**
 
 > _tool: Read - C:/Users/josia/thanksgiving/Captures/stills_s2p2/hero_mouth_16x9.png_
+
+**Agent (2026-11-27 01:59 UTC):**
+
+> _tool: Bash - List shaders and editor scripts with sizes_
+
+**Agent (2026-11-27 01:59 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Art/Shaders/BWK_DrumWall.shader_
+
+**Agent (2026-11-27 01:59 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/MaterialLibrary.Environment.cs_
+
+**Agent (2026-11-27 02:00 UTC):**
+
+> _tool: Bash - Find mouth drum and wall material use in Hall_
+
+**Agent (2026-11-27 02:00 UTC):**
+
+> _tool: Bash - Read the hall mouth section of SceneBuilder.Hall.cs_
+
+**Agent (2026-11-27 02:00 UTC):**
+
+> _tool: Bash - Inspect the image tools and pass-1 measure script_
+
+**Agent (2026-11-27 02:00 UTC):**
+
+> _tool: Bash - Create output folder and read pass-1 scripts_
+
+**Agent (2026-11-27 02:00 UTC):**
+
+> _tool: Bash - Write crop-sheet script and build reference vs before sheets_
+
+**Agent (2026-11-27 02:00 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/lighting/screen_S2_p3/c_walls_ref_before.png_
+
+**Agent (2026-11-27 02:01 UTC):**
+
+> _tool: Bash - Find R2 camera definition and tunnel constants_
+
+**Agent (2026-11-27 02:01 UTC):**
+
+> _tool: Bash - Crop the 4K reference walls for detail_
+
+**Agent (2026-11-27 02:01 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/lighting/screen_S2_p3/ref4k_wallL.png_
+
+**Agent (2026-11-27 02:01 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/lighting/screen_S2_p3/ref4k_wallR.png_
+
+**Agent (2026-11-27 02:02 UTC):**
+
+> _tool: Bash - Find door ring model materials in Blender scripts_
+
+**Agent (2026-11-27 02:02 UTC):**
+
+> _tool: Bash - Read the door ring build and tunnel module refs_
+
+**Agent (2026-11-27 02:02 UTC):**
+
+> _tool: Bash - Read rest of hall placement and door scripts headers_
+
+**Agent (2026-11-27 02:02 UTC):**
+
+> _tool: Bash - Zoom our render's wall crops 3x_
+
+**Agent (2026-11-27 02:02 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/lighting/screen_S2_p3/ours_wallR_3x.png_
+
+**Agent (2026-11-27 02:02 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/lighting/screen_S2_p3/ours_wallL_3x.png_
+
+**Agent (2026-11-27 02:03 UTC):**
+
+> _tool: Bash - Find hall material slots and wall material users_
+
+**Agent (2026-11-27 02:03 UTC):**
+
+> _tool: Bash - Read the TunnelMouthWall and hall tunnel creation_
+
+**Agent (2026-11-27 02:04 UTC):**
+
+> _tool: Bash - Find HallScale and preview flags_
+
+**Agent (2026-11-27 02:05 UTC):**
+
+> _tool: Bash - Locate star placement code in SceneBuilder.Lighting.cs_
+
+**Agent (2026-11-27 02:05 UTC):**
+
+> _tool: Bash - Read the neon star layout and builder code_
+
+**Agent (2026-11-27 02:05 UTC):**
+
+> _tool: Bash - Find environment star placements_

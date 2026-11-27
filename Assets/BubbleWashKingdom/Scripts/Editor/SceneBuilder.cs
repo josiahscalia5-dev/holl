@@ -619,12 +619,11 @@ namespace BubbleWash.EditorTools
             // camera as the mascot reaches the door - a left-lane line 33-42 m (the reference shows one at the lower left
             // next to the camera and more ahead). Placed after the seeded patterns (their rng sequence is unchanged) and
             // skipped wherever a pattern item already sits within 1 m in that lane.
-            for (float d = 33.2f; d < 42f; d += 1.7f)
-            {
-                float dc = d;
+            // s2p2 judges: a 6-coin queue read as clutter over the chevron and its first coin sat 1 m in front of the camera
+            // -> three big coins flanking the mascot like the reference (two low beside it, one raised = a jump coin)
+            foreach (var (dc, hc) in new[] { (35.0f, 0.55f), (37.2f, 0.55f), (39.6f, 1.55f) })
                 if (!registry.items.Any(it => Mathf.Abs(it.distance - dc) < 1f && Mathf.Abs(it.lateral + lane) < 0.6f))
-                    Make(coin, PrimitiveType.Cylinder, "M_Coin", TrackItemKind.Coin, dc, -lane, 0.55f, 1f);
-            }
+                    Make(coin, PrimitiveType.Cylinder, "M_Coin", TrackItemKind.Coin, dc, -lane, hc, 1f);
             foreach (var it in registry.items)
                 if (it.kind == TrackItemKind.Boost || it.kind == TrackItemKind.Obstacle) { it.spinSpeed = 0f; it.bobAmplitude = 0f; }
             registry.Sort();
