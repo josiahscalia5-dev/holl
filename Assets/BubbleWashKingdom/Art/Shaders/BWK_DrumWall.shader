@@ -517,7 +517,9 @@ Shader "BWK/DrumWall"
                     {
                         float ribP = max(_DoorRibPitch, 0.1);
                         float ribFade = saturate(1.0 - fwidth(m.y) * 5.0 / ribP);
-                        half3 nr = normalize(n + alongDir * (_DoorRibTilt * ribFade * sin(m.y * 6.2831853 / ribP)));
+                        // v3: per-rib strength (0.45-1.25, zero at every rib boundary) -> irregular streaks, not a vinyl record
+                        float ribAmp = lerp(0.45, 1.25, BWK_Hash21(float2(floor(m.y / ribP) * 0.913 + 0.37, 3.7)));
+                        half3 nr = normalize(n + alongDir * (_DoorRibTilt * ribAmp * ribFade * sin(m.y * 6.2831853 / ribP)));
                         half3 R = reflect(-viewDir, nr);
                         half down = saturate(abs(dot(R, alongDir)));
                         half sheen = pow(down, max(_DoorSheenPower, 1.0));

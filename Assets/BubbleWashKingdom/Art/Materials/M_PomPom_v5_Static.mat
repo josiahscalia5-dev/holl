@@ -33,7 +33,7 @@ Material:
     - _ClumpAmount: 0.55
     - _ClumpScale: 7
     - _Curl: 0.25
-    - _Density: 170
+    - _Density: 190
     - _EdgeSoft: 0.16
     - _FurLength: 0
     - _Glow: 0.06
@@ -57,6 +57,6 @@ Material:
     - _PawTipColor: {r: 1, g: 0.97999996, b: 0.97999996, a: 1}
     - _RimColor: {r: 0.78431374, g: 0.47058824, b: 0.94509804, a: 1}
     - _RootColor: {r: 0.24313726, g: 0.047058824, b: 0.43137255, a: 1}
-    - _TipColor: {r: 0.70980394, g: 0.4, b: 0.8980392, a: 1}
+    - _TipColor: {r: 0.6627451, g: 0.33333334, b: 0.8784314, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -36,7 +36,7 @@ Material:
     - _Density: 240
     - _EdgeSoft: 0.16
     - _FurLength: 0.052
-    - _Glow: 0.24
+    - _Glow: 0.22
     - _Gravity: 0.02
     - _PawGlow: 0.45
     - _PlushMode: 1
@@ -44,9 +44,9 @@ Material:
     - _RimStrength: 0.5
     - _SilhouetteFade: 0.45
     - _StaticMode: 0
-    - _StrandContrast: 0.5
+    - _StrandContrast: 0.35
     - _Thinning: 0.8
-    - _TuftAmount: 0.5
+    - _TuftAmount: 0.3
     - _TuftScale: 20
     - _Underfur: 0.8
     - _UseVertexTint: 1
