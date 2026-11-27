@@ -323,3 +323,31 @@ Now the drum-wall values in MaterialLibrary.Environment.cs.
 **Agent (2026-11-27 02:15 UTC):**
 
 > _tool: Bash - Tone cyan core, compile-check, run preview v3_
+
+**Agent (2026-11-27 02:17 UTC):**
+
+> _tool: Bash - Measure v3 and try building the R2 triptych_
+
+**Agent (2026-11-27 02:17 UTC):**
+
+> _tool: Bash - Build ref|before|after triptychs and crop sheet_
+
+**Agent (2026-11-27 02:17 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/lighting/screen_S2_p3/S2_p3_triptych_R2.png_
+
+**Agent (2026-11-27 02:17 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/lighting/screen_S2_p3/v3/hero_16x9.png_
+
+**Agent (2026-11-27 02:18 UTC):**
+
+> _tool: Bash - Append v2/v3 results and lead requests to NOTES_
+
+**Agent (2026-11-27 02:18 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/lighting/screen_S2_p3/v3/hero_mouth_9x16.png_
+
+**Agent (2026-11-27 02:18 UTC):**
+
+> _tool: StructuredOutput_
