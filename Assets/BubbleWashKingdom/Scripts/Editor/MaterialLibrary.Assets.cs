@@ -23,8 +23,8 @@ namespace BubbleWash.EditorTools
             // the violet tunnel light lands on the reference ~325), stronger racing rainbow streaks + clear coat.
             Mat("M_RailBand_r8", "BWK/Soft", m =>
             {
-                // v2: v1 (hue 328 albedo) still rendered hue 312 vs reference 321-327 -> albedo hue ~340 (warm candy pink)
-                F(m, "_Mode", 1); C(m, "_ColorA", "#FF5A98"); C(m, "_ColorB", "#FFD25E"); C(m, "_ColorC", "#FF4690");
+                // v2: v1 (hue 328 albedo) still rendered hue 312 vs reference 321-327 -> albedo hue ~340 (warm candy pink); v3 hue ~342 (v2 rendered 317)
+                F(m, "_Mode", 1); C(m, "_ColorA", "#FF5C8C"); C(m, "_ColorB", "#FFD84A"); C(m, "_ColorC", "#FF4A86");
                 F(m, "_Smoothness", 0.96f); F(m, "_Metallic", 0f); F(m, "_Glow", 0.34f);
                 F(m, "_RimPower", 3f); F(m, "_RimStrength", 0.35f);
                 F(m, "_StreakAmount", 1.25f); F(m, "_StreakSpeed", 7f);      // racing rainbow reflections (pink / yellow / cyan)
@@ -33,7 +33,7 @@ namespace BubbleWash.EditorTools
             Mat("M_RailTube_r8", "BWK/Soft", m =>
             {
                 // hot pink tube with a pale glossy crest on the channel side and a deep hot pink back
-                F(m, "_Mode", 1); C(m, "_ColorA", "#FF5A98"); C(m, "_ColorB", "#FFE0EC"); C(m, "_ColorC", "#FF448E");
+                F(m, "_Mode", 1); C(m, "_ColorA", "#FF5C8C"); C(m, "_ColorB", "#FFE0EC"); C(m, "_ColorC", "#FF4886");
                 F(m, "_Smoothness", 0.97f); F(m, "_Metallic", 0f); F(m, "_Glow", 0.32f);
                 F(m, "_RimPower", 2.6f); F(m, "_RimStrength", 0.45f);
                 F(m, "_StreakAmount", 0.7f); F(m, "_StreakSpeed", 7f); F(m, "_ReflectBoost", 1.1f);

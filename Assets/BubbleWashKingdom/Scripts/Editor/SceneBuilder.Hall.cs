@@ -127,7 +127,7 @@ namespace BubbleWash.EditorTools
         /// <summary>r8 v2 (asset artist): raises a roller centre just enough that its fur bottom stays >= minClear above the
         /// slide wherever the roller hangs over the slide corridor (horizontal distance to the centre line < 3 m), sampled
         /// along its axis. SM_BrushRoller_r8: band peak radius 0.98 m and 2.62 m long in asset space, + 0.30 m world fur.</summary>
-        static Vector3 HallRollerClear(Vector3 p, Quaternion rot, float scale, float minClear, string label)
+        static Vector3 HallRollerClear(Vector3 p, Quaternion rot, float scale, float minClear, string label, float corridor = 3f)
         {
             float radius = 0.98f * scale + 0.32f, halfLen = 1.4f * scale, lift = 0f, worst = float.MaxValue;
             for (int i = -4; i <= 4; i++)
@@ -141,7 +141,7 @@ namespace BubbleWash.EditorTools
                     float hd = new Vector2(rel.x, rel.z).magnitude;
                     if (hd < bestD) { bestD = hd; slideY = f.position.y; }
                 }
-                if (bestD > 3f) continue;
+                if (bestD > corridor) continue;
                 float clear = q.y - radius - slideY;
                 worst = Mathf.Min(worst, clear);
                 lift = Mathf.Max(lift, minClear - clear);
@@ -290,12 +290,14 @@ namespace BubbleWash.EditorTools
             // 35 m, CaptureTools "R2_rear_S2_like_3s"). Reference f_03.00s: a big pink fluffy roller fills the upper-left
             // corner (0,0)-(280,160) in FRONT of the hatch rim; left of the rim a dark blue machine housing with a
             // horizontal polished gold pipe + collars at y ~200-235 running into the rim (x 60-245).
-            // The door roller (r8 v2: 36 m, 6.2 m high = above the R2 frame) moves to where R2 sees it; it stays outside the
-            // slide corridor (HallRollerClear: >= 2.6 m wherever it is within 3 m of the centre line, logged).
+            // The door roller (r8 v2: 36 m, 6.2 m high = above the R2 frame) moves to where R2 sees it. Its fur bottom stays
+            // >= 2.6 m above the slide level everywhere within 12 m of the centre line (HallRollerClear corridor 12, logged),
+            // not only over the 3 m corridor: v2 (5.6 m deep, scale 1.45) was 3.6 m+ to the side but only ~2 m above it.
+            // v3: 6.3 m deep + scale 1.6 keeps the corner coverage with the lift; axis closer to the door plane (z .1).
             var r2 = R2Cam();
-            var dRot = HallRollerRot(r2.rot * new Vector3(-1f, 0.1f, 0.25f));
+            var dRot = HallRollerRot(r2.rot * new Vector3(-1f, 0.1f, 0.1f));
             // v1: the r8 layout showed its blue / white non-hub half here (corner 78 % blue) -> pink-dominant s2 body
-            HallRoller(holder, HallRollerClear(HallScreenPoint(r2, 0.035f, -0.06f, 5.6f), dRot, 1.45f, 2.6f, "door/S2"), dRot, 1.45f, -36f,
+            HallRoller(holder, HallRollerClear(HallScreenPoint(r2, 0.035f, -0.08f, 6.3f), dRot, 1.6f, 2.6f, "door/S2", 12f), dRot, 1.6f, -36f,
                        "SM_BrushRoller_s2");
             // blue machine housing + gold pipe (SM_DoorMachine_s2, build_door_machinery_s2.py): front parallel to the door
             // wall, flange end (asset -X) at the rim; centre at R2 (u .06, v .32), 7 m deep = in front of the wall (40.35 m)

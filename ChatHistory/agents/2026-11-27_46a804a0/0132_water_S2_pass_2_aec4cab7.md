@@ -287,3 +287,59 @@ Now batch 2: milkier crowns, less hue overshoot, exact S2-camera bubble placemen
 **Agent (2026-11-27 01:46 UTC):**
 
 > _tool: Bash - Run agent preview 2 with the water gate enabled_
+
+**Agent (2026-11-27 01:49 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_S2_p2/p2/waterfx/R2_rear_S2_like_3s_16x9.png_
+
+**Agent (2026-11-27 01:49 UTC):**
+
+> _tool: Bash - Measure preview 2 and build comparison sheets_
+
+**Agent (2026-11-27 01:49 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_S2_p2/full_ref_before_p2.png_
+
+**Agent (2026-11-27 01:50 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_S2_p2/crowns_ref_before_p2.png_
+
+**Agent (2026-11-27 01:50 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Art/Shaders/BWK_Soft.shader_
+
+**Agent (2026-11-27 01:50 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/MaterialLibrary.WaterFX.cs_
+
+**Agent (2026-11-27 01:50 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_S2_p2/foamL_ref_before_p2.png_
+
+**Agent (2026-11-27 01:50 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/MaterialLibrary.WaterFX.cs_
+
+**Agent (2026-11-27 01:50 UTC):**
+
+> _tool: Bash - Compile check, log notes, run preview 3_
+
+**Agent (2026-11-27 01:53 UTC):**
+
+> _tool: Bash - Measure preview 3 and build final sheets_
+
+**Agent (2026-11-27 01:53 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_S2_p2/S2_ref_before_p3.png_
+
+**Agent (2026-11-27 01:53 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_S2_p2/foamL_ref_before_p3.png_
+
+**Agent (2026-11-27 01:54 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_S2_p2/p3/waterfx/hero_mouth_9x16.png_
+
+**Agent (2026-11-27 01:54 UTC):**
+
+> _tool: Bash - Append final preview notes_

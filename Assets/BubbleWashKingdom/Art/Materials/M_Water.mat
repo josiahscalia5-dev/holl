@@ -46,14 +46,14 @@ Material:
     - _HueLock: 0.85
     - _HueTarget: 203
     - _NearBrighten: 0.16
-    - _PatchAmount: 0.5
+    - _PatchAmount: 0.42
     - _RainbowAmount: 0.32
     - _ReflectBoost: 0.55
     - _RippleStrength: 1.15
     - _Smoothness: 0.62
     - _SparkleAmount: 0.9
-    - _StreakAmount: 0.52
-    - _StreakDensity: 1.25
+    - _StreakAmount: 0.62
+    - _StreakDensity: 1.45
     - _VTile: 4
     - _WaveHeight: 0.025
     - _WeaveAmp: 0.5
@@ -68,6 +68,6 @@ Material:
     - _ReflectTint: {r: 0.49803922, g: 0.9411765, b: 1, a: 1}
     - _ShallowColor: {r: 0.11764706, g: 0.61960787, b: 0.84705883, a: 1}
     - _StreakColor: {r: 0.9019608, g: 0.9882353, b: 1, a: 1}
-    - _TurquoiseColor: {r: 0.16470589, g: 0.7529412, b: 0.8862745, a: 1}
+    - _TurquoiseColor: {r: 0.27450982, g: 0.7607843, b: 0.8862745, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

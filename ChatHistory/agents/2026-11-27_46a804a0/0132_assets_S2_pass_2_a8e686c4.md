@@ -237,3 +237,59 @@ Now I'll parametrize the roller builder for a pink-dominant S2 variant.
 **Agent (2026-11-27 01:48 UTC):**
 
 > _tool: Bash - Build ref/before/after comparison sheets_
+
+**Agent (2026-11-27 01:48 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/assets/screen_S2_p2/S1_before_after.png_
+
+**Agent (2026-11-27 01:49 UTC):**
+
+> _tool: Bash - Add corridor width parameter to roller clearance_
+
+**Agent (2026-11-27 01:49 UTC):**
+
+> _tool: Bash - Locate door roller lines_
+
+**Agent (2026-11-27 01:49 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.Hall.cs_
+
+**Agent (2026-11-27 01:49 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.Hall.cs_
+
+**Agent (2026-11-27 01:49 UTC):**
+
+> _tool: Bash - Compile-check and append v2 notes_
+
+**Agent (2026-11-27 01:50 UTC):**
+
+> _tool: Bash - Tweak rail hue, compile, run preview v3_
+
+**Agent (2026-11-27 01:52 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/assets/screen_S2_p2/v3/R2_rear_S2_like_3s_16x9.png_
+
+**Agent (2026-11-27 01:52 UTC):**
+
+> _tool: Bash - Measure v3 crops_
+
+**Agent (2026-11-27 01:52 UTC):**
+
+> _tool: Bash - Regenerate sheets with v3 and hero_mouth pairs_
+
+**Agent (2026-11-27 01:52 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/assets/screen_S2_p2/hero_mouth_9x16_before_after.png_
+
+**Agent (2026-11-27 01:52 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/assets/screen_S2_p2/S1_before_after.png_
+
+**Agent (2026-11-27 01:53 UTC):**
+
+> _tool: Bash - Append final pass notes_
+
+**Agent (2026-11-27 01:53 UTC):**
+
+> _tool: StructuredOutput_

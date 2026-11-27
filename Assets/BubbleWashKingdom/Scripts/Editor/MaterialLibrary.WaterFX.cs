@@ -61,6 +61,9 @@ namespace BubbleWash.EditorTools
                 // bluer turquoise patches, a little more white flow and near-camera translucency
                 F(m, "_HueTarget", 203f); F(m, "_HueLock", 0.85f); C(m, "_TurquoiseColor", "#2AC0E2"); C(m, "_ShallowColor", "#1E9ED8");
                 F(m, "_StreakAmount", 0.52f); F(m, "_NearBrighten", 0.16f);
+                // p3 (p2 lane #51B4D9 hue 196 vs reference #7ABADE hue 202: right hue band, but too saturated - the reference
+                // lane carries more white flow): softer turquoise patches, denser white flow streaks
+                C(m, "_TurquoiseColor", "#46C2E2"); F(m, "_PatchAmount", 0.42f); F(m, "_StreakAmount", 0.62f); F(m, "_StreakDensity", 1.45f);
                 // light halos around the decor chevrons: same period / geometry / runway offset as SceneBuilder.BuildDecorChevrons
                 F(m, "_ChevronStart", SceneBuilder.ChevronStart); F(m, "_ChevronSpacing", SceneBuilder.ChevronSpacing);
                 // (v2 notch measured #55B8E5 vs reference deep #3386CC: the arrows now bloom on their own -> fainter, tighter pool)
@@ -187,6 +190,10 @@ namespace BubbleWash.EditorTools
                 // round 8 MASTER (library 17 "soft rounded foam bubbles", owner sheet 01 item 4): softer light wrap on the
                 // bigger lumps, a satin sheen + small bubble glints, broader soft rim (no flat white)
                 F(m, "_Wrap", 0.68f); F(m, "_SpecStrength", 0.38f); F(m, "_GlintAmount", 0.12f); F(m, "_RimStrength", 0.36f); F(m, "_RimPower", 2.2f);
+                // S2 pass 2 p3 (owner item 3 "LARGE, SOFT, THREE-DIMENSIONAL foam banks"; p2 door banks = right size, white 56 %
+                // vs ref 59 %, but they shade as one flat grey-white wall): less light wrap so every lobe rounds off into a
+                // soft lavender-blue crevice, brighter satin tops
+                F(m, "_Wrap", 0.45f); F(m, "_SpecStrength", 0.5f); C(m, "_ShadowColor", "#AEB4DA");
             });
             // round 8 masters: the old hall / fallback foam material is now a VARIANT of M_Foam_v2 (no overrides: one foam look)
             WaterVariant("M_Foam", "M_Foam_v2", null, -1);
