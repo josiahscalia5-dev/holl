@@ -5,6 +5,19 @@ of one enormous magical washing machine. These instructions come only from the o
 (`Docs/ProjectBrief.md`) and the approved Google Flow video `25982.mp4`.
 
 ## Owner standing rules (2026-11-27, follow in every session)
+- OWNER 2026-11-27 12:36 STRICT PERMANENT USAGE AND QUALITY RULE (verbatim in Captures/agents/_shared/OWNER_RULE_1236_usage_quality.txt):
+  never voluntarily stop, wrap up, pause development or reduce quality because usage reaches 61 / 75 / 85 / 90 / 95 / 99 % -
+  continue productive development until 100 % of the included usage is exhausted or the enforced limit stops the work (usage is
+  the owner's responsibility; producing the highest-quality game is ours). Strongest suitable models / reasoning, best
+  specialists, skills, plugins, MCPs and integrations; Unity + Blender to their fullest. Continue unfinished specialist work and
+  launch the next visual reconstruction tasks without waiting for a reset. Priority: golden hatch, fluffy washing roller,
+  metallic tunnel walls, cinematic lighting, mascot, water, scenery (approved references + the closed Marble evaluation; no more
+  Marble credits). Goal 9/10+ on ALL approved screens, genuine interactive 3D Android gameplay. Exactly ONE 5-minute autosave,
+  safe GitHub sync, private conversation backups. No cash, paid usage, purchases or bypassing enforced limits.
+- OWNER 2026-11-27 12:30 REAL 3D PROOF (verbatim Captures/agents/_shared/OWNER_BRIEF_1230_real3d_proof.txt): Marble = look target
+  only; no flat image planes / background cards / billboards / placeholders for scenery; every S2 claim proven with the comparison
+  sheet, 5-angle proof, neutral clay proof, mascot visible / hidden / alone, a Play Mode recording, a per-item geometry audit
+  (Tools/owner_package.sh -> CaptureTools.S2ProofViewsBatch) and an honest score + short gap list.
 - QUALITY FIRST, NOT CREDIT CONSERVATION: use the whole subscription allowance; never pick inferior methods, simplify 3D
   assets or compromise visual accuracy to save credits; rebuild inadequate assets properly. Do not voluntarily stop at
   72/80/85/90/95 % usage - keep working until the real limit (respect hardware stability, disk safety; no paid charges,

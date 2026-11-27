@@ -37,6 +37,12 @@ namespace BubbleWash.EditorTools
         // this yaw so v4 faces the travel direction like v3. A re-export without the test yaw must set this back to 0.
         public const float ModelYaw = UseMascotV5 ? 0f : UseMascotV4 ? 180f : 0f;
         public const string ControllerPath = "Assets/BubbleWashKingdom/Animation/Mascot.controller";
+        // Motion E 2026-11-27 pass 9 (owner 10:48 / 12:08, reference 01 + crop 23b): the Ride centre "Slide" = the FBX take with
+        // the seated arms raised UP-OUTWARD beside the brim baked in (BubbleWash.SeatedArmSolver: collision-checked against the
+        // knitted cuff), so the hero stills (they sample "Slide"), the Ride blend and the arm hold all show the same pose.
+        // The FBX and its takes stay untouched. false + full build = the FBX's own Slide take exactly as before.
+        public const bool BakeSeatedSlide = true;
+        public const string SeatedSlidePath = "Assets/BubbleWashKingdom/Animation/SeatedSlide/Slide.anim";
 
         [MenuItem("Bubble Wash/Setup/4 Build Animator")]
         public static RuntimeAnimatorController Run()
@@ -46,6 +52,11 @@ namespace BubbleWash.EditorTools
                 .Where(c => !c.name.StartsWith("__preview__"))
                 .GroupBy(c => c.name).ToDictionary(g => g.Key, g => g.First());
             Debug.Log($"[BWK] Mascot clips found: {string.Join(", ", clips.Keys)}");
+            if (BakeSeatedSlide && clips.TryGetValue("Slide", out var fbxSlide))
+            {
+                var seated = BakeSeatedSlideAsset(fbxSlide);
+                if (seated != null) clips["Slide"] = seated;
+            }
 
             AnimationClip Clip(params string[] names)
             {
@@ -129,6 +140,144 @@ namespace BubbleWash.EditorTools
         static void AddChild(BlendTree tree, Motion m, Vector2 pos)
         {
             if (m != null) tree.AddChild(m, pos);
+        }
+
+        /// <summary>Bakes the seated "Slide" from the FBX take on a temporary model instance and saves it (SeatedSlidePath).
+        /// Any failure keeps the FBX's own Slide take.</summary>
+        static AnimationClip BakeSeatedSlideAsset(AnimationClip src)
+        {
+            GameObject inst = null;
+            try
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(FbxPath);
+                if (prefab == null) return null;
+                inst = Object.Instantiate(prefab);
+                inst.hideFlags = HideFlags.HideAndDontSave;
+                var baked = BakeSeatedSlideClip(src, inst, new SeatedArmSettings());
+                if (baked == null) return null;
+                Directory.CreateDirectory(Path.GetDirectoryName(SeatedSlidePath));
+                if (File.Exists(SeatedSlidePath)) AssetDatabase.DeleteAsset(SeatedSlidePath);
+                AssetDatabase.CreateAsset(baked, SeatedSlidePath);
+                var saved = AssetDatabase.LoadAssetAtPath<AnimationClip>(SeatedSlidePath);
+                Debug.Log("[BWK motion] seated Slide baked: " + SeatedSlidePath);
+                return saved;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning("[BWK motion] seated Slide bake failed - the FBX Slide take is kept: " + e.Message);
+                return null;
+            }
+            finally { if (inst != null) Object.DestroyImmediate(inst); }
+        }
+
+        /// <summary>
+        /// Copy of <paramref name="src"/> whose arm / hand curves carry the seated up-outward arms (SeatedArmSolver applied
+        /// after sampling the take at 30 keys/s; the shoulder keys only move if the solver needs its outward slide). All
+        /// other curves are copied unchanged. <paramref name="go"/> = the GameObject the clip animates (the model root).
+        /// </summary>
+        public static AnimationClip BakeSeatedSlideClip(AnimationClip src, GameObject go, SeatedArmSettings set)
+        {
+            var solver = SeatedArmSolver.Create(go.transform);
+            if (solver == null) { Debug.LogWarning("[BWK motion] seated Slide: bones / cuff not found - not baked"); return null; }
+            var all = go.GetComponentsInChildren<Transform>(true);
+            Transform Find(string n) => all.FirstOrDefault(t => t.name == n);
+            var bones = new[] { Find("arm.L"), Find("hand.L"), Find("arm.R"), Find("hand.R") };
+            var paths = bones.Select(b => AnimationUtility.CalculateTransformPath(b, go.transform)).ToArray();
+            var clip = new AnimationClip { name = src.name, frameRate = src.frameRate };
+            foreach (var b in AnimationUtility.GetCurveBindings(src))
+            {
+                int bi = System.Array.IndexOf(paths, b.path);
+                bool rot = b.propertyName.StartsWith("m_LocalRotation") || b.propertyName.StartsWith("localEulerAngles");
+                bool shoulderPos = b.propertyName.StartsWith("m_LocalPosition") && (bi == 0 || bi == 2);
+                if (bi >= 0 && b.type == typeof(Transform) && (rot || shoulderPos)) continue;
+                AnimationUtility.SetEditorCurve(clip, b, AnimationUtility.GetEditorCurve(src, b));
+            }
+            int n = Mathf.Max(12, Mathf.RoundToInt(src.length * 30f));
+            var rk = new List<Keyframe>[4, 4];
+            var pk = new List<Keyframe>[2, 3];
+            for (int i = 0; i < 4; i++) for (int c = 0; c < 4; c++) rk[i, c] = new List<Keyframe>();
+            for (int i = 0; i < 2; i++) for (int c = 0; c < 3; c++) pk[i, c] = new List<Keyframe>();
+            var prev = new Quaternion[4];
+            string at025 = "";
+            for (int k = 0; k <= n; k++)
+            {
+                float t = src.length * k / n;
+                src.SampleAnimation(go, t);
+                solver.Apply(1f, set, (float)k / n);
+                if (at025.Length == 0 && t >= 0.25f) at025 = $"t {t:F2}: " + solver.LastSolve();
+                for (int i = 0; i < 4; i++)
+                {
+                    Quaternion q = bones[i].localRotation;
+                    if (k > 0 && Quaternion.Dot(prev[i], q) < 0f) q = new Quaternion(-q.x, -q.y, -q.z, -q.w);
+                    prev[i] = q;
+                    rk[i, 0].Add(new Keyframe(t, q.x)); rk[i, 1].Add(new Keyframe(t, q.y));
+                    rk[i, 2].Add(new Keyframe(t, q.z)); rk[i, 3].Add(new Keyframe(t, q.w));
+                }
+                for (int i = 0; i < 2; i++)
+                {
+                    Vector3 p = bones[i * 2].localPosition;
+                    pk[i, 0].Add(new Keyframe(t, p.x)); pk[i, 1].Add(new Keyframe(t, p.y)); pk[i, 2].Add(new Keyframe(t, p.z));
+                }
+            }
+            AnimationCurve Smooth(List<Keyframe> keys)
+            {
+                var cv = new AnimationCurve(keys.ToArray());
+                for (int i = 0; i < cv.length; i++) cv.SmoothTangents(i, 0f);
+                return cv;
+            }
+            string[] rc = { "m_LocalRotation.x", "m_LocalRotation.y", "m_LocalRotation.z", "m_LocalRotation.w" };
+            string[] pc = { "m_LocalPosition.x", "m_LocalPosition.y", "m_LocalPosition.z" };
+            for (int i = 0; i < 4; i++)
+                for (int c = 0; c < 4; c++)
+                    AnimationUtility.SetEditorCurve(clip, EditorCurveBinding.FloatCurve(paths[i], typeof(Transform), rc[c]), Smooth(rk[i, c]));
+            for (int i = 0; i < 2; i++)
+                for (int c = 0; c < 3; c++)
+                    AnimationUtility.SetEditorCurve(clip, EditorCurveBinding.FloatCurve(paths[i * 2], typeof(Transform), pc[c]), Smooth(pk[i, c]));
+            AnimationUtility.SetAnimationClipSettings(clip, AnimationUtility.GetAnimationClipSettings(src));
+            clip.EnsureQuaternionContinuity();
+            src.SampleAnimation(go, 0.25f);
+            Debug.Log($"[BWK motion] seated Slide: {solver.Describe()}; {at025}");
+            return clip;
+        }
+
+        /// <summary>
+        /// Motion E preview (no scene save): CaptureTools.AgentPreviewBatch plus the seated "Slide" bake applied in memory
+        /// (AnimatorOverrideController on the scene mascot), so the hero stills show the arms the next full build bakes.
+        /// Run: Tools/unity_run.sh BubbleWash.EditorTools.AnimatorBuilder.MotionPreviewBatch LOG -bwkOut DIR [-bwkStills]
+        /// </summary>
+        public static void MotionPreviewBatch()
+        {
+            try
+            {
+                var args = System.Environment.GetCommandLineArgs();
+                int oi = System.Array.IndexOf(args, "-bwkOut");
+                string outDir = oi >= 0 && oi < args.Length - 1 ? args[oi + 1] : "Captures/agents/motion/preview";
+                TextureGenerator.Run();
+                MaterialLibrary.Run();
+                UnityEditor.SceneManagement.EditorSceneManager.OpenScene(SceneBuilder.ScenePath);
+                SceneBuilder.PreviewRefreshDomains();
+                var runner = Object.FindFirstObjectByType<RunnerController>();
+                var animator = runner != null ? runner.GetComponentInChildren<Animator>() : null;
+                var ctrl = animator != null ? animator.runtimeAnimatorController : null;
+                var src = ctrl != null ? ctrl.animationClips.FirstOrDefault(c => c != null && c.name == "Slide") : null;
+                if (src != null)
+                {
+                    var baked = BakeSeatedSlideClip(src, animator.gameObject, new SeatedArmSettings());
+                    if (baked != null)
+                    {
+                        var ov = new AnimatorOverrideController(ctrl) { name = "Mascot_SeatedPreview" };
+                        ov[src] = baked;
+                        animator.runtimeAnimatorController = ov;
+                        var seen = ov.animationClips.FirstOrDefault(c => c != null && c.name == "Slide");
+                        Debug.Log("[BWK motion] preview: seated Slide override " + (seen == baked ? "ACTIVE" : "NOT seen by the name lookup"));
+                    }
+                }
+                else Debug.LogWarning("[BWK motion] preview: no Slide clip on the scene mascot - stills unchanged");
+                CaptureTools.CaptureHero(outDir, outDir);
+                if (System.Array.IndexOf(args, "-bwkStills") >= 0) CaptureTools.CaptureStills(outDir + "/stills");
+                EditorApplication.Exit(0);
+            }
+            catch (System.Exception e) { Debug.LogError("[BWK motion] preview failed: " + e); EditorApplication.Exit(1); }
         }
     }
 }
