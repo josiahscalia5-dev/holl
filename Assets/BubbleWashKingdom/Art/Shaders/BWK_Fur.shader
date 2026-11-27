@@ -107,6 +107,7 @@ Shader "BWK/Fur"
                     float2 q = float2(i.uv.x * 2.0, i.uv.y) * (_TuftScale * _LenNoiseScale);
                     float nz = BWK_ValueNoise(q) * 0.7 + BWK_ValueNoise(q * 2.6 + 11.3) * 0.3;
                     mask *= lerp(1.0, 0.5 + 1.1 * nz, _LenNoise);
+                    mask *= lerp(1.0, lerp(0.62, 1.0, i.color.a), _UseVertexTint);   // cream paw coat stays short (no slicing)
                 }
                 float3 nWS = TransformObjectToWorldNormal(i.normalOS);
                 float3 posWS = TransformObjectToWorld(i.positionOS.xyz);
@@ -171,7 +172,7 @@ Shader "BWK/Fur"
                     // S2 p10f (_TuftDepth): each lock is lit on its lower (tip) half and shadowed on its upper half where
                     // the lock above overlaps it, and darkens toward the partings = shingled, deep plush instead of velvet
                     float2 dT = (auv - tc) / an;
-                    tuftShade = 0.55 * saturate(0.5 - dT.y * 0.8) + 0.45 * saturate((f2 - f1) * 2.5);
+                    tuftShade = 0.5 * saturate(0.5 + (tRnd - 0.5) * 0.4 - dT.y * 0.5) + 0.5 * saturate((f2 - f1) * 2.0);
                     pull = _TuftAmount * h * (0.6 + 0.8 * tRnd);
                     tc.y -= h * 0.3;                                  // the lock's tips converge BELOW its centre (droop)
                     relSkin = (auv - tc) / an;

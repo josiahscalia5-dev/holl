@@ -117,7 +117,7 @@ namespace BubbleWash.EditorTools
                 F(m, "_StitchU", 44); F(m, "_StitchV", 40); F(m, "_BumpStrength", 2.0f); F(m, "_Smoothness", 0.12f); F(m, "_Glow", 0.06f);
                 F(m, "_PurlDepth", 1.8f);   // prev1: cuff still flat (Lstd 3.6 vs reference 10.8) -> much deeper rib valleys
                 // p10f: yarn relief knit (s2p10e R2 cuff Lstd 3.5 vs reference 13.0 = flat pleats)
-                C(m, "_ColorA", "#A84EB8"); C(m, "_ColorB", "#A84EB8"); F(m, "_StitchU", 88); F(m, "_StitchV", 60);
+                C(m, "_ColorA", "#B456C2"); C(m, "_ColorB", "#B456C2"); F(m, "_StitchU", 88); F(m, "_StitchV", 60);
                 F(m, "_BumpStrength", 1.2f); F(m, "_Smoothness", 0.05f); F(m, "_Glow", 0.08f); F(m, "_YarnRelief", 1.0f);
             });
             Mat("M_HatStripe_v5", "BWK/Character", m =>
@@ -136,6 +136,7 @@ namespace BubbleWash.EditorTools
                 // root -> lilac tip vertex colours). Less self-glow than v4 (.65) so the locks keep their light / shade.
                 F(m, "_Mode", 4); C(m, "_ColorA", "#FFFFFF"); F(m, "_BumpScale", 0.6f); F(m, "_Smoothness", 0.3f); F(m, "_Glow", 0.5f);
                 F(m, "_RimStrength", 0.3f);
+                F(m, "_VioletLift", 1.35f);   // p10f: pom-pom yarn L42 vs reference 49 (pink toe beans unaffected)
             });
             var furNoise = AssetDatabase.LoadAssetAtPath<Texture2D>($"{Tex}/T_FurNoise.png");
             Mat("M_Fur_v5", "BWK/Fur", m =>
@@ -161,11 +162,12 @@ namespace BubbleWash.EditorTools
                 // Lstd 13.0 = grey-pink velvet. Now a THICK deep coat: 50 % longer pile, bigger locks that part at the tips,
                 // shingled tuft depth shading (_TuftDepth), per-tuft pile length (_LenNoise: tufts break the silhouette),
                 // saturated warm-rose roots -> pale pink tips, less flat self-glow, soft unlit white-pink rim (_RimSelf)
-                C(m, "_RootColor", "#F06470"); C(m, "_BaseColor", "#FFA084"); C(m, "_TipColor", "#FFDCCB");
+                // prev1: body 179/104/150 L54.2 (too dark), regular 'pinecone scale' pattern -> softer, irregular depth, lighter
+                C(m, "_RootColor", "#F46A62"); C(m, "_BaseColor", "#FFA67A"); C(m, "_TipColor", "#FFE0C4");
                 F(m, "_FurLength", 0.078f); F(m, "_Gravity", 0.035f); F(m, "_Thinning", 0.75f); F(m, "_Curl", 0.8f);
-                F(m, "_TuftScale", 15f); F(m, "_TuftAmount", 0.55f); F(m, "_StrandContrast", 0.45f); F(m, "_AO", 0.5f);
-                F(m, "_TuftDepth", 0.8f); F(m, "_LenNoise", 0.6f); F(m, "_LenNoiseScale", 0.5f); F(m, "_SilhouetteFade", 0.3f);
-                C(m, "_RimColor", "#FFD6D6"); F(m, "_Glow", 0.14f); F(m, "_RimStrength", 0.55f); F(m, "_RimSelf", 0.25f);
+                F(m, "_TuftScale", 15f); F(m, "_TuftAmount", 0.55f); F(m, "_StrandContrast", 0.45f); F(m, "_AO", 0.42f);
+                F(m, "_TuftDepth", 0.42f); F(m, "_LenNoise", 0.6f); F(m, "_LenNoiseScale", 0.5f); F(m, "_SilhouetteFade", 0.3f);
+                C(m, "_RimColor", "#FFD6D6"); F(m, "_Glow", 0.16f); F(m, "_RimStrength", 0.55f); F(m, "_RimSelf", 0.25f);
             }, (int)RenderQueue.AlphaTest);
             Mat("M_PomPom_v5", "BWK/Fur", m =>
             {

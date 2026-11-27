@@ -926,7 +926,8 @@ namespace BubbleWash.EditorTools
         }
 
         // S2 pass 10f V6 crown frame in runner space (m / deg): sink, pull back toward the camera, lean the top back, taller
-        const float CrownV6Drop = -0.16f, CrownV6Back = -0.3f, CrownV6Lean = -24f, CrownV6ScaleX = 1.0f, CrownV6ScaleY = 1.3f, CrownV6ScaleZ = 1.2f;
+        // (p1 -0.16 / -0.3 / -24 / 1.0 x 1.3 x 1.2: lay flat on the water like antlers, the left one hidden by the body + coin)
+        const float CrownV6Drop = -0.1f, CrownV6Back = -0.44f, CrownV6Lean = -8f, CrownV6ScaleX = 1.0f, CrownV6ScaleY = 1.42f, CrownV6ScaleZ = 1.2f;
 
         static void BuildCrowns(GameObject fxRoot, RunnerController runner, bool save, Vector3 rootL, Vector3 rootR)
         {

@@ -38,6 +38,7 @@ Material:
     - _StitchV: 60
     - _StripeWidth: 0
     - _Stripes: 3
+    - _VioletLift: 1
     - _Wrap: 0.5
     - _YarnRelief: 1
     m_Colors:

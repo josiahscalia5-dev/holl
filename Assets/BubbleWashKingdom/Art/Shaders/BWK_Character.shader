@@ -28,6 +28,7 @@ Shader "BWK/Character"
         _RimStrength ("Rim Strength", Range(0,2)) = 0.35
         _PurlDepth ("Knit Purl Depth (0 = v4 look)", Range(0,1)) = 0
         _YarnRelief ("Yarn Relief Knit (0 = previous knit)", Range(0,1.5)) = 0
+        _VioletLift ("Fabric: lift violet vertex colours (pom-pom yarn; 1 = off)", Range(0.5, 2.5)) = 1
     }
     SubShader
     {
@@ -37,7 +38,7 @@ Shader "BWK/Character"
         CBUFFER_START(UnityPerMaterial)
             half4 _ColorA, _ColorB, _ColorC, _ShadowColor;
             half _Mode, _Smoothness, _Metallic, _Wrap, _BumpScale, _BumpStrength, _Stripes, _StripeWidth;
-            half _StitchU, _StitchV, _Glow, _RimPower, _RimStrength, _PurlDepth, _YarnRelief;
+            half _StitchU, _StitchV, _Glow, _RimPower, _RimStrength, _PurlDepth, _YarnRelief, _VioletLift;
         CBUFFER_END
         ENDHLSL
         Pass
@@ -92,7 +93,7 @@ Shader "BWK/Character"
             {
                 float c = frac(ph.x) - 0.5;                       // -0.5..0.5 across one rib, 0 = rib crest
                 float ac = abs(c);
-                float rib = saturate(cos(c * 3.14159) * 1.35 - 0.1);
+                float rib = saturate(cos(c * 3.14159) * 1.2 - 0.04);
                 float r = frac(ph.y - ac * 1.2);                  // V stitch rows: legs slant down toward the column centre
                 float leg = sin(r * 3.14159);
                 leg = leg * (2.0 - leg);                          // full, round yarn strand across the leg
@@ -148,7 +149,9 @@ Shader "BWK/Character"
                         float gv = (KnitHeight(ph + float2(0, e)) - h0) / e;   // dH per stitch row
                         n = normalize(n - (i.tangentWS.xyz * gu * 0.30 + bitangent * gv * 0.22) * (_BumpStrength * _YarnRelief));
                         float ply = BWK_ValueNoise(float2(ph.x * 7.0, ph.y * 3.0 + ph.x * 2.0));   // plied fibres
-                        albedo *= lerp(0.5, 1.1, h0) * lerp(0.92, 1.05, ply);
+                        // wool reads by its relief: rib flanks turned away from the viewer fall off (soft round tubes)
+                        half facing = saturate(dot(n, v));
+                        albedo *= lerp(0.5, 1.1, h0) * lerp(0.92, 1.05, ply) * lerp(0.6, 1.08, facing * facing);
                         occlusion = lerp(0.45, 1.0, h0);
                         half sheen = pow(1.0 - saturate(dot(n, v)), 3.0) * 0.45 + 0.06;
                         emission = albedo * _Glow + lerp(albedo, half3(1, 1, 1), 0.25) * (sheen * h0 * 0.35);
@@ -192,6 +195,8 @@ Shader "BWK/Character"
                 else // fabric
                 {
                     albedo = _ColorA.rgb * (i.color.a > 0.001 ? i.color.rgb : half3(1, 1, 1));
+                    // p10f: the v5 pom-pom yarn locks (violet vertex colours) can be lifted without touching the pink toe beans
+                    albedo *= lerp(1.0, _VioletLift, saturate((i.color.b - i.color.r) * 4.0) * step(0.001, i.color.a));
                     float fib = BWK_ValueNoise(i.uv * _BumpScale * 20.0);
                     albedo *= lerp(0.9, 1.05, fib);
                     emission = albedo * _Glow;

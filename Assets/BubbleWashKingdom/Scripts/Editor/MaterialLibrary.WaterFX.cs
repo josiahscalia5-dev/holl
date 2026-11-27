@@ -79,6 +79,10 @@ namespace BubbleWash.EditorTools
                 F(m, "_DepthContrast", 0.6f); C(m, "_CrestColor", "#3FCBEE"); F(m, "_Translucency", 0.35f);
                 F(m, "_FlowLines", 0.75f); F(m, "_FlowLineDensity", 2.2f); F(m, "_GlossLines", 0.55f);
                 F(m, "_ReflectBoost", 0.38f); F(m, "_FresnelBoost", 0.5f);
+                // p2 (p1: the flow lines read as a burst of straight speed lines, milky px waterL 38 % vs ref 24 %; lane p10
+                // #4388B1 grey-blue vs ref #3B8CD0): fewer / wavier / more broken lines, softer crest highlights, red absorption
+                F(m, "_FlowLines", 0.42f); F(m, "_FlowLineDensity", 1.5f); F(m, "_GlossLines", 0.4f); F(m, "_Absorb", 0.7f);
+                F(m, "_FresnelBoost", 0.35f); F(m, "_DepthContrast", 0.7f);
                 // light halos around the decor chevrons: same period / geometry / runway offset as SceneBuilder.BuildDecorChevrons
                 F(m, "_ChevronStart", SceneBuilder.ChevronStart); F(m, "_ChevronSpacing", SceneBuilder.ChevronSpacing);
                 // (v2 notch measured #55B8E5 vs reference deep #3386CC: the arrows now bloom on their own -> fainter, tighter pool)
@@ -227,6 +231,8 @@ namespace BubbleWash.EditorTools
                 C(m, "_ColorA", "#E6F1F8"); C(m, "_ShadowColor", "#9BB3D8"); C(m, "_MilkThin", "#8FC6EC"); F(m, "_Glow", 0.02f);
                 F(m, "_BumpScale", 7f); F(m, "_BumpStrength", 0.75f); F(m, "_MilkAlpha", 0.88f); F(m, "_MilkEdgeAlpha", 0.3f);
                 F(m, "_MilkWet", 1f); F(m, "_SpecStrength", 0.9f);
+                // p2 (p1: still a chalky white antler lying on the water): more see-through core and edges
+                F(m, "_MilkAlpha", 0.78f); F(m, "_MilkEdgeAlpha", 0.22f); F(m, "_BumpStrength", 0.9f);
             }, (int)RenderQueue.Transparent);
             Mat("M_Foam_v2", "BWK/Soft", m =>
             {

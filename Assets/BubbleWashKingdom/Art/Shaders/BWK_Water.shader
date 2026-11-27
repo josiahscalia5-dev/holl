@@ -66,6 +66,7 @@ Shader "BWK/Water"
         _Translucency ("p10f Light Through Thin Crests", Range(0,1)) = 0
         _FresnelBoost ("p10f Grazing Reflection Boost", Range(0,3)) = 0
         _CrestColor ("p10f Crest Color", Color) = (0.3, 0.82, 0.95, 1)
+        _Absorb ("p10f Red Absorption in the Lane (deep saturated blue)", Range(0,1)) = 0
     }
     SubShader
     {
@@ -88,6 +89,7 @@ Shader "BWK/Water"
             half _FlowLines, _GlossLines, _DepthContrast, _Translucency, _FresnelBoost;
             float _FlowLineDensity;
             half4 _CrestColor;
+            half _Absorb;
         CBUFFER_END
 
         // flowing height field: long swells stretched along the flow + a finer, faster chop
@@ -309,8 +311,8 @@ Shader "BWK/Water"
                 half flowLine = 0;
                 if (_FlowLines > 0.001)
                 {
-                    float fwarp = (BWK_ValueNoise(float2(m.x * 0.6 + 1.3, flowY * 0.16)) - 0.5) * 0.55
-                                + (BWK_ValueNoise(float2(m.x * 1.7 + 4.1, flowY * 0.45)) - 0.5) * 0.14;
+                    float fwarp = (BWK_ValueNoise(float2(m.x * 0.6 + 1.3, flowY * 0.16)) - 0.5) * 0.85
+                                + (BWK_ValueNoise(float2(m.x * 1.7 + 4.1, flowY * 0.45)) - 0.5) * 0.22;
                     [unroll] for (int fl = 0; fl < 2; fl++)
                     {
                         float dens = _FlowLineDensity * (fl == 0 ? 1.0 : 2.3);
@@ -323,7 +325,7 @@ Shader "BWK/Water"
                         float aa = max(fwidth(fxl), 1e-4);
                         float lcore = saturate((wid - dl) / aa + 0.5) * saturate(wid * 2.5 / aa);
                         float lhalo = exp(-dl * dl / (wid * wid * 12.0)) * 0.28;
-                        float seg = smoothstep(0.36, 0.74, BWK_ValueNoise(float2(cellL * 1.37 + fl * 7.0, flowY * (0.09 + 0.08 * r1))));
+                        float seg = smoothstep(0.42, 0.8, BWK_ValueNoise(float2(cellL * 1.37 + fl * 7.0, flowY * (0.12 + 0.1 * r1))));
                         flowLine = max(flowLine, (half)((lcore + lhalo) * seg * (0.45 + 0.55 * r2) * (fl == 0 ? 1.0 : 0.65)));
                     }
                     flowLine *= _FlowLines * lerp(0.5, 1.0, smoothstep(0.15, 0.85, across)) * (1.0 - foam);
@@ -364,6 +366,14 @@ Shader "BWK/Water"
                 emission += _CrestColor.rgb * smoothstep(0.55, 0.95, depthK) * _Translucency * (0.35 + 0.65 * centre) * 0.45;
 
                 half4 lit = BWK_PBR_Lit(i.positionWS, i.positionCS, n, viewDir, albedo, 0.0, smooth, 1.0, emission, 1.0, i.fog);
+                // S2 pass 10f (p1 lane p10 ours #4388B1 vs ref #3B8CD0: the lavender tunnel reflections grey the deep water):
+                // water absorbs red light - the lane's lit colour loses red / gains blue with the absorption, never the banks,
+                // foam or the white flow lines
+                if (_Absorb > 0.001)
+                {
+                    half amask = (1.0 - smoothstep(0.62, 0.95, across)) * saturate(1.0 - foam - flowLine - gloss);
+                    lit.rgb *= lerp(half3(1, 1, 1), half3(0.8, 0.97, 1.08), _Absorb * amask);
+                }
                 // ---- S2 pass 2 (owner 20:15 "rich vivid turquoise flowing water"; measured lane under the mascot ours #7099D3
                 //      hue 215 / gameplay rig hue 228 vs reference #7ABADE hue 202): the lavender drum, violet bulbs and the
                 //      pink back light reach the water through the PBR reflection + GI and turn the whole lit lane periwinkle.
