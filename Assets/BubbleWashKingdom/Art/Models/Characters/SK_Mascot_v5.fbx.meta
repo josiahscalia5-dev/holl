@@ -18,22 +18,22 @@ ModelImporter:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: M_Fur
-    second: {fileID: 2100000, guid: 6955273355457c24d841d88d986374d0, type: 2}
+    second: {fileID: 2100000, guid: 24816a9393cf36e49a7897d76d43e569, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: M_HatCuff
-    second: {fileID: 2100000, guid: 01e30b800f78e82458ec10244f31b1d7, type: 2}
+    second: {fileID: 2100000, guid: d97e996f3d9ee04429fd1a240fb2db28, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: M_HatKnit
-    second: {fileID: 2100000, guid: 20f33dba4bf5a44469e7da63dafe0c40, type: 2}
+    second: {fileID: 2100000, guid: 3a787cf9010972440a8ec3a41ec25bd0, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: M_HatStripe
-    second: {fileID: 2100000, guid: 28466e5cc71c7f146bc371ccf1a6d6d9, type: 2}
+    second: {fileID: 2100000, guid: f2036a2ba4bbc864b80a071b6a1b72f1, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -43,12 +43,12 @@ ModelImporter:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: M_PawPad
-    second: {fileID: 2100000, guid: da4caf6a508b8c5478868295c809c6eb, type: 2}
+    second: {fileID: 2100000, guid: 8483363f94d72324fbc18d430fbb32e8, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: M_PomPom
-    second: {fileID: 2100000, guid: f90b507a8323b3941a9e43211575be09, type: 2}
+    second: {fileID: 2100000, guid: e3d6e246a8eff5e4fa7e87e2747c1360, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule

@@ -10,6 +10,14 @@ of one enormous magical washing machine. These instructions come only from the o
   72/80/85/90/95 % usage - keep working until the real limit (respect hardware stability, disk safety; no paid charges,
   no paid Fast Mode, no purchases). Multiple specialists may work concurrently when their files do not conflict; heavy
   Unity / Blender runs stay staggered through Tools/heavy_lock.sh.
+- OWNER 2026-11-27 07:10 (permanent): never stop, pause, restart or interrupt running specialists, agents, workflows,
+  Unity / Blender runs or background jobs to process a new message - fold new instructions into
+  Captures/agents/LEAD_DIRECTIVES.md (printed to every specialist after each heavy run) and the pass args instead. Never
+  choose weaker models / reasoning / tools / simplified assets to save usage; work until the REAL limit (no Fast Mode,
+  no charges). Storage target: >= 30 GB free on C: if SAFELY achievable - owner-approved categories only (Logs/cleanup.log),
+  one concise approval list for anything else; never delete unique personal or synced cloud files, Unity / Unity Hub,
+  Blender, Claude, the Android SDK, this project, v4 / v5 mascots, references, checkpoints, chat history; never restart
+  the laptop or close development apps. Exactly ONE 5-minute autosave with verified pushes; chat history LOCAL only.
 - ONE SCREEN AT A TIME: S2 (video 3.00 s, golden tunnel entrance at the washing-machine door) until the owner has
   reviewed the improved S2 gameplay; aim 9/10+. Private plan: Captures/agents/_shared/S2_FOCUS_PLAN.md; the owner's
   annotated corrections: Reference/s2_corrections/.

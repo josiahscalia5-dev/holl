@@ -367,7 +367,8 @@ namespace BubbleWash.EditorTools
             // the reference housing stands beside the hatch against the wall -> 8.8 m deep (~0.5 m in front of the wall),
             // u 0 (centre ~8 m to the side, outside the gold band), scale 1.3 keeps its screen size; the pipe end reaches
             // into the band like the reference pipe running into the rim
-            var mp = HallScreenPoint(r2, 0.0f, 0.27f, 8.8f);
+            // v4: at v .27 / 8.8 m the whole machine sat behind the left foam bank (top y ~160) -> v .21 (pipe just above it)
+            var mp = HallScreenPoint(r2, 0.0f, 0.21f, 8.8f);
             var mach = HallPlace(holder, "Machinery", "SM_DoorMachine_s2", mp, fm.FlatRotation, 1.3f);
             if (mach != null)
             {
