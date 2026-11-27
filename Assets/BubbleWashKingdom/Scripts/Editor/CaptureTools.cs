@@ -308,6 +308,130 @@ namespace BubbleWash.EditorTools
             catch (System.Exception e) { Debug.LogError("[BWK] mouth search failed: " + e); EditorApplication.Exit(1); }
         }
 
+        /// <summary>
+        /// Lead tool (no scene save): solves a COMPARISON-ONLY rear camera for the S2 hero frame (reference f_03.00s) instead of
+        /// guessing it. Landmarks measured on the 1280x720 reference: door-ring outer rim leftmost (248,230) and rightmost
+        /// (~1270,230) points, mascot pompom top (640,183), mascot body bottom (640,520). Grid search over the mascot's track
+        /// distance d (lane 0), camera back / height / lateral offset, yaw / pitch and vertical FOV; logs the 5 best poses and
+        /// renders the best one (+ the unchanged gameplay rig at the same d) into -bwkOut DIR. The gameplay rig is not touched.
+        /// </summary>
+        public static void S2CameraSolveBatch()
+        {
+            try
+            {
+                string outDir = ArgValue("-bwkOut") ?? "Captures/agents/_lead_mouth";
+                Directory.CreateDirectory(outDir);
+                EditorSceneManager.OpenScene(SceneBuilder.ScenePath);
+                var runner = Object.FindFirstObjectByType<RunnerController>();
+                var rig = Object.FindFirstObjectByType<RunnerCameraRig>(FindObjectsInactive.Include);
+                var cam = Camera.main;
+                if (runner == null || rig == null || cam == null) throw new System.Exception("scene objects missing");
+                SceneBuilder.ApplyHeroCamera(rig);
+                var brain = cam.GetComponent<CinemachineBrain>();
+                if (brain) brain.enabled = false;
+                runner.track.Rebuild();
+                var ring = GameObject.Find("SM_MouthRing_r7");
+                if (ring == null) throw new System.Exception("SM_MouthRing_r7 not found");
+                Bounds rb = default; bool first = true;
+                foreach (var r in ring.GetComponentsInChildren<Renderer>()) { if (first) { rb = r.bounds; first = false; } else rb.Encapsulate(r.bounds); }
+                var rf = runner.track.Evaluate(SceneBuilder.HallMouthD);
+                float R = rb.extents.y;
+                Vector3 ringL = rb.center - rf.flatRight * R, ringR = rb.center + rf.flatRight * R;
+                var animator = runner.GetComponentInChildren<Animator>();
+                AnimationClip slide = animator != null && animator.runtimeAnimatorController != null
+                    ? animator.runtimeAnimatorController.animationClips.FirstOrDefault(c => c.name == "Slide") : null;
+                var mascot = MascotRenderers(runner);
+                var best = new List<(float cost, float d, float b, float h, float s, float yaw, float pitch, float fov)>();
+                for (float d = 33f; d <= 37.01f; d += 0.25f)
+                {
+                    runner.TeleportTo(d, 0f);
+                    if (slide != null) slide.SampleAnimation(animator.gameObject, 0.25f);
+                    // real posed extremes (skinned bounds are conservative and made the solved mascot ~25 % too small)
+                    Vector3 top = Vector3.zero, bot = Vector3.zero; float topU = float.MinValue, botU = float.MaxValue;
+                    var baked = new Mesh();
+                    foreach (var mr in mascot)
+                    {
+                        Vector3[] vs; Matrix4x4 m;
+                        if (mr is SkinnedMeshRenderer smr) { smr.BakeMesh(baked, true); vs = baked.vertices; m = Matrix4x4.TRS(smr.transform.position, smr.transform.rotation, Vector3.one); }
+                        else { var mf = mr.GetComponent<MeshFilter>(); if (mf == null || mf.sharedMesh == null) continue; vs = mf.sharedMesh.vertices; m = mr.transform.localToWorldMatrix; }
+                        foreach (var v in vs)
+                        {
+                            var wv = m.MultiplyPoint3x4(v);
+                            float u = wv.y;
+                            if (u > topU) { topU = u; top = wv; }
+                            if (u < botU) { botU = u; bot = wv; }
+                        }
+                    }
+                    Object.DestroyImmediate(baked);
+                    if (d == 33f) Debug.Log($"[BWK] S2 solve: mascot top {top} bottom {bot} (height {topU - botU:F2} m)");
+                    var f = runner.Frame;
+                    Vector3 fwd = Vector3.ProjectOnPlane(f.forward, Vector3.up).normalized, right = Vector3.Cross(Vector3.up, fwd);
+                    Vector3 basePos = runner.transform.position;
+                    var baseRot = Quaternion.LookRotation(fwd, Vector3.up);
+                    foreach (float fov in new[] { 50f, 58f, 66f })
+                        for (float b = 2.25f; b <= 4.01f; b += 0.25f)
+                            for (float h = 0.5f; h <= 1.61f; h += 0.1f)
+                                for (float s = -1.2f; s <= 1.21f; s += 0.3f)
+                                {
+                                    Vector3 cp = basePos - fwd * b + Vector3.up * h + right * s;
+                                    for (float yaw = -18f; yaw <= 18.01f; yaw += 1f)
+                                        for (float pitch = -6f; pitch <= 14.01f; pitch += 1f)
+                                        {
+                                            var cr = baseRot * Quaternion.Euler(pitch, yaw, 0f);
+                                            var pL = ProjectPose(cp, cr, fov, ringL, 1280, 720, out bool f1);
+                                            var pR = ProjectPose(cp, cr, fov, ringR, 1280, 720, out bool f2);
+                                            var pT = ProjectPose(cp, cr, fov, top, 1280, 720, out bool f3);
+                                            var pB = ProjectPose(cp, cr, fov, bot, 1280, 720, out bool f4);
+                                            if (!(f1 && f2 && f3 && f4)) continue;
+                                            float cost = (pL - new Vector2(248f, 230f)).sqrMagnitude
+                                                       + 0.5f * (pR - new Vector2(1270f, 230f)).sqrMagnitude
+                                                       + (pT - new Vector2(640f, 183f)).sqrMagnitude
+                                                       + (pB.y - 520f) * (pB.y - 520f) + 0.5f * (pB.x - 640f) * (pB.x - 640f);
+                                            if (best.Count < 5 || cost < best[best.Count - 1].cost)
+                                            {
+                                                best.Add((cost, d, b, h, s, yaw, pitch, fov));
+                                                best.Sort((x, y) => x.cost.CompareTo(y.cost));
+                                                if (best.Count > 5) best.RemoveAt(5);
+                                            }
+                                        }
+                                }
+                }
+                foreach (var p in best)
+                    Debug.Log($"[BWK] S2 solve: rms {Mathf.Sqrt(p.cost / 4.5f):F1} px  d {p.d:F2} back {p.b:F2} height {p.h:F2} lat {p.s:F2} yaw {p.yaw:F0} pitch {p.pitch:F0} vfov {p.fov:F0}");
+                var w = best[0];
+                runner.TeleportTo(w.d, 0f);
+                if (slide != null) slide.SampleAnimation(animator.gameObject, 0.25f);
+                SimulateSlideFX(runner);
+                {
+                    var f = runner.Frame;
+                    Vector3 fwd = Vector3.ProjectOnPlane(f.forward, Vector3.up).normalized, right = Vector3.Cross(Vector3.up, fwd);
+                    Vector3 cp = runner.transform.position - fwd * w.b + Vector3.up * w.h + right * w.s;
+                    cam.transform.SetPositionAndRotation(cp, Quaternion.LookRotation(fwd, Vector3.up) * Quaternion.Euler(w.pitch, w.yaw, 0f));
+                    cam.fieldOfView = w.fov;
+                    RenderWithBackground(cam, 1280, 720, outDir, "R2_solved_16x9.png", mascot);
+                }
+                rig.aspectOverride = 1280f / 720f;
+                rig.Snap();
+                var lens = rig.vcam.Lens;
+                cam.transform.SetPositionAndRotation(rig.transform.position, rig.transform.rotation * Quaternion.Euler(0f, 0f, lens.Dutch));
+                cam.fieldOfView = lens.FieldOfView;
+                RenderWithBackground(cam, 1280, 720, outDir, "rig_at_solved_d_16x9.png", mascot);
+                rig.aspectOverride = 0f;
+                if (brain) brain.enabled = true;
+                EditorApplication.Exit(0);
+            }
+            catch (System.Exception e) { Debug.LogError("[BWK] S2 solve failed: " + e); EditorApplication.Exit(1); }
+        }
+
+        static Vector2 ProjectPose(Vector3 camPos, Quaternion camRot, float vfov, Vector3 world, int w, int h, out bool inFront)
+        {
+            var p = Quaternion.Inverse(camRot) * (world - camPos);
+            inFront = p.z > 0.05f;
+            float z = Mathf.Max(p.z, 0.05f);
+            float f = h * 0.5f / Mathf.Tan(vfov * 0.5f * Mathf.Deg2Rad);
+            return new Vector2(w * 0.5f + p.x / z * f, h * 0.5f - p.y / z * f);
+        }
+
         /// <summary>Pinhole projection of a world point to w x h pixels (y down) through cam's pose and vertical FOV.</summary>
         static Vector2 ProjectPx(Camera cam, Vector3 world, int w, int h, out bool inFront)
         {

@@ -137,7 +137,7 @@ namespace BubbleWash.EditorTools
         /// from the 16 m still a ring at 62 m covered only 0.21 H (v1), at 40 m ~0.38 H (Tools/track_camera_model.py).
         /// The drum walls 40-62 m reuse the tunnel module (BendChunks, like the main tunnel) with gold bulb rings every 8.5 m
         /// that continue into the first BuildRings ring at 71.5 m. tunnelStart itself (lead constant) is unchanged.</summary>
-        const float HallMouthD = 40f;
+        internal const float HallMouthD = 40f;
 
         static readonly Dictionary<string, Material> hallMats = new Dictionary<string, Material>();
 
