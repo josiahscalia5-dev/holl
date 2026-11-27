@@ -226,7 +226,13 @@ namespace BubbleWash.EditorTools
                 // separate round puffs lit white from the upper left with lilac-blue lower halves + contact creases): sculpted
                 // form shading on (BWK_Soft _FormShade), cooler body (the warm hall grade turned it peach), deeper lilac shade
                 F(m, "_FormShade", 1f); C(m, "_ColorA", "#F0F1FF"); C(m, "_ShadowColor", "#998DCF"); F(m, "_RimStrength", 0.28f);
+                // p1 (left box p5 / p25 / p50 #AE99BD / #C4B1C9 / #DDC4D7 vs ref #CBA3C8 / #D4C3D7 / #E1D1E1): shade side a little
+                // lighter and less magenta (green up), body stays cool
+                C(m, "_ShadowColor", "#AFA7DD");
             });
+            // S2 pass 9: the door's right bank sits in the hatch's shadow in the reference (R2 box p50 #ADA1CF, p75 #DBC0DB):
+            // same foam, shaded body (placed only there by SceneBuilder.WaterFX MouthBank)
+            WaterVariant("M_Foam_v2_Shade", "M_Foam_v2", m => { C(m, "_ColorA", "#D9D3F2"); C(m, "_ShadowColor", "#9289C8"); F(m, "_Glow", 0.03f); }, -1);
             // round 8 masters: the old hall / fallback foam material is now a VARIANT of M_Foam_v2 (no overrides: one foam look)
             WaterVariant("M_Foam", "M_Foam_v2", null, -1);
             Particle("M_FX_Splash", $"{Tex}/T_Splash.png", additive: false, "#FFFFFF");

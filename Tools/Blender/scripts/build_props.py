@@ -237,9 +237,12 @@ def blob(bm, center, rx, rz, h, y_face, sign, segs=14, rings=3, mat=0):
 
 
 def build_coin(M):
-    R, T, segs, hr = 0.32, 0.075, 30, 0.022
-    inner_r = R - 0.06
-    rec = T * 0.5 - 0.016
+    # S2 pass 9 (owner 06:58 "thick rounded gold coins with a raised paw", crop 21; R2 s2p8a / s2p9a: the coin beside the
+    # mascot read as a thin hoop - only its 6 cm rim showed around his arm): thicker body (7.5 -> 11 cm), rounder + wider
+    # rolled rim (r 2.2 -> 3.2 cm, band 6 -> 7.5 cm), deeper recess, paw pads raised higher (3 -> 4.4 cm)
+    R, T, segs, hr = 0.32, 0.11, 36, 0.032
+    inner_r = R - 0.075
+    rec = T * 0.5 - 0.022
     # closed (r, y) profile: front centre -> recessed face -> raised rim roll -> edge -> back rim -> back centre
     prof = [(inner_r * 0.3, rec), (inner_r * 0.65, rec), (inner_r, rec), (inner_r + 0.014, T * 0.5 + 0.003)]
     for k in range(0, 11):
@@ -267,12 +270,12 @@ def build_coin(M):
     bmesh.ops.recalc_face_normals(bm, faces=body)
     # paw print (raised gold, both faces): main pad + 4 toe beans
     k = 1.28  # paw fills ~65% of the face like the reference coins
-    paw = [((0.0, -0.05 * k), 0.095 * k, 0.078 * k, 0.03), ((-0.105 * k, 0.04 * k), 0.04 * k, 0.05 * k, 0.026),
-           ((-0.04 * k, 0.1 * k), 0.04 * k, 0.05 * k, 0.026), ((0.04 * k, 0.1 * k), 0.04 * k, 0.05 * k, 0.026),
-           ((0.105 * k, 0.04 * k), 0.04 * k, 0.05 * k, 0.026)]
+    paw = [((0.0, -0.05 * k), 0.095 * k, 0.078 * k, 0.044), ((-0.105 * k, 0.04 * k), 0.04 * k, 0.05 * k, 0.036),
+           ((-0.04 * k, 0.1 * k), 0.04 * k, 0.05 * k, 0.036), ((0.04 * k, 0.1 * k), 0.04 * k, 0.05 * k, 0.036),
+           ((0.105 * k, 0.04 * k), 0.04 * k, 0.05 * k, 0.036)]
     for sign in (+1, -1):
         for (cx, cz), rx, rz, h in paw:
-            blob(bm, Vector((cx * sign, cz)), rx, rz, h, sign * rec, sign, segs=12 if rx > 0.06 else 9, rings=3, mat=0)
+            blob(bm, Vector((cx * sign, cz)), rx, rz, h, sign * rec, sign, segs=14 if rx > 0.06 else 10, rings=4, mat=0)
     obj = new_obj("SM_Coin", bm)
     finish(obj, [M["M_Coin"], M["M_GoldDark"]], smooth_deg=50)
     return obj
@@ -798,6 +801,10 @@ def main():
     objs.append(build_bubble(M))
 
     report = []
+    # S2 pass 9: BWK_PROPS_ONLY=SM_Coin re-exports just the listed props (other agents' exports stay untouched)
+    only = [n for n in os.environ.get("BWK_PROPS_ONLY", "").split(",") if n]
+    if only:
+        objs = [o for o in objs if o.name in only]
     for o in objs:
         if not o.data.uv_layers:
             box_uv(o)
@@ -807,6 +814,9 @@ def main():
         o.location = (0, 0, 0)
         C.export_fbx([o], C.model_path(GROUP, o.name))
     print("\n".join("CHECK " + r for r in report))
+    if only:                                       # partial re-export: keep the shared props preview untouched
+        print("DONE build_props (only %s)" % ",".join(only))
+        return
 
     # ---------------- preview: lay the set out like a shelf, seen from the player side (+Y looking -Y)
     layout = {

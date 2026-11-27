@@ -27,12 +27,12 @@ Material:
     m_Floats:
     - _Alpha: 0.035
     - _Bubble: 1
-    - _FilmStrength: 2
+    - _FilmStrength: 1.3
     - _FresnelPower: 2.6
     - _Glow: 0.18
     - _Iridescence: 1
     - _Reflectivity: 0.8
-    - _RimWidth: 2.6
+    - _RimWidth: 3
     - _WindowStrength: 1.9
     m_Colors:
     - _Tint: {r: 0.9411765, g: 0.972549, b: 1, a: 1}

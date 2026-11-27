@@ -164,6 +164,9 @@ namespace BubbleWash.EditorTools
             if (bodyVariant != null && ModelPrefab("Machinery", bodyVariant) != null) bodyName = bodyVariant;
             var body = HallPlace(parent, "Machinery", bodyName, pos, rot, scale, default, false);
             if (body != null) HallOwnMaterials(body);
+            // Screen S2 pass 9: SM_RollerDrum_s2 (build_s2_roller_p9.py) = closed core + dense clumped bristle tufts, no fur
+            // shells and no separate sleeve (LOD0 56k / LOD1 16k tris)
+            if (body != null && bodyName == "SM_RollerDrum_s2") HallLods(body, "RollerDrum_LOD0", "RollerDrum_LOD1");
             // Screen S2 pass 6 (owner sheet S2/03 "dense soft pink bristles"): the S2 body gets the bristle sleeve
             // SM_RollerBristle_s2 (build_s2_roller_p6.py, same asset frame) as a child, so it spins with the body
             if (body != null && bodyName == "SM_BrushRoller_s2")
@@ -393,8 +396,9 @@ namespace BubbleWash.EditorTools
             // hole; R2 sees the roller ~49 deg off-axis, so that end face is visible). Tried: closed bristled ends + u -0.05 /
             // v -0.11 (previews v1-v3) -> a dark navy spiky starburst (corner pink 35 -> 20 %) = REJECTED, pass-6 geometry and
             // placement kept (the fix needs a new roller body master with a closed fur end cap, see NOTES.md)
+            // pass 9: body = the new bristle drum master SM_RollerDrum_s2 (the s2 body + sleeve stay the fallback)
             HallRoller(holder, HallRollerClear(HallScreenPoint(r2, -0.08f, -0.12f, 6.3f), dRot, 1.6f, 2.6f, "door/S2", 4.0f), dRot, 1.6f, -36f,
-                       "SM_BrushRoller_s2");
+                       ModelPrefab("Machinery", "SM_RollerDrum_s2") != null ? "SM_RollerDrum_s2" : "SM_BrushRoller_s2");
             // blue machine housing + gold pipe (SM_DoorMachine_s2, build_door_machinery_s2.py): front parallel to the door
             // wall, flange end (asset -X) at the rim; centre at R2 (u .06, v .32), 7 m deep = in front of the wall (40.35 m)
             // (v1 u .03 / v .29: pipe at y ~190 and flange at x ~165; reference pipe y 195-235 reaching the rim at x ~245)

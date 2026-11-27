@@ -104,10 +104,10 @@ Shader "BWK/Glass"
                     // interference - the colour cycles 2-3 times with film thickness + viewing angle, its reflectance follows
                     // Fresnel (clear centre, coloured ring), patchy where the film drains
                     half edge = 1.0 - ndv;
-                    float opd = thick * 2.4 + edge * 1.15 + 0.15;
+                    float opd = thick * 1.5 + edge * 0.85 + 0.2;    // p1: 2.4 / 1.15 read as concentric contour stripes
                     half3 irid = saturate(0.5 + 0.62 * cos(6.2832 * (opd + float3(0.0, 0.36, 0.68))));
                     half filmR = 0.06 + 0.94 * edge * edge;
-                    half patchy = 0.4 + 0.6 * smoothstep(0.2, 0.75, BWK_ValueNoise3(fp * 1.4 + 7.3));
+                    half patchy = 0.3 + 0.7 * smoothstep(0.25, 0.7, BWK_ValueNoise3(fp * 1.1 + 7.3));
                     half3 filmC = irid * filmR * patchy * 1.3 * _FilmStrength;
                     half3 bc = lerp(half3(1, 1, 1), irid, 0.4) * rim * 0.6 + half3(0.85, 0.8, 1.0) * haze
                              + refl * _Reflectivity * (0.05 + rim * 0.4) + _Tint.rgb * _Glow * rim + filmC;

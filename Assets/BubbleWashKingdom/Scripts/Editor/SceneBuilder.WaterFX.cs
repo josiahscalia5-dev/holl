@@ -381,13 +381,15 @@ namespace BubbleWash.EditorTools
                 // foam layout keeps its draws)
                 var rm = new System.Random(3571);
                 float RM(float a, float b) => Mathf.Lerp(a, b, (float)rm.NextDouble());
+                bool shadeSide = false;                                                   // S2 p9: right door bank on M_Foam_v2_Shade
+                List<Part> shadeParts0 = null, shadeParts1b = null;
                 void MouthBank(float dm, float lat, float h, float sc, int vi)
                 {
                     var fm = track.Evaluate(dm);
                     var rot = fm.FlatRotation * Quaternion.Euler(0, 90f + RM(-8f, 8f) + (rm.NextDouble() < 0.5 ? 180f : 0f), 0);
                     var mm = Matrix4x4.TRS(fm.FlatPoint(lat, h), rot, new Vector3(sc, sc * RM(1.05f, 1.25f), sc));
-                    comb0.Add(lod0[vi], mm);
-                    comb1.Add(lod1[Mathf.Min(vi, lod1.Length - 1)], mm);
+                    comb0.Add(shadeSide && shadeParts0 != null ? shadeParts0 : lod0[vi], mm);
+                    comb1.Add(shadeSide && shadeParts1b != null ? shadeParts1b : lod1[Mathf.Min(vi, lod1.Length - 1)], mm);
                 }
                 bool mouthDone = false;
                 for (float d = 0f; d < L; d += (d < tunnelStart ? 1.6f : 1.3f))
@@ -411,11 +413,18 @@ namespace BubbleWash.EditorTools
                         // 0.2 m lower, round Mounds (never the flat Puffs) on and behind both rails. Same rm draw count as before.
                         float FLB = SlideProfile.FoamLateralBase, FHL = SlideProfile.FoamHeightLift;
                         float railTop = SlideProfile.RailZ + SlideProfile.RailR * 0.5f;          // puffs half-sunk into the tube top
+                        float railTopHi = SlideProfile.RailZ + SlideProfile.RailR * 0.75f;      // p1: left rail-top puffs hid in the tube -> sit higher, bigger
+                        var shadeMat = Mat("M_Foam_v2_Shade");
+                        if (shadeMat != null)
+                        {
+                            shadeParts0 = lod0[1].Select(q => new Part(q.mesh, new[] { shadeMat }, q.local)).ToList();
+                            shadeParts1b = lod1[Mathf.Min(1, lod1.Length - 1)].Select(q => new Part(q.mesh, new[] { shadeMat }, q.local)).ToList();
+                        }
                         for (float dm = d0 - 2.6f; dm < d0 + 8.4f; dm += 1.15f)
                         {
                             if (rm.NextDouble() < 0.25) continue;                                 // natural gaps
                             float near = Mathf.InverseLerp(d0 + 8.4f, d0 - 2.6f, dm);              // 1 = nearest the camera
-                            MouthBank(dm + RM(-0.2f, 0.2f), -(FLB + RM(0.48f, 0.68f)), FHL + RM(0.56f, 0.64f), Mathf.Lerp(1.35f, 1.75f, near) * RM(0.92f, 1.08f), 1);
+                            MouthBank(dm + RM(-0.2f, 0.2f), -(FLB + RM(0.48f, 0.68f)), FHL + RM(0.64f, 0.72f), Mathf.Lerp(1.35f, 1.75f, near) * RM(0.92f, 1.08f), 1);   // p1: top y 293 vs ref ~278 -> +0.08 m
                         }
                         for (float dm = d0 - 2.0f; dm < d0 + 7.0f; dm += 1.6f)
                         {
@@ -426,13 +435,17 @@ namespace BubbleWash.EditorTools
                         for (float dm = d0 - 1.5f; dm < d0 + 6.0f; dm += 1.9f)
                         {
                             if (rm.NextDouble() < 0.4) continue;
-                            MouthBank(dm + RM(-0.3f, 0.3f), -(SlideProfile.RailX + RM(0.0f, 0.12f)), railTop + RM(-0.02f, 0.02f), RM(0.55f, 0.75f), 1);
+                            MouthBank(dm + RM(-0.3f, 0.3f), -(SlideProfile.RailX + RM(0.0f, 0.12f)), railTopHi + RM(-0.02f, 0.02f), RM(0.75f, 0.95f), 1);
                         }
                         // right (reference x 900-1150, y 330-440): a low row of rounded puffs right behind the rail tube
+                        // p1: right puffs 63 % milky vs ref 20 %, bright #F9E3EB vs the reference's shaded lilac #ADA1CF (that bank sits in
+                        // the hatch's shadow) -> smaller, lower, on the shaded foam variant
+                        shadeSide = true;
                         foreach (float dm in new[] { d0 + 1.0f, d0 + 1.9f, d0 + 2.9f, d0 + 4.2f })
-                            MouthBank(dm + RM(-0.15f, 0.15f), FLB + RM(0.23f, 0.35f), FHL + RM(0.70f, 0.78f), RM(0.95f, 1.2f), 1);
-                        MouthBank(d0 + 1.4f, FLB + RM(0.48f, 0.58f), FHL + RM(0.72f, 0.76f), RM(0.75f, 0.9f), 1);
-                        MouthBank(d0 + 3.4f, FLB + RM(0.48f, 0.58f), FHL + RM(0.72f, 0.76f), RM(0.75f, 0.9f), 1);
+                            MouthBank(dm + RM(-0.15f, 0.15f), FLB + RM(0.23f, 0.35f), FHL + RM(0.62f, 0.68f), RM(0.62f, 0.8f), 1);
+                        MouthBank(d0 + 1.4f, FLB + RM(0.48f, 0.58f), FHL + RM(0.66f, 0.70f), RM(0.6f, 0.72f), 1);
+                        MouthBank(d0 + 3.4f, FLB + RM(0.48f, 0.58f), FHL + RM(0.66f, 0.70f), RM(0.6f, 0.72f), 1);
+                        shadeSide = false;
                         // small puffs spilling onto both rail tops (the old water-edge mounds at |lat| 2.0 sit inside the new tube)
                         foreach (float dm in new[] { d0 + 1.2f, d0 + 2.2f, d0 + 3.3f })
                             MouthBank(dm + RM(-0.15f, 0.15f), SlideProfile.RailX + RM(0.0f, 0.1f), railTop + RM(-0.01f, 0.03f), RM(0.5f, 0.7f), 1);
