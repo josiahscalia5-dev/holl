@@ -312,7 +312,12 @@ namespace BubbleWash.EditorTools
                 // Screen S2 pass 9 (judge gap #3 "rows of small pink-white dots"; owner "differentiated THICKNESS, warm
                 // bulbs"): the LED rims between the first gold rings become gold marquee rings too (alternating medium /
                 // thin with the rings, PlaceMarquee) = receding gold bulb rings of varied thickness like crop 06
-                if (d < MarqueeRingsUntil && PlaceMarquee(d, 0.98f)) return true;
+                // pass 10 (judge gap #8 + lead 13:12 "ref interior = ONE gold bulb ring a few metres in, then ALTERNATING
+                // violet perforated bands whose rims glow pink-violet with tiny pink-white lights; ours = 5+ receding gold
+                // rings", gold 12.2 % vs ref 3.9 % in (520,40)-(1000,330)): the rims between the gold rings are violet LED
+                // rims again (SM_LedRim_s2) = half the gold rings, violet glowing rims between them
+                const bool S2GoldRimsP9 = false;
+                if (S2GoldRimsP9 && d < MarqueeRingsUntil && PlaceMarquee(d, 0.98f)) return true;
                 if (ledRim == null || d >= MarqueeRingsUntil) return false;
                 var f = track.Evaluate(d);
                 var go = Spawn(ledRim);

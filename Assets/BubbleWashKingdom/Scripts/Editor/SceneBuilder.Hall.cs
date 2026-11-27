@@ -438,6 +438,24 @@ namespace BubbleWash.EditorTools
                 Debug.Log($"[BWK] hall S2 machinery: centre {mp}, lateral {Vector3.Dot(mp - fmp.position, fmp.flatRight):F2} m, " +
                           $"height over the slide {mp.y - fmp.position.y:F2} m");
             }
+            // Screen S2 pass 10 (judge gap #4 "left machinery under the roller reads flat purple and empty"; ref x 0-240,
+            // y 150-280 = a dark slate-blue machinery wall with lit details behind the gold pipe, mean RGB 103 / 88 / 112 vs
+            // ours 129 / 96 / 150 = bare violet wall): NEW SM_MachineWall_s2 (build_s2_machwall_p10.py, 5 x 3.4 m slab +
+            // raised bevelled panels, vents, pilaster, gold trim / bolts, warm lamps) behind the housing, ~0.5 m in front of
+            // the mouth wall (8.7 m deep), sized to the corner (u 0-0.17 = x 0-218, never over the hatch's gold band)
+            {
+                const float wu = 0.06f, wv = 0.30f, wDepth = 8.7f, wSpan = 0.22f;
+                var wp = HallScreenPoint(r2, wu, wv, wDepth);
+                float wWorld = wSpan * 2f * r2.tanHalf * r2.aspect * wDepth;
+                float wScale = Mathf.Clamp(wWorld / 5.0f / 0.9f, 0.5f, 3f);
+                var wRot = Quaternion.Slerp(fm.FlatRotation, HallFaceCam(r2, wp), 0.5f);
+                var mwall = HallPlace(holder, "Machinery", "SM_MachineWall_s2", wp, wRot, wScale);
+                if (mwall != null)
+                {
+                    HallOwnMaterials(mwall);
+                    Debug.Log($"[BWK] hall S2 machine wall p10: centre {wp}, scale {wScale:F2}");
+                }
+            }
 
             // ---- the hall between start and door (density: no stretch without landmarks; |lateral| >= 4.6 m or high)
             HallWallItem(holder, 26f, 1, "SM_GoldValves_r7", 6.8f, -0.4f, 1.2f);

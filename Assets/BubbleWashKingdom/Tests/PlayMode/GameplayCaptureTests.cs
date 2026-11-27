@@ -110,9 +110,12 @@ namespace BubbleWash.Tests
             // mascot on-screen size (motion E pass 7)
             var bake = new Mesh();
             var driver = runner.GetComponent<MascotAnimatorDriver>();
-            var sizeCsv = new System.Text.StringBuilder("t,distance,state,boxH,boxW,top,bottom,left,right,camDist,fov,armHold\n");
+            var sizeCsv = new System.Text.StringBuilder("t,distance,state,boxH,boxW,top,bottom,left,right,camDist,fov,armHold,seatW,raiseL,foreL,raiseR,foreR,clearMin\n");
             int sizeSamples = 0, bigSamples = 0, smallSamples = 0;
             float gameMinH = float.MaxValue, gameMaxH = 0f, openMinH = float.MaxValue, openMaxH = 0f;
+            // Motion E pass 9 (owner brief s18 / reference 01 + crop 23b): seated arms raised up-outward beside the brim
+            int armSamples = 0, armSolved = 0;
+            float armForeMin = float.MaxValue, armForeMax = float.MinValue, armClearMin = float.MaxValue;
             while (frames < 30 * 75)
             {
                 yield return null;
@@ -131,7 +134,20 @@ namespace BubbleWash.Tests
                         "{0:F2},{1:F1},{2},{3:F3},{4:F3},{5:F3},{6:F3},{7:F3},{8:F3},{9:F2},{10:F1},{11:F2}", tv, runner.Distance,
                         gm.Celebrating ? "finish" : play ? "play" : gm.RunStarted ? "start" : "intro", bh, bw, 1f - box.w, 1f - box.y,
                         box.x, box.z, Vector3.Distance(cam.transform.position, runner.visual != null ? runner.visual.position : runner.transform.position),
-                        cam.fieldOfView, driver != null ? driver.ArmHoldWeight : -1f));
+                        cam.fieldOfView, driver != null ? driver.ArmHoldWeight : -1f) + ArmCsv(driver));
+                    if (play && driver != null && driver.ArmSolver != null && driver.SeatedArmsWeight > 0.5f)
+                    {
+                        var so = driver.ArmSolver;
+                        armSamples++;
+                        bool ok = true;
+                        for (int k = 0; k < 2; k++)
+                        {
+                            if (float.IsNaN(so.LastElevation[k]) || so.LastClearance[k] < -1e-4f) { ok = false; continue; }
+                            armForeMin = Mathf.Min(armForeMin, so.LastForearm[k]); armForeMax = Mathf.Max(armForeMax, so.LastForearm[k]);
+                            armClearMin = Mathf.Min(armClearMin, so.LastClearance[k]);
+                        }
+                        if (ok) armSolved++;
+                    }
                     if (play)
                     {
                         sizeSamples++;
@@ -177,6 +193,9 @@ namespace BubbleWash.Tests
             File.AppendAllText(Path.Combine(OutDir, "run_summary.txt"), string.Format(System.Globalization.CultureInfo.InvariantCulture,
                 "sizeSamples={0}\nboxHeightPlay={1:F3}..{2:F3}\nboxHeightOpening0p5to4s={3:F3}..{4:F3} (ratio {5:F2})\nboxTooBig={6}\nboxTooSmall={7}\n",
                 sizeSamples, gameMinH, gameMaxH, openMinH, openMaxH, openMinH > 0f ? openMaxH / openMinH : 0f, bigSamples, smallSamples));
+            File.AppendAllText(Path.Combine(OutDir, "run_summary.txt"), string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                "seatedArmSamples={0}\nseatedArmSolved={1}\nseatedArmForearmDeg={2:F1}..{3:F1}\nseatedArmClearanceMin={4:F3}\n",
+                armSamples, armSolved, armSamples > 0 ? armForeMin : 0f, armSamples > 0 ? armForeMax : 0f, armSamples > 0 ? armClearMin : 0f));
             Object.Destroy(bake);
             Assert.Greater(runner.Distance - startDistance, runner.track.Length * 0.8f, "mascot did not travel the section");
             Assert.AreEqual(0, rearViolations, "camera was not behind the mascot during gameplay");
@@ -196,6 +215,20 @@ namespace BubbleWash.Tests
             Assert.AreEqual(0, smallSamples, $"the mascot was too small to read (box height < {MinBoxHeight} in {smallSamples} samples, min {gameMinH:F3})");
             Assert.LessOrEqual(openMaxH / Mathf.Max(1e-3f, openMinH), MaxOpeningSizeRatio,
                 $"the opening changed the mascot's on-screen size too much (0.5-4 s box height {openMinH:F3}..{openMaxH:F3})");
+            // Motion E 2026-11-27 pass 9: the seated up-outward arm pose is engaged in normal play and clears the hat.
+            Assert.Greater(armSamples, 10, "the seated raised-arm pose never engaged during gameplay (solver missing or weight 0)");
+            Assert.GreaterOrEqual(armSolved, armSamples * 9 / 10,
+                $"the seated arms found no hat-clear raise in {armSamples - armSolved} of {armSamples} gameplay samples");
+        }
+
+        /// <summary>Motion E pass 9: seated-arm weight and last solve (deg / m) as extra mascot_size.csv columns.</summary>
+        static string ArmCsv(MascotAnimatorDriver d)
+        {
+            if (d == null || d.ArmSolver == null) return ",-1,,,,,";
+            var s = d.ArmSolver;
+            return string.Format(System.Globalization.CultureInfo.InvariantCulture, ",{0:F2},{1:F1},{2:F1},{3:F1},{4:F1},{5:F3}",
+                d.SeatedArmsWeight, s.LastElevation[0], s.LastForearm[0], s.LastElevation[1], s.LastForearm[1],
+                Mathf.Min(s.LastClearance[0], s.LastClearance[1]));
         }
 
         [UnityTest, Timeout(600000)]
