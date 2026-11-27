@@ -41,6 +41,12 @@ namespace BubbleWash.Tests
             }
 
             const int w = 720, h = 1280;
+            // Lead cd16e551 2026-11-27 07:58: in batchmode the screen is NOT portrait, so Camera.main.aspect was landscape and
+            // RunnerCameraRig used its LANDSCAPE framing (2.9 back / 1.6 up / pitch 9 / FOV 52) while the frames were rendered
+            // 720x1280 - every recording (and the owner's review of them: "the mascot fills half the screen around 3 s") showed
+            // the mascot about twice as large as a portrait phone does. Force the phone's portrait aspect on the camera and the rig.
+            cam.aspect = (float)w / h;
+            foreach (var r in Object.FindObjectsByType<RunnerCameraRig>(FindObjectsInactive.Include, FindObjectsSortMode.None)) r.aspectOverride = (float)w / h;
             var rt = new RenderTexture(w, h, 24, RenderTextureFormat.ARGB32) { antiAliasing = 2 };
             var tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
             Time.captureFramerate = 30;
@@ -199,6 +205,12 @@ namespace BubbleWash.Tests
                 canvas.planeDistance = 0.5f;
             }
             const int w = 720, h = 1280;
+            // Lead cd16e551 2026-11-27 07:58: in batchmode the screen is NOT portrait, so Camera.main.aspect was landscape and
+            // RunnerCameraRig used its LANDSCAPE framing (2.9 back / 1.6 up / pitch 9 / FOV 52) while the frames were rendered
+            // 720x1280 - every recording (and the owner's review of them: "the mascot fills half the screen around 3 s") showed
+            // the mascot about twice as large as a portrait phone does. Force the phone's portrait aspect on the camera and the rig.
+            cam.aspect = (float)w / h;
+            foreach (var r in Object.FindObjectsByType<RunnerCameraRig>(FindObjectsInactive.Include, FindObjectsSortMode.None)) r.aspectOverride = (float)w / h;
             var rt = new RenderTexture(w, h, 24, RenderTextureFormat.ARGB32) { antiAliasing = 2 };
             var tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
             Time.captureFramerate = 30;

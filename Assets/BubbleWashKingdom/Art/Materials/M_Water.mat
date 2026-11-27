@@ -38,9 +38,9 @@ Material:
     - _ChevronThick: 0.36
     - _ChevronWidth: 0.5
     - _Depth: 0.22
-    - _DetailStrength: 0.7
+    - _DetailStrength: 0.85
     - _EdgeFoam: 0.6
-    - _EdgeTintAmount: 0.28
+    - _EdgeTintAmount: 0.42
     - _FlowSpeed: 7.5
     - _Glow: 0.16
     - _HueLock: 0.85
@@ -49,11 +49,11 @@ Material:
     - _PatchAmount: 0.42
     - _RainbowAmount: 0.32
     - _ReflectBoost: 0.55
-    - _RippleStrength: 1.15
+    - _RippleStrength: 1.3
     - _Smoothness: 0.62
-    - _SparkleAmount: 0.9
-    - _StreakAmount: 0.62
-    - _StreakDensity: 1.45
+    - _SparkleAmount: 0.7
+    - _StreakAmount: 0.2
+    - _StreakDensity: 1.15
     - _VTile: 4
     - _WaveHeight: 0.025
     - _WeaveAmp: 0.5

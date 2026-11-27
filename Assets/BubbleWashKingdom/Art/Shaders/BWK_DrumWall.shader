@@ -114,6 +114,7 @@ Shader "BWK/DrumWall"
         _DoorSlotStart ("Near -> far slot scale from (m along)", Float) = 52
         _DoorSlotEnd ("Near -> far slot scale until (m along)", Float) = 72
         _DoorRowSpread ("Door grade extra column spacing along (near)", Float) = 1
+        _DoorPanelCurve ("Door grade curved panels (replaces _PanelCurve)", Range(0, 0.8)) = 0.25
     }
     SubShader
     {
@@ -148,7 +149,7 @@ Shader "BWK/DrumWall"
             half _DeepAmount, _DeepHole, _DeepEmit;
             float _DeepStart, _DeepEnd;
             half4 _DeepTint, _DeepEdgeGlow;
-            half _DoorAmount, _DoorDesat, _DoorHole, _DoorSmooth;
+            half _DoorAmount, _DoorDesat, _DoorHole, _DoorSmooth, _DoorPanelCurve;
             float _DoorFadeStart, _DoorFadeEnd, _DoorSlotNear, _DoorSlotFar, _DoorSlotStart, _DoorSlotEnd, _DoorRowSpread;
             half4 _DoorTint;
         CBUFFER_END
@@ -381,10 +382,12 @@ Shader "BWK/DrumWall"
                 // two seams is gently curved across its width - the normal turns around the tunnel axis from -_PanelCurve at
                 // one seam to +_PanelCurve at the next, so the key light / probes draw a soft sheen band on every panel and a
                 // value step marks every seam (real lighting response, not a painted gradient)
-                if (_PanelCurve > 0.0 && _Pattern > 0.5)
+                // S2 pass 7: deeper pressed panels in the door drum (_DoorPanelCurve) -> broader probe / key sheen bands per panel
+                float pcurve = lerp(_PanelCurve, _DoorPanelCurve, BWK_DoorW(m.y));
+                if (pcurve > 0.0 && _Pattern > 0.5)
                 {
                     float ps = frac(m.x / (_Circumference / 8.0)) - 0.5;
-                    n = normalize(n + i.tangentWS.xyz * (ps * 2.0 * _PanelCurve));
+                    n = normalize(n + i.tangentWS.xyz * (ps * 2.0 * pcurve));
                 }
 
                 float variation = BWK_Fbm(m * 0.35);

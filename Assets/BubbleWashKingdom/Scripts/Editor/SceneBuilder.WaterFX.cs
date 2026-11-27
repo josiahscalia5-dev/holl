@@ -401,19 +401,19 @@ namespace BubbleWash.EditorTools
                         // S2 pass 7 (owner item 03 + s14; reference f_03.00s: SEPARATE shaded rounded puffs on the left bank,
                         // top edge at R2 y ~270-280 (ours p6b ~160-190 = a continuous wall 1.5-1.7 m high that hid the blue
                         // machine + gold pipe), small puffs on the right rail at x 1040-1150 y 380-430): one front row of
-                        // separate Mound clusters (tops ~1.05 m, ~0.35 m above the rail tube) with random gaps, a lower back
-                        // row of Bank clusters (tops ~0.95 m), little pillows spilling onto the rail top; on the right only a
+                        // separate Mound clusters (tops ~1.35 m: p1 at ~1.05 m hid behind the rail, top y ~310 vs ref ~270) with random gaps, a lower back
+                        // row of Bank clusters (tops ~1.2 m), little pillows spilling onto the rail top; on the right only a
                         // few small pillows + two small mounds on the rail. All |lat| >= 2.3 m (rail +-2.22): never in the lanes.
                         for (float dm = d0 - 2.6f; dm < d0 + 8.4f; dm += 1.15f)
                         {
                             if (rm.NextDouble() < 0.25) continue;                                 // natural gaps
                             float near = Mathf.InverseLerp(d0 + 8.4f, d0 - 2.6f, dm);              // 1 = nearest the camera
-                            MouthBank(dm + RM(-0.2f, 0.2f), -RM(2.55f, 2.75f), RM(0.40f, 0.47f), Mathf.Lerp(0.95f, 1.25f, near) * RM(0.92f, 1.08f), 1);
+                            MouthBank(dm + RM(-0.2f, 0.2f), -RM(2.55f, 2.75f), RM(0.46f, 0.54f), Mathf.Lerp(1.35f, 1.75f, near) * RM(0.92f, 1.08f), 1);
                         }
                         for (float dm = d0 - 2.0f; dm < d0 + 7.0f; dm += 1.6f)
                         {
                             if (rm.NextDouble() < 0.3) continue;
-                            MouthBank(dm + RM(-0.3f, 0.3f), -RM(3.1f, 3.5f), RM(0.28f, 0.36f), RM(0.85f, 1.05f), 0);
+                            MouthBank(dm + RM(-0.3f, 0.3f), -RM(3.1f, 3.5f), RM(0.34f, 0.42f), RM(1.2f, 1.45f), 0);
                         }
                         for (float dm = d0 - 1.5f; dm < d0 + 6.0f; dm += 1.9f)
                         {

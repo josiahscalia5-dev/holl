@@ -102,7 +102,11 @@ namespace BubbleWash.EditorTools
                 F(m, "_DoorAmount", 1f); F(m, "_DoorFadeStart", 78f); F(m, "_DoorFadeEnd", 112f);
                 // v2: v1 (tint .86/.88/1, holes .42) had the reference hue but ~10 L too dark and flat (patches L 38 / 37.5 vs
                 // 49 / 47.7, p10-p90 11-15 vs 24-28): brighter lit metal (x1.5 linear ~ +8-10 L), holes kept near black
-                F(m, "_DoorDesat", 0.12f); m.SetColor("_DoorTint", new Color(1.30f, 1.30f, 1.42f)); F(m, "_DoorHole", 0.27f);
+                // v3: v2 (x1.3 / 1.42) matched the contrast (p10-p90 26.7 / 25.4 vs ref 24-28) but lifted the ceiling to L 57.9
+                // (ref 43.1) and its bloom washed the yellow stars cream-pink -> half way back, and the contrast from deeper
+                // pressed panels instead (_DoorPanelCurve .25 -> .45: broader probe / key sheen band per panel)
+                F(m, "_DoorDesat", 0.12f); m.SetColor("_DoorTint", new Color(1.08f, 1.08f, 1.18f)); F(m, "_DoorHole", 0.32f);
+                F(m, "_DoorPanelCurve", 0.45f);
                 F(m, "_DoorSmooth", 0.82f);
                 F(m, "_DoorSlotNear", 1.15f); F(m, "_DoorSlotFar", 0.72f); F(m, "_DoorSlotStart", 54f); F(m, "_DoorSlotEnd", 70f);
                 F(m, "_DoorRowSpread", 1.45f);

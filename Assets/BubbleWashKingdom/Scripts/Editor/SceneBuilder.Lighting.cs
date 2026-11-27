@@ -572,9 +572,10 @@ namespace BubbleWash.EditorTools
                             scale = s.w * 2f * depth * tH / dW;
                             inset = 0.12f + dR * scale;
                         }
-                        // p7: the hatch v2's violet torus rolls back into the drum within ~0.6 m of the door plane -> stars
-                        // may sit from 40.8 m (p3: 41.2 m nudged the right yellow / pink 60-80 px off their reference spots)
-                        if (ok && wf.distance > HallMouthD + 0.8f) break;
+                        // p7: the hatch v2's violet torus (rho >= 4.2) never reaches inside the drum radius, so a star whose tips
+                        // stay 0.12 m inside the wall may sit from 40.35 m (p3 41.2 m / p7 v2 40.8 m still pushed the right
+                        // yellow ~100 px left of its reference spot (1010, 60))
+                        if (ok && wf.distance > HallMouthD + 0.35f) break;
                         ok = false;
                         u = Mathf.Lerp(u, 0.58f, 0.05f); v = Mathf.Lerp(v, 0.40f, 0.012f);   // p7 v2: sideways (keeps the reference height; v1 moved the right yellow 60 px down)
                     }

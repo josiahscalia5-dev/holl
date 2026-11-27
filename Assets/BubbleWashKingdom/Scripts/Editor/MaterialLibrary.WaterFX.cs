@@ -64,6 +64,10 @@ namespace BubbleWash.EditorTools
                 // p3 (p2 lane #51B4D9 hue 196 vs reference #7ABADE hue 202: right hue band, but too saturated - the reference
                 // lane carries more white flow): softer turquoise patches, denser white flow streaks
                 C(m, "_TurquoiseColor", "#46C2E2"); F(m, "_PatchAmount", 0.42f); F(m, "_StreakAmount", 0.62f); F(m, "_StreakDensity", 1.45f);
+                // S2 pass 7 (owner s12 + 26480: "far fewer straight white streaks", natural ripples, pink rail reflections):
+                // streaks .62 -> .2 (and meandering / broken in BWK_Water), livelier ripple normals, stronger rail-pink pickup
+                F(m, "_StreakAmount", 0.2f); F(m, "_StreakDensity", 1.15f); F(m, "_RippleStrength", 1.3f); F(m, "_DetailStrength", 0.85f);
+                F(m, "_EdgeTintAmount", 0.42f); F(m, "_SparkleAmount", 0.7f); F(m, "_CausticAmount", 0.26f);   // p1: the caustic web read as a cell grid once the streaks were gone
                 // light halos around the decor chevrons: same period / geometry / runway offset as SceneBuilder.BuildDecorChevrons
                 F(m, "_ChevronStart", SceneBuilder.ChevronStart); F(m, "_ChevronSpacing", SceneBuilder.ChevronSpacing);
                 // (v2 notch measured #55B8E5 vs reference deep #3386CC: the arrows now bloom on their own -> fainter, tighter pool)
@@ -116,6 +120,9 @@ namespace BubbleWash.EditorTools
                 // bright aqua HDR edge band, no white-hot near-camera block; blended over the water (Transparent queue)
                 F(m, "_ArrowEdge", 1.8f); F(m, "_ArrowFillAlpha", 0.72f);
                 C(m, "_ColorA", "#0DB2D8"); C(m, "_ColorB", "#18D8EE"); C(m, "_ColorC", "#8CFFF4"); F(m, "_Glow", 0.42f);
+                // S2 pass 7 (owner 06:58 s16 + 26480: "SOLID glowing cyan chevrons", not thin outlines; reference f_03.00s arm
+                // #A6FBF3 bright aqua fill, #7AE3E8 turquoise edges): bright opaque aqua fill, edge band DARKER turquoise
+                C(m, "_ColorA", "#52E4EC"); C(m, "_ColorC", "#1FC2DC"); F(m, "_ArrowEdge", 1.0f); F(m, "_ArrowFillAlpha", 0.96f);
                 F(m, "_SrcBlend", (float)BlendMode.SrcAlpha); F(m, "_DstBlend", (float)BlendMode.OneMinusSrcAlpha); F(m, "_ZWrite", 1f);
             }, (int)RenderQueue.Transparent);
             Mat("M_Foam", "BWK/Soft", m =>
@@ -211,6 +218,9 @@ namespace BubbleWash.EditorTools
                 // vs ref 59 %, but they shade as one flat grey-white wall): less light wrap so every lobe rounds off into a
                 // soft lavender-blue crevice, brighter satin tops
                 F(m, "_Wrap", 0.45f); F(m, "_SpecStrength", 0.5f); C(m, "_ShadowColor", "#AEB4DA");
+                // S2 pass 7 (owner s14: individual rounded puffs, soft lilac / blue shading, contact shadows - not white walls):
+                // less wrap (each lobe shades), lilac shadow + faint lilac puff tint, less self glow
+                F(m, "_Wrap", 0.3f); C(m, "_ShadowColor", "#A49CD6"); C(m, "_ColorB", "#ECE2FA"); F(m, "_Glow", 0.06f);
             });
             // round 8 masters: the old hall / fallback foam material is now a VARIANT of M_Foam_v2 (no overrides: one foam look)
             WaterVariant("M_Foam", "M_Foam_v2", null, -1);
@@ -268,6 +278,9 @@ namespace BubbleWash.EditorTools
             {
                 C(m, "_Tint", "#F0F8FF"); F(m, "_Alpha", 0.035f); F(m, "_Iridescence", 0.8f); F(m, "_FresnelPower", 2.6f); F(m, "_Glow", 0.34f);
                 F(m, "_Reflectivity", 0.8f); F(m, "_Bubble", 1f); F(m, "_FilmStrength", 1.0f); F(m, "_WindowStrength", 1.9f); F(m, "_RimWidth", 3.2f);
+                // S2 pass 7 (owner item 06 + s15: transparent bubbles with iridescent rims, not grey discs): film colour on the
+                // rim x2 (lerp .35 -> .7), wider rim band, less grey tint glow
+                F(m, "_FilmStrength", 2.0f); F(m, "_RimWidth", 2.6f); F(m, "_Glow", 0.18f); F(m, "_Iridescence", 1.0f);
             }, (int)RenderQueue.Transparent);
         }
     }

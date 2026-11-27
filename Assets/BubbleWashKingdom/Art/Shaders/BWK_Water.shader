@@ -265,10 +265,15 @@ Shader "BWK/Water"
                 half foam = smoothstep(0.84, 0.97, across + (wob - 0.5) * 0.12) * _EdgeFoam;
 
                 // ---- fast thin surface speed streaks (long light lines racing down the slide)
-                float sx = m.x * _StreakDensity;
-                float sA = Ridge(BWK_ValueNoise(float2(sx * 3.1, flowY * 0.07)));
-                float sB = Ridge(BWK_ValueNoise(float2(sx * 7.3 + 5.0, flowY * 0.16 + 2.0)));
-                float gate = smoothstep(0.3, 0.7, BWK_ValueNoise(float2(sx * 1.3 + 11.0, flowY * 0.22)));
+                // S2 pass 7 (owner s12 + 26480 sheets: "too many straight white lines ... a glowing conveyor belt"): the
+                // streaks MEANDER (lateral drift from a slow noise of the flow), are ~3x shorter and gated into broken
+                // segments -> short wavy ripple-crest glints instead of long straight lines racing down the slide
+                float wv = (BWK_ValueNoise(float2(m.x * 0.9 + 2.3, flowY * 0.35)) - 0.5) * 0.9
+                         + (BWK_ValueNoise(float2(m.x * 2.2 + 7.1, flowY * 0.9)) - 0.5) * 0.25;
+                float sx = (m.x + wv) * _StreakDensity;
+                float sA = Ridge(BWK_ValueNoise(float2(sx * 3.1, flowY * 0.18)));
+                float sB = Ridge(BWK_ValueNoise(float2(sx * 7.3 + 5.0, flowY * 0.36 + 2.0)));
+                float gate = smoothstep(0.42, 0.8, BWK_ValueNoise(float2(sx * 1.3 + 11.0, flowY * 0.5)));
                 half streak = saturate((smoothstep(0.9, 0.985, sA) * 0.85 + smoothstep(0.935, 0.992, sB) * 0.55) * gate) * _StreakAmount;
 
                 half3 albedo = lerp(body, _StreakColor.rgb, saturate(streak + foam));

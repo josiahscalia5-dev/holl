@@ -34,9 +34,9 @@ from mathutils import Vector  # noqa: E402
 GROUP = "FX"
 QUICK = os.environ.get("BWK_FX_QUICK", "") == "1"
 K_VIS = 0.575          # visible radius / metaball radius (isolated element, stiffness 2, threshold 0.6)
-RES = 0.0068           # polygonizer cell (m): strands 2.4-3.6 cm across get 4-5 cells
+RES = 0.0085           # polygonizer cell (m): v4c strands 5-7 cm across get 6-8 cells
 MAX_TRIS = 12000
-GRAV = 0.17            # downward bend added per segment (x u): v4a 0.30 fell back too soon (spray 0.25 m high vs ref ~0.45)
+GRAV = 0.13            # downward bend per segment (x u): v4a 0.30 fell back too soon; p1 (0.17) read too low
 
 
 def U(x, y, z):
@@ -149,15 +149,15 @@ def crown_side(s, seed, big):
     k = 1.0 if big else 0.8
     fx, fz = s * 0.22, 0.10                                  # foot centre (sole pads face the rear camera)
     # 1) connected curved base: from beside the toes (az 20) round the outer side to behind the heel (az 160)
-    rim = base_sheet(E, rng, s, fx, fz, 0.15, 15.0, 165.0, 0.06, 0.17 * k, 16, 0.024)
+    rim = base_sheet(E, rng, s, fx, fz, 0.16, 15.0, 165.0, 0.07, 0.22 * k, 14, 0.034)
     # 2) main spray: strands from the rim fanning outward, rising 25-70 deg and falling back, longer at the outer side
-    n_main = 11 if big else 8
+    n_main = 8 if big else 6
     for i in range(n_main):
         top, o, ang = rim[min(len(rim) - 1, int((i + rng.uniform(0.15, 0.85)) * len(rim) / n_main))]
         az = s * (ang + rng.uniform(-18.0, 18.0))
-        el = rng.uniform(34.0, 66.0)
-        L = rng.uniform(0.28, 0.52) * k * (1.15 if 60.0 < ang < 130.0 else 0.9)
-        strand(E, rng, top, dir_from(az, el), L, rng.uniform(0.016, 0.023), 2 if rng.random() < 0.75 else 1)
+        el = rng.uniform(42.0, 78.0)
+        L = rng.uniform(0.3, 0.5) * k * (1.15 if 60.0 < ang < 130.0 else 0.9)
+        strand(E, rng, top, dir_from(az, el), L, rng.uniform(0.026, 0.036), 2 if rng.random() < 0.75 else 1)
     # 3) low WAKE arm (rear view, reference lower right): a thin band lying on the water sweeping outward + back toward the
     #    camera from behind the foot, its rim breaking into low strands that skim outward
     n_w = 9 if big else 6
@@ -166,18 +166,18 @@ def crown_side(s, seed, big):
         u = (j + 0.5) / n_w
         p = (fx + s * (0.12 + 0.7 * u * wl), 0.0, fz - 0.10 - 0.42 * u * wl)
         h = (0.05 + 0.03 * rng.random()) * (1.0 - 0.5 * u)
-        E.capsule((p[0], 0.006, p[2]), (p[0] + s * 0.02, h, p[2]), 0.016)
+        E.capsule((p[0], 0.006, p[2]), (p[0] + s * 0.02, h, p[2]), 0.022)
         if j % 2 == 0 or rng.random() < 0.4:
             az = s * rng.uniform(100.0, 150.0)
             strand(E, rng, (p[0] + s * 0.02, h, p[2]), dir_from(az, rng.uniform(18.0, 48.0)), rng.uniform(0.16, 0.3) * k,
-                   rng.uniform(0.011, 0.015), 1)
+                   rng.uniform(0.018, 0.024), 1)
     for j in range(n_w * 2):                                 # the band itself: capsules along the water, broken by gaps
         if j > 2 and rng.random() < 0.3:
             continue
         u0, u1 = j / (n_w * 2), (j + 1) / (n_w * 2)
         a = (fx + s * (0.12 + 0.7 * u0 * wl), 0.012, fz - 0.10 - 0.42 * u0 * wl)
         b = (fx + s * (0.12 + 0.7 * u1 * wl), 0.012, fz - 0.10 - 0.42 * u1 * wl)
-        E.capsule(a, b, 0.015 * (1.0 - 0.45 * u0))
+        E.capsule(a, b, 0.022 * (1.0 - 0.45 * u0))
     # 4) low BOW arm (front comparison cameras): a V opening forward from the toes, strands fanning outward-forward
     n_b = 7 if big else 6
     bl = 1.0 * k
@@ -185,22 +185,22 @@ def crown_side(s, seed, big):
         u0, u1 = j / (n_b * 2), (j + 1) / (n_b * 2)
         a = (fx + s * (0.06 + 0.55 * u0 * bl), 0.012, fz + 0.12 + 0.95 * u0 * bl)
         b = (fx + s * (0.06 + 0.55 * u1 * bl), 0.012, fz + 0.12 + 0.95 * u1 * bl)
-        E.capsule(a, b, 0.02 * (1.0 - 0.4 * u0))
+        E.capsule(a, b, 0.026 * (1.0 - 0.4 * u0))
     for j in range(n_b):
         u = (j + 0.5) / n_b
         p = (fx + s * (0.06 + 0.55 * u * bl), 0.0, fz + 0.12 + 0.95 * u * bl)
         h = 0.07 * (1.0 - 0.45 * u) + 0.02 * rng.random()
-        E.capsule((p[0], 0.006, p[2]), (p[0] + s * 0.02, h, p[2]), 0.018)
+        E.capsule((p[0], 0.006, p[2]), (p[0] + s * 0.02, h, p[2]), 0.024)
         az = s * rng.uniform(40.0, 85.0)
         strand(E, rng, (p[0] + s * 0.02, h, p[2]), dir_from(az, rng.uniform(25.0, 55.0)), rng.uniform(0.16, 0.3) * k,
-               rng.uniform(0.012, 0.016), 1)
+               rng.uniform(0.018, 0.024), 1)
     # 5) loose droplet cloud around the spray (varied sizes, never on the lane centre)
     for _ in range(26 if big else 18):
         az = s * rng.uniform(20.0, 160.0)
         dist = rng.uniform(0.25, 0.85) * k
         o = dir_from(az, 0.0)
         c = (fx + o[0] * dist, rng.uniform(0.06, 0.5) * k, fz + o[2] * dist)
-        E.ball(c, rng.uniform(0.007, 0.022))
+        E.ball(c, rng.uniform(0.012, 0.03))
     return E
 
 

@@ -103,7 +103,13 @@ Shader "BWK/Glass"
                     half3 bc = lerp(half3(1, 1, 1), bubbleFilm, filmVis * 0.35) * (rim * 0.95 + haze)
                              + refl * _Reflectivity * (0.05 + rim * 0.5) + _Tint.rgb * _Glow * rim;
                     bc += half3(1, 1, 1) * (win * _WindowStrength + spec * 0.4);
-                    half ba = saturate(_Alpha + haze + rim * 0.85 + win * _WindowStrength * 0.8);
+                    // S2 pass 7 (owner item 06 + s15, reference f_03.00s upper-right bubble: pink / cyan / yellow thin-film swirls
+                    // across the face, strongest toward the rim, clear centre): an additive interference sheen over the whole
+                    // face, patchy with the film thickness noise (p1: colour only on the white rim read as a grey disc)
+                    half swirl = smoothstep(0.25, 0.85, frac(thick * 1.7 + 0.3));
+                    half3 sheen = bubbleFilm * (0.1 + 0.55 * (1.0 - ndv)) * swirl * 0.3 * _FilmStrength;
+                    bc += sheen;
+                    half ba = saturate(_Alpha + haze + rim * 0.85 + win * _WindowStrength * 0.8 + dot(sheen, half3(0.3, 0.4, 0.3)) * 0.9);
                     c = lerp(c, bc, _Bubble);
                     alpha = lerp(alpha, ba, _Bubble);
                 }
