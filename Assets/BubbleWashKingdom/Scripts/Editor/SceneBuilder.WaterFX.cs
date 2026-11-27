@@ -404,34 +404,40 @@ namespace BubbleWash.EditorTools
                         // separate Mound clusters (tops ~1.35 m: p1 at ~1.05 m hid behind the rail, top y ~310 vs ref ~270) with random gaps, a lower back
                         // row of Bank clusters (tops ~1.2 m), little pillows spilling onto the rail top; on the right only a
                         // few small pillows + two small mounds on the rail. All |lat| >= 2.3 m (rail +-2.22): never in the lanes.
+                        // S2 pass 9 (lead s2p9a corridor: rail tube 1.95 / 0.30 / r 0.28, top 0.58 m instead of 2.22 / 0.88): every
+                        // door cluster is now placed from SlideProfile (FoamLateralBase 2.07 = tube outer clearance, FoamHeightLift
+                        // -0.30 = top drop). s2p9a showed the left banks ~0.2 m too tall (top y ~250 vs reference ~280) and the
+                        // old rail-top pillows FLOATING as flat plates above the lowered right rail -> same lateral spots, banks
+                        // 0.2 m lower, round Mounds (never the flat Puffs) on and behind both rails. Same rm draw count as before.
+                        float FLB = SlideProfile.FoamLateralBase, FHL = SlideProfile.FoamHeightLift;
+                        float railTop = SlideProfile.RailZ + SlideProfile.RailR * 0.5f;          // puffs half-sunk into the tube top
                         for (float dm = d0 - 2.6f; dm < d0 + 8.4f; dm += 1.15f)
                         {
                             if (rm.NextDouble() < 0.25) continue;                                 // natural gaps
                             float near = Mathf.InverseLerp(d0 + 8.4f, d0 - 2.6f, dm);              // 1 = nearest the camera
-                            MouthBank(dm + RM(-0.2f, 0.2f), -RM(2.55f, 2.75f), RM(0.46f, 0.54f), Mathf.Lerp(1.35f, 1.75f, near) * RM(0.92f, 1.08f), 1);
+                            MouthBank(dm + RM(-0.2f, 0.2f), -(FLB + RM(0.48f, 0.68f)), FHL + RM(0.56f, 0.64f), Mathf.Lerp(1.35f, 1.75f, near) * RM(0.92f, 1.08f), 1);
                         }
                         for (float dm = d0 - 2.0f; dm < d0 + 7.0f; dm += 1.6f)
                         {
                             if (rm.NextDouble() < 0.3) continue;
-                            MouthBank(dm + RM(-0.3f, 0.3f), -RM(3.1f, 3.5f), RM(0.34f, 0.42f), RM(1.2f, 1.45f), 0);
+                            MouthBank(dm + RM(-0.3f, 0.3f), -(FLB + RM(1.03f, 1.43f)), FHL + RM(0.48f, 0.56f), RM(1.2f, 1.45f), 0);
                         }
+                        // left rail top: small round puffs sitting on the tube (crop 17), not flat pillows
                         for (float dm = d0 - 1.5f; dm < d0 + 6.0f; dm += 1.9f)
                         {
                             if (rm.NextDouble() < 0.4) continue;
-                            MouthBank(dm + RM(-0.3f, 0.3f), -RM(2.30f, 2.42f), RM(0.68f, 0.72f), RM(0.8f, 1.1f), 2);
+                            MouthBank(dm + RM(-0.3f, 0.3f), -(SlideProfile.RailX + RM(0.0f, 0.12f)), railTop + RM(-0.02f, 0.02f), RM(0.55f, 0.75f), 1);
                         }
+                        // right (reference x 900-1150, y 330-440): a low row of rounded puffs right behind the rail tube
                         foreach (float dm in new[] { d0 + 1.0f, d0 + 1.9f, d0 + 2.9f, d0 + 4.2f })
-                            MouthBank(dm + RM(-0.15f, 0.15f), RM(2.30f, 2.42f), RM(0.68f, 0.72f), RM(0.85f, 1.1f), 2);
-                        MouthBank(d0 + 1.4f, RM(2.55f, 2.65f), RM(0.42f, 0.46f), RM(0.5f, 0.62f), 1);
-                        MouthBank(d0 + 3.4f, RM(2.55f, 2.65f), RM(0.42f, 0.46f), RM(0.5f, 0.62f), 1);
-                        // p2 (08:03): right crop (1030,370,1160,440) milky 0 % (ref 45.8 %, puffs ON the rail band, top y ~389) and left
-                        // 37.6 % (ref 57.6 %, a pile hanging over the rail at x 0-450 y 380-440): the rail-top pillows sank into
-                        // the rail tube -> small mounds clinging to the rail at the WATER EDGE (|lat| ~2.0, outside the lanes
-                        // +-1.5), tops ~0.65 m, where the reference shows them
+                            MouthBank(dm + RM(-0.15f, 0.15f), FLB + RM(0.23f, 0.35f), FHL + RM(0.70f, 0.78f), RM(0.95f, 1.2f), 1);
+                        MouthBank(d0 + 1.4f, FLB + RM(0.48f, 0.58f), FHL + RM(0.72f, 0.76f), RM(0.75f, 0.9f), 1);
+                        MouthBank(d0 + 3.4f, FLB + RM(0.48f, 0.58f), FHL + RM(0.72f, 0.76f), RM(0.75f, 0.9f), 1);
+                        // small puffs spilling onto both rail tops (the old water-edge mounds at |lat| 2.0 sit inside the new tube)
                         foreach (float dm in new[] { d0 + 1.2f, d0 + 2.2f, d0 + 3.3f })
-                            MouthBank(dm + RM(-0.15f, 0.15f), RM(1.95f, 2.05f), RM(0.25f, 0.32f), RM(0.55f, 0.75f), 1);
+                            MouthBank(dm + RM(-0.15f, 0.15f), SlideProfile.RailX + RM(0.0f, 0.1f), railTop + RM(-0.01f, 0.03f), RM(0.5f, 0.7f), 1);
                         foreach (float dm in new[] { d0 + 0.3f, d0 + 1.3f, d0 + 2.6f })
-                            MouthBank(dm + RM(-0.15f, 0.15f), -RM(1.98f, 2.08f), RM(0.26f, 0.32f), RM(0.7f, 0.9f), 1);
+                            MouthBank(dm + RM(-0.15f, 0.15f), -(SlideProfile.RailX + RM(0.03f, 0.13f)), railTop + RM(-0.01f, 0.03f), RM(0.6f, 0.8f), 1);
                     }
                     bool hall = d < tunnelStart;
                     foreach (int side in new[] { -1, 1 })

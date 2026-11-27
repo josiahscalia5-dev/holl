@@ -221,6 +221,11 @@ namespace BubbleWash.EditorTools
                 // S2 pass 7 (owner s14: individual rounded puffs, soft lilac / blue shading, contact shadows - not white walls):
                 // less wrap (each lobe shades), lilac shadow + faint lilac puff tint, less self glow
                 F(m, "_Wrap", 0.3f); C(m, "_ShadowColor", "#A49CD6"); C(m, "_ColorB", "#ECE2FA"); F(m, "_Glow", 0.06f);
+                // S2 pass 9 (s2p9a lower rails uncover the door banks: one flat warm-white cloud, R2 left box p25 / p50 / p75
+                // #DDD1D4 / #ECDEDD / #F8ECE7 vs reference #D4C3D7 / #E1D1E1 / #E7E1EA, right box p50 #F3E1E0 vs #ADA1CF; crop 17 =
+                // separate round puffs lit white from the upper left with lilac-blue lower halves + contact creases): sculpted
+                // form shading on (BWK_Soft _FormShade), cooler body (the warm hall grade turned it peach), deeper lilac shade
+                F(m, "_FormShade", 1f); C(m, "_ColorA", "#F0F1FF"); C(m, "_ShadowColor", "#998DCF"); F(m, "_RimStrength", 0.28f);
             });
             // round 8 masters: the old hall / fallback foam material is now a VARIANT of M_Foam_v2 (no overrides: one foam look)
             WaterVariant("M_Foam", "M_Foam_v2", null, -1);
@@ -281,6 +286,9 @@ namespace BubbleWash.EditorTools
                 // S2 pass 7 (owner item 06 + s15: transparent bubbles with iridescent rims, not grey discs): film colour on the
                 // rim x2 (lerp .35 -> .7), wider rim band, less grey tint glow
                 F(m, "_FilmStrength", 2.0f); F(m, "_RimWidth", 2.6f); F(m, "_Glow", 0.18f); F(m, "_Iridescence", 1.0f);
+                // S2 pass 9: BWK_Glass bubble branch now does real thin-film interference (Fresnel-weighted, 2-3 hue cycles);
+                // film 1.3 = saturated pink / cyan / yellow ring with a clear centre (crop 19), thinner white rim
+                F(m, "_FilmStrength", 1.3f); F(m, "_RimWidth", 3.0f);
             }, (int)RenderQueue.Transparent);
         }
     }

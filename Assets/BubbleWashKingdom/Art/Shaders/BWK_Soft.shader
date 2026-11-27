@@ -38,6 +38,7 @@ Shader "BWK/Soft"
         _WobbleFreq ("Wobble Frequency", Float) = 3
         _SpecStrength ("Gloss Highlight (modes 5/6)", Range(0,3)) = 1
         _GlintAmount ("Bubble Glints (mode 5)", Range(0,2)) = 0.5
+        _FormShade ("S2 p9 sculpted puff shading: upper-left key + sky hemisphere + lilac contact creases (mode 5, 0 = off)", Range(0,1)) = 0
         _HotNear ("Chevron white-hot nearer than (m, mode 7)", Float) = 3.0
         _HotFar ("Chevron turquoise farther than (m, mode 7)", Float) = 3.5
         _HotBoost ("Chevron white-hot extra glow (mode 7)", Range(0,3)) = 0.6
@@ -68,6 +69,7 @@ Shader "BWK/Soft"
             half4 _MilkThin;
             half _MilkSoft;
             half _MilkGlass, _ArrowEdge, _ArrowFillAlpha;
+            half _FormShade;
         CBUFFER_END
         ENDHLSL
         Pass
@@ -236,8 +238,23 @@ Shader "BWK/Soft"
                     half3 light = BWK_WrapLight(i.positionWS, n, _Wrap);
                     half lum = saturate(dot(light, half3(0.3, 0.5, 0.2)));
                     half occ = lerp(0.35, 1.0, ao);
-                    half3 col = lerp(_ShadowColor.rgb, _ColorA.rgb, smoothstep(0.08, 0.8, lum * occ + 0.12));
-                    col *= lerp(0.78, 1.0, occ);
+                    half tone = smoothstep(0.08, 0.8, lum * occ + 0.12);
+                    // S2 pass 9 (owner 06:58 + crop 17: "individual rounded foam puffs with lilac / blue shading, gaps, contact
+                    // shadows"; s2p9a: the door banks lit flat white from the camera side = one white cloud): a sculpted form
+                    // term independent of the scene light - every puff white toward the upper-left studio key and the sky,
+                    // lilac-blue on its lower / right half and underside, deep lilac where puffs touch (baked AO)
+                    if (_FormShade > 0.001)
+                    {
+                        half3 fnv = mul((float3x3)UNITY_MATRIX_V, n);
+                        half keyF = saturate(dot(fnv, half3(-0.5, 0.62, 0.6)) * 0.62 + 0.42);
+                        half hemi = saturate(n.y * 0.5 + 0.5);
+                        half form = saturate(keyF * 0.8 + hemi * 0.38 - 0.18);
+                        form = form * form * (3.0 - 2.0 * form);
+                        half formT = form * lerp(0.25, 1.0, ao * ao);
+                        tone = lerp(tone, min(tone, formT), _FormShade);
+                    }
+                    half3 col = lerp(_ShadowColor.rgb, _ColorA.rgb, tone);
+                    col *= lerp(lerp(0.78, 0.7, _FormShade), 1.0, occ);
                     col = lerp(col, _ColorB.rgb, saturate(puff - 0.62) * 0.9);       // a few faintly tinted puffs
                     half fr = BWK_Fresnel(n, v, _RimPower);
                     col += _ColorA.rgb * fr * _RimStrength * occ;                    // translucent bright rims

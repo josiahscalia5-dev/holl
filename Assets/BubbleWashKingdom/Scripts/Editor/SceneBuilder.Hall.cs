@@ -322,9 +322,13 @@ namespace BubbleWash.EditorTools
                 var frm = track.Evaluate(HallMouthD + 6f);
                 // pass 6 v2: the lead build showed SM_DrumRim here as loose pink dots on a wall-coloured lip; the reference's
                 // first ring inside the door is a fat glossy violet LED rim -> SM_LedRim_s2 (same clearance, SM_DrumRim fallback)
-                var led = HallPlace(holder, "Machinery", "SM_LedRim_s2", frm.FlatPoint(0f, TunnelCenter), frm.FlatRotation, 1.0f);
+                // pass 9 (judge gap #3 "first rings inside the hatch read as rows of small pink-white dots"): the LED rim's
+                // 48 pink LEDs were exactly that row of dots at r ~180 px; the reference shows the perforated violet drum
+                // wall there, then the THICK gold bulb ring (r ~145 px) -> no rim at +6 m, the first ring = SM_MarqueeRing_s2c
+                bool ledRimHere = false;
+                var led = ledRimHere ? HallPlace(holder, "Machinery", "SM_LedRim_s2", frm.FlatPoint(0f, TunnelCenter), frm.FlatRotation, 1.0f) : null;
                 if (led != null) { led.name = "MouthLedRim_s2"; HallOwnMaterials(led); HallLods(led, "LedRim_LOD0", "LedRim_LOD1"); }
-                if (led == null)
+                if (led == null && ledRimHere)
                 {
                     var rimGo = Spawn(rimPrefab);
                     rimGo.name = "MouthDrumRim_s2";
@@ -337,7 +341,10 @@ namespace BubbleWash.EditorTools
                 // band 6 px) -> thick master SM_MarqueeRing_s2a (build_s2_rings_p7.py, band 0.60 m, 36 big bulbs) at
                 // 50.5 m (R2 depth ~18.3 m -> r ~145 px); the gate / deeper rings get the medium / thin masters (BuildRings)
                 var fmr = track.Evaluate(HallMouthD + 10.5f);
-                string mqName = ModelPrefab("Machinery", "SM_MarqueeRing_s2a") != null ? "SM_MarqueeRing_s2a" : "SM_MarqueeRing_s2";
+                // pass 9: extra-thick layered master SM_MarqueeRing_s2c (build_s2_rings_p9.py: band 0.76 m, double rope bead,
+                // stepped flange + bolts, 24 BIG warm bulbs r .21 like crops 06 / 08); s2a / thin master = fallbacks
+                string mqName = ModelPrefab("Machinery", "SM_MarqueeRing_s2c") != null ? "SM_MarqueeRing_s2c"
+                              : ModelPrefab("Machinery", "SM_MarqueeRing_s2a") != null ? "SM_MarqueeRing_s2a" : "SM_MarqueeRing_s2";
                 var mq = HallPlace(holder, "Machinery", mqName, fmr.FlatPoint(0f, TunnelCenter), fmr.FlatRotation, 1.0f);
                 if (mq != null) { mq.name = "MouthDrumRing_s2"; HallOwnMaterials(mq); HallLods(mq, "MarqueeRing_LOD0", "MarqueeRing_LOD1"); }
             }
@@ -370,7 +377,12 @@ namespace BubbleWash.EditorTools
             // Screen ALL pass 4 (judge gap #4 "thin donut ring seen end-on"): with the axis z +.1 the open non-hub end turned
             // TOWARD the camera (its hollow end read as a donut at x 250-320); z -.2 turns that end away so R2 sees the fur
             // BODY, and u .035 -> 0 keeps the body in the reference corner (0-280 px) instead of the end
-            var dRot = HallRollerRot(r2.rot * new Vector3(-1f, 0.1f, -0.2f));
+            // Screen S2 pass 9 (judge gap #5 "flat fringed DONUT; reference = dense bristle DRUM seen from the SIDE", crop
+            // 02): the view ray to the roller centre (u -.08, v -.12, 6.3 m) is ~(-.69, .41, .60) in R2 space and the old
+            // axis (-1, .1, -.2) sat 54 deg off it, so the open end face filled the corner. Axis now perpendicular to that
+            // ray (hub end left + toward the camera, out of frame): R2 sees the bristle sleeve along its length (radiating
+            // bristles, pink / white / cyan bands), both end faces turned away; far end ~x 230 px, lower edge y ~150-180
+            var dRot = HallRollerRot(r2.rot * new Vector3(-0.66f, 0.05f, -0.75f));
             // v1: the r8 layout showed its blue / white non-hub half here (corner 78 % blue) -> pink-dominant s2 body
             // pass 6: the 2.6 m clearance is checked within 4.5 m of the centre line (lanes + 2.38 m rails + 2 m margin)
             // instead of 12 m: this roller hangs >= 4 m to the side of the slide, and the 12 m literal lifted it out of the

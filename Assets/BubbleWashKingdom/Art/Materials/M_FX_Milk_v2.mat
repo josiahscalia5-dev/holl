@@ -30,6 +30,7 @@ Material:
     - _BumpScale: 11
     - _BumpStrength: 0.9
     - _DstBlend: 10
+    - _FormShade: 0
     - _GlintAmount: 0.5
     - _Glow: 0.05
     - _HotBoost: 0.6

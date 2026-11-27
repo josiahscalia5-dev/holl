@@ -27,20 +27,26 @@ namespace BubbleWash.EditorTools
                 // Screen ALL pass 4 (judge gap #5 "flat pastel bands", sheet 15 = pink -> magenta -> orange/yellow glossy
                 // tubes with strong highlights): deeper magenta outer band, warmer orange-yellow stripe, less flat self-light
                 // (glow .34 -> .27, the pastel lift), stronger clear-coat reflection + racing streaks
-                F(m, "_Mode", 1); C(m, "_ColorA", "#FF5C8C"); C(m, "_ColorB", "#FFC23C"); C(m, "_ColorC", "#F2288E");
-                F(m, "_Smoothness", 0.97f); F(m, "_Metallic", 0f); F(m, "_Glow", 0.27f);
-                F(m, "_RimPower", 3f); F(m, "_RimStrength", 0.4f);
-                F(m, "_StreakAmount", 1.4f); F(m, "_StreakSpeed", 7f);       // racing rainbow reflections (pink / yellow / cyan)
-                F(m, "_ReflectBoost", 1.3f);                                   // clear-coat probe reflection (baked probes)
+                // Screen S2 pass 9 (judge gap #7, crop 15 "broad glossy hot-pink, yellow / orange / magenta stripes, white
+                // specular streaks along the flow"; s2p9a corners: pink 28 / 26 % vs ref 34 / 55, highlights 4.5 / 2.8 vs
+                // 8.3 / 9.5): hotter pink outer bands, a slightly narrower-reading golden-orange stripe, ~1.6x racing white
+                // streaks + stronger clear-coat / fresnel sheen so the sharp highlights run along the flow
+                F(m, "_Mode", 1); C(m, "_ColorA", "#FF4F96"); C(m, "_ColorB", "#FFB23A"); C(m, "_ColorC", "#F21E8C");
+                F(m, "_Smoothness", 0.985f); F(m, "_Metallic", 0f); F(m, "_Glow", 0.29f);
+                F(m, "_RimPower", 2.6f); F(m, "_RimStrength", 0.55f);
+                F(m, "_StreakAmount", 2.3f); F(m, "_StreakSpeed", 7f);       // racing rainbow reflections (pink / yellow / cyan)
+                F(m, "_ReflectBoost", 1.6f);                                   // clear-coat probe reflection (baked probes)
             });
             Mat("M_RailTube_r8", "BWK/Soft", m =>
             {
                 // hot pink tube with a pale glossy crest on the channel side and a deep magenta back (pass 4: was hot pink
                 // #FF4886, glow .32 -> .26, reflect 1.1 -> 1.35 for the sheet-15 specular tube look)
-                F(m, "_Mode", 1); C(m, "_ColorA", "#FF5C8C"); C(m, "_ColorB", "#FFE0EC"); C(m, "_ColorC", "#E8248E");
-                F(m, "_Smoothness", 0.975f); F(m, "_Metallic", 0f); F(m, "_Glow", 0.26f);
-                F(m, "_RimPower", 2.6f); F(m, "_RimStrength", 0.5f);
-                F(m, "_StreakAmount", 0.8f); F(m, "_StreakSpeed", 7f); F(m, "_ReflectBoost", 1.35f);
+                // pass 9 (gap #7, sheet 05 "rounded glossy pink rail with strong highlights"): hot-pink body, white-pink
+                // crest toward the channel, sharper clear coat + 2x white streaks along the flow
+                F(m, "_Mode", 1); C(m, "_ColorA", "#FF4A92"); C(m, "_ColorB", "#FFE6F2"); C(m, "_ColorC", "#E81C8A");
+                F(m, "_Smoothness", 0.988f); F(m, "_Metallic", 0f); F(m, "_Glow", 0.27f);
+                F(m, "_RimPower", 2.4f); F(m, "_RimStrength", 0.6f);
+                F(m, "_StreakAmount", 1.6f); F(m, "_StreakSpeed", 7f); F(m, "_ReflectBoost", 1.6f);
             });
 
             // ---------------------------------------------------------------- S2 door machinery (pass 2)

@@ -309,6 +309,10 @@ namespace BubbleWash.EditorTools
             var ledRim = ModelPrefab("Machinery", "SM_LedRim_s2");
             bool PlaceLedRim(float d)
             {
+                // Screen S2 pass 9 (judge gap #3 "rows of small pink-white dots"; owner "differentiated THICKNESS, warm
+                // bulbs"): the LED rims between the first gold rings become gold marquee rings too (alternating medium /
+                // thin with the rings, PlaceMarquee) = receding gold bulb rings of varied thickness like crop 06
+                if (d < MarqueeRingsUntil && PlaceMarquee(d, 0.98f)) return true;
                 if (ledRim == null || d >= MarqueeRingsUntil) return false;
                 var f = track.Evaluate(d);
                 var go = Spawn(ledRim);

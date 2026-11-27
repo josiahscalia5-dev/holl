@@ -90,9 +90,7 @@ Shader "BWK/Glass"
                     half ndv = saturate(dot(n, v));
                     float3 fp = i.positionOS * 2.2 + float3(0.0, _Time.y * 0.12, _Time.y * 0.05);
                     float thick = BWK_ValueNoise3(fp) * 0.9 + BWK_ValueNoise3(fp * 2.7 + 4.1) * 0.35;
-                    half3 bubbleFilm = BWK_Rainbow(thick * 1.6 + (1.0 - ndv) * 0.9 + 0.1);
                     half rim = pow(1.0 - ndv, _RimWidth);
-                    half filmVis = saturate(rim * 1.2 + (1.0 - ndv) * 0.15) * _FilmStrength;
                     // round soft highlights fixed relative to the camera (view-space normal)
                     half3 nv = mul((float3x3)UNITY_MATRIX_V, n);
                     half win = smoothstep(0.2, 0.08, length((nv.xy - half2(-0.22, 0.5)) * half2(1.0, 1.35)));
@@ -100,16 +98,21 @@ Shader "BWK/Glass"
                     win += smoothstep(0.16, 0.06, length((nv.xy - half2(0.45, -0.5)) * half2(1.6, 1.0))) * 0.45;
                     win *= step(0.0, nv.z);
                     half haze = (1.0 - rim) * 0.1;                                        // faint milky body
-                    half3 bc = lerp(half3(1, 1, 1), bubbleFilm, filmVis * 0.35) * (rim * 0.95 + haze)
-                             + refl * _Reflectivity * (0.05 + rim * 0.5) + _Tint.rgb * _Glow * rim;
+                    // S2 pass 9 (owner 06:58 "transparent iridescent bubbles"; crop 19 + f_03.00s upper-right bubble: saturated
+                    // pink / cyan / yellow / violet thin-film swirls, strongest in the outer ring, a clear violet-tinted centre and
+                    // a bright pink-white rim; p8a/p9a = grey glass discs with a faint rainbow fringe): real thin-film
+                    // interference - the colour cycles 2-3 times with film thickness + viewing angle, its reflectance follows
+                    // Fresnel (clear centre, coloured ring), patchy where the film drains
+                    half edge = 1.0 - ndv;
+                    float opd = thick * 2.4 + edge * 1.15 + 0.15;
+                    half3 irid = saturate(0.5 + 0.62 * cos(6.2832 * (opd + float3(0.0, 0.36, 0.68))));
+                    half filmR = 0.06 + 0.94 * edge * edge;
+                    half patchy = 0.4 + 0.6 * smoothstep(0.2, 0.75, BWK_ValueNoise3(fp * 1.4 + 7.3));
+                    half3 filmC = irid * filmR * patchy * 1.3 * _FilmStrength;
+                    half3 bc = lerp(half3(1, 1, 1), irid, 0.4) * rim * 0.6 + half3(0.85, 0.8, 1.0) * haze
+                             + refl * _Reflectivity * (0.05 + rim * 0.4) + _Tint.rgb * _Glow * rim + filmC;
                     bc += half3(1, 1, 1) * (win * _WindowStrength + spec * 0.4);
-                    // S2 pass 7 (owner item 06 + s15, reference f_03.00s upper-right bubble: pink / cyan / yellow thin-film swirls
-                    // across the face, strongest toward the rim, clear centre): an additive interference sheen over the whole
-                    // face, patchy with the film thickness noise (p1: colour only on the white rim read as a grey disc)
-                    half swirl = smoothstep(0.25, 0.85, frac(thick * 1.7 + 0.3));
-                    half3 sheen = bubbleFilm * (0.1 + 0.55 * (1.0 - ndv)) * swirl * 0.3 * _FilmStrength;
-                    bc += sheen;
-                    half ba = saturate(_Alpha + haze + rim * 0.85 + win * _WindowStrength * 0.8 + dot(sheen, half3(0.3, 0.4, 0.3)) * 0.9);
+                    half ba = saturate(_Alpha + haze + rim * 0.6 + win * _WindowStrength * 0.8 + dot(filmC, half3(0.3, 0.4, 0.3)) * 0.7);
                     c = lerp(c, bc, _Bubble);
                     alpha = lerp(alpha, ba, _Bubble);
                 }
