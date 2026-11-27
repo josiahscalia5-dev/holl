@@ -1,5 +1,16 @@
 # Bubble Wash Kingdom - lead handoff (2026-11-26 12:30, lead session cd43a82d on the third Pro account)
 
+## STATUS 2026-11-27 06:45 (lead 264e8266, ninth account) - exact resume point (private details: Captures/handoff/NEXT_ACCOUNT_START.md)
+- The previous account's usage limit cut the S2 quality pass 6 at 06:25; this account relaunched it at 06:39 with the same
+  team rules (character + environment first, water + metal queued, max 2 specialists at once) and per-agent resume notes.
+- Interim integration build lead_s2p6 (06:38, first build with the slide levelled inside the door so the far end rises):
+  build OK, section stills + sheets, Play Mode autopilot test PASSED 06:45 (lanes, jumps, rear facing, celebration).
+- Mascot v5 (character artist's reconstruction of the original approved character) is a SEPARATE version:
+  AnimatorBuilder.UseMascotV5 (false until the owner has seen it in gameplay), own *_v5 materials via
+  ModelImportRules.RemapVersionedMaterials; v4 and v3 stay the complete fallbacks.
+- Next: comparison-camera re-solve on the risen tunnel -> pass-6 integration build (Tools/after_wave.sh s2p6b) -> v5 in
+  gameplay for the owner's review -> camera / seated-motion specialist (E) -> one S2 judge + skeptic.
+
 ## STATUS 2026-11-27 06:00 (lead 8670dda0) - exact resume point (private details: Captures/handoff/NEXT_ACCOUNT_START.md)
 - Owner direction: ONE SCREEN AT A TIME. Target = S2 (video 3.00 s, golden tunnel entrance, rear view at the door), aim
   as close to 9/10 as possible; honest status 5.5 / 10 with mascot, 6 / 10 scenery only; 9/10 not realistic without

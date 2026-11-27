@@ -1928,55 +1928,174 @@ def export_game_model():
     print("GAMEMODEL_DONE")
 
 
-# ------------------------------------------------------------------ v5 GAME model: targeted owner corrections (2026-11-27)
-# Owner S2 item 05 (same identity, v4 + skeleton + takes kept as the fallback): the in-game pom-pom was only the 0.148 m
-# dark core + short shells (~0.25 x cuff width on screen, reference ~0.53), the arms ended close to the body and the
-# soles were covered by white shell fur (pads unreadable). Derived from mascot_v4_game.blend/.json (no v4 rebuild), so
-# the v4 game model, SK_Mascot_v4.fbx and SK_Mascot.fbx stay untouched. Rig: BWK_RIG_MODEL_BLEND/JSON = the v5 files.
-V5_POM_SCALE = 1.40      # pom-pom core radius 0.148 -> 0.207 (+ longer Unity yarn shells -> ~0.52 x cuff width)
-V5_POM_LIFT = 0.045      # centre up the hat axis so the bigger ball still sits ON the crown (bottom sinks ~1.5 cm)
-V5_ARM_STRETCH = 0.16    # arms 16 % longer past the shoulder root: mitts reach out past the body like the reference
-V5_SOLE_FUR = 0.18       # rig (contract 'sole_fur'): sole-side paw fur scaled to 18 % -> smooth white sole + pink pads
+# ------------------------------------------------------------------ v5 GAME model (owner 2026-11-27 item 05 + 06:30)
+# SK_Mascot_v5 = a separate, geometrically rebuilt in-game version of the approved character (v4 game model, its FBX,
+# skeleton, takes and materials stay the complete fallback). Studied view by view against the approved frames:
+#  REAR (f_03.00s): a LARGE fluffy yarn pom-pom ~0.42-0.45 x the brim width made of radial yarn locks (dark centre,
+#    light lilac tips) - the v4 game model only kept the 0.148 m dark core sphere (the yarn existed only as Blender hair
+#    curves), so in Unity it read as a small smooth dark ball; arms raised OUT at shoulder height with the mitts beside
+#    the brim (v4 game: level arms under the brim); smooth white soles with pink pads facing the camera.
+#  FRONT / 3-4: same hat, star badge, face (eyes / nose / mouth carried over from the approved v4 face).
+# Real geometry: ~230 tapered, slightly bent yarn-lock tubes (5 sides, 4 rings + rounded tip, vertex-coloured dark
+# violet root -> violet -> lilac tip, material slot M_PawPad = BWK/Character fabric x vertex colour, no fur shells:
+# build_mascot_rig.py tags only M_PomPom faces as shell fur) around a mid-violet core (M_PomPom shells = fuzz between
+# the locks). Derived from mascot_v4_game.blend/.json, so mascot_v4_game.*, SK_Mascot_v4.fbx and SK_Mascot.fbx stay
+# untouched. Rig: BWK_RIG_MODEL_BLEND/JSON = the v5 files, BWK_RIG_FBX = SK_Mascot_v5.fbx.
+V5_POM_TIP_R = 0.222      # yarn tip radius (reference rear: pom-pom diameter ~0.42-0.45 x brim width 0.98 m)
+V5_POM_CORE_R = 0.150     # core sphere (v4 0.148): its shells fill between the locks
+V5_POM_SINK = 0.36        # fraction of the tip radius sunk into the crown (reference: ball sits ON the crown)
+V5_YARN_N = 300           # Fibonacci directions; locks pointing into the crown are skipped (never seen)
+V5_ARM_RAISE = 17.0       # deg about the shoulder root: mitts beside the brim at brim / stripe height (reference rear)
+V5_ARM_STRETCH = 0.10     # arm 10 % longer past the root so the raised mitts clear the brim edge
+V5_SOLE_FUR = 0.18        # rig (contract 'sole_fur'): sole-side paw fur scaled to 18 % -> smooth white sole + pink pads
+V5_CUFF_ROLL = 0.012      # folded brim: outer rib surface pushed out up to 1.2 cm mid-height = thicker rolled cuff
 GAME5_BLEND = os.path.join(OUT, "mascot_v5_game.blend")
 GAME5_JSON = os.path.join(OUT, "mascot_v5_game.json")
+
+
+def smooth01(x):
+    x = min(1.0, max(0.0, x))
+    return x * x * (3.0 - 2.0 * x)
+
+
+def _rot_about(v, pivot, axis, ang):
+    return pivot + Matrix.Rotation(ang, 3, axis) @ (v - pivot)
+
+
+def _yarn_locks(c, ax, n, r_tip, seed=11):
+    """Radial yarn locks as a grabbed dict in world space (one tapered, slightly bent 5-sided tube per direction)."""
+    import random
+    rng = random.Random(seed)
+    V, F, UV, CO = [], [], [], []
+    golden = math.pi * (3.0 - math.sqrt(5.0))
+    rings = ((0.50, 0.70), (0.72, 1.00), (0.88, 0.92), (0.97, 0.55))   # (fraction of the lock length, radius scale)
+    cols = ((0.050, 0.014, 0.115), (0.205, 0.062, 0.430), (0.370, 0.170, 0.700), (0.560, 0.380, 0.900))
+    tip_col = (0.660, 0.500, 0.960)
+    sides = 5
+    for k in range(n):
+        z = 1.0 - 2.0 * (k + 0.5) / n
+        rr = math.sqrt(max(0.0, 1.0 - z * z))
+        d = Vector((rr * math.cos(golden * k), rr * math.sin(golden * k), z))
+        d = (d + Vector((rng.gauss(0, 0.07), rng.gauss(0, 0.07), rng.gauss(0, 0.07)))).normalized()
+        if d.dot(ax) < -0.30:
+            continue
+        L = r_tip * rng.uniform(0.90, 1.05)
+        w = rng.uniform(0.021, 0.028)
+        t1 = d.cross(Vector((0.31, 0.57, 0.76))).normalized()
+        t2 = d.cross(t1).normalized()
+        ph = rng.uniform(0.0, 2.0 * math.pi)
+        bend = (t1 * math.cos(ph) + t2 * math.sin(ph)) * rng.uniform(0.0, 0.035)
+        tone = rng.uniform(0.86, 1.12)
+        twist = rng.uniform(0.0, 2.0 * math.pi)
+        base = len(V)
+        for s, sc in rings:
+            ctr = c + d * (L * s) + bend * (s * s)
+            for j in range(sides):
+                a = twist + 2.0 * math.pi * j / sides
+                V.append(ctr + (t1 * math.cos(a) + t2 * math.sin(a)) * (w * sc))
+        V.append(c + d * L + bend)
+        tip = len(V) - 1
+        for ri in range(len(rings) - 1):
+            for j in range(sides):
+                a0, a1 = base + ri * sides + j, base + ri * sides + (j + 1) % sides
+                b0, b1 = a0 + sides, a1 + sides
+                F.append((a0, a1, b1, b0))
+                UV.append([(j / sides, rings[ri][0]), ((j + 1) / sides, rings[ri][0]),
+                           ((j + 1) / sides, rings[ri + 1][0]), (j / sides, rings[ri + 1][0])])
+                c0 = tuple(min(1.0, x * tone) for x in cols[ri]) + (1.0,)
+                c1 = tuple(min(1.0, x * tone) for x in cols[ri + 1]) + (1.0,)
+                CO.append([c0, c0, c1, c1])
+        last = base + (len(rings) - 1) * sides
+        for j in range(sides):
+            F.append((last + j, last + (j + 1) % sides, tip))
+            UV.append([(j / sides, 0.97), ((j + 1) / sides, 0.97), ((j + 0.5) / sides, 1.0)])
+            c0 = tuple(min(1.0, x * tone) for x in cols[-1]) + (1.0,)
+            ct = tuple(min(1.0, x * tone) for x in tip_col) + (1.0,)
+            CO.append([c0, c0, ct])
+    return dict(V=V, F=F, M=["M_PawPad"] * len(F), UV=UV, CO=CO)
 
 
 def export_game_model_v5():
     bpy.ops.wm.open_mainfile(filepath=GAME_BLEND)
     with open(GAME_JSON) as fh:
         contract = json.load(fh)
+    coll = bpy.data.collections.get("SK_Mascot_model") or bpy.context.scene.collection
     ax = Vector(contract["HAT_AXIS"]).normalized()
-    # ---- bigger pom-pom core, lifted so it still rests on the crown (shells inside the beanie are hidden by the rig)
-    pom = bpy.data.objects["PomPom"]
-    c0 = Vector(contract["hat"]["pompom_c"])
-    c1 = c0 + ax * V5_POM_LIFT
-    for v in pom.data.vertices:
-        v.co = c1 + (v.co - c0) * V5_POM_SCALE
-    contract["hat"]["pompom_c"] = list(c1)
-    contract["hat"]["pompom_r"] = contract["hat"]["pompom_r"] * V5_POM_SCALE
-    # ---- longer arms: stretch along the arm axis past the root (the shoulder seam at t = 0 stays put)
-    for tag in ("L", "R"):
+    body_c = Vector(contract["BODY_C"])
+    hat = contract["hat"]
+    # ---- 1. pom-pom: core re-centred so the bigger yarn ball sits ON the crown, + real radial yarn locks
+    crown_top = body_c + ax * hat["top_u"]
+    c1 = crown_top + ax * (V5_POM_TIP_R * (1.0 - V5_POM_SINK))
+    old = bpy.data.objects["PomPom"]
+    g = _grab(old)
+    c0 = Vector(hat["pompom_c"])
+    k = V5_POM_CORE_R / hat["pompom_r"]
+    g["V"] = [c1 + (Vector(v) - c0) * k for v in g["V"]]
+    g["CO"] = [[(1.0, 1.0, 1.0, 1.0)] * len(f) for f in g["CO"]]
+    locks = _yarn_locks(c1, ax, V5_YARN_N, V5_POM_TIP_R)
+    bpy.data.objects.remove(old, do_unlink=True)
+    _emit("PomPom", _merge(g, locks), coll)
+    hat["pompom_c"] = list(c1)
+    hat["pompom_r"] = V5_POM_CORE_R
+    lock_tris = sum(len(f) - 2 for f in locks["F"])
+    # ---- 2. arms raised out to shoulder height (+ a little longer); soft blend at the root keeps the shoulder seam
+    for side, tag in ((1, 'L'), (-1, 'R')):
         a = contract["arms"][tag]
         root, d = Vector(a["root"]), Vector(a["dir"]).normalized()
+        kax = d.cross(Vector((0.0, 0.0, 1.0))).normalized()
+        ang = math.radians(V5_ARM_RAISE)
         ob = bpy.data.objects["Arm." + tag]
         for v in ob.data.vertices:
             t = (v.co - root).dot(d)
-            if t > 0.0:
-                v.co = v.co + d * (t * V5_ARM_STRETCH)
+            wgt = smooth01((t + 0.02) / 0.12)
+            p = v.co + d * (max(0.0, t) * V5_ARM_STRETCH)
+            v.co = _rot_about(p, root, kax, ang * wgt)
         pc = Vector(a["palm_c"])
-        a["palm_c"] = list(pc + d * (max(0.0, (pc - root).dot(d)) * V5_ARM_STRETCH))
+        pc = pc + d * (max(0.0, (pc - root).dot(d)) * V5_ARM_STRETCH)
+        a["palm_c"] = list(_rot_about(pc, root, kax, ang))
+        a["dir"] = list((Matrix.Rotation(ang, 3, kax) @ d).normalized())
+        a["palm_dir"] = list((Matrix.Rotation(ang, 3, kax) @ Vector(a["palm_dir"])).normalized())
         a["length"] = a["length"] * (1.0 + V5_ARM_STRETCH)
+        ob.data.update()
+    # ---- 3. thicker folded brim: push the OUTER cuff rib surface out (profile 0 at both edges, max mid-height)
+    me = bpy.data.objects["Beanie"].data
+    cuff_mi = [i for i, m in enumerate(me.materials) if m and m.name == "M_HatCuff"]
+    cuff_v = {vi for pl in me.polygons if pl.material_index in cuff_mi for vi in pl.vertices}
+    other_v = {vi for pl in me.polygons if pl.material_index not in cuff_mi for vi in pl.vertices}
+    us = {vi: (me.vertices[vi].co - body_c).dot(ax) for vi in cuff_v}
+    u_lo, u_hi = min(us.values()), max(us.values())
+    rad = {vi: ((me.vertices[vi].co - body_c) - ax * us[vi]).length for vi in cuff_v}
+    bins = {}
+    for vi in cuff_v:       # outer surface = within 1.5 cm of the max radius in its 1 cm height bin (inner wall kept)
+        b = int((us[vi] - u_lo) / 0.01)
+        bins[b] = max(bins.get(b, 0.0), rad[vi])
+    moved = 0
+    for vi in cuff_v:
+        if vi in other_v or rad[vi] < bins[int((us[vi] - u_lo) / 0.01)] - 0.015:
+            continue
+        f = (us[vi] - u_lo) / max(1e-6, u_hi - u_lo)
+        push = V5_CUFF_ROLL * math.sin(math.pi * min(1.0, max(0.0, f)))
+        co = me.vertices[vi].co.copy()
+        rv = (co - body_c) - ax * us[vi]
+        if rv.length > 1e-6:
+            me.vertices[vi].co = co + rv.normalized() * push
+            moved += 1
+    me.update()
     contract["sole_fur"] = V5_SOLE_FUR
     objs = [o for o in bpy.data.objects if o.type == 'MESH']
     contract["counts"] = {o.name: len(o.data.vertices) for o in objs}
-    contract["source"] = "build_mascot_v4.py BWK_V4_MODE=gamemodel_v5 (v5 candidate from the v4 game model)"
+    contract["source"] = ("build_mascot_v4.py BWK_V4_MODE=gamemodel_v5 (SK_Mascot_v5: rebuilt yarn pom-pom, raised "
+                          "arms, rolled brim)")
     for o in objs:
         o.data.update()
     with open(GAME5_JSON, "w") as fh:
         json.dump(contract, fh, indent=1, default=float)
-    print("CHECK v5 pompom c %s r %.3f  arm L length %.3f palm %s" % (
-        tuple(round(x, 3) for x in c1), contract["hat"]["pompom_r"], contract["arms"]["L"]["length"],
-        tuple(round(x, 3) for x in contract["arms"]["L"]["palm_c"])))
+    tris = sum(sum(len(p.vertices) - 2 for p in o.data.polygons) for o in objs)
+    print("CHECK v5 pompom c %s core %.3f tip %.3f  yarn locks %d tris  model tris %d" % (
+        tuple(round(x, 3) for x in c1), V5_POM_CORE_R, V5_POM_TIP_R, lock_tris, tris))
+    print("CHECK v5 arm L dir %s palm %s length %.3f  cuff u %.3f-%.3f outer verts moved %d" % (
+        tuple(round(x, 3) for x in contract["arms"]["L"]["dir"]),
+        tuple(round(x, 3) for x in contract["arms"]["L"]["palm_c"]), contract["arms"]["L"]["length"], u_lo, u_hi, moved))
     bpy.ops.wm.save_as_mainfile(filepath=GAME5_BLEND, compress=True)
     print("SAVED", GAME5_BLEND, GAME5_JSON)
     print("GAMEMODEL_V5_DONE")

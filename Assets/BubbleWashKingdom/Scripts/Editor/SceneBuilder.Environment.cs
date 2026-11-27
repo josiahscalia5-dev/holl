@@ -289,6 +289,23 @@ namespace BubbleWash.EditorTools
                 rings++;
                 return true;
             }
+            // pass 6 v2: the lavender lips in the same stretch = SM_LedRim_s2 (fat glossy violet tube + 48 pink LEDs, the
+            // reference's violet LED rims between the gold marquee rings); SM_DrumRim stays the fallback and everywhere else
+            var ledRim = ModelPrefab("Machinery", "SM_LedRim_s2");
+            bool PlaceLedRim(float d)
+            {
+                if (ledRim == null || d >= MarqueeRingsUntil) return false;
+                var f = track.Evaluate(d);
+                var go = Spawn(ledRim);
+                go.name = "LedRim_s2";
+                go.transform.SetParent(holder.transform, false);
+                go.transform.SetPositionAndRotation(f.FlatPoint(0, TunnelCenter), f.FlatRotation * Quaternion.Euler(0f, 0f, (Hash(d) - 0.5f) * 7.5f));
+                HallOwnMaterials(go);
+                HallLods(go, "LedRim_LOD0", "LedRim_LOD1");
+                foreach (var r in go.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
+                rims++;
+                return true;
+            }
             void PlaceRing(float d, float scale)
             {
                 if (PlaceMarquee(d, scale)) return;
@@ -309,6 +326,7 @@ namespace BubbleWash.EditorTools
             if (rim.Count > 0)
                 for (float dr = FirstRingDistance - (RimsPerGap == 1 ? GoldRingSpacing - rimOffset : rimOffset); dr > tunnelStart + 0.8f; dr -= RimsPerGap == 1 ? GoldRingSpacing : rimOffset)
                 {
+                    if (PlaceLedRim(dr)) continue;
                     comb.Add(rim, World(dr, 1f) * Vary(dr, 360f / RimLamps));
                     rims++;
                 }
@@ -320,6 +338,7 @@ namespace BubbleWash.EditorTools
                     {
                         float dr = d + r * rimOffset;
                         if (dr > portalD - 4f) break;
+                        if (PlaceLedRim(dr)) continue;
                         comb.Add(rim, World(dr, 1f) * Vary(dr, 360f / RimLamps));
                         rims++;
                     }

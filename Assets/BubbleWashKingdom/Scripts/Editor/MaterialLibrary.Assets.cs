@@ -65,6 +65,24 @@ namespace BubbleWash.EditorTools
                 m.DisableKeyword("_EMISSION");
             });
 
+            // ---------------------------------------------------------------- S2 door hatch + LED rim (pass 6)
+            // Violet torus rims of the new masters SM_DoorHatch_s2 / SM_LedRim_s2 (build_s2_door_p6.py). Reference f_03.00s
+            // right of the door: a fat glossy violet rim, low #4C326B / mid #8059A3 / high #B07CCD with one long highlight
+            // along the crest; the shared lavender drum lip M_DrumRim (fog .75, pale pink streaks) rendered the v1 hatch rim
+            // like the drum wall. Same stylised BWK/Gold violet palette, deeper mid / low, less fog, a tighter brighter
+            // highlight and fewer streaks, so the torus shape reads as polished violet metal (no emission added).
+            Mat("M_HatchViolet_s2", "BWK/Gold", m =>
+            {
+                C(m, "_HighColor", "#E6B4FF"); C(m, "_MidColor", "#6E40C4"); C(m, "_LowColor", "#2A1260");
+                C(m, "_RimColor", "#C064F0"); C(m, "_BandColor", "#C8A0F4");
+                F(m, "_Brightness", 0.80f); F(m, "_Emission", 0.06f); F(m, "_Contrast", 1.6f); F(m, "_ViewGradient", 1f);
+                F(m, "_EnvReflect", 0.45f); F(m, "_EnvTint", 0.55f); F(m, "_EnvRoughness", 0.18f);
+                F(m, "_SpecPower", 120f); F(m, "_SpecStrength", 1.5f); F(m, "_GlintStrength", 0.9f);
+                F(m, "_Sparkle", 0.25f); F(m, "_SparkleScale", 16f); F(m, "_FogAmount", 0.45f);
+                F(m, "_HighlightSize", 6f); F(m, "_BandSharpness", 16f); F(m, "_LightInfluence", 0.35f);
+                F(m, "_StreakStrength", 0.3f); F(m, "_StreakHeight", 0.6f);
+            });
+
             // ---------------------------------------------------------------- 02 striped fluffy washing roller
             // SM_BrushRoller_r8 (build_hall_assets.py): smooth rounded band body + 8 coincident fur shells (UV1.x = shell
             // fraction, UV1.y = 1), band colour in the vertex colour (linear pink / white / cyan), alpha 1 = "coat" path of

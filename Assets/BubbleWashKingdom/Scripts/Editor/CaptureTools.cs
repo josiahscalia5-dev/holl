@@ -367,9 +367,11 @@ namespace BubbleWash.EditorTools
                 // far one and the solve collapsed (rms 259 px) -> take the instance nearest the door (HallMouthD)
                 var mouthPos = runner.track.Evaluate(SceneBuilder.HallMouthD).position;
                 GameObject ring = null; float ringDist = float.MaxValue;
+                // lead 2026-11-27 06:50: S2 pass 6 replaced the door ring at the mouth by the layered master SM_DoorHatch_s2
+                // (SM_MouthRing_r7 stays only as its fallback) - accept either, nearest the door wins
                 foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsSortMode.None))
-                    if (t.name == "SM_MouthRing_r7" && (t.position - mouthPos).sqrMagnitude < ringDist) { ringDist = (t.position - mouthPos).sqrMagnitude; ring = t.gameObject; }
-                if (ring == null) throw new System.Exception("SM_MouthRing_r7 not found");
+                    if ((t.name == "SM_MouthRing_r7" || t.name == "SM_DoorHatch_s2") && (t.position - mouthPos).sqrMagnitude < ringDist) { ringDist = (t.position - mouthPos).sqrMagnitude; ring = t.gameObject; }
+                if (ring == null) throw new System.Exception("door ring (SM_DoorHatch_s2 / SM_MouthRing_r7) not found");
                 Debug.Log($"[BWK] S2 solve: door ring {ring.name} at {Mathf.Sqrt(ringDist):F1} m from the mouth point");
                 Bounds rb = default; bool first = true;
                 foreach (var r in ring.GetComponentsInChildren<Renderer>()) { if (first) { rb = r.bounds; first = false; } else rb.Encapsulate(r.bounds); }

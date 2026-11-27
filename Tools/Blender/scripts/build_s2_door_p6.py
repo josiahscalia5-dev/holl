@@ -11,10 +11,11 @@ Ours (checkpoint-27): one fat gold torus (81 px, no violet rim) + four identical
 28 bulbs) within 23 m -> "thick identical arches with sparse bulbs".
 
 Assets (Blender Z up, display face toward Blender +Y = asset -Z = toward the oncoming player; ring in the XZ plane, axis Y):
-  SM_DoorHatch_s2     LOD0 / LOD1: polished gold hatch band (convex front, rho 5.40-6.06) + dark-gold rope lip + 16 big
-                      warm bulbs in gold cups + copper inner bead (rho 5.22) + thick glossy violet drum rim (rho 4.30-5.10,
-                      1.2 m deep, rolls back to the drum wall r 4.2) + a thin violet bead. Slots M_Gold, M_GoldDark,
-                      M_DrumRim, M_Bulb (existing project materials, metal / environment domains).
+  SM_DoorHatch_s2     LOD0 / LOD1 (v2, see build_hatch): fat glossy violet torus rim rho 4.20-5.30 (crest in front of the
+                      gold) + copper bead + polished gold band rho 5.62-6.62 (convex front) + dark-gold rope lip + thin
+                      violet outer bezel + 16 big warm bulbs in gold cups. Slots M_Gold, M_GoldDark, M_HatchViolet_s2
+                      (MaterialLibrary.Assets.cs), M_Bulb.
+  SM_LedRim_s2        LOD0 / LOD1 (v2): fat glossy violet tube rim + 48 pink LED domes (first ring inside the door).
   SM_MarqueeRing_s2   LOD0 / LOD1: thin layered gold marquee ring (rho 3.88-4.27, band 0.26 m channel between an outer gold
                       bead and an inner dark-gold bead) with 40 distinct warm bulbs in cups (LOD1: no cups, coarser).
 Export: Assets/BubbleWashKingdom/Art/Models/Machinery/<name>.fbx (root empty + <Short>_LOD0 / _LOD1 children);
@@ -38,8 +39,8 @@ BM = {"__name__": "bwk_machinery_helpers", "__file__": _MP}
 exec(compile(_SRC[: -len("main()")], _MP, "exec"), BM)
 MB, lathe = BM["MB"], BM["lathe"]
 
-SLOTS = ["M_Gold", "M_GoldDark", "M_DrumRim", "M_Bulb"]
-GOLD, GDARK, VIOLET, BULB = range(4)
+SLOTS = ["M_Gold", "M_GoldDark", "M_HatchViolet_s2", "M_Bulb", "M_RimLight"]
+GOLD, GDARK, VIOLET, BULB, LED = range(5)
 TAU = 2.0 * math.pi
 AXIS = (0.0, 1.0, 0.0)
 
@@ -61,29 +62,53 @@ def ring_points(rho, count, phase=0.5):
 
 
 # ------------------------------------------------------------------ door hatch
+# v2 (06:50, measured on the lead build lead_s2p6 R2 still vs f_03.00s, 720p): the reference hatch left of the door is
+# ~120 px from the outer gold edge to the inner violet edge (ours v1 ~90 px) and its violet rim is a FAT glossy torus
+# (~35-40 px wide on the left, ~120 px on the right where the camera sees it face-on; ours v1 ~15 px, set back behind the
+# gold and lit like the lavender drum wall). v2: violet rim = a rounded D-section torus rho 4.20-5.30 with its crest
+# (h 0.40) IN FRONT of the gold face, copper bead rho 5.29-5.63, gold band rho 5.62-6.62 (convex front), dark-gold rope
+# lip + a thin violet outer bezel (the reference's lilac band left of the gold); 16 big warm bulbs on the band crest.
+# Violet slot = M_HatchViolet_s2 (glossy deep violet, MaterialLibrary.Assets.cs) instead of the pale M_DrumRim.
 def build_hatch(q):
     mb = MB()
     seg = 160 if q else 64
+    # fat glossy violet drum rim (CCW: back edge -> outer side -> crest -> inner side rolling back into the drum r 4.2)
+    rim = [(4.12, -1.00), (5.30, -1.00), (5.30, -0.30), (5.24, -0.02), (5.14, 0.18), (4.98, 0.33), (4.78, 0.40),
+           (4.58, 0.37), (4.42, 0.25), (4.31, 0.06), (4.25, -0.20), (4.20, -0.50), (4.15, -0.80)]
+    lathe(mb, rim, VIOLET, seg, axis=AXIS, closed=True)
+    # copper bead between the violet rim and the gold band
+    lathe(mb, circle_prof(5.46, 0.17, 0.12, 12 if q else 6), GDARK, seg, axis=AXIS, closed=True)
     # polished gold hatch band: flat back, convex front bulging toward the camera (highlights on both halves)
     front = []
-    for k in range(9):
-        t = k / 8.0
-        front.append((6.05 - 0.65 * t, 0.02 + 0.27 * math.sin(math.pi * t) ** 0.8))
-    band = [(5.40, -0.30), (6.02, -0.30), (6.06, -0.12)] + front + [(5.40, -0.10)]
+    for k in range(11):
+        t = k / 10.0
+        front.append((6.62 - 1.00 * t, 0.02 + 0.30 * math.sin(math.pi * t) ** 0.8))
+    band = [(5.62, -0.30), (6.58, -0.30), (6.63, -0.12)] + front + [(5.62, -0.10)]
     lathe(mb, band, GOLD, seg, axis=AXIS, closed=True)
-    # outer rope lip (dark gold) + copper inner bead
-    lathe(mb, circle_prof(6.10, 0.075, -0.06, 10 if q else 6), GDARK, seg, axis=AXIS, closed=True)
-    lathe(mb, circle_prof(5.22, 0.14, 0.02, 12 if q else 6), GDARK, seg, axis=AXIS, closed=True)
-    # thick glossy violet drum rim behind the gold, rolling back into the drum wall (r 4.2)
-    rim = [(4.12, -1.00), (5.10, -1.00), (5.10, -0.20), (5.03, 0.02), (4.92, 0.14), (4.74, 0.20), (4.56, 0.17),
-           (4.43, 0.07), (4.35, -0.10), (4.31, -0.35), (4.25, -0.62), (4.18, -0.82)]
-    lathe(mb, rim, VIOLET, seg, axis=AXIS, closed=True)
-    lathe(mb, circle_prof(4.86, 0.05, 0.19, 8 if q else 4), VIOLET, seg, axis=AXIS, closed=True)
-    # 16 big warm bulbs in gold cups on the band crest (rho 5.71)
-    cup = [(0.0, -0.03), (0.235, -0.03), (0.24, 0.04), (0.215, 0.085), (0.17, 0.06), (0.0, 0.06)]
-    for x, z in ring_points(5.71, 16):
-        lathe(mb, cup, GDARK, 20 if q else 10, origin=(x, 0.27, z), axis=AXIS)
-        lathe(mb, ellipsoid_prof(0.19, 0.15, 8 if q else 4), BULB, 18 if q else 8, origin=(x, 0.37, z), axis=AXIS)
+    # outer dark-gold rope lip + thin violet bezel outside it
+    lathe(mb, circle_prof(6.68, 0.08, -0.04, 10 if q else 6), GDARK, seg, axis=AXIS, closed=True)
+    lathe(mb, circle_prof(6.86, 0.12, -0.10, 10 if q else 6), VIOLET, seg, axis=AXIS, closed=True)
+    # 16 big warm bulbs in gold cups on the band crest (rho 6.12)
+    cup = [(0.0, -0.03), (0.255, -0.03), (0.26, 0.04), (0.235, 0.09), (0.19, 0.065), (0.0, 0.065)]
+    for x, z in ring_points(6.12, 16):
+        lathe(mb, cup, GDARK, 20 if q else 10, origin=(x, 0.29, z), axis=AXIS)
+        lathe(mb, ellipsoid_prof(0.21, 0.16, 8 if q else 4), BULB, 18 if q else 8, origin=(x, 0.40, z), axis=AXIS)
+    return mb
+
+
+# ------------------------------------------------------------------ violet LED drum rim (first ring inside the door)
+# Reference f_03.00s: right inside the hatch a FAT glossy violet rim with many small pink-white LEDs frames the tunnel
+# (on-screen r ~211 px); ours = SM_DrumRim (0.28 m bead, 24 lamps, lavender like the wall) read as loose pink dots.
+# SM_LedRim_s2: rounded violet tube (centre rho 3.95, r 0.30 -> apex rho 3.65, same clearance as SM_DrumRim) on a short
+# back web into the wall (rho 4.30), 48 LED domes on the front-inner face (rho 3.74, h 0.22). Slots M_HatchViolet_s2,
+# M_RimLight (the existing pink LED emissive).
+def build_ledrim(q):
+    mb = MB()
+    seg = 128 if q else 48
+    lathe(mb, circle_prof(3.95, 0.30, 0.0, 18 if q else 8), VIOLET, seg, axis=AXIS, closed=True)
+    lathe(mb, [(4.02, -0.62), (4.30, -0.62), (4.30, 0.02), (4.02, -0.10)], VIOLET, seg, axis=AXIS, closed=True)
+    for x, z in ring_points(3.74, 48):
+        lathe(mb, ellipsoid_prof(0.075, 0.06, 6 if q else 3), LED, 12 if q else 6, origin=(x, 0.22, z), axis=AXIS)
     return mb
 
 
@@ -106,13 +131,24 @@ def build_marquee(q):
 def make_materials():
     return [C.material("M_Gold", "#E8B04A", 1.0, 0.18),
             C.material("M_GoldDark", "#B8782C", 1.0, 0.25),
-            C.material("M_DrumRim", "#7E52C8", 0.3, 0.2),
-            C.material("M_Bulb", "#FFB060", 0.0, 0.2, emission="#FF9A40", emission_strength=6.0)]
+            C.material("M_HatchViolet_s2", "#6A36C8", 0.35, 0.16),
+            C.material("M_Bulb", "#FFB060", 0.0, 0.2, emission="#FF9A40", emission_strength=6.0),
+            C.material("M_RimLight", "#FF6AD0", 0.0, 0.3, emission="#FF4FC4", emission_strength=5.0)]
+
+
+def compact(mb, mats):
+    """Keep only the material slots this mesh uses (no empty submeshes in Unity); remaps mb.fmat in place."""
+    used = sorted(set(mb.fmat))
+    remap = {o: n for n, o in enumerate(used)}
+    mb.fmat = [remap[i] for i in mb.fmat]
+    return [mats[i] for i in used]
 
 
 def export(name, short, builder, mats, cam, target, lens):
-    lod0 = builder(1).build(short + "_LOD0", mats)
-    lod1 = builder(0).build(short + "_LOD1", mats)
+    b0, b1 = builder(1), builder(0)
+    m0, m1 = compact(b0, mats), compact(b1, mats)
+    lod0 = b0.build(short + "_LOD0", m0)
+    lod1 = b1.build(short + "_LOD1", m1)
     t0, t1 = C.tri_count(lod0), C.tri_count(lod1)
     d = lod0.dimensions
     print("CHECK %s tris LOD0 %d LOD1 %d (%.0f %%) dims %.2f x %.2f x %.2f" % (name, t0, t1, 100.0 * t1 / t0, d.x, d.y, d.z))
@@ -138,7 +174,10 @@ def main():
     r1, h0, h1 = export("SM_DoorHatch_s2", "DoorHatch", build_hatch, mats, (1.2, 8.3, -1.0), (-0.8, 0.0, 0.6), 18.0)
     for o in (h0, h1):
         o.hide_render = True
-    export("SM_MarqueeRing_s2", "MarqueeRing", build_marquee, mats, (0.6, 9.0, -0.6), (-0.4, 0.0, 0.8), 20.0)
+    r2, m0_, m1_ = export("SM_MarqueeRing_s2", "MarqueeRing", build_marquee, mats, (0.6, 9.0, -0.6), (-0.4, 0.0, 0.8), 20.0)
+    for o in (m0_, m1_):
+        o.hide_render = True
+    export("SM_LedRim_s2", "LedRim", build_ledrim, mats, (0.6, 9.0, -0.6), (-0.4, 0.0, 0.8), 20.0)
     C.save_work("s2_door_p6.blend")
     print("DONE")
 

@@ -42,11 +42,15 @@ namespace BubbleWash.EditorTools
         /// placement of what the reference f_03.00s shows around the door. Placement helper only; the rig is unchanged.</summary>
         static HallCam R2Cam()
         {
+            // Screen S2 pass 6: reads the lead's solved comparison pose (CaptureTools.R2*, re-solved on the bent / risen
+            // tunnel) instead of the pass-2 copy (2.75 back / 1.0 up / yaw -9 / pitch 6), so the shot-matched door roller
+            // and machine stay where the comparison camera looks (the 06:13 re-solve pitched 4 deg down: the roller left
+            // the upper-left corner, corner pink 42 -> 27 %).
             var f = track.Evaluate(HeroMouthDistance);
             Vector3 fwd = Vector3.ProjectOnPlane(f.forward, Vector3.up).normalized, right = Vector3.Cross(Vector3.up, fwd);
-            Vector3 pos = f.position - fwd * 2.75f + Vector3.up * 1.0f + right * 0.3f;
-            var rot = Quaternion.LookRotation(fwd, Vector3.up) * Quaternion.Euler(6f, -9f, 0f);
-            return new HallCam { pos = pos, rot = rot, tanHalf = Mathf.Tan(29f * Mathf.Deg2Rad), aspect = 16f / 9f };
+            Vector3 pos = f.position - fwd * CaptureTools.R2Back + Vector3.up * CaptureTools.R2Height + right * CaptureTools.R2Lat;
+            var rot = Quaternion.LookRotation(fwd, Vector3.up) * Quaternion.Euler(CaptureTools.R2Pitch, CaptureTools.R2Yaw, 0f);
+            return new HallCam { pos = pos, rot = rot, tanHalf = Mathf.Tan(CaptureTools.R2Fov * 0.5f * Mathf.Deg2Rad), aspect = 16f / 9f };
         }
 
         /// <summary>Embedded FBX materials -> the project material of the same name (works before the full build's
@@ -285,11 +289,18 @@ namespace BubbleWash.EditorTools
             if (ModelPrefab("Machinery", "SM_MarqueeRing_s2") != null && rimPrefab != null)
             {
                 var frm = track.Evaluate(HallMouthD + 6f);
-                var rimGo = Spawn(rimPrefab);
-                rimGo.name = "MouthDrumRim_s2";
-                rimGo.transform.SetParent(holder.transform, false);
-                rimGo.transform.SetPositionAndRotation(frm.FlatPoint(0f, TunnelCenter), frm.FlatRotation);
-                HallOwnMaterials(rimGo);
+                // pass 6 v2: the lead build showed SM_DrumRim here as loose pink dots on a wall-coloured lip; the reference's
+                // first ring inside the door is a fat glossy violet LED rim -> SM_LedRim_s2 (same clearance, SM_DrumRim fallback)
+                var led = HallPlace(holder, "Machinery", "SM_LedRim_s2", frm.FlatPoint(0f, TunnelCenter), frm.FlatRotation, 1.0f);
+                if (led != null) { led.name = "MouthLedRim_s2"; HallOwnMaterials(led); HallLods(led, "LedRim_LOD0", "LedRim_LOD1"); }
+                if (led == null)
+                {
+                    var rimGo = Spawn(rimPrefab);
+                    rimGo.name = "MouthDrumRim_s2";
+                    rimGo.transform.SetParent(holder.transform, false);
+                    rimGo.transform.SetPositionAndRotation(frm.FlatPoint(0f, TunnelCenter), frm.FlatRotation);
+                    HallOwnMaterials(rimGo);
+                }
                 var fmr = track.Evaluate(HallMouthD + 12.5f);
                 var mq = HallPlace(holder, "Machinery", "SM_MarqueeRing_s2", fmr.FlatPoint(0f, TunnelCenter), fmr.FlatRotation, 1.0f);
                 if (mq != null) { mq.name = "MouthDrumRing_s2"; HallOwnMaterials(mq); HallLods(mq, "MarqueeRing_LOD0", "MarqueeRing_LOD1"); }
