@@ -164,6 +164,7 @@ Shader "BWK/DrumWall"
         _DoorThinSlots ("Door drum: keep thin far slot rows visible (0 = old 1.5 px fade)", Range(0, 1)) = 0
         _DoorRampDeepBlue ("Door ramp: deeper drum body -> the cobalt ceiling body (by camera distance, _DoorRampNear.._DoorRampFarDist)", Range(0, 1)) = 0
         _DoorBaySheen ("Door drum: bay sheen multiplier (glossy blue band on the ceiling bays)", Float) = 1
+        _DoorDeepPink ("Door drum: pink rim spill / rim mirror kept on the deeper walls", Range(0, 1)) = 1
     }
     SubShader
     {
@@ -212,7 +213,7 @@ Shader "BWK/DrumWall"
             half4 _DoorRampDark, _DoorRampMid, _DoorRampHigh;
             float _DoorRampScale, _DoorRampNear, _DoorRampFarDist, _DoorRampCap;
             half4 _DoorRampCeil;
-            half _DoorRampCeilAmount, _DoorThinSlots, _DoorRampDeepBlue, _DoorBaySheen;
+            half _DoorRampCeilAmount, _DoorThinSlots, _DoorRampDeepBlue, _DoorBaySheen, _DoorDeepPink;
         CBUFFER_END
 
         // Screen S2 pass 7: weight of the S2 door-drum grade at a distance along the tunnel (1 at the door, 0 beyond
@@ -512,7 +513,8 @@ Shader "BWK/DrumWall"
                 {
                     float w = max(_PinkSpillWidth, 0.05);
                     half spill = exp(-secLocal / w) + exp(-(secLen - secLocal) / w);
-                    emission += _PinkSpill.rgb * _PinkSpillStrength * saturate(spill) * (1.0 - hole);   // r3 v3: no fresnel boost (grazing walls stayed too bright)
+                    emission += _PinkSpill.rgb * _PinkSpillStrength * saturate(spill) * (1.0 - hole)   // r3 v3: no fresnel boost (grazing walls stayed too bright)
+                              * lerp(1.0, _DoorDeepPink, doorW * smoothstep(_DoorRampNear, _DoorRampFarDist, camDist));   // v9: cobalt deep drum
                 }
                 // r4: pale steel-blue sheen band across each bay of the upper drum (reference f_003.00s: a soft cyan-white
                 // reflection on the ceiling between the big rim and the next gold ring, the rest of the bay stays indigo)
@@ -647,7 +649,10 @@ Shader "BWK/DrumWall"
                         half floorH = smoothstep(0.62, 0.82, abs(aH - 0.5) * 2.0);
                         half3 env = _MirrorWall.rgb;
                         env = lerp(env, _MirrorFloor.rgb, floorH);
-                        env += (_MirrorGold.rgb * gW + _MirrorRim.rgb * rW) * (1.0 - floorH * 0.7);
+                        // v9: the deeper walls (grazing, fresnel ~.7) mirrored the pink LED rims over every band = lilac-pink deep
+                        // drum; the reference's deep drum is cobalt between its glowing rims -> pink mirror kept mostly near
+                        env += (_MirrorGold.rgb * gW + _MirrorRim.rgb * rW * lerp(1.0, _DoorDeepPink, doorW * smoothstep(_DoorRampNear, _DoorRampFarDist, camDist)))
+                             * (1.0 - floorH * 0.7);
                         env = lerp(env, _MirrorCore.rgb, smoothstep(_MirrorCoreStart, _MirrorCoreEnd, dAl));
                         // polished, slightly worn metal: Schlick fresnel on the rib normal, broken by a coarse wipe pattern
                         half nv = saturate(dot(n, viewDir));

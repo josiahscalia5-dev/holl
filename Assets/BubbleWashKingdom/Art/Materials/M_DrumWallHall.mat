@@ -47,6 +47,7 @@ Material:
     - _DoorBaySheen: 1
     - _DoorDeepFar: 30
     - _DoorDeepNear: 14
+    - _DoorDeepPink: 1
     - _DoorDesat: 0.5
     - _DoorFadeEnd: 112
     - _DoorFadeStart: 75

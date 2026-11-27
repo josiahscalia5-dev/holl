@@ -202,6 +202,9 @@ namespace BubbleWash.EditorTools
                 // ours lilac-indigo, too dark for the slot rows to read -> deeper body slides to the cobalt body, less deep
                 // darkening (x .5 -> .8 = slot contrast), brighter glossy blue bay band in the door drum only
                 F(m, "_DoorRampDeepBlue", 0.85f); F(m, "_DoorRampFar", 0.8f); F(m, "_DoorBaySheen", 2.5f);
+                // v9: v8 deep drum still lilac-pink: the grazing deeper walls mirror the pink LED rims (fresnel ~.7) + the pink
+                // rim spill -> both kept at 30 % on the deeper door-drum walls (the rims themselves keep their pink LEDs)
+                F(m, "_DoorDeepPink", 0.3f);
             });
             // polished lavender drum lips between the gold rings (SM_DrumRim, m1: fat rolled lip): the stylised BWK/Gold
             // environment shading with a lavender palette - violet body, magenta-pink fresnel edge, soft pink-lavender

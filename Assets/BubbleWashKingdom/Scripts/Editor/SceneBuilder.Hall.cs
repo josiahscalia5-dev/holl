@@ -471,6 +471,19 @@ namespace BubbleWash.EditorTools
                 float wScale = Mathf.Clamp(Vector3.Distance(hL, hR) / 5.0f, 0.6f, 2.6f);
                 var wp = (hL + hR) * 0.5f - wn * (slabBack * wScale + gap);
                 var wRot = fwm.FlatRotation;
+                // v7 (v4 at 8.7 m / v5-v6 on the mouth plane 13.4 m away: ZERO pixel change at x 0-240 between them = the
+                // slab is behind a nearer violet surface; the housing at 7.6 m shows only its side, so that surface sits at
+                // ~8 m depth on these rays): the machinery panel stands in FRONT of it, parallel to the R2 image plane at
+                // 7.0 m depth, bottom edge y 196 (just above the gold pipe, top y ~203, which stays visible), right edge
+                // x 215 (left of the hatch's gold band), top behind the roller; 92.8 px / m at 7 m -> 255 px = 2.75 m (x .81)
+                const bool S2MachWallFrontP10 = true;
+                if (S2MachWallFrontP10)
+                {
+                    const float fDepth = 7.0f, fScale = 0.81f;
+                    wScale = fScale;
+                    wp = HallScreenPoint(r2, 0.021f, 0.095f, fDepth);
+                    wRot = Quaternion.LookRotation(Vector3.ProjectOnPlane(r2.rot * Vector3.forward, Vector3.up).normalized, Vector3.up);
+                }
                 var mwall = HallPlace(holder, "Machinery", "SM_MachineWall_s2", wp, wRot, wScale);
                 if (mwall != null)
                 {
