@@ -26,14 +26,14 @@ Material:
     m_Ints: []
     m_Floats:
     - _Chase: 1
-    - _ChaseMin: 0.75
+    - _ChaseMin: 0.85
     - _ChaseScale: 1.6
     - _ChaseSpeed: 1.5
     - _CorePower: 2.6
     - _CoreWhite: 0.9
     - _EdgeSaturate: 1
     - _FogAmount: 0.08
-    - _HaloBoost: 1
+    - _HaloBoost: 1.35
     - _Intensity: 5
     - _ProbeBakeDim: 0.3
     - _PulseAmount: 0.05

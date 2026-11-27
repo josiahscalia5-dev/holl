@@ -148,7 +148,12 @@ namespace BubbleWash.EditorTools
         /// door / tunnel / chambers (Captures/agents/_lead_cam_2140/sheet_d035|d106|d215.png, v0 = old, v3 = this) -> 3.1 / 1.45
         /// / 7 / 70: the mascot keeps ~70 % of its old on-screen size, sits lower, and the rings, neon stars, coins and
         /// chamber doors open up around it. Revert = the old four values here + RunnerCameraRig portrait defaults.</summary>
-        public const float HeroCamBack = 3.1f, HeroCamHeight = 1.45f, HeroCamPitch = 7f, HeroCamFov = 70f;
+        /// Lead cd16e551 2026-11-27 07:46 (owner 07:20 + brief s19 "correct excessive camera closeness around three seconds - do not let
+        /// the mascot fill half the screen and hide the scenery"; review_s2p6b frames 2.5-3.5 s: the hat spanned ~55-60 % of the
+        /// portrait width whenever he was not boosting, and v5 is 10 % taller than v4): 3.1 / 1.45 -> 4.3 / 1.75 (pitch 7, FOV 70
+        /// kept) = ~73 % of the 3.1 m on-screen size, the same look-down angle to the mascot. The motion specialist (E) refines it.
+        /// Revert: 3.1f / 1.45f.
+        public const float HeroCamBack = 4.3f, HeroCamHeight = 1.75f, HeroCamPitch = 7f, HeroCamFov = 70f;
 
         internal static void ApplyHeroCamera(RunnerCameraRig rig)
         {

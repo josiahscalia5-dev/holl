@@ -357,6 +357,10 @@ namespace BubbleWash.EditorTools
                 bool heroWin = heroD > HeroDistance - 1.5f && heroD < HeroDistance + 15f;
                 // right bank clear in the hero view (round 4: to +26 m - a right-bank cumulus still showed at screen (.8, .4))
                 if (lat > 0f && heroD > HeroDistance - 1.5f && heroD < HeroDistance + 26f) return;
+                // S2 pass 7 (owner item 03 + s14 "large solid-white banks ... obscure machinery and scenery"; assets agent: the
+                // blue machine + gold pipe on the left must show): no continuous hall bank in the S2 door window on either
+                // side - MouthBank lays separate, lower puff clusters there instead (draws above already consumed)
+                if (heroD > HeroMouthDistance - 3f && heroD < HeroMouthDistance + 9f) return;
                 if (heroWin) { sc *= 1.3f; h += 0.12f; }                  // fuller, taller left banks
                 var m = Matrix4x4.TRS(f.FlatPoint(lat, h), rot, new Vector3(sc, sc * yS, sc));
                 comb0.Add(lod0[vi], m);
@@ -394,14 +398,32 @@ namespace BubbleWash.EditorTools
                     {
                         mouthDone = true;
                         float d0 = HeroMouthDistance;
-                        for (float dm = d0 - 0.8f; dm < d0 + 5.0f; dm += 0.9f)
+                        // S2 pass 7 (owner item 03 + s14; reference f_03.00s: SEPARATE shaded rounded puffs on the left bank,
+                        // top edge at R2 y ~270-280 (ours p6b ~160-190 = a continuous wall 1.5-1.7 m high that hid the blue
+                        // machine + gold pipe), small puffs on the right rail at x 1040-1150 y 380-430): one front row of
+                        // separate Mound clusters (tops ~1.05 m, ~0.35 m above the rail tube) with random gaps, a lower back
+                        // row of Bank clusters (tops ~0.95 m), little pillows spilling onto the rail top; on the right only a
+                        // few small pillows + two small mounds on the rail. All |lat| >= 2.3 m (rail +-2.22): never in the lanes.
+                        for (float dm = d0 - 2.6f; dm < d0 + 8.4f; dm += 1.15f)
                         {
-                            float near = Mathf.InverseLerp(d0 + 5.0f, d0 - 0.8f, dm);              // 1 = nearest the camera
-                            MouthBank(dm, -RM(2.78f, 2.95f), RM(0.36f, 0.46f), Mathf.Lerp(1.35f, 1.8f, near) * RM(0.92f, 1.08f), 0);
-                            MouthBank(dm + 0.45f, -RM(3.35f, 3.9f), RM(0.38f, 0.6f), Mathf.Lerp(1.7f, 2.4f, near) * RM(0.92f, 1.08f), 1);
+                            if (rm.NextDouble() < 0.25) continue;                                 // natural gaps
+                            float near = Mathf.InverseLerp(d0 + 8.4f, d0 - 2.6f, dm);              // 1 = nearest the camera
+                            MouthBank(dm + RM(-0.2f, 0.2f), -RM(2.55f, 2.75f), RM(0.40f, 0.47f), Mathf.Lerp(0.95f, 1.25f, near) * RM(0.92f, 1.08f), 1);
                         }
-                        MouthBank(d0 + 1.6f, RM(2.62f, 2.72f), RM(0.42f, 0.5f), 1.25f, 1);
-                        MouthBank(d0 + 2.3f, RM(2.66f, 2.78f), RM(0.46f, 0.56f), 1.05f, 2);
+                        for (float dm = d0 - 2.0f; dm < d0 + 7.0f; dm += 1.6f)
+                        {
+                            if (rm.NextDouble() < 0.3) continue;
+                            MouthBank(dm + RM(-0.3f, 0.3f), -RM(3.1f, 3.5f), RM(0.28f, 0.36f), RM(0.85f, 1.05f), 0);
+                        }
+                        for (float dm = d0 - 1.5f; dm < d0 + 6.0f; dm += 1.9f)
+                        {
+                            if (rm.NextDouble() < 0.4) continue;
+                            MouthBank(dm + RM(-0.3f, 0.3f), -RM(2.30f, 2.42f), RM(0.68f, 0.72f), RM(0.8f, 1.1f), 2);
+                        }
+                        foreach (float dm in new[] { d0 + 1.0f, d0 + 1.9f, d0 + 2.9f, d0 + 4.2f })
+                            MouthBank(dm + RM(-0.15f, 0.15f), RM(2.30f, 2.42f), RM(0.68f, 0.72f), RM(0.85f, 1.1f), 2);
+                        MouthBank(d0 + 1.4f, RM(2.55f, 2.65f), RM(0.42f, 0.46f), RM(0.5f, 0.62f), 1);
+                        MouthBank(d0 + 3.4f, RM(2.55f, 2.65f), RM(0.42f, 0.46f), RM(0.5f, 0.62f), 1);
                     }
                     bool hall = d < tunnelStart;
                     foreach (int side in new[] { -1, 1 })

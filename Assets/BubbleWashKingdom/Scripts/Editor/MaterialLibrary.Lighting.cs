@@ -38,7 +38,7 @@ namespace BubbleWash.EditorTools
             // golden-brown lows + bevel rim (rolled edges fall off into deep amber), paler cream highlight, higher body
             // contrast and sharper / stronger studio streaks (crisp bright specular lines on a rich amber body).
             GoldLook("M_Gold", high: "#FFF0C0", mid: "#E2A23E", low: "#3E2208", rim: "#6A3E12", band: "#F4C478",
-                brightness: 0.96f, glow: 0.05f, contrast: 2.2f, viewGradient: 1f, env: 0.38f, envTint: 0.85f, envRough: 0.14f,
+                brightness: 0.96f, glow: 0.05f, contrast: 2.2f, viewGradient: 1f, env: 0.38f, envTint: 1.0f, envRough: 0.14f,   // S2 p7: envTint .85 -> 1 (R2 hatch band S .44 vs ref .57: the untinted white foam / lavender hall in the probe washed it beige)
                 specPower: 260f, specStrength: 3.8f, glints: 3.4f, sparkle: 0f, fog: 0.4f, highlightSize: 11f, streak: 1.25f,
                 probeTint: "#8C5A6A");
             GoldLook("M_GoldDark", high: "#FFE8BC", mid: "#C88634", low: "#3A1E10", rim: "#5A3414", band: "#F0C890",
@@ -67,7 +67,7 @@ namespace BubbleWash.EditorTools
             // (_EdgeSaturate 1: G/R ~.02) -> the reference's pale warm cores (#fef9bb) with an orange bloom halo.
             // Round 5: cores still lemon (V99 #ffee9b vs reference #ffe0a6 peach-cream): G too high / B too low after the warm
             // highlight grade. Core #FFAA80 x5 tonemaps (Neutral, exposure -.25) to ~#ffe2c6 before grading -> peach-cream.
-            EmissiveLook("M_Bulb", "#FF6A10", 5.0f, core: 0.9f, corePower: 2.6f, halo: 1.0f, edgeSat: 1.0f, chase: 1f, chaseMin: 0.75f,
+            EmissiveLook("M_Bulb", "#FF6A10", 5.0f, core: 0.9f, corePower: 2.6f, halo: 1.35f, edgeSat: 1.0f, chase: 1f, chaseMin: 0.85f,   // S2 p7: halo 1 -> 1.35, chaseMin .75 -> .85 (reference S2 bulbs = warm amber glows, even)
                 pulse: 0.05f, fog: 0.08f, coreColor: "#FFAA80", probeDim: 0.3f);
             // end-of-tunnel portal disc (BuildPortal core): radiant warm white-gold, bright but not a screen-filling flare
             // round 8 (owner sheet 03 item 1 "large warm gold burst, no clipped white centre"; measured portal zone f_14.50s:

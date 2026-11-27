@@ -102,7 +102,7 @@ Material:
     - _Emission: 0.05
     - _EnvReflect: 0.38
     - _EnvRoughness: 0.14
-    - _EnvTint: 0.85
+    - _EnvTint: 1
     - _EnvironmentReflections: 1
     - _FogAmount: 0.4
     - _GlintStrength: 3.4

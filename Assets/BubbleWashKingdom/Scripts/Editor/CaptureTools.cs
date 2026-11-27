@@ -343,7 +343,7 @@ namespace BubbleWash.EditorTools
         /// height / lateral (m) from the runner, yaw / pitch (deg) on the flat track heading, vertical FOV. Solved 2026-11-26
         /// 20:25 by S2CameraSolveBatch (door ring both sides + mascot, rms 8.4 px). Re-solve after any S2 geometry change
         /// (2026-11-27: tunnel bend right inside the door) with -bwkSolveVP so the vanishing point counts too.</summary>
-        public static float R2Back = 3.0f, R2Height = 0.9f, R2Lat = 0.3f, R2Yaw = -7f, R2Pitch = 5f, R2Fov = 50f;   // re-solved 2026-11-27 06:52 on the bent + RISEN tunnel with the pass-6 door hatch SM_DoorHatch_s2 (rms 27.9 px; VP (793,272) vs ref (760,205); ring L (245,213) / R (1249,201) vs (248,230) / (1270,230)). Before: 2.5 / 1.1 / 0.3 / -8 / 10 / 58 at d 34.5 (06:13, rms 35.9)
+        public static float R2Back = 2.75f, R2Height = 1.0f, R2Lat = 0.3f, R2Yaw = -7f, R2Pitch = 6f, R2Fov = 58f;   // re-solved 2026-11-27 07:44 (lead cd16e551, lead_s2solve5, vpWeight 1.0) on the CLIMBING tunnel (S2RiseY 07:40) with the v5 mascot: rms 15.7 px, VP (770,213) vs ref (760,205), ring L (241,216) / R (1243,202) vs (248,230) / (1270,230). Before: 3.0 / 0.9 / 0.3 / -7 / 5 / 50 (06:52, rms 27.9, VP (793,272)); 2.5 / 1.1 / 0.3 / -8 / 10 / 58 at d 34.5 (06:13, rms 35.9)
 
         public static void S2CameraSolveBatch()
         {

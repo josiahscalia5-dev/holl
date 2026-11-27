@@ -544,6 +544,16 @@ namespace BubbleWash.EditorTools
                 float tV = r2.tanHalf, tH = r2.tanHalf * r2.aspect;
                 var r2Fwd = r2.rot * Vector3.forward; var r2Up = r2.rot * Vector3.up; var r2Right = r2.rot * Vector3.right;
                 int doorCount = 0;
+                // Screen S2 pass 7 (owner 06:58 s7 + 26480 sheets: "clean hollow outline tubes, distinct under bloom"): the door
+                // stars use the SLIM outline master SM_NeonStarTube_v2 (tube 6.5 % of r; reference door stars ~5 px tubes on
+                // 70-75 px stars) with its 3.2x outline-glow card; the chubby SM_NeonStarTube (tube 17 % of r) read as filled
+                // glowing shapes under the approved bloom
+                var slimD = ModelParts("Lighting", "SM_NeonStarTube_v2");
+                bool slimDoor = slimD.Count > 0;
+                float dW = slimDoor ? 2.13f : StarMeshWidth, dR = slimDoor ? 1.065f : StarMeshRadius, dCard = slimDoor ? 3.2f : StarGlowCard;
+                List<Part> RecolorD(Material mat) => slimDoor
+                    ? slimD.Select(p => new Part(p.mesh, Enumerable.Repeat(mat, Mathf.Max(1, p.mesh.subMeshCount)).ToArray(), p.local)).ToList()
+                    : Recolor(mat);
                 foreach (var s in DoorStarLayout)
                 {
                     float u = s.x, v = s.y, inset = 0.5f, scale = 1f; Vector3 pos = r2.pos; TrackFrame wf = default; bool ok = false;
@@ -556,10 +566,12 @@ namespace BubbleWash.EditorTools
                             ok = TunnelWallHit(r2.pos, dir, HeroMouthDistance - 2.75f, inset, out pos, out wf);
                             if (!ok) break;
                             float depth = Vector3.Dot(pos - r2.pos, r2Fwd);
-                            scale = s.w * 2f * depth * tH / StarMeshWidth;
-                            inset = 0.12f + StarMeshRadius * scale;
+                            scale = s.w * 2f * depth * tH / dW;
+                            inset = 0.12f + dR * scale;
                         }
-                        if (ok && wf.distance > HallMouthD + 1.2f) break;
+                        // p7: the hatch v2's violet torus rolls back into the drum within ~0.6 m of the door plane -> stars
+                        // may sit from 40.8 m (p3: 41.2 m nudged the right yellow / pink 60-80 px off their reference spots)
+                        if (ok && wf.distance > HallMouthD + 0.8f) break;
                         ok = false;
                         u = Mathf.Lerp(u, 0.58f, 0.05f); v = Mathf.Lerp(v, 0.40f, 0.05f);   // v3: finer steps (closer to the reference spot)
                     }
@@ -571,9 +583,9 @@ namespace BubbleWash.EditorTools
                     float rr = s.roll * Mathf.Deg2Rad;
                     var upHint = Vector3.ProjectOnPlane(r2Up * Mathf.Cos(rr) + r2Right * Mathf.Sin(rr), facing).normalized;
                     var rot = Quaternion.LookRotation(facing, upHint);
-                    comb.Add(Recolor(mats[s.color]), Matrix4x4.TRS(pos, rot, Vector3.one * scale));
+                    comb.Add(RecolorD(mats[s.color]), Matrix4x4.TRS(pos, rot, Vector3.one * scale));
                     // clean outline tubes with a tight halo (reference: purple wall visible inside every star, no filled blob)
-                    AddGlow(s.color, pos, rot, StarGlowCard * scale);   // pass 5: co-planar outline glow
+                    AddGlow(s.color, pos, rot, dCard * scale);   // pass 5: co-planar outline glow (p7: slim master card 3.2x)
                     doorCount++;
                     Debug.Log($"[BWK] door star c{s.color} screen ({s.x:F3},{s.y:F3}) -> ({u:F3},{v:F3}) track {wf.distance:F1} m " +
                               $"depth {Vector3.Dot(pos - r2.pos, r2Fwd):F1} m scale {scale:F2}");
@@ -679,6 +691,21 @@ namespace BubbleWash.EditorTools
                 float u = 0.5f + 0.5f * c.x / (c.z * tanH), v = 0.5f - 0.5f * c.y / (c.z * tanV);
                 return u > -margin && u < 1f + margin && v > -margin && v < 1f + margin;
             }
+            // Screen S2 pass 7 (owner 26480 sheets: the deep tunnel seen through the door = "clusters of FILLED FLOWER
+            // shapes"; R2 lead_s2p6b showed 6 sparse stars at 65-90 m piled at (700-830, 195-280) around the vanishing point,
+            // reference f_03.00s has only the small yellow (820, 205) + small pink (825, 250) there): the S2 door frame shows
+            // only its designed DoorStarLayout, like the hero frame
+            var r2v = R2Cam();
+            float r2tV = r2v.tanHalf, r2tH = r2v.tanHalf * r2v.aspect;
+            var r2Inv = Quaternion.Inverse(r2v.rot);
+            bool InR2View(Vector3 p, float margin)
+            {
+                var c = r2Inv * (p - r2v.pos);
+                if (c.z < 0.3f) return false;
+                float u = 0.5f + 0.5f * c.x / (c.z * r2tH), v = 0.5f - 0.5f * c.y / (c.z * r2tV);
+                return u > -margin && u < 1f + margin && v > -margin && v < 1f + margin;
+            }
+            int r2Skipped = 0;
             var r = new System.Random(5150);
             float Rand() => (float)r.NextDouble();
             int chunk = 0; float chunkStart = tunnelStart;
@@ -711,6 +738,7 @@ namespace BubbleWash.EditorTools
                 int ci = cr < 0.34f ? 0 : cr < 0.6f ? 1 : cr < 0.84f ? 2 : 3;
                 if (ci == lastColor) ci = (ci + 1) % 4;
                 if (InHeroView(pos, 0.12f)) continue;   // the hero frame shows only the designed layout
+                if (InR2View(pos, 0.04f)) { r2Skipped++; continue; }   // p7: so does the S2 door frame
                 lastColor = ci;
                 comb.Add(Recolor(mats[ci]), Matrix4x4.TRS(pos, rot, Vector3.one * scale));
                 // glow card ~2x the star size, just behind the tubes; tilted only half as much toward the camera as
@@ -729,7 +757,7 @@ namespace BubbleWash.EditorTools
             }
             comb.Flush(holder, $"Stars_{chunk:00}", false);
             glowComb.Flush(holder, $"StarGlow_{chunk:00}", false);
-            Debug.Log($"[BWK] neon stars: {heroCount} hero-frame + {count} tunnel stars with glow cards");
+            Debug.Log($"[BWK] neon stars: {heroCount} hero-frame + {count} tunnel stars with glow cards ({r2Skipped} skipped in the S2 door frame)");
         }
 
         /// <summary>Lights parented to the runner so the mascot always gets the reference's warm top glow and soft back rim.</summary>
