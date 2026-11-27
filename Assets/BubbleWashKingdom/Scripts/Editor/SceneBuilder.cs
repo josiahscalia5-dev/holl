@@ -695,29 +695,35 @@ namespace BubbleWash.EditorTools
 
         /// <summary>lead 3c2b09a2 2026-11-27: the approved S2 frame's big tilted paw coin (centre ~(350,546), ~190 px wide on
         /// 1280x720, lower left between the camera and the mascot). Casts that pixel through R2Cam() (the comparison pose
-        /// CaptureTools renders) to the depth where a coin of scale s (SM_Coin is 0.64 m across) is 190 px wide, converts the
-        /// point to track coordinates, and shrinks s (1 -> 0.7) until the coin floats clear of the water line.</summary>
+        /// CaptureTools renders) and finds where the ray crosses the LEFT LANE centre (a free-lateral solve landed at -0.55 m,
+        /// between lanes: the centre-lane runner collected it, so the stills hid it); the coin scale gives ~190 px at that
+        /// depth (SM_Coin is 0.64 m across), and the height is floored so it floats clear of the water - which lifts it a little
+        /// above the reference spot (logged as the predicted pixel).</summary>
         static (float d, float lat, float h, float s) S2HeroCoin(float lane)
         {
             const float px = 350f, py = 546f, widthPx = 190f, coinDiameter = 0.64f;
             var cam = R2Cam();
             Vector3 dir = cam.rot * new Vector3((px / 1280f * 2f - 1f) * cam.tanHalf * cam.aspect, (1f - py / 720f * 2f) * cam.tanHalf, 1f);
             float focal = 640f / (cam.tanHalf * cam.aspect);   // pixels per metre at camera depth 1
-            (float d, float lat, float h, float s) best = (HeroMouthDistance - 1f, -lane, 0.45f, 1f);
-            for (float s = 1f; s > 0.69f; s -= 0.05f)
+            (float d, float lat, float h) At(float t)
             {
-                Vector3 p = cam.pos + dir * (s * coinDiameter * focal / widthPx);
+                Vector3 p = cam.pos + dir * t;
                 float d = HeroMouthDistance;
-                for (int i = 0; i < 10; i++) d += Vector3.Dot(p - track.Evaluate(d).position, track.Evaluate(d).forward);
+                for (int i = 0; i < 10; i++) { var g = track.Evaluate(d); d += Vector3.Dot(p - g.position, g.forward); }
                 var f = track.Evaluate(d);
-                best = (d, Vector3.Dot(p - f.position, f.right), Vector3.Dot(p - f.position, f.up), s);
-                if (best.h >= 0.32f * s + 0.06f) break;
+                return (d, Vector3.Dot(p - f.position, f.right), Vector3.Dot(p - f.position, f.up));
             }
-            // collectable in the left lane, and outside the runner's own lane so CaptureTools.HideCollectedItems keeps it
-            if (best.lat > -0.65f || best.lat < -1.5f)
-                Debug.LogWarning($"[BWK] S2 hero coin lateral {best.lat:F2} is outside the left lane (-1.5 .. -0.65) - check R2 / HeroMouthDistance");
-            Debug.Log($"[BWK] S2 hero coin: d {best.d:F2} m (mascot {HeroMouthDistance}), lateral {best.lat:F2}, height {best.h:F2}, scale {best.s:F2}");
-            return best;
+            float lo = 0.3f, hi = 8f;   // the ray runs from the camera (0.3 m right of centre) toward the left
+            for (int i = 0; i < 40; i++) { float mid = 0.5f * (lo + hi); if (At(mid).lat > -lane) lo = mid; else hi = mid; }
+            float depth = 0.5f * (lo + hi);
+            var q = At(depth);
+            float s = Mathf.Clamp(widthPx * depth / (coinDiameter * focal), 0.75f, 1.1f);
+            float h = Mathf.Max(q.h, 0.32f * s + 0.04f);
+            Vector3 local = Quaternion.Inverse(cam.rot) * (track.Evaluate(q.d).Point(-lane, h) - cam.pos);
+            Debug.Log($"[BWK] S2 hero coin: d {q.d:F2} m (mascot {HeroMouthDistance}), left lane {-lane:F2}, height {h:F2} (ray {q.h:F2}), " +
+                      $"scale {s:F2}, predicted R2 pixel ({640f + local.x / local.z / (cam.tanHalf * cam.aspect) * 640f:F0}, " +
+                      $"{360f - local.y / local.z / cam.tanHalf * 360f:F0}) vs reference ({px:F0}, {py:F0})");
+            return (q.d, -lane, h, s);
         }
 
 

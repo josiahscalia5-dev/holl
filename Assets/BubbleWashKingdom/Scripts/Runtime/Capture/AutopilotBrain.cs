@@ -55,7 +55,7 @@ namespace BubbleWash
                         int span = Mathf.Max(0, Mathf.RoundToInt((it.halfWidth - 0.4f) / r.laneWidth));
                         for (int l = lane - span; l <= lane + span; l++)
                             if (l >= -lanes && l <= lanes) score[l + lanes] -= (it.jumpable ? 4f : 12f) * w;
-                        if (it.jumpable && ahead < 5.5f && Mathf.Abs(it.lateral - r.Lateral) < it.halfWidth + 0.3f) jumpNeeded = true;
+                        if (it.jumpable && ahead < 5.5f && Mathf.Abs(it.lateral - r.Lateral) < TrackItemRegistry.HitHalfWidth(it, r.laneWidth)) jumpNeeded = true;
                         break;
                 }
                 if (it.kind == TrackItemKind.Gem && it.height > 1.0f && ahead < 4.5f && Mathf.Abs(it.lateral - r.Lateral) < 0.6f)

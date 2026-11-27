@@ -17,6 +17,12 @@ namespace BubbleWash
 
         void Awake() { Sort(); }
 
+        /// <summary>Lateral reach of a hit (item half-width + 0.3 m body), capped at 0.62 lane widths. lead 3c2b09a2
+        /// 2026-11-27: since the 11:00 corridor narrowing (lanes 1.15 -> 0.90 m) the uncapped 0.6 + 0.3 = 0.9 m equalled the
+        /// lane spacing, so a mascot in the centre lane also collected the coins (and boost pads) of BOTH side lanes and
+        /// lane choice stopped mattering. Capped: 0.56 m with 0.90 m lanes - own lane only, either lane mid-change.</summary>
+        public static float HitHalfWidth(TrackItem it, float laneWidth) => Mathf.Min(it.halfWidth + 0.3f, laneWidth * 0.62f);
+
         public void Sort()
         {
             items.RemoveAll(i => i == null);
@@ -41,7 +47,7 @@ namespace BubbleWash
                 if (it.distance - it.halfLength > d + 1.0f) break;
                 if (it.Consumed) continue;
                 if (Mathf.Abs(it.distance - d) > it.halfLength + 0.35f) continue;
-                if (Mathf.Abs(it.lateral - r.Lateral) > it.halfWidth + 0.3f) continue;
+                if (Mathf.Abs(it.lateral - r.Lateral) > HitHalfWidth(it, r.laneWidth)) continue;
                 switch (it.kind)
                 {
                     case TrackItemKind.Coin:

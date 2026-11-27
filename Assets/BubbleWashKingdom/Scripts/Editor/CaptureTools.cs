@@ -1094,7 +1094,7 @@ namespace BubbleWash.EditorTools
             foreach (var it in Object.FindObjectsByType<BubbleWash.TrackItem>(FindObjectsSortMode.None))
             {
                 if (it.kind != TrackItemKind.Coin && it.kind != TrackItemKind.Gem) continue;
-                if (it.distance < d - 4f || it.distance > d + 0.6f || Mathf.Abs(it.lateral - lat) > 0.6f) continue;
+                if (it.distance < d - 4f || it.distance > d + 0.6f || Mathf.Abs(it.lateral - lat) > TrackItemRegistry.HitHalfWidth(it, runner.laneWidth)) continue;
                 foreach (var r in it.GetComponentsInChildren<Renderer>())
                     if (r.enabled) { r.enabled = false; hidden.Add(r); }
             }
