@@ -34,7 +34,7 @@ Material:
     - _EdgeSaturate: 0.3
     - _FogAmount: 0.25
     - _HaloBoost: 0.9
-    - _Intensity: 2.6
+    - _Intensity: 3.4
     - _ProbeBakeDim: 1
     - _PulseAmount: 0.35
     - _PulseSpeed: 1.3

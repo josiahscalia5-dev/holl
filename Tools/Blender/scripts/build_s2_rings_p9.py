@@ -36,7 +36,10 @@ def build_c(q):
     if q:   # recessed seam lines either side of the bulb row
         for off in (-0.34, 0.34):
             lathe(mb, circle_prof(mid + off * (r_out - r_in), 0.022, crest * 0.78, 6), GDARK, seg, axis=AXIS, closed=True)
-    bulb_r, cup_r, n = 0.21, 0.26, 24
+    # owner step 2 (2026-11-27 15:50, side-by-side Captures/look/s2_step2_rims_ref_vs_ours.png): the approved frame's first
+    # gold ring carries ~30 SMALLER, denser warm bulbs (~8 px at 1280) - ours 24 x r .21 (~15 px) read as a few big
+    # lamps -> 32 bulbs r .15 in matching cups
+    bulb_r, cup_r, n = 0.15, 0.19, 32
     cup = [(0.0, -0.03), (cup_r, -0.03), (cup_r * 1.06, 0.05), (cup_r * 0.92, 0.10), (cup_r * 0.74, 0.07), (0.0, 0.07)]
     for x, z in ring_points(mid, n):
         if q:

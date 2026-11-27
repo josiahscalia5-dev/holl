@@ -40,11 +40,14 @@ def build_rim_v2(q):
     step = [(3.80, -0.50), (4.32, -0.50), (4.32, 0.02), (4.24, 0.13), (4.11, 0.21), (3.96, 0.24), (3.83, 0.21),
             (3.74, 0.13), (3.69, 0.02), (3.68, -0.14), (3.71, -0.30), (3.75, -0.42)]
     lathe(mb, step, VIOLET, seg, axis=AXIS, closed=True)
-    # continuous glowing pink-violet lip along the inner front edge
-    lathe(mb, circle_prof(3.705, 0.042, 0.08, 8 if q else 4), GLOW, seg, axis=AXIS, closed=True)
-    # 20 tiny sparkle lights on the crest
-    for x, z in ring_points(3.98, 20, 0.25):
-        lathe(mb, ellipsoid_prof(0.05, 0.04, 5 if q else 3), SPARK, 10 if q else 5, origin=(x, 0.235, z), axis=AXIS)
+    # continuous glowing pink-violet lip along the inner front edge.
+    # v3 (owner step 2 "tunnel light structure", 2026-11-27 15:50): the reference rims read as THICK neon bands with fairy
+    # lights; the v2 bead (tube r 0.042) rendered as a thin pale line at the R2 depth -> tube r 0.09, centre pushed to
+    # rho 3.745 so its inner edge stays at the 3.655 clearance, a little higher on the front edge (h 0.10)
+    lathe(mb, circle_prof(3.745, 0.09, 0.10, 10 if q else 5), GLOW, seg, axis=AXIS, closed=True)
+    # 32 sparkle lights on the crest (v2: 20 tiny 5 cm domes, invisible beyond ~10 m) -> 8.5 cm, facing the player
+    for x, z in ring_points(3.97, 32, 0.25):
+        lathe(mb, ellipsoid_prof(0.085, 0.07, 5 if q else 3), SPARK, 10 if q else 5, origin=(x, 0.24, z), axis=AXIS)
     return mb
 
 

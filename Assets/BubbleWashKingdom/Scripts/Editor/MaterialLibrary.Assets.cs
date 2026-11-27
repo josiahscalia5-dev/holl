@@ -145,15 +145,17 @@ namespace BubbleWash.EditorTools
             // pass 10 resume (owner 13:25 "excessive gold rings"): SM_LedRim_s2 v2 (build_s2_rims_p10.py) = the violet band
             // steps inside the door. Reference rims glow soft pink-violet along their inner edge with a few tiny white-pink
             // sparkles (not rows of saturated pink LED dots) -> own emissive looks (BWK/Emissive, no new shader)
+            // owner step 2 (2026-11-27 15:50): the v2 lip read as a thin PALE line (tonemapped to near white) -> deeper
+            // violet-magenta, ~2x intensity for a real neon bloom halo, less white core, more saturated edges
             Mat("M_RimGlow_s2", "BWK/Emissive", m =>
             {
-                C(m, "_Color", "#E86CF0"); F(m, "_Intensity", 1.7f); F(m, "_CoreWhite", 0.18f); F(m, "_CorePower", 3f);
-                F(m, "_HaloBoost", 0.6f); F(m, "_EdgeSaturate", 0.4f); F(m, "_Chase", 0f); F(m, "_PulseAmount", 0.1f);
-                F(m, "_PulseSpeed", 0.6f); F(m, "_FogAmount", 0.3f);
+                C(m, "_Color", "#D85CFF"); F(m, "_Intensity", 3.2f); F(m, "_CoreWhite", 0.08f); F(m, "_CorePower", 3f);
+                F(m, "_HaloBoost", 1.0f); F(m, "_EdgeSaturate", 0.75f); F(m, "_Chase", 0f); F(m, "_PulseAmount", 0.1f);
+                F(m, "_PulseSpeed", 0.6f); F(m, "_FogAmount", 0.25f);
             });
             Mat("M_RimSpark_s2", "BWK/Emissive", m =>
             {
-                C(m, "_Color", "#FFC8F2"); F(m, "_Intensity", 2.6f); F(m, "_CoreWhite", 0.6f); F(m, "_CorePower", 2.5f);
+                C(m, "_Color", "#FFC8F2"); F(m, "_Intensity", 3.4f); F(m, "_CoreWhite", 0.6f); F(m, "_CorePower", 2.5f);
                 F(m, "_HaloBoost", 0.9f); F(m, "_EdgeSaturate", 0.3f); F(m, "_Chase", 0f); F(m, "_PulseAmount", 0.35f);
                 F(m, "_PulseSpeed", 1.3f); F(m, "_FogAmount", 0.25f);
             });
