@@ -40,16 +40,16 @@ SEGS = 7          # 7 segments = 8 evenly spaced edge loops (0.57 m) - mobile bu
 V_TILE = 4.0      # v = distance along / 4 m
 
 # ------------------------------------------------------------------ slide cross-section (RunnerController contract)
-FLAT = 1.25                     # flat floor |x| <= 1.25 at z = 0
-K = 0.9                         # inner wall z = 0.9 * (|x| - 1.25)^2
-X_TOP = 2.10                    # wall top |x| = 2.10 (z ~ 0.65), buried inside the rail tube
+FLAT = 0.95                     # flat floor |x| <= 0.95 at z = 0 (lead 2026-11-27 corridor: was 1.25 - reference slide ~0.78x narrower)
+K = 1.3                         # inner wall z = 1.3 * (|x| - FLAT)^2 (was 0.9)
+X_TOP = 1.64                    # wall top |x| = 1.64 (z ~ 0.62), buried inside the rail tube (was 2.10)
 A_TOP = X_TOP - FLAT
 Z_SPLIT = 0.40                  # M_Water below, M_RailRainbow above
 A_SPLIT = math.sqrt(Z_SPLIT / K)
 WALL_T = 0.12                   # wall / floor thickness
-RAIL_R, RAIL_X, RAIL_Z = 0.16, 2.22, 0.72   # keep FLAT / K / X_TOP / RAIL_* in sync with Assets/BubbleWashKingdom/Scripts/Runtime/Gameplay/SlideProfile.cs
+RAIL_R, RAIL_X, RAIL_Z = 0.30, 1.86, 0.80   # keep FLAT / K / X_TOP / RAIL_* in sync with Assets/BubbleWashKingdom/Scripts/Runtime/Gameplay/SlideProfile.cs
 WATER_WALL_SEGS, RAINBOW_SEGS = 12, 4   # 16 profile segments per curved wall
-RAIL_SIDES, SHELL_WALL_SEGS = 12, 3
+RAIL_SIDES, SHELL_WALL_SEGS = 20, 3
 
 # ------------------------------------------------------------------ tunnel / pipes
 TUN_R, TUN_ZC, TUN_SIDES = 4.2, 2.3, 64
