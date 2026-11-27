@@ -28,6 +28,7 @@ Material:
     - _BumpScale: 0.6
     - _BumpStrength: 0.5
     - _Glow: 0.5
+    - _KnitSoft: 0
     - _Metallic: 0
     - _Mode: 4
     - _PurlDepth: 0
@@ -38,7 +39,7 @@ Material:
     - _StitchV: 26
     - _StripeWidth: 0.35
     - _Stripes: 4
-    - _VioletLift: 1.45
+    - _VioletLift: 1.25
     - _WoolAbsorb: 1
     - _Wrap: 0.5
     - _YarnRelief: 0
@@ -46,6 +47,7 @@ Material:
     - _ColorA: {r: 1, g: 1, b: 1, a: 1}
     - _ColorB: {r: 0.78, g: 0.8, b: 1, a: 1}
     - _ColorC: {r: 0.54999995, g: 0.29999998, b: 0.85, a: 1}
+    - _FuzzColor: {r: 1, g: 0.92, b: 1, a: 1}
     - _ShadowColor: {r: 0.62, g: 0.62, b: 0.95, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

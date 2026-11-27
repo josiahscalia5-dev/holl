@@ -29,12 +29,12 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AO: 0.5
+    - _AO: 0.6
     - _BrimShade: 0
     - _ClumpAmount: 0.55
     - _ClumpScale: 7
-    - _Curl: 0.25
-    - _Density: 230
+    - _Curl: 0.1
+    - _Density: 200
     - _EdgeSoft: 0.16
     - _FlowRadial: 0
     - _Fray: 0
@@ -46,15 +46,15 @@ Material:
     - _PawGlow: 0
     - _PlushMode: 0
     - _RimPower: 2.6
-    - _RimSelf: 0.2
+    - _RimSelf: 0.3
     - _RimStrength: 0.5
     - _SeatLight: 0
     - _SilhouetteFade: 0.3
     - _SoftBreakup: 0
     - _StaticMode: 0
-    - _StrandContrast: 0
+    - _StrandContrast: 0.6
     - _StrandFlow: 0
-    - _Thinning: 0.4
+    - _Thinning: 0.7
     - _TuftAmount: 0
     - _TuftDepth: 0
     - _TuftLean: 0
@@ -69,9 +69,9 @@ Material:
     - _PawRootColor: {r: 0.86, g: 0.8, b: 0.8399999, a: 1}
     - _PawTipColor: {r: 1, g: 0.97999996, b: 0.97999996, a: 1}
     - _RimColor: {r: 0.85490197, g: 0.6901961, b: 1, a: 1}
-    - _RootColor: {r: 0.3529412, g: 0.10980392, b: 0.5882353, a: 1}
+    - _RootColor: {r: 0.22745098, g: 0.047058824, b: 0.44705883, a: 1}
     - _SeatColor: {r: 1, g: 0.9, b: 0.92, a: 1}
     - _SeatRange: {r: 0.42, g: 0.3, b: 0, a: 0}
-    - _TipColor: {r: 0.83137256, g: 0.6117647, b: 0.98039216, a: 1}
+    - _TipColor: {r: 0.8666667, g: 0.6901961, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
