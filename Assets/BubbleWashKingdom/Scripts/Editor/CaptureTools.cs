@@ -139,7 +139,11 @@ namespace BubbleWash.EditorTools
             m.name = "SK_Mascot_Candidate";
             m.transform.SetParent(old.parent, false);
             m.transform.localPosition = old.localPosition;
-            m.transform.localRotation = old.localRotation;
+            // lead 2026-11-27: this preview REMOVES the Animator, and an Animator-less FBX rest pose of a correct export (no
+            // BWK_RIG_TEST_YAW, see build_mascot_rig.py) faces the camera -> -bwkMascotYaw DEG, default 180 for correct exports;
+            // pass 0 only for test-yaw exports like SK_Mascot_v4.fbx. In-game (with the Animator) a correct export needs
+            // AnimatorBuilder.ModelYaw 0. Never copy the scene mascot's turn (v4 carries ModelYaw 180).
+            m.transform.localRotation = Quaternion.Euler(0f, float.Parse(ArgValue("-bwkMascotYaw") ?? "180", System.Globalization.CultureInfo.InvariantCulture), 0f);
             m.transform.localScale = old.localScale;
             // No Animator: the old controller's clips belong to the old skeleton proportions; the candidate's rest pose
             // is its seated hero pose, and CaptureHero skips clip sampling when no Animator is found.
