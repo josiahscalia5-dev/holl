@@ -75,7 +75,7 @@ namespace BubbleWash.EditorTools
             // round 3: bluer violet (owner sheet 04 "blue-violet shading, avoid flat lavender"): the mid tunnel measured
             // p50 #9578d0 vs reference #5c52ac -> the haze between the rings is now a deeper blue-violet
             RenderSettings.fogColor = new Color(0.50f, 0.42f, 1.0f);
-            RenderSettings.fogDensity = 0.0102f;
+            RenderSettings.fogDensity = 0.0102f;   // S2 p1 v4 tested .0078: far-tunnel disk unchanged (mean #b194b4 vs #b294b6) -> kept .0102 (global, other screens unverified)
             RenderSettings.skybox = null;
             RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
             RenderSettings.reflectionIntensity = 0.9f;

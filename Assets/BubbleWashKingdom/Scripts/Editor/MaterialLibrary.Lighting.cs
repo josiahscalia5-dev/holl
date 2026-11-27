@@ -125,10 +125,10 @@ namespace BubbleWash.EditorTools
             // soft coloured glow cards behind every neon star (additive BWK/LightBlob): the star's light spilling over the wall
             // (reference: the big yellow star is filled with a warm ORANGE glow, the cyan one with a soft cyan haze)
             // round 3: less yellow glare (owner sheet 01), a little more soft cyan / pink spill on the wall (lead audit)
-            StarGlow("M_StarGlow_Yellow", "#FF7A00", 2.7f, 1.45f);
-            StarGlow("M_StarGlow_Cyan", "#14B8FF", 1.9f, 1.8f);
-            StarGlow("M_StarGlow_Pink", "#FF2AA8", 1.8f, 1.8f);
-            StarGlow("M_StarGlow_Purple", "#9A3CFF", 1.8f, 1.8f);
+            StarGlow("M_StarGlow_Yellow", "#FF7A00", 2.0f, 1.6f);   // S2 p1 v3: tighter (was 2.7 / 1.45)
+            StarGlow("M_StarGlow_Cyan", "#14B8FF", 1.4f, 2.0f);     // v3 (was 1.9 / 1.8)
+            StarGlow("M_StarGlow_Pink", "#FF2AA8", 1.3f, 2.0f);     // v3 (was 1.8 / 1.8)
+            StarGlow("M_StarGlow_Purple", "#9A3CFF", 1.3f, 2.0f);   // v3 (was 1.8 / 1.8): far r7 star cluster glow cards stacked into a pale haze disk inside the third ring
             // inside of the yellow star (reference: filled with warm orange light): a multiply card first pulls the pale
             // lavender wall / rim behind it toward orange, then the additive glow lights it up
             Mat("M_StarFill_Yellow", "BWK/LightBlob", m =>

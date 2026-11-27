@@ -69,6 +69,7 @@ namespace BubbleWash.EditorTools
                 // v2: lighter, greyer lilac metal (wall-hue pixels upper right ref #7758aa V .67 vs ours #68488e V .56; top band
                 // ref V .67 vs ours .56-.65): albedo only (no exposure / light change), hue kept blue-violet
                 C(m, "_BaseColor", "#9886B6"); C(m, "_HighlightColor", "#B8AAD6");
+                m.SetColor("_LitTint", new Color(0.91f, 0.745f, 1.0f));   // v3: a little bluer (upper-right wall hue 271 vs reference 263)
             });
             // polished lavender drum lips between the gold rings (SM_DrumRim, m1: fat rolled lip): the stylised BWK/Gold
             // environment shading with a lavender palette - violet body, magenta-pink fresnel edge, soft pink-lavender
