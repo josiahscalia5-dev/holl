@@ -128,7 +128,7 @@ namespace BubbleWash.EditorTools
         /// <summary>Lead 2026-11-26 20:40 (owner takeover brief item 5): the reference hero frame f_03.00s is taken AT the
         /// washing-machine door (SM_MouthRing_r7, 40 m), not 65 m past it like HeroDistance. S2 comparison stills
         /// (R2_rear_S2_like_3s + hero_mouth, CaptureTools.CaptureHero) put the mascot here. Comparison only, never gameplay.</summary>
-        public const float HeroMouthDistance = 34.5f;   // 2026-11-27 R2 re-solve on the bent tunnel (was 35)
+        public const float HeroMouthDistance = 33.5f;   // 2026-11-27 06:52 R2 re-solve on the bent + risen tunnel with SM_DoorHatch_s2 (was 34.5, before that 35)
 
         /// <summary>Owner-approved portrait gameplay camera: back, height, pitch, FOV. Applied in BuildCameras and (for
         /// previews, which load the saved scene) in PreviewRefreshDomains. Change only with the owner's explicit approval.

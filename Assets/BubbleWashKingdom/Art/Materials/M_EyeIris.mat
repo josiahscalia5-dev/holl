@@ -30,6 +30,7 @@ Material:
     - _Glow: 0.1
     - _Metallic: 0
     - _Mode: 3
+    - _PurlDepth: 0
     - _RimPower: 3
     - _RimStrength: 0.05
     - _Smoothness: 0.35

@@ -1945,8 +1945,9 @@ V5_POM_TIP_R = 0.222      # yarn tip radius (reference rear: pom-pom diameter ~0
 V5_POM_CORE_R = 0.150     # core sphere (v4 0.148): its shells fill between the locks
 V5_POM_SINK = 0.36        # fraction of the tip radius sunk into the crown (reference: ball sits ON the crown)
 V5_YARN_N = 300           # Fibonacci directions; locks pointing into the crown are skipped (never seen)
-V5_ARM_RAISE = 17.0       # deg about the shoulder root: mitts beside the brim at brim / stripe height (reference rear)
-V5_ARM_STRETCH = 0.10     # arm 10 % longer past the root so the raised mitts clear the brim edge
+V5_ARM_UPPER = 25.0       # deg elevation of the upper arm (runs out under the brim; v4 straight arm 40.5)
+V5_ARM_FORE = 70.0        # deg elevation of the forearm + mitt beside the brim (reference rear: paws at brim/stripe height)
+V5_ARM_EXTRA = 0.094      # m added to the shoulder->mitt segment only (v4 0.13 m stub): mitts clear the brim edge
 V5_SOLE_FUR = 0.18        # rig (contract 'sole_fur'): sole-side paw fur scaled to 18 % -> smooth white sole + pink pads
 V5_CUFF_ROLL = 0.012      # folded brim: outer rib surface pushed out up to 1.2 cm mid-height = thicker rolled cuff
 GAME5_BLEND = os.path.join(OUT, "mascot_v5_game.blend")
@@ -2038,24 +2039,45 @@ def export_game_model_v5():
     hat["pompom_c"] = list(c1)
     hat["pompom_r"] = V5_POM_CORE_R
     lock_tris = sum(len(f) - 2 for f in locks["F"])
-    # ---- 2. arms raised out to shoulder height (+ a little longer); soft blend at the root keeps the shoulder seam
+    # ---- 2. arms BENT like the reference rear view: the upper arm runs out low under the brim (25 deg), the forearm
+    #      rises steeply (70 deg) OUTSIDE the brim edge, so the round mitts sit beside the brim at brim / stripe height.
+    #      (A straight raise puts the forearm inside the brim's cone and build_mascot_rig.py's cuff solve then lowers
+    #      the whole arm by ~40 deg = the level arms of the first v5 export.) Only the short arm segment between the
+    #      shoulder and the mitt is lengthened (+9.4 cm); the round mitt keeps its v4 shape.
     for side, tag in ((1, 'L'), (-1, 'R')):
         a = contract["arms"][tag]
         root, d = Vector(a["root"]), Vector(a["dir"]).normalized()
         kax = d.cross(Vector((0.0, 0.0, 1.0))).normalized()
-        ang = math.radians(V5_ARM_RAISE)
+        elev0 = math.degrees(math.asin(max(-1.0, min(1.0, d.z))))
+        a1, a2 = math.radians(V5_ARM_UPPER - elev0), math.radians(V5_ARM_FORE - elev0)
+
+        def ang_at(s, a1=a1, a2=a2):
+            if s < 0.06:
+                return a1 * smooth01(s / 0.06)
+            if s < 0.12:
+                return a1
+            return a1 + (a2 - a1) * smooth01((s - 0.12) / 0.07)
+        ds, cl = 0.004, [root.copy()]
+        for i in range(200):
+            cl.append(cl[-1] + (Matrix.Rotation(ang_at((i + 0.5) * ds), 3, kax) @ d) * ds)
+
+        def bend(p, root=root, d=d, kax=kax, cl=cl, ds=ds, ang_at=ang_at):
+            t = (p - root).dot(d)
+            if t <= 0.0:
+                return p.copy()
+            q = p - (root + d * t)
+            t2 = t + V5_ARM_EXTRA * smooth01((t - 0.02) / 0.12)
+            i = min(len(cl) - 2, int(t2 / ds))
+            f = t2 / ds - i
+            c = cl[i].lerp(cl[i + 1], min(1.0, max(0.0, f)))
+            return c + Matrix.Rotation(ang_at(t2), 3, kax) @ q
         ob = bpy.data.objects["Arm." + tag]
         for v in ob.data.vertices:
-            t = (v.co - root).dot(d)
-            wgt = smooth01((t + 0.02) / 0.12)
-            p = v.co + d * (max(0.0, t) * V5_ARM_STRETCH)
-            v.co = _rot_about(p, root, kax, ang * wgt)
-        pc = Vector(a["palm_c"])
-        pc = pc + d * (max(0.0, (pc - root).dot(d)) * V5_ARM_STRETCH)
-        a["palm_c"] = list(_rot_about(pc, root, kax, ang))
-        a["dir"] = list((Matrix.Rotation(ang, 3, kax) @ d).normalized())
-        a["palm_dir"] = list((Matrix.Rotation(ang, 3, kax) @ Vector(a["palm_dir"])).normalized())
-        a["length"] = a["length"] * (1.0 + V5_ARM_STRETCH)
+            v.co = bend(v.co)
+        a["palm_c"] = list(bend(Vector(a["palm_c"])))
+        a["dir"] = list((Matrix.Rotation(a1, 3, kax) @ d).normalized())
+        a["palm_dir"] = list((Matrix.Rotation(a2, 3, kax) @ Vector(a["palm_dir"])).normalized())
+        a["length"] = a["length"] + V5_ARM_EXTRA
         ob.data.update()
     # ---- 3. thicker folded brim: push the OUTER cuff rib surface out (profile 0 at both edges, max mid-height)
     me = bpy.data.objects["Beanie"].data

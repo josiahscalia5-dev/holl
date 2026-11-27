@@ -46,6 +46,15 @@ namespace BubbleWash.EditorTools
                         if (oldHall != null) Object.DestroyImmediate(oldHall.gameObject);
                         BuildHallExtras(envH.gameObject, L);
                         Debug.Log("[BWK] preview: hall set HallExtras_r7 rebuilt in memory (-bwkEnvHall)");
+                        // S2 pass 6 (asset artist): -bwkEnvRings = also rebuild the tunnel gold rings / rims (marquee + LED
+                        // rim masters near the door) in memory; deterministic (Hash per distance), no shared rng
+                        if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-bwkEnvRings") >= 0)
+                        {
+                            var oldRings = envH.Find("Rings");
+                            if (oldRings != null) Object.DestroyImmediate(oldRings.gameObject);
+                            BuildRings(envH.gameObject, L);
+                            Debug.Log("[BWK] preview: tunnel rings rebuilt in memory (-bwkEnvRings)");
+                        }
                     }
                     catch (System.Exception e) { Debug.LogError("[BWK] preview: hall rebuild failed: " + e); }
                     finally { rng = keepRng; envSave = true; }
