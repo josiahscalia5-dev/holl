@@ -210,6 +210,16 @@ namespace BubbleWash.EditorTools
                 // M_HatchViolet_s2 made the drum PALER (R2 right wall lum .495 -> .573, reference .451; milky lavender, no depth)
                 // - Captures/look/s2_step2b/. Lesson: the approved wall is DARKER than ours; the glow must stay on the band
                 // EDGES (pink-violet lip) over deep violet band faces - never brighten the faces / mirror on this drum.
+                // v10 = step 2b REDO 1 (lead 15a68124 17:05, owner "DARKER, deep, reflective blue-violet metal walls"; analysis
+                // Captures/lead/s2_step2b_redo/wall/): the v7 ramp bodies reach ~.89 linear blue, ABOVE the bloom knee (threshold
+                // .9 -> knee ~.40-.55 max channel), so the drum bloomed onto itself = a uniform +.25 linear blue veil that filled
+                // the slots (our darkest wall L 29-33 vs reference 18-20), lifted the deep drum (+10 L) and desaturated it. Every
+                // stop now stays under the knee (body max channel ~.52-.55 linear): darker, more saturated metal, black slots;
+                // the gold / pink-rim reflections (mirror) are unchanged = reflective, not milky. Revert = delete these 4 lines.
+                m.SetColor("_DoorRampCeil", new Color(0.16f, 0.11f, 0.74f));
+                m.SetColor("_DoorRampMid", new Color(0.40f, 0.24f, 0.76f));
+                m.SetColor("_DoorRampHigh", new Color(0.62f, 0.44f, 0.82f));
+                m.SetColor("_DoorRampDark", new Color(0.07f, 0.05f, 0.30f));
             });
             // polished lavender drum lips between the gold rings (SM_DrumRim, m1: fat rolled lip): the stylised BWK/Gold
             // environment shading with a lavender palette - violet body, magenta-pink fresnel edge, soft pink-lavender

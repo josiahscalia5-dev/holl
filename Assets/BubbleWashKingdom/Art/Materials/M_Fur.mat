@@ -50,6 +50,7 @@ Material:
     - _RimStrength: 0.5
     - _SeatLight: 0
     - _SilhouetteFade: 0.45
+    - _SoftBreakup: 0
     - _StaticMode: 0
     - _StrandContrast: 0
     - _StrandFlow: 0

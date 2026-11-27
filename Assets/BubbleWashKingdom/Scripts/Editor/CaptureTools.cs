@@ -93,9 +93,55 @@ namespace BubbleWash.EditorTools
                 // refreshed level into DIR/stills (no save, ~5 extra minutes), so one preview shows a change in all sections
                 if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-bwkStills") >= 0)
                     CaptureStills(outDir + "/stills");
+                // lead 15a68124 2026-11-27 17:00 (owner 16:55 "show me mascot-only front / side / rear previews"): optional
+                // -bwkMascotViews = also render the mascot ALONE (everything else hidden, neutral backdrop) from rear / side /
+                // front / three-quarter with the in-memory refreshed materials into DIR/mascot (M1..M4, the S2ProofViewsBatch
+                // cameras), so the character artist judges the whole plush look without a lead build (~20 s extra)
+                if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-bwkMascotViews") >= 0)
+                    CaptureMascotViews(outDir + "/mascot");
                 EditorApplication.Exit(0);
             }
             catch (System.Exception e) { Debug.LogError("[BWK] agent preview failed: " + e); EditorApplication.Exit(1); }
+        }
+
+        /// <summary>Mascot alone (M1 rear, M2 side right, M3 front, M4 three-quarter) at the S2 hero spot in the Slide pose,
+        /// same cameras / backdrop as S2ProofViewsBatch; used by AgentPreviewBatch -bwkMascotViews (no save).</summary>
+        static void CaptureMascotViews(string dir)
+        {
+            Directory.CreateDirectory(dir);
+            var runner = Object.FindFirstObjectByType<RunnerController>();
+            var cam = Camera.main;
+            if (runner == null || cam == null) { Debug.LogWarning("[BWK] mascot views: runner / camera missing"); return; }
+            var brain = cam.GetComponent<CinemachineBrain>();
+            bool brainOn = brain != null && brain.enabled;
+            if (brain) brain.enabled = false;
+            try
+            {
+                runner.TeleportTo(SceneBuilder.HeroMouthDistance, 0f);
+                var animator = runner.GetComponentInChildren<Animator>();
+                AnimationClip slide = null;
+                if (animator != null && animator.runtimeAnimatorController != null)
+                    slide = animator.runtimeAnimatorController.animationClips.FirstOrDefault(c => c.name == "Slide");
+                if (slide != null) slide.SampleAnimation(animator.gameObject, 0.25f);
+                var mascot = MascotRenderers(runner);
+                if (mascot.Count == 0) { Debug.LogWarning("[BWK] mascot views: no mascot renderers"); return; }
+                var mset = new HashSet<Renderer>(mascot);
+                var fr = runner.Frame;
+                Vector3 fwd = Vector3.ProjectOnPlane(fr.forward, Vector3.up).normalized, right = Vector3.Cross(Vector3.up, fwd), up = Vector3.up;
+                var mb = mascot[0].bounds;
+                foreach (var r in mascot) mb.Encapsulate(r.bounds);
+                Vector3 mc = mb.center; float mh = Mathf.Max(mb.size.y, 0.4f), md = mh * 2.5f;
+                var mviews = new List<(string name, Vector3 pos, Vector3 look)>
+                {
+                    ("M1_mascot_rear", mc - fwd * md + up * mh * 0.35f, mc),
+                    ("M2_mascot_side_right", mc + right * md + up * mh * 0.15f, mc),
+                    ("M3_mascot_front", mc + fwd * md + up * mh * 0.2f, mc),
+                    ("M4_mascot_three_quarter", mc + (fwd - right).normalized * md + up * mh * 0.3f, mc),
+                };
+                RenderMascotAlone(cam, mset, mviews, up, dir, "");
+                Debug.Log("[BWK] mascot views (M1 rear, M2 side, M3 front, M4 three-quarter) written to " + Path.GetFullPath(dir));
+            }
+            finally { if (brain) brain.enabled = brainOn; }
         }
 
         /// <summary>

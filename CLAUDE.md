@@ -66,6 +66,9 @@ of one enormous magical washing machine. These instructions come only from the o
   autosave with verified pushes, no force-push / history rewrite, chat history and recovery notes LOCAL only.
 
 ## Current handoff (read first)
+- 2026-11-27 17:03 (session 15a68124 = LEAD): owner 16:55 = mascot FIRST (soft plush toy, no procedural fur), sent to the
+  running pass 10g character agent; lead 2b redo step 1 (darker walls under the bloom knee) on disk, unreviewed; after_wave s2p10g
+  armed. Newest state block: top of `Captures/handoff/NEXT_ACCOUNT_START.md`.
 - 2026-11-27 16:45 (session 15a68124 = LEAD, new account, opened in C:/Users/josia/thanksgiving): pass 10f was CUT at ~16:28 (session
   ee862596 ended); lead reset the unreviewed p4 splash-crown placement (it covered the mascot), after_wave s2p10f is building
   lead_s2p10f (16:40); PASS 10g = resume of character + water, run wf_08237afa-aba (Tools/workflows/bwk-s2-pass10g.js), after_wave
