@@ -133,17 +133,17 @@ namespace BubbleWash.EditorTools
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
                 F(m, "_Density", 200); F(m, "_FurLength", 0.052f); F(m, "_Gravity", 0.012f); F(m, "_Thinning", 0.8f); F(m, "_ClumpAmount", 0.8f); F(m, "_ClumpScale", 5f);
                 F(m, "_AO", 0.2f); F(m, "_Curl", 1.1f); F(m, "_Underfur", 0.8f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.45f);
-                F(m, "_TuftScale", 15f); F(m, "_TuftAmount", 0.45f);
+                F(m, "_TuftScale", 15f); F(m, "_TuftAmount", 0.6f);   // body Lstd 10.7 vs reference 14.3 (cand2): stronger tufts
                 C(m, "_RimColor", "#FFD0C8"); F(m, "_Glow", 0.2f); F(m, "_RimStrength", 0.5f);
             }, (int)RenderQueue.AlphaTest);
             Mat("M_PomPom_v5", "BWK/Fur", m =>
             {
                 // v5 pom-pom = real radial yarn locks (M_PawPad_v5) around this core: a short MID-violet fuzz that fills the gaps
                 // between the locks (v4's core was a near-black ball because it was the whole pom-pom)
-                C(m, "_RootColor", "#3A1468"); C(m, "_BaseColor", "#7A34B8"); C(m, "_TipColor", "#B07CE8");
+                C(m, "_RootColor", "#3A1468"); C(m, "_BaseColor", "#7A34B8"); C(m, "_TipColor", "#C29AF2");
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
-                F(m, "_Density", 170); F(m, "_FurLength", 0.03f); F(m, "_Gravity", 0.0f); F(m, "_Thinning", 0.7f); F(m, "_AO", 0.35f);
-                F(m, "_Curl", 0.25f); F(m, "_Underfur", 0.8f); F(m, "_ClumpAmount", 0.45f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.3f);
+                F(m, "_Density", 170); F(m, "_FurLength", 0.05f); F(m, "_Gravity", 0.0f); F(m, "_Thinning", 0.6f); F(m, "_AO", 0.35f);   // cand3: longer core fuzz softens the spiky lock silhouette
+                F(m, "_Curl", 0.25f); F(m, "_Underfur", 0.8f); F(m, "_ClumpAmount", 0.55f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.3f);
                 C(m, "_RimColor", "#D6B4FF"); F(m, "_Glow", 0.06f); F(m, "_RimStrength", 0.4f);
             }, (int)RenderQueue.AlphaTest);
             // static (shell-less) variants, same naming rule as v4 (name + "_Static")
