@@ -11,6 +11,7 @@ Shader "BWK/LightBlob"
         _Core ("Core Tightness", Range(0.5, 4)) = 1.4
         [Enum(Multiply,0,Additive,1)] _Mode ("Mode", Float) = 0
         _NearFade ("Fade out closer than (m, 0 = off)", Float) = 0
+        _FarFade ("Fade out farther than (m, gone at 2x, 0 = off)", Float) = 0
         [HideInInspector] _SrcBlend ("Src", Float) = 2
         [HideInInspector] _DstBlend ("Dst", Float) = 0
     }
@@ -34,7 +35,7 @@ Shader "BWK/LightBlob"
             #include "BWKCommon.hlsl"
             CBUFFER_START(UnityPerMaterial)
                 half4 _Color;
-                half _Strength, _Softness, _Core, _Mode, _SrcBlend, _DstBlend, _NearFade;
+                half _Strength, _Softness, _Core, _Mode, _SrcBlend, _DstBlend, _NearFade, _FarFade;
             CBUFFER_END
             struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; half4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; half fog : TEXCOORD1; half4 color : TEXCOORD2; half near : TEXCOORD3; UNITY_VERTEX_INPUT_INSTANCE_ID };
@@ -49,7 +50,11 @@ Shader "BWK/LightBlob"
                 o.fog = ComputeFogFactor(p.positionCS.z);
                 o.color = i.color;
                 // far light glows (vanishing point): fade out as the camera approaches, so passing through never flashes
-                o.near = _NearFade > 0.0 ? saturate((distance(p.positionWS, GetCameraPositionWS()) - _NearFade) / _NearFade) : 1.0;
+                float camD = distance(p.positionWS, GetCameraPositionWS());
+                o.near = _NearFade > 0.0 ? saturate((camD - _NearFade) / _NearFade) : 1.0;
+                // S2 pass 3: far glow cards (dozens of star halos down the tunnel axis) stacked into a pale haze disk over
+                // the receding rings -> halos fade out beyond _FarFade (gone at 2x); the star tubes themselves stay crisp
+                o.near *= _FarFade > 0.0 ? saturate(2.0 - camD / _FarFade) : 1.0;
                 return o;
             }
             half4 frag(Varyings i) : SV_Target

@@ -561,6 +561,7 @@ namespace BubbleWash.EditorTools
             runner.TeleportTo(best, 0f);
             if (slide != null) slide.SampleAnimation(animator.gameObject, 0.25f);
             SimulateSlideFX(runner);
+            var collectedHero = HideCollectedItems(runner);
             foreach (var (w, h, tag) in new[] { (1280, 720, "16x9"), (720, 1280, "9x16") })
             {
                 rig.aspectOverride = w / (float)h;
@@ -570,6 +571,7 @@ namespace BubbleWash.EditorTools
                 cam.fieldOfView = lens.FieldOfView;
                 RenderWithBackground(cam, w, h, stillsDir, $"hero_{tag}.png", MascotRenderers(runner));
             }
+            foreach (var r in collectedHero) r.enabled = true;
             // S2 at the washing-machine door (lead 2026-11-26 20:25, owner takeover brief item 5 "correct the comparison
             // camera first"): the reference 3.0 s frame is taken at the door ring (40 m), hero_* above is 65 m past it.
             // hero_mouth = the UNCHANGED gameplay rig with the mascot at 35 m (what the player sees at the door);
@@ -702,6 +704,7 @@ namespace BubbleWash.EditorTools
                 runner.TeleportTo(s.d, s.lat);
                 if (slide != null) slide.SampleAnimation(animator.gameObject, 0.25f);
                 SimulateSlideFX(runner);
+                var collected = HideCollectedItems(runner);
                 foreach (var (w, h, tag) in new[] { (1280, 720, "16x9"), (720, 1280, "9x16") })
                 {
                     rig.aspectOverride = w / (float)h;
@@ -711,6 +714,7 @@ namespace BubbleWash.EditorTools
                     cam.fieldOfView = lens.FieldOfView;
                     RenderWithBackground(cam, w, h, outDir, $"{s.name}_{tag}.png", mascot);
                 }
+                foreach (var r in collected) r.enabled = true;
             }
 
             // 10_finale (lead 2026-11-26, owner corrections 7 + 8): the finishing sequence's front-facing celebration exactly as
@@ -789,6 +793,25 @@ namespace BubbleWash.EditorTools
             rig.aspectOverride = 0f;
             if (brain) brain.enabled = true;
             Debug.Log("[BWK] Stills written to " + Path.GetFullPath(outDir) + " (+ bg/ with the mascot hidden)");
+        }
+
+        /// <summary>Rear stills place the mascot without playing the level, so coins / gems it would already have collected in
+        /// its own lane (between the camera and the mascot) float in front of the lens - lead 2026-11-26 21:10: 07_chambers
+        /// showed one filling the portrait frame. Hides those for the still (re-enable the returned renderers afterwards);
+        /// items in the other lanes, which the player really sees passing by, stay visible.</summary>
+        static List<Renderer> HideCollectedItems(RunnerController runner)
+        {
+            var hidden = new List<Renderer>();
+            float d = runner.Distance, lat = runner.Lateral;
+            foreach (var it in Object.FindObjectsByType<BubbleWash.TrackItem>(FindObjectsSortMode.None))
+            {
+                if (it.kind != TrackItemKind.Coin && it.kind != TrackItemKind.Gem) continue;
+                if (it.distance < d - 4f || it.distance > d + 0.6f || Mathf.Abs(it.lateral - lat) > 0.6f) continue;
+                foreach (var r in it.GetComponentsInChildren<Renderer>())
+                    if (r.enabled) { r.enabled = false; hidden.Add(r); }
+            }
+            if (hidden.Count > 0) Debug.Log($"[BWK] still at {d:F1} m: {hidden.Count} already-collected item renderers hidden");
+            return hidden;
         }
 
         /// <summary>Edit-mode stills: run the sliding splash emitters for a moment so the water FX show like in play.</summary>

@@ -27,6 +27,7 @@ Material:
     m_Floats:
     - _Core: 1.8
     - _DstBlend: 1
+    - _FarFade: 60
     - _Mode: 1
     - _NearFade: 14
     - _Softness: 1

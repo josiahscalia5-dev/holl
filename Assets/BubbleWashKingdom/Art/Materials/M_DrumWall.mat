@@ -43,18 +43,19 @@ Material:
     - _FlangeWidth: 0.2
     - _Glow: 0.035
     - _GlowChance: 0.03
-    - _HoleAO: 0.35
-    - _HoleAOWidth: 0.03
+    - _HoleAO: 0.55
+    - _HoleAOWidth: 0.07
     - _HoleBand: 1
     - _HoleDarken: 0.3
-    - _HoleDepth: 0.1
+    - _HoleDepth: 0.16
     - _HoleRadius: 0.19
     - _HoleSpacing: 0.6
     - _HoleStretch: 1.75
-    - _InnerWall: 0.2
-    - _LipWidth: 0.018
+    - _InnerWall: 0.16
+    - _LipWidth: 0.03
     - _LitDesat: 0.5
-    - _Metallic: 0.58
+    - _Metallic: 0.64
+    - _PanelCurve: 0.25
     - _PanelLength: 3
     - _Pattern: 1
     - _PinkSpillStrength: 0.36
@@ -62,23 +63,24 @@ Material:
     - _PlainBack: 0.85
     - _PlainFront: 0.75
     - _RimPhase: 0.4
-    - _RowPitch: 0.62
+    - _RowPitch: 0.95
     - _Rows: 5
     - _SeamHighlight: 0.5
     - _SeamMargin: 0.06
     - _ShadowTint: 0.4
     - _SheenStrength: 0.06
-    - _SideRowPitch: 0.6
-    - _SideSlotLength: 0.24
-    - _SideSlotPitch: 0.41
-    - _SideSlotWidth: 0.14
+    - _SideRowPitch: 1.1
+    - _SideSlotLength: 0.46
+    - _SideSlotPitch: 0.6
+    - _SideSlotWidth: 0.34
     - _SideZone: 0.25
-    - _SlotDropout: 0.18
-    - _SlotLength: 0.3
-    - _SlotPitch: 0.41
-    - _SlotVariation: 0.2
-    - _SlotWidth: 0.14
-    - _Smoothness: 0.58
+    - _SlotDropout: 0.12
+    - _SlotLength: 0.4
+    - _SlotPitch: 0.58
+    - _SlotVarPerSlot: 1
+    - _SlotVariation: 0.38
+    - _SlotWidth: 0.26
+    - _Smoothness: 0.66
     - _Sparkle: 0.25
     - _VTile: 4
     m_Colors:

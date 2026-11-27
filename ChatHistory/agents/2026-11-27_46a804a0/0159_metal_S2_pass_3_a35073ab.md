@@ -159,3 +159,95 @@ _Text-only export: the lead's brief, the agent's statements and one line per too
 **Agent (2026-11-27 02:05 UTC):**
 
 > _tool: Bash - Find environment star placements_
+
+**Agent (2026-11-27 02:05 UTC):**
+
+> _tool: Bash - Read LightBlob shader header and glow materials_
+
+**Agent (2026-11-27 02:05 UTC):**
+
+> _tool: Bash - Read LightBlob fragment and glow material settings_
+
+**Agent (2026-11-27 02:05 UTC):**
+
+> _tool: Bash - Read post-processing DOF and fog settings_
+
+**Agent (2026-11-27 02:06 UTC):**
+
+> _tool: Bash - Read R2Cam and HallCam definitions_
+
+**Agent (2026-11-27 02:07 UTC):**
+
+> _tool: Bash - Check time, cs_check usage, mouth distance constant_
+
+**Agent (2026-11-27 02:07 UTC):**
+
+> _tool: Bash - Back up the files this pass edits_
+
+**Agent (2026-11-27 02:07 UTC):**
+
+Now the shader edits: per-slot length variation and curved panels in BWK_DrumWall.
+
+**Agent (2026-11-27 02:07 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Art/Shaders/BWK_DrumWall.shader_
+
+**Agent (2026-11-27 02:07 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Art/Shaders/BWK_DrumWall.shader_
+
+**Agent (2026-11-27 02:07 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Art/Shaders/BWK_DrumWall.shader_
+
+**Agent (2026-11-27 02:07 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Art/Shaders/BWK_DrumWall.shader_
+
+**Agent (2026-11-27 02:07 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Art/Shaders/BWK_LightBlob.shader_
+
+**Agent (2026-11-27 02:08 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Art/Shaders/BWK_LightBlob.shader_
+
+**Agent (2026-11-27 02:08 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Art/Shaders/BWK_LightBlob.shader_
+
+**Agent (2026-11-27 02:08 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/MaterialLibrary.Lighting.cs_
+
+**Agent (2026-11-27 02:08 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/MaterialLibrary.Lighting.cs_
+
+**Agent (2026-11-27 02:08 UTC):**
+
+Now the drum-wall values in MaterialLibrary.Environment.cs.
+
+**Agent (2026-11-27 02:08 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/MaterialLibrary.Environment.cs_
+
+**Agent (2026-11-27 02:08 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.Lighting.cs_
+
+**Agent (2026-11-27 02:08 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.Lighting.cs_
+
+**Agent (2026-11-27 02:08 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.Lighting.cs_
+
+**Agent (2026-11-27 02:09 UTC):**
+
+> _tool: Bash - Compile-check the C# edits_
+
+**Agent (2026-11-27 02:09 UTC):**
+
+> _tool: Bash - Run Unity agent preview v1 for pass 3_

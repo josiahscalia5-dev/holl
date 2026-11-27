@@ -145,6 +145,7 @@ namespace BubbleWash.EditorTools
                 // S2 pass 1 (lead gap #3: far end = soft pink bokeh, far-tunnel mean ours #ba9bbc vs reference #9b70be):
                 // half again, lavender instead of pink-lavender -> the receding rings / bulbs / stars carry the far end
                 C(m, "_Color", "#B49CF0"); F(m, "_Strength", 0.11f); F(m, "_Softness", 1f); F(m, "_Core", 1.8f); F(m, "_NearFade", 14f);
+                F(m, "_FarFade", 60f);   // S2 pass 3: the hero's wide halo (30-55 m ahead of it) is 100+ m from the door camera -> gone there
                 F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
             }, (int)RenderQueue.Transparent - 9);
             // round 5: soft pink haze card on the upper-left drum wall of the hero view (SceneBuilder.BuildNeonStars)
@@ -175,6 +176,9 @@ namespace BubbleWash.EditorTools
             {
                 C(m, "_Color", hex); F(m, "_Strength", strength); F(m, "_Softness", 1f); F(m, "_Core", core);
                 F(m, "_Mode", 1f); F(m, "_SrcBlend", (float)BlendMode.One); F(m, "_DstBlend", (float)BlendMode.One);
+                // S2 pass 3 (judge gap #3: pale pink / lavender haze disk over the receding rings): the far tunnel stars'
+                // halos stacked on the axis; halos fade from 22 m (gone at 44 m), the neon tubes stay as crisp small stars
+                F(m, "_FarFade", 22f);
             }, (int)RenderQueue.Transparent - 10);
         }
 

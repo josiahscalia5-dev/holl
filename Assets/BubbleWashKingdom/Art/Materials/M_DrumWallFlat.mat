@@ -55,6 +55,7 @@ Material:
     - _LipWidth: 0.035
     - _LitDesat: 0
     - _Metallic: 0.75
+    - _PanelCurve: 0
     - _PanelLength: 1000
     - _Pattern: 0
     - _PinkSpillStrength: 0
@@ -76,6 +77,7 @@ Material:
     - _SlotDropout: 0
     - _SlotLength: 0.34
     - _SlotPitch: 0.5
+    - _SlotVarPerSlot: 0
     - _SlotVariation: 0.4
     - _SlotWidth: 0.12
     - _Smoothness: 0.72

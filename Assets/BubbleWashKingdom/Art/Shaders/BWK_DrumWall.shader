@@ -90,6 +90,9 @@ Shader "BWK/DrumWall"
         _LitDesat ("Desaturate the lit metal toward its luminance (before fog)", Range(0, 1)) = 0
         _LitTint ("Tint of the desaturated part (grey-lavender)", Color) = (1, 1, 1, 1)
         _HoleDarken ("Lit hole brightness (1 = unchanged, lower = blacker recesses)", Range(0, 1)) = 1
+        [Header(Screen S2 pass 3 big ovals and curved panels)]
+        _SlotVarPerSlot ("Length variation per slot (0 = per row, 1 = every slot)", Range(0, 1)) = 0
+        _PanelCurve ("Curved panels: normal tilt across each of the 8 panels", Range(0, 0.6)) = 0
     }
     SubShader
     {
@@ -120,6 +123,7 @@ Shader "BWK/DrumWall"
             half4 _BaySheenColor;
             half _LitDesat, _HoleDarken;
             half4 _LitTint;
+            half _SlotVarPerSlot, _PanelCurve;
         CBUFFER_END
 
         // Round 3: sections between gold rings (_BandLength = gold spacing) split by one lavender rim at _RimPhase
@@ -166,13 +170,17 @@ Shader "BWK/DrumWall"
             rowIdx = clamp(floor((local - z0) / rowPitch), 0.0, rows - 1.0);
             float rowLocal = local - z0 - (rowIdx + 0.5) * rowPitch;           // metres from the nearest row centre
             float rowHash = BWK_Hash21(float2(rowIdx + 0.5, bandIdx + 0.25));
-            float slotLen = lenA * lerp(1.0 - _SlotVariation, 1.0 + _SlotVariation * 0.5, rowHash);
             float stagger = frac((rowIdx + bandIdx) * 0.5);                    // 0 / 0.5 alternating rows
             float pitch = pitchA;
             float panelW = _Circumference / 8.0;
             if (_SeamMargin > 0.0) pitch = panelW / max(1.0, floor(panelW / pitchA + 0.5));   // whole slots per panel
             float ac = m.x / pitch + stagger;
             slotIdx = floor(ac);
+            // S2 pass 3 (reference f_03.00s inside the hatch): long and short ovals alternate WITHIN a column -> the length
+            // hash can follow every slot (_SlotVarPerSlot 1) instead of the whole row; lengths stay <= lenA (fit the pitch)
+            float slotHash = BWK_Hash21(float2(slotIdx * 0.731 + 0.17, rowIdx * 1.913 + bandIdx * 0.37));
+            float lenHash = lerp(rowHash, slotHash, _SlotVarPerSlot);
+            float slotLen = lenA * lerp(1.0 - _SlotVariation, lerp(1.0 + _SlotVariation * 0.5, 1.0, _SlotVarPerSlot), lenHash);
             float aLocal = (ac - slotIdx - 0.5) * pitch;
             hw = widA * 0.5;
             float hx = max(abs(aLocal) - max(slotLen * 0.5 - hw, 0.0), 0.0);
@@ -326,6 +334,15 @@ Shader "BWK/DrumWall"
 
                 // countersink / bevel normal (dir points from the hole centre line outward, in (around, along))
                 half3 n = normalize(i.normalWS - (i.tangentWS.xyz * dir.x + bitangent * dir.y) * lip * _Bevel);
+                // S2 pass 3 (owner directive "curved panel seams, soft specular bands"): each of the 8 pressed panels between
+                // two seams is gently curved across its width - the normal turns around the tunnel axis from -_PanelCurve at
+                // one seam to +_PanelCurve at the next, so the key light / probes draw a soft sheen band on every panel and a
+                // value step marks every seam (real lighting response, not a painted gradient)
+                if (_PanelCurve > 0.0 && _Pattern > 0.5)
+                {
+                    float ps = frac(m.x / (_Circumference / 8.0)) - 0.5;
+                    n = normalize(n + i.tangentWS.xyz * (ps * 2.0 * _PanelCurve));
+                }
 
                 float variation = BWK_Fbm(m * 0.35);
                 // m1: periwinkle-blue ceiling bays, violet side walls (reference f_003.00s)

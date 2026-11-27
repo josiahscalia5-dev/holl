@@ -192,7 +192,8 @@ namespace BubbleWash.EditorTools
             // S2 pass 1 (lead gap #3): the far tunnel read as a soft pink bokeh blur (edge energy x 480-800 / y 140-360 ours
             // 5.1 vs reference 7.9): the reference's receding gold bulb rings and stars are sharp -> blur only far beyond
             // the third ring, and much less of it (no heavy DOF)
-            dof.mode.Override(DepthOfFieldMode.Gaussian); dof.gaussianStart.Override(45f); dof.gaussianEnd.Override(110f);
+            // S2 pass 3 (judge gap #3, door camera: gold rings 6-8 sit 39-78 m away and blurred into the haze disk) -> 70 / 150
+            dof.mode.Override(DepthOfFieldMode.Gaussian); dof.gaussianStart.Override(70f); dof.gaussianEnd.Override(150f);
             dof.gaussianMaxRadius.Override(0.5f); dof.highQualitySampling.Override(true);
             foreach (var c in profile.components) AssetDatabase.AddObjectToAsset(c, profile);
             vol.sharedProfile = profile;
@@ -361,6 +362,21 @@ namespace BubbleWash.EditorTools
             (1.512f, 0.346f, 0.130f, 12f, 2),   // pink star, right wall below the yellow one
         };
 
+        /// <summary>Screen S2 pass 3 (owner directive 4): neon outline stars just inside the washing-machine door, measured on
+        /// reference f_03.00s at 720p through the R2 door camera (centre x / 1280, y / 720, tip-to-tip width / 1280, roll,
+        /// colour 0 yellow 1 cyan 2 pink): yellow (510, 60) ~70 px, cyan (595, 140) ~50, yellow (1010, 60) ~75, cyan
+        /// (900, 150) ~50, pink (1050, 285) ~60, small yellow (820, 205) ~26, small pink (825, 250) ~22.</summary>
+        static readonly (float x, float y, float w, float roll, int color)[] DoorStarLayout =
+        {
+            (0.398f, 0.083f, 0.055f, -12f, 0),
+            (0.465f, 0.194f, 0.039f, 14f, 1),
+            (0.789f, 0.083f, 0.059f, 10f, 0),
+            (0.703f, 0.208f, 0.039f, -12f, 1),
+            (0.820f, 0.396f, 0.047f, -8f, 2),
+            (0.641f, 0.285f, 0.020f, 6f, 0),
+            (0.645f, 0.347f, 0.017f, -6f, 2),
+        };
+
         const float StarMeshWidth = 1.07f;   // SM_NeonStarTube tip-to-tip incl. tube at scale 1 (outer radius 0.5 + tube 0.085)
         const float StarMeshRadius = 0.585f;
 
@@ -479,6 +495,52 @@ namespace BubbleWash.EditorTools
                 if (s.color == 0 && !outlineOnly) AddCard(Mat("M_StarFill_Yellow"), pos - toCam * (0.04f * scale), Quaternion.LookRotation(-toCam, upHint), StarMeshWidth * 1.15f * scale);
                 heroCount++;
                 Debug.Log($"[BWK] hero star c{s.color} screen ({s.x:F2},{s.y:F2}) track {wf.distance:F1} m depth {Vector3.Dot(pos - camPos, camFwd):F1} m scale {scale:F2}");
+            }
+
+            // ---- Screen S2 pass 3: the door frame (R2 camera = mascot at HeroMouthDistance; the gameplay rig sees the same
+            // walls in hero_mouth): clean outline stars just inside the hatch at the reference f_03.00s spots, projected
+            // through R2Cam onto the mouth drum (40.2-62 m). A ray that leaves the drum's front edge (hit before the door)
+            // is nudged toward the vanishing point until it lands on the drum wall behind the hatch.
+            {
+                var r2 = R2Cam();
+                float tV = r2.tanHalf, tH = r2.tanHalf * r2.aspect;
+                var r2Fwd = r2.rot * Vector3.forward; var r2Up = r2.rot * Vector3.up; var r2Right = r2.rot * Vector3.right;
+                int doorCount = 0;
+                foreach (var s in DoorStarLayout)
+                {
+                    float u = s.x, v = s.y, inset = 0.5f, scale = 1f; Vector3 pos = r2.pos; TrackFrame wf = default; bool ok = false;
+                    for (int nudge = 0; nudge < 8; nudge++)
+                    {
+                        var dir = (r2.rot * new Vector3((2f * u - 1f) * tH, (1f - 2f * v) * tV, 1f)).normalized;
+                        inset = 0.5f;
+                        for (int it = 0; it < 3; it++)
+                        {
+                            ok = TunnelWallHit(r2.pos, dir, HeroMouthDistance - 2.75f, inset, out pos, out wf);
+                            if (!ok) break;
+                            float depth = Vector3.Dot(pos - r2.pos, r2Fwd);
+                            scale = s.w * 2f * depth * tH / StarMeshWidth;
+                            inset = 0.12f + StarMeshRadius * scale;
+                        }
+                        if (ok && wf.distance > HallMouthD + 1.2f) break;
+                        ok = false;
+                        u = Mathf.Lerp(u, 0.58f, 0.12f); v = Mathf.Lerp(v, 0.40f, 0.12f);
+                    }
+                    if (!ok) { Debug.LogWarning($"[BWK] door star at ({s.x}, {s.y}) found no drum wall behind the hatch"); continue; }
+                    var toCam = (r2.pos - pos).normalized;
+                    var inward = Vector3.ProjectOnPlane(wf.FlatPoint(0, TunnelCenter) - pos, wf.forward).normalized;
+                    var facing = (toCam + inward * 0.35f).normalized;
+                    scale /= Mathf.Lerp(1f, Mathf.Max(0.5f, Vector3.Dot(facing, toCam)), 0.5f);
+                    float rr = s.roll * Mathf.Deg2Rad;
+                    var upHint = Vector3.ProjectOnPlane(r2Up * Mathf.Cos(rr) + r2Right * Mathf.Sin(rr), facing).normalized;
+                    var rot = Quaternion.LookRotation(facing, upHint);
+                    comb.Add(Recolor(mats[s.color]), Matrix4x4.TRS(pos, rot, Vector3.one * scale));
+                    // clean outline tubes with a tight halo (reference: purple wall visible inside every star, no filled blob)
+                    AddGlow(s.color, pos - toCam * (0.06f * scale), Quaternion.LookRotation(-toCam, upHint), StarMeshWidth * 1.5f * scale);
+                    doorCount++;
+                    Debug.Log($"[BWK] door star c{s.color} screen ({s.x:F3},{s.y:F3}) -> ({u:F3},{v:F3}) track {wf.distance:F1} m " +
+                              $"depth {Vector3.Dot(pos - r2.pos, r2Fwd):F1} m scale {scale:F2}");
+                }
+                Debug.Log($"[BWK] door stars (S2 pass 3): {doorCount}");
             }
 
             // ---- round 5: soft pink-magenta haze on the upper-left drum wall (reference: the wall around the big yellow star
