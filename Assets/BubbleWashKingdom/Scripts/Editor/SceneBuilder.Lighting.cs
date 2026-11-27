@@ -398,6 +398,21 @@ namespace BubbleWash.EditorTools
             (0.645f, 0.347f, 0.017f, -6f, 2),
         };
 
+        /// <summary>Screen ALL pass 5: big neon outline stars of the owner's front frames (track distance of the R still, centre
+        /// x / 1280, y / 720, tip-to-tip width / 1280, roll, colour 0 yellow 1 cyan 2 pink), measured at 720p on f_04.50s (R3),
+        /// f_06.75s (R4), f_08.25s (R5) and f_11.25s (R6).</summary>
+        static readonly (float d, float x, float y, float w, float roll, int color)[] RStarLayout =
+        {
+            (158f, 0.403f, 0.153f, 0.063f, -10f, 1), (158f, 0.778f, 0.167f, 0.086f, 12f, 1), (158f, 0.653f, 0.319f, 0.028f, 0f, 0),
+            (190f, 0.766f, 0.125f, 0.148f, -6f, 0), (190f, 0.753f, 0.375f, 0.094f, 10f, 2), (190f, 0.245f, 0.042f, 0.086f, 8f, 0),
+            (190f, 0.477f, 0.250f, 0.047f, -8f, 2), (190f, 0.425f, 0.306f, 0.034f, 6f, 1),
+            (220f, 0.9375f, 0.283f, 0.140f, 8f, 2), (220f, 0.719f, 0.297f, 0.086f, -10f, 2), (220f, 0.644f, 0.075f, 0.086f, 6f, 2),
+            (220f, 0.409f, 0.028f, 0.110f, -4f, 0), (220f, 0.575f, 0.242f, 0.047f, 4f, 1),
+            (280f, 0.902f, 0.311f, 0.117f, -8f, 1), (280f, 0.808f, 0.283f, 0.070f, 10f, 0), (280f, 0.695f, 0.067f, 0.070f, 6f, 1),
+            (280f, 0.311f, 0.083f, 0.047f, -6f, 1), (280f, 0.516f, 0.139f, 0.047f, 8f, 1), (280f, 0.660f, 0.233f, 0.040f, -4f, 2),
+            (280f, 0.386f, 0.214f, 0.030f, 0f, 0),
+        };
+
         const float StarMeshWidth = 1.07f;   // SM_NeonStarTube tip-to-tip incl. tube at scale 1 (outer radius 0.5 + tube 0.085)
         const float StarMeshRadius = 0.585f;
         const float StarGlowCard = 1.6f;     // pass 5: outline-glow card size per unit star scale (star outer radius .625 of the card half)
@@ -564,6 +579,51 @@ namespace BubbleWash.EditorTools
                               $"depth {Vector3.Dot(pos - r2.pos, r2Fwd):F1} m scale {scale:F2}");
                 }
                 Debug.Log($"[BWK] door stars (S2 pass 3): {doorCount}");
+            }
+
+            // ---- Screen ALL pass 5 (judge gap #1): the BIG near-camera neon outline stars of the front sections S3-S6, measured
+            // on the owner's frames at 720p and projected through the reference-matched front comparison cameras R3-R6
+            // (CaptureTools R stills: runner at d, camera 2.6 m ahead / 1.3 up / 0.3 right, aimed at the mascot, then -2.9 /
+            // +9.1 deg, vFOV 52, 16:9) onto the drum wall. Walls above the slide only (never in the lanes); the gameplay camera
+            // sees the same 3D tubes from behind (double-sided outline halo cards).
+            {
+                int rCount = 0;
+                float tV = Mathf.Tan(26f * Mathf.Deg2Rad), tH = tV * 16f / 9f;
+                foreach (var s in RStarLayout)
+                {
+                    var rf = track.Evaluate(s.d);
+                    Vector3 rp = rf.position;
+                    Vector3 cPos = rp + rf.forward * 2.6f + rf.flatUp * 1.3f + rf.flatRight * 0.3f;
+                    var cRot = Quaternion.LookRotation(rp + rf.flatUp * 0.6f - cPos, rf.flatUp) * Quaternion.Euler(-2.9f, 9.1f, 0f);
+                    var cFwd = cRot * Vector3.forward; var cUp = cRot * Vector3.up; var cRight = cRot * Vector3.right;
+                    var dir = (cRot * new Vector3((2f * s.x - 1f) * tH, (1f - 2f * s.y) * tV, 1f)).normalized;
+                    float inset = 0.5f, scale = 1f; Vector3 pos = cPos; TrackFrame wf = default; bool ok = false;
+                    for (int it = 0; it < 3; it++)
+                    {
+                        ok = TunnelWallHit(cPos, dir, s.d + 2.6f, inset, out pos, out wf);
+                        if (!ok) break;
+                        float depth = Vector3.Dot(pos - cPos, cFwd);
+                        scale = s.w * 2f * depth * tH / StarMeshWidth;
+                        inset = 0.12f + StarMeshRadius * scale;
+                    }
+                    if (!ok) { Debug.LogWarning($"[BWK] R star d{s.d} ({s.x}, {s.y}) found no wall"); continue; }
+                    float hUp = Vector3.Dot(pos - wf.position, wf.flatUp), lat = Mathf.Abs(Vector3.Dot(pos - wf.position, wf.flatRight));
+                    if (hUp < 2.6f && !(lat > 3.0f && hUp > 1.2f))
+                    { Debug.LogWarning($"[BWK] R star d{s.d} ({s.x}, {s.y}) too low (h {hUp:F1} lat {lat:F1}) - skipped"); continue; }
+                    var toCam = (cPos - pos).normalized;
+                    var inward = Vector3.ProjectOnPlane(wf.FlatPoint(0, TunnelCenter) - pos, wf.forward).normalized;
+                    var facing = (toCam + inward * 0.35f).normalized;
+                    scale /= Mathf.Lerp(1f, Mathf.Max(0.5f, Vector3.Dot(facing, toCam)), 0.5f);
+                    float rr = s.roll * Mathf.Deg2Rad;
+                    var upHint = Vector3.ProjectOnPlane(cUp * Mathf.Cos(rr) + cRight * Mathf.Sin(rr), facing).normalized;
+                    var rot = Quaternion.LookRotation(facing, upHint);
+                    comb.Add(Recolor(mats[s.color]), Matrix4x4.TRS(pos, rot, Vector3.one * scale));
+                    AddGlow(s.color, pos, rot, StarGlowCard * scale);
+                    rCount++;
+                    Debug.Log($"[BWK] R star d{s.d} c{s.color} ({s.x:F2},{s.y:F2}) track {wf.distance:F1} m depth " +
+                              $"{Vector3.Dot(pos - cPos, cFwd):F1} m scale {scale:F2} h {hUp:F1} lat {lat:F1}");
+                }
+                Debug.Log($"[BWK] front-section stars (pass 5): {rCount}");
             }
 
             // ---- round 5: soft pink-magenta haze on the upper-left drum wall (reference: the wall around the big yellow star
@@ -747,7 +807,37 @@ namespace BubbleWash.EditorTools
                         r.sharedMaterials = mats;
                     }
                 }
-                Debug.Log($"[BWK] destination: core disc off, starburst x0.8, {n} glow slots on the M_Dest* masters");
+                // Screen ALL pass 5 (judge gap #6): the reference burst is full of glowing GOLD 5-point stars (+ a few pink ones)
+                // between the cream centre and the bulb ring; ours showed rays only. Filled-star cards in the portal plane just in
+                // front of the rays (local z ~1.0; bulb ring -0.35, rays 1.3), golden-angle spiral r 0.95-3.0 m (ring R ~3.56)
+                var oldStars = portal.Find("DestStars");
+                if (oldStars != null) Object.DestroyImmediate(oldStars.gameObject);
+                var starRoot = new GameObject("DestStars").transform;
+                starRoot.SetParent(portal, false);
+                var quad = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
+                Material gold = Mat("M_DestStarGold"), pink = Mat("M_DestStarPink");
+                var rnd = new System.Random(2414);
+                int ns = 0;
+                if (quad != null && gold != null)
+                    for (int i = 0; i < 26; i++)
+                    {
+                        float t = (i + 0.5f) / 26f;
+                        float rad = Mathf.Lerp(0.95f, 3.0f, Mathf.Sqrt(t));
+                        float ang = (i * 137.508f + (float)rnd.NextDouble() * 20f) * Mathf.Deg2Rad;
+                        bool isPink = i % 6 == 3;
+                        float size = isPink ? Mathf.Lerp(0.40f, 0.62f, (float)rnd.NextDouble()) : Mathf.Lerp(0.28f, 0.60f, (float)rnd.NextDouble());
+                        var go = new GameObject($"DestStar_{i:00}");
+                        go.transform.SetParent(starRoot, false);
+                        go.transform.localPosition = new Vector3(Mathf.Cos(ang) * rad, Mathf.Sin(ang) * rad, 1.0f - 0.01f * i);
+                        go.transform.localRotation = Quaternion.Euler(0f, 0f, (float)rnd.NextDouble() * 50f - 25f);
+                        go.transform.localScale = new Vector3(size, size, 1f);
+                        go.AddComponent<MeshFilter>().sharedMesh = quad;
+                        var mr = go.AddComponent<MeshRenderer>();
+                        mr.sharedMaterial = isPink && pink != null ? pink : gold;
+                        mr.shadowCastingMode = ShadowCastingMode.Off; mr.receiveShadows = false;
+                        ns++;
+                    }
+                Debug.Log($"[BWK] destination: core disc off, starburst x0.8, {n} glow slots on the M_Dest* masters, {ns} star cards");
             }
             catch (System.Exception e) { Debug.LogWarning($"[BWK] destination tune failed: {e.Message}"); }
         }

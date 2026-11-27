@@ -158,3 +158,67 @@ Let me build a quick comparison sheet of ref vs current for S4, S5, S6 to see th
 **Agent (2026-11-27 10:43 UTC):**
 
 > _tool: Bash - Run agent preview with chambers rebuild and stills_
+
+**Agent (2026-11-27 10:46 UTC):**
+
+> _tool: Bash - Check unity_run.sh usage and outputs_
+
+**Agent (2026-11-27 10:46 UTC):**
+
+> _tool: Bash - Locate preview log and check results_
+
+**Agent (2026-11-27 10:46 UTC):**
+
+> _tool: Bash - Build ref/before/after left-side sheet for v1_
+
+**Agent (2026-11-27 10:46 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/assets/screen_ALL_p5/v1_left_ref_before_after.png_
+
+**Agent (2026-11-27 10:47 UTC):**
+
+> _tool: Bash - Read cyan curve pipe geometry_
+
+**Agent (2026-11-27 10:47 UTC):**
+
+> _tool: Bash - Measure chamber and pipe crops before vs v1_
+
+**Agent (2026-11-27 10:48 UTC):**
+
+> _tool: Bash - Crop v1 R5 and R6 left areas_
+
+**Agent (2026-11-27 10:48 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/assets/screen_ALL_p5/v1_R5_R6_left.png_
+
+**Agent (2026-11-27 10:48 UTC):**
+
+> _tool: Bash - Find pink/cyan liquid material definitions_
+
+**Agent (2026-11-27 10:49 UTC):**
+
+> _tool: Bash - Check time and material variant helpers_
+
+**Agent (2026-11-27 10:49 UTC):**
+
+> _tool: Bash - Read variant material code_
+
+**Agent (2026-11-27 10:49 UTC):**
+
+> _tool: Bash - Sample ref vs v1 pink liquid colours_
+
+**Agent (2026-11-27 10:50 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/MaterialLibrary.Assets.cs_
+
+**Agent (2026-11-27 10:50 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.Environment.cs_
+
+**Agent (2026-11-27 10:50 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.Environment.cs_
+
+**Agent (2026-11-27 10:50 UTC):**
+
+> _tool: Bash - Find rear chamber still distances_

@@ -251,3 +251,91 @@ Now the shader edits: star shapes in BWK_LightBlob, deep-section grade in BWK_Dr
 **Agent (2026-11-27 10:45 UTC):**
 
 > _tool: Read - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Lighting.cs_
+
+**Agent (2026-11-27 10:45 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Lighting.cs_
+
+**Agent (2026-11-27 10:45 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Lighting.cs_
+
+**Agent (2026-11-27 10:45 UTC):**
+
+> _tool: Edit - C:\Users\josia\thanksgiving\Assets\BubbleWashKingdom\Scripts\Editor\SceneBuilder.Lighting.cs_
+
+**Agent (2026-11-27 10:45 UTC):**
+
+> _tool: Bash - Run C# compile check_
+
+**Agent (2026-11-27 10:46 UTC):**
+
+> _tool: Bash - Run agent preview with all section stills_
+
+**Agent (2026-11-27 10:47 UTC):**
+
+> _tool: Bash - Check why preview produced no log_
+
+**Agent (2026-11-27 10:48 UTC):**
+
+> _tool: Bash - Inspect preview outputs and logs_
+
+**Agent (2026-11-27 10:48 UTC):**
+
+> _tool: Bash - Measure v1 stills against reference_
+
+**Agent (2026-11-27 10:48 UTC):**
+
+> _tool: Bash - Build ref vs base vs v1 sheet_
+
+**Agent (2026-11-27 10:48 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Captures\agents\lighting\screen_ALL_p5\v1_sheetA.png_
+
+**Agent (2026-11-27 10:48 UTC):**
+
+> _tool: Bash - Check whether new material values reached disk_
+
+**Agent (2026-11-27 10:49 UTC):**
+
+> _tool: Bash - Find which materials the tunnel walls use_
+
+**Agent (2026-11-27 10:49 UTC):**
+
+> _tool: Bash - Check tunnel module UV layout_
+
+**Agent (2026-11-27 10:49 UTC):**
+
+> _tool: Bash - Crop R3 upper area base vs v1_
+
+**Agent (2026-11-27 10:49 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Captures\agents\lighting\screen_ALL_p5\c_r3_pair.png_
+
+**Agent (2026-11-27 10:49 UTC):**
+
+> _tool: Bash - Check how bent chunks set wall UVs_
+
+**Agent (2026-11-27 10:49 UTC):**
+
+> _tool: Bash - Check whether m is modified in the shader_
+
+**Agent (2026-11-27 10:49 UTC):**
+
+> _tool: Bash - Count scene references to drum wall materials_
+
+**Agent (2026-11-27 10:50 UTC):**
+
+> _tool: Bash - Compare wall pixel values base vs v1_
+
+**Agent (2026-11-27 10:50 UTC):**
+
+> _tool: Bash - Crop R4 right side and finale portal for inspection_
+
+**Agent (2026-11-27 10:50 UTC):**
+
+> _tool: Bash - Append v1 notes to lighting NOTES_
+
+**Agent (2026-11-27 10:50 UTC):**
+
+> _tool: Read - C:\Users\josia\thanksgiving\Captures\agents\lighting\screen_ALL_p5\c_r4_fin.png_

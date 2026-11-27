@@ -132,6 +132,14 @@ namespace BubbleWash.EditorTools
                 F(m, "_Mode", 4); C(m, "_ColorA", "#FFFFD8"); F(m, "_Smoothness", 0.25f); F(m, "_Glow", 0.5f); F(m, "_BumpScale", 2f);
             });
 
+            // Screen ALL pass 5 (gap #4): the shot-matched R5 pink column's liquid = VARIANT of the water owner's M_PipeWater
+            // master (tint / strength only). Preview v1 with M_PipeWaterPink (#FF3FB8 / #FFB3EE x 1.7) rendered #F9D8F3 (near
+            // white) vs the reference liquid #BF4BB1 (p10 #A835A1, p90 #EC73D1) -> deep magenta at a lower strength.
+            WaterVariant("M_PinkLiquid_p5", "M_PipeWater", m =>
+            {
+                C(m, "_ColorA", "#C82AA8"); C(m, "_ColorB", "#E860C8"); F(m, "_Intensity", 0.85f); F(m, "_Speed", 0.9f); F(m, "_Scale", 2.5f);
+            }, -1);
+
             // ---------------------------------------------------------------- 24 golden starburst geometry (r8 v2)
             // SM_Starburst_r8 (build_hall_assets.py): additive soft quads for BWK/LightBlob (radial UV falloff): 132 thin rays
             // that fade outward, 42 soft 4-point sparkles, an amber halo and a small CREAM core (reference f_14.50s: warm

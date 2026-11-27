@@ -767,7 +767,9 @@ namespace BubbleWash.EditorTools
             if (pink != null)
             {
                 var c5 = RFrontCam(220f);
-                const float latP = 2.98f, baseP = 0.35f, sP = 0.85f;
+                // v1 base 0.35: liquid top at y 12 = a flat pink slab to the frame top -> v2 base 0: liquid top ~y 60 with clear
+                // glass above (tube read); liquid = M_PinkLiquid_p5 (v1 rendered near white #F9D8F3, ref #BF4BB1)
+                const float latP = 2.98f, baseP = 0.0f, sP = 0.85f;
                 float dp = ShotMatchDistance(c5, 214f, 223f, latP, 1.8f, 0.05f);
                 var f = track.Evaluate(dp);
                 var go = Spawn(pink);
@@ -775,7 +777,15 @@ namespace BubbleWash.EditorTools
                 go.transform.SetParent(holder.transform, false);
                 go.transform.SetPositionAndRotation(f.FlatPoint(latP, baseP), Quaternion.LookRotation(Vector3.ProjectOnPlane(-f.flatRight, Vector3.up).normalized, Vector3.up));
                 go.transform.localScale = Vector3.one * sP;
-                foreach (var r in go.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
+                var liquid = Mat("M_PinkLiquid_p5");
+                foreach (var r in go.GetComponentsInChildren<Renderer>())
+                {
+                    r.shadowCastingMode = ShadowCastingMode.Off;
+                    if (liquid == null) continue;
+                    var ms = r.sharedMaterials;
+                    for (int i = 0; i < ms.Length; i++) if (ms[i] != null && ms[i].name.StartsWith("M_PipeWater")) ms[i] = liquid;
+                    r.sharedMaterials = ms;
+                }
                 var top = HallViewport(c5, f.FlatPoint(latP, baseP + 2.54f * sP));
                 var bot = HallViewport(c5, f.FlatPoint(latP, baseP + 0.2f * sP));
                 Debug.Log($"[BWK] pass-5 R5 pink column at {dp:F2} m: liquid top px ({top.x * 1280f:F0},{top.y * 720f:F0}) bottom ({bot.x * 1280f:F0},{bot.y * 720f:F0}) depth {top.z:F1} m");
@@ -787,19 +797,34 @@ namespace BubbleWash.EditorTools
             var curve = ModelPrefab("Machinery", "SM_CyanPipeCurve_r7");
             if (curve != null)
             {
+                // v1 (mirrored, anchor 273.65 m) ran diagonally ACROSS the R6 porthole (it sat inside door B's 269.9-274.1 m
+                // span, curving away from the lens) and read pale pink (M_PipeWater core) -> v2: turned 180 deg (no mirror) so
+                // it drops toward the lens down the frame edge (ref x 0-120, y 120-580), top anchor downstream of door B,
+                // 0.8 x (lower end 1.36 m in from the 3.95 m wall = 2.59 m, tube r .22 -> clear of the 2.38 m rail, above
+                // the 0.88 m rail top), cyan liquid core (M_PipeWaterCyan, as the S6 wall pipe)
                 var c6 = RFrontCam(280f);
-                const float latC = 3.7f;
-                float dc = ShotMatchDistance(c6, 268f, 283f, latC, 2.0f, 0.05f);
+                const float latC = 3.95f, baseC = 0.9f, sC = 0.8f;
+                float topH = baseC + 2.6f * sC;
+                float dc = ShotMatchDistance(c6, 274.4f, 283f, latC, topH, 0.07f);
                 var f = track.Evaluate(dc);
                 var go = Spawn(curve);
                 go.name = $"CyanPipeCurve_R6_{dc:000.0}";
                 go.transform.SetParent(holder.transform, false);
-                go.transform.SetPositionAndRotation(f.FlatPoint(latC, 0.5f), f.FlatRotation);
-                go.transform.localScale = new Vector3(-1f, 1f, 1f);
+                go.transform.SetPositionAndRotation(f.FlatPoint(latC, baseC), f.FlatRotation * Quaternion.Euler(0f, 180f, 0f));
+                go.transform.localScale = Vector3.one * sC;
                 HallOwnMaterials(go);
-                foreach (var r in go.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
-                var vp = HallViewport(c6, f.FlatPoint(latC, 2.0f));
-                Debug.Log($"[BWK] pass-5 R6 cyan curve pipe at {dc:F2} m: anchor px ({vp.x * 1280f:F0},{vp.y * 720f:F0}) depth {vp.z:F1} m");
+                var cyanCore = Mat("M_PipeWaterCyan");
+                foreach (var r in go.GetComponentsInChildren<Renderer>())
+                {
+                    r.shadowCastingMode = ShadowCastingMode.Off;
+                    if (cyanCore == null) continue;
+                    var ms = r.sharedMaterials;
+                    for (int i = 0; i < ms.Length; i++) if (ms[i] != null && ms[i].name == "M_PipeWater") ms[i] = cyanCore;
+                    r.sharedMaterials = ms;
+                }
+                var vp = HallViewport(c6, f.FlatPoint(latC, topH));
+                var ve = HallViewport(c6, go.transform.TransformPoint(new Vector3(1.7f, 0.12f, 3.3f)));
+                Debug.Log($"[BWK] pass-5 R6 cyan curve pipe at {dc:F2} m: top px ({vp.x * 1280f:F0},{vp.y * 720f:F0}) depth {vp.z:F1} m, end px ({ve.x * 1280f:F0},{ve.y * 720f:F0})");
             }
             var glass = ModelParts("Track", "SM_GlassPipe_Module");
             int nc = 0;
