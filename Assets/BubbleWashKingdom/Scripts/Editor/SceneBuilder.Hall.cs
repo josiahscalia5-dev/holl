@@ -291,7 +291,9 @@ namespace BubbleWash.EditorTools
             // reference door faces the camera -> yaw the hatch 8 deg back toward the comparison camera about its LEFT outer
             // edge (the left band stays where it matches, nothing moves into the mouth wall), scale 1.08 (left gold band
             // 73 -> ~79 px, ref 84); the right half comes ~2 m forward, its gold band moves out right, the violet rim widens
-            const float hatchScale = 1.08f, hatchOuter = 6.98f, hatchYaw = 8f;
+            // v3 (preview v2, yaw 8: right gold gone from the frame, door_R gold 17.1 -> 1.2 %, ref 6.7 = the reference keeps a
+            // gold band at x >= 1200 below y ~300) -> yaw 5
+            const float hatchScale = 1.08f, hatchOuter = 6.98f, hatchYaw = 5f;
             Vector3 hatchPivot = fm.FlatPoint(-hatchOuter, TunnelCenter);
             Quaternion hatchTurn = Quaternion.AngleAxis(hatchYaw, Vector3.up);
             Vector3 hatchPos = hatchPivot + hatchTurn * (fm.FlatPoint(-hatchOuter + hatchOuter * hatchScale, TunnelCenter) - hatchPivot);
@@ -397,7 +399,10 @@ namespace BubbleWash.EditorTools
             // wall plane, i.e. mostly inside the wall) -> 7.6 m deep (~1.5 m in front of the wall), scale 1.3 -> 1.12
             // (same screen size), so the navy housing with its panels reads like the reference block left of the hatch
             var mp = HallScreenPoint(r2, 0.0f, 0.31f, 7.6f);
-            var mach = HallPlace(holder, "Machinery", "SM_DoorMachine_s2", mp, fm.FlatRotation, 1.12f);
+            // v3 (preview v2: the housing showed only as a narrow dark block - R2 sees the machine ~50 deg off-axis, i.e. its
+            // side) -> turned halfway toward the comparison camera so the panelled front + horizontal gold pipe read
+            var machRot = Quaternion.Slerp(fm.FlatRotation, HallFaceCam(r2, mp), 0.5f);
+            var mach = HallPlace(holder, "Machinery", "SM_DoorMachine_s2", mp, machRot, 1.12f);
             if (mach != null)
             {
                 HallOwnMaterials(mach);

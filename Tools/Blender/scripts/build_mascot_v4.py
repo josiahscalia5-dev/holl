@@ -1959,6 +1959,8 @@ V7B_LOCK_COLS = ((0.073, 0.007, 0.180), (0.170, 0.015, 0.376), (0.301, 0.037, 0.
 V7B_LOCK_TIP = (0.428, 0.067, 0.689)
 V7B_ARM_THIN = 0.80       # limb cross-section (rear R2: our arms ~60 px thick vs reference ~35 px = boxy blocks at the brim)
 V7B_MITT_THIN = 0.90      # round mitt keeps more of its size (reference: round paws wider than the limb)
+V7B_ARM_FUR = 0.60        # rig contract 'arm_fur': arm shell-fur length x this (prev2: 5.2 cm shells on the slim arm = fat blocks)
+V7B_TAPER_Z0, V7B_TAPER_Z1, V7B_TAPER_K = 0.42, 0.12, 0.90   # lower body narrows in x to 90 % at the seat (owner: too wide / squat)
 V5_YARN_N = 560           # Fibonacci directions; locks pointing into the crown are skipped (never seen)
 V5_ARM_UPPER = 18.0       # deg elevation of the upper arm (runs out under the brim; v4 straight arm 40.5)
 V5_ARM_FORE = 70.0        # deg elevation of the forearm + mitt beside the brim (reference rear: paws at brim/stripe height)
@@ -2262,6 +2264,14 @@ def export_game_model_v5():
             me.vertices[vi].co = co + rv.normalized() * push
             moved += 1
     me.update()
+    # ---- 3b. run 2 (prev2): rounder, less squat body - the lower body narrows in x toward the seat (reference rear: widest
+    #      just under the brim, the feet stick out at the bottom corners); the face (mouth z .46, front centre) is unaffected
+    bo = bpy.data.objects["Body"]
+    for v in bo.data.vertices:
+        s_t = smooth01((V7B_TAPER_Z0 - v.co.z) / (V7B_TAPER_Z0 - V7B_TAPER_Z1))
+        v.co.x *= 1.0 - (1.0 - V7B_TAPER_K) * s_t
+    bo.data.update()
+    contract["arm_fur"] = V7B_ARM_FUR
     _v7_face_and_fur_uv(contract)            # ---- 4. pass 7: face (smile, nose, eye rims) + metric fur UVs
     contract["sole_fur"] = V5_SOLE_FUR
     contract["arm_cuff_tol"] = V5_ARM_CUFF_TOL

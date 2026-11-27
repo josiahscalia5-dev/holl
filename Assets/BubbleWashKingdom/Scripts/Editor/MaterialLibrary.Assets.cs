@@ -49,9 +49,11 @@ namespace BubbleWash.EditorTools
             // violet, so the paint stays navy (not lavender) with a clear-coat gloss; small self-light keeps it off black.
             Mat("M_DoorMachineBlue_s2", "Universal Render Pipeline/Lit", m =>
             {
-                C(m, "_BaseColor", "#2A3A96"); F(m, "_Metallic", 0.25f); F(m, "_Smoothness", 0.72f);
+                // pass 7: rendered saturated violet (#5435A1 / #644A83 vs reference slate #403F62 / #4A435E): the glossy
+                // clear coat mirrored the violet drum -> desaturated slate-navy paint, smoothness .72 -> .5
+                C(m, "_BaseColor", "#3E4478"); F(m, "_Metallic", 0.3f); F(m, "_Smoothness", 0.5f);
                 m.EnableKeyword("_EMISSION"); m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
-                C(m, "_EmissionColor", "#101A52");
+                C(m, "_EmissionColor", "#181C3A");
             });
             Mat("M_DoorMachinePanel_s2", "Universal Render Pipeline/Lit", m =>
             {
@@ -74,21 +76,22 @@ namespace BubbleWash.EditorTools
             {
                 Mat(name, "Universal Render Pipeline/Lit", m =>
                 {
-                    // pass 7: smoothness .38 -> .22 - the glossy bristle undersides mirrored the violet drum (blue-violet
-                    // spikes at the roller's lower edge, corner pink 35 % vs reference 68 %); soft matte bristles like the ref
-                    // v2: .22 rendered DARKER magenta (the new closed ends are lit only by the blue hall light) -> .3 and
-                    // the glow below raised to ~90 % of the albedo (the fur body's colour-true self-light approach)
-                    C(m, "_BaseColor", albedo); F(m, "_Metallic", 0f); F(m, "_Smoothness", 0.3f);
+                    // pass 7 v3: v1 / v2 (smoothness .22 / .3, glow 90 %) still rendered every spike half pink / half
+                    // blue-violet: the violet drum mirrored in the spike faces (environment reflection + the blue hall
+                    // light's specular). Matte bristles: no specular highlights, no environment reflections, a darker
+                    // albedo for the soft diffuse form and the colour-true glow carrying the hue (corner ref #C35FA2)
+                    C(m, "_BaseColor", albedo); F(m, "_Metallic", 0f); F(m, "_Smoothness", 0.1f);
+                    F(m, "_SpecularHighlights", 0f); m.EnableKeyword("_SPECULARHIGHLIGHTS_OFF");
+                    F(m, "_EnvironmentReflections", 0f); m.EnableKeyword("_ENVIRONMENTREFLECTIONS_OFF");
                     m.EnableKeyword("_EMISSION"); m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
                     C(m, "_EmissionColor", glow);
                 });
             }
-            // v3: v2 glow (~40 % of the albedo) rendered the unlit bristle sides blue-violet under the hall light (corner
-            // pink 45 -> 20 %) -> ~75 % colour-true self light, like the fur body's glow .6
-            Bristle("M_BristlePink_s2", "#E2368C", "#CC3280");
-            Bristle("M_BristlePinkTip_s2", "#FF8CC8", "#E87CB4");
-            Bristle("M_BristleWhite_s2", "#FFF0FA", "#DCD0DC");
-            Bristle("M_BristleCyan_s2", "#7CD0F4", "#5EAAD2");
+            // v3 albedo ~55 % of the colour, glow ~ the colour (pink / light tip / white / cyan of the reference roller)
+            Bristle("M_BristlePink_s2", "#8A2458", "#C83A88");
+            Bristle("M_BristlePinkTip_s2", "#9A5078", "#EC80BC");
+            Bristle("M_BristleWhite_s2", "#888088", "#E6DCE8");
+            Bristle("M_BristleCyan_s2", "#3C6E88", "#66B8E0");
 
             // ---------------------------------------------------------------- S2 door hatch + LED rim (pass 6)
             // Violet torus rims of the new masters SM_DoorHatch_s2 / SM_LedRim_s2 (build_s2_door_p6.py). Reference f_03.00s

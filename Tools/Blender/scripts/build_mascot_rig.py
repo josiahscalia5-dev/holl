@@ -522,7 +522,8 @@ def tag_fur(objs, info):
             sole_k = CONTRACT.get('sole_fur')      # optional (v5 candidate): None = v4 / v3 behaviour unchanged
             for v in me.vertices:
                 if arm:
-                    w = V_LIMB                             # no palm pads: full fur mitt
+                    # no palm pads: full fur mitt; optional contract 'arm_fur' (v5 pass 7: .6 = slimmer arms), default 1.0
+                    w = V_LIMB * float(CONTRACT.get('arm_fur', 1.0))
                 else:
                     w = V_LIMB if v.index < nlv else V_PAW
                     pad_lo = 0.25
