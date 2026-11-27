@@ -29,8 +29,8 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AO: 0.2
-    - _ClumpAmount: 0.8
+    - _AO: 0.25
+    - _ClumpAmount: 0.6
     - _ClumpScale: 5
     - _Curl: 1.1
     - _Density: 200
@@ -45,16 +45,16 @@ Material:
     - _StaticMode: 0
     - _Thinning: 0.8
     - _TuftAmount: 0.6
-    - _TuftScale: 15
+    - _TuftScale: 13
     - _Underfur: 0.8
     - _UseVertexTint: 1
     - _Wrap: 0.6
     m_Colors:
-    - _BaseColor: {r: 0.972549, g: 0.54509807, b: 0.45882353, a: 1}
+    - _BaseColor: {r: 1, g: 0.61960787, b: 0.54901963, a: 1}
     - _PawRootColor: {r: 1, g: 0.9411765, b: 0.8862745, a: 1}
     - _PawTipColor: {r: 1, g: 0.9764706, b: 0.93333334, a: 1}
     - _RimColor: {r: 1, g: 0.8156863, b: 0.78431374, a: 1}
-    - _RootColor: {r: 0.8235294, g: 0.41568628, b: 0.36078432, a: 1}
-    - _TipColor: {r: 1, g: 0.7764706, b: 0.69803923, a: 1}
+    - _RootColor: {r: 0.8627451, g: 0.49411765, b: 0.44705883, a: 1}
+    - _TipColor: {r: 1, g: 0.8392157, b: 0.78431374, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
