@@ -39,10 +39,12 @@ Material:
     - _Glow: 0.06
     - _Gravity: 0
     - _PawGlow: 0
+    - _PlushMode: 0
     - _RimPower: 2.6
     - _RimStrength: 0.4
     - _SilhouetteFade: 0.3
     - _StaticMode: 0
+    - _StrandContrast: 0
     - _Thinning: 0.6
     - _TuftAmount: 0
     - _TuftScale: 24
@@ -50,11 +52,11 @@ Material:
     - _UseVertexTint: 1
     - _Wrap: 0.6
     m_Colors:
-    - _BaseColor: {r: 0.47843137, g: 0.20392157, b: 0.72156864, a: 1}
+    - _BaseColor: {r: 0.44705883, g: 0.1254902, b: 0.68235296, a: 1}
     - _PawRootColor: {r: 0.86, g: 0.8, b: 0.8399999, a: 1}
     - _PawTipColor: {r: 1, g: 0.97999996, b: 0.97999996, a: 1}
-    - _RimColor: {r: 0.8392157, g: 0.7058824, b: 1, a: 1}
-    - _RootColor: {r: 0.22745098, g: 0.078431375, b: 0.40784314, a: 1}
-    - _TipColor: {r: 0.7607843, g: 0.6039216, b: 0.9490196, a: 1}
+    - _RimColor: {r: 0.78431374, g: 0.47058824, b: 0.94509804, a: 1}
+    - _RootColor: {r: 0.24313726, g: 0.047058824, b: 0.43137255, a: 1}
+    - _TipColor: {r: 0.70980394, g: 0.4, b: 0.8980392, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

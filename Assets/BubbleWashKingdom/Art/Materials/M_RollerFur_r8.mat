@@ -39,10 +39,12 @@ Material:
     - _Glow: 0.6
     - _Gravity: 0
     - _PawGlow: 0
+    - _PlushMode: 0
     - _RimPower: 2.4
     - _RimStrength: 0.3
     - _SilhouetteFade: 0.12
     - _StaticMode: 0
+    - _StrandContrast: 0
     - _Thinning: 0.45
     - _TuftAmount: 0.7
     - _TuftScale: 7

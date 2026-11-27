@@ -98,15 +98,18 @@ namespace BubbleWash.EditorTools
             Mat("M_HatKnit_v5", "BWK/Character", m =>
             {
                 // crown: more saturated blue-violet yarn, deeper purl valleys (_PurlDepth 1) and bolder ribs
-                F(m, "_Mode", 2); C(m, "_ColorA", "#7438A8"); C(m, "_ColorB", "#EDE6FF"); F(m, "_Stripes", 3); F(m, "_StripeWidth", 0.0f);
-                F(m, "_StitchU", 44); F(m, "_StitchV", 38); F(m, "_BumpStrength", 1.3f); F(m, "_Smoothness", 0.14f); F(m, "_Glow", 0.1f);
+                // pass 7 run 2: R2 crown rendered 40.5/36/-45 vs reference 36.7/44/-42 (too blue) -> linear x1.32/.73/.87
+                F(m, "_Mode", 2); C(m, "_ColorA", "#842F9E"); C(m, "_ColorB", "#EDE6FF"); F(m, "_Stripes", 3); F(m, "_StripeWidth", 0.0f);
+                F(m, "_StitchU", 44); F(m, "_StitchV", 38); F(m, "_BumpStrength", 1.6f); F(m, "_Smoothness", 0.14f); F(m, "_Glow", 0.1f);
                 F(m, "_PurlDepth", 1f);
             });
             Mat("M_HatCuff_v5", "BWK/Character", m =>
             {
                 // thick folded brim (v5 geometry: outer rib surface rolled out 1.2 cm): bluer violet, deep rib shading
-                F(m, "_Mode", 2); C(m, "_ColorA", "#7E3CA6"); C(m, "_ColorB", "#7E3CA6"); F(m, "_StripeWidth", 0f);
-                F(m, "_StitchU", 44); F(m, "_StitchV", 40); F(m, "_BumpStrength", 1.3f); F(m, "_Smoothness", 0.12f); F(m, "_Glow", 0.14f);
+                // pass 7 run 2: R2 cuff 36/41/-46 vs reference 39/47/-44 and FLAT (Lstd 3.4 vs 10.8) -> redder, lighter
+                // (linear x1.51/1.32/1.09) and deeper rib relief
+                F(m, "_Mode", 2); C(m, "_ColorA", "#9845AD"); C(m, "_ColorB", "#9845AD"); F(m, "_StripeWidth", 0f);
+                F(m, "_StitchU", 44); F(m, "_StitchV", 40); F(m, "_BumpStrength", 2.0f); F(m, "_Smoothness", 0.12f); F(m, "_Glow", 0.1f);
                 F(m, "_PurlDepth", 1f);
             });
             Mat("M_HatStripe_v5", "BWK/Character", m =>
@@ -131,23 +134,27 @@ namespace BubbleWash.EditorTools
                 // pass 7: the v5 FBX now carries METRIC fur UVs (body equirectangular, arms cylindrical, 1.57 m per base unit)
                 // instead of the master's smart-UV islands that stretched the strand cells 2:1 = streaks / blocky patches.
                 // R2 body (s2p7b) rendered 53/43/-10 vs reference 60/39/-8 -> lighter, slightly less saturated coat.
-                C(m, "_RootColor", "#DC7E72"); C(m, "_BaseColor", "#FF9E8C"); C(m, "_TipColor", "#FFD6C8");
+                // pass 7 run 2: R2 body 56.7/43/-11 vs reference 54.9/44/-6 (linear x1.03/.93/.84) and the 12 cm tuft cells
+                // read as a QUILTED LATTICE of round bumps -> BWK_Fur _PlushMode 1 (irregular Voronoi tufts, ~6.5 cm) +
+                // _StrandContrast 1 (reference body Lstd 11.3 vs ours 6.2), a little more downward droop
+                C(m, "_RootColor", "#DF7A69"); C(m, "_BaseColor", "#FF9981"); C(m, "_TipColor", "#FFCFB9");
                 C(m, "_PawRootColor", "#FFF0E2"); C(m, "_PawTipColor", "#FFF9EE"); F(m, "_PawGlow", 0.45f);
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
-                F(m, "_Density", 200); F(m, "_FurLength", 0.052f); F(m, "_Gravity", 0.012f); F(m, "_Thinning", 0.8f); F(m, "_ClumpAmount", 0.6f); F(m, "_ClumpScale", 5f);
-                F(m, "_AO", 0.25f); F(m, "_Curl", 1.1f); F(m, "_Underfur", 0.8f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.45f);
-                F(m, "_TuftScale", 13f); F(m, "_TuftAmount", 0.6f);   // ~12 cm soft plush tufts on the metric UVs
+                F(m, "_Density", 200); F(m, "_FurLength", 0.052f); F(m, "_Gravity", 0.02f); F(m, "_Thinning", 0.8f); F(m, "_ClumpAmount", 0.6f); F(m, "_ClumpScale", 5f);
+                F(m, "_AO", 0.3f); F(m, "_Curl", 1.0f); F(m, "_Underfur", 0.8f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.45f);
+                F(m, "_TuftScale", 24f); F(m, "_TuftAmount", 0.5f); F(m, "_PlushMode", 1f); F(m, "_StrandContrast", 1f);
                 C(m, "_RimColor", "#FFD0C8"); F(m, "_Glow", 0.2f); F(m, "_RimStrength", 0.5f);
             }, (int)RenderQueue.AlphaTest);
             Mat("M_PomPom_v5", "BWK/Fur", m =>
             {
                 // v5 pom-pom = real radial yarn locks (M_PawPad_v5) around this core: a short MID-violet fuzz that fills the gaps
                 // between the locks (v4's core was a near-black ball because it was the whole pom-pom)
-                C(m, "_RootColor", "#3A1468"); C(m, "_BaseColor", "#7A34B8"); C(m, "_TipColor", "#C29AF2");
+                // pass 7 run 2: R2 pom-pom pale lilac 61/27/-31 vs reference saturated violet 47/49/-46 (linear x.86/.41/.88)
+                C(m, "_RootColor", "#3E0C6E"); C(m, "_BaseColor", "#7220AE"); C(m, "_TipColor", "#B566E5");
                 if (furNoise) m.SetTexture("_NoiseTex", furNoise);
                 F(m, "_Density", 170); F(m, "_FurLength", 0.05f); F(m, "_Gravity", 0.0f); F(m, "_Thinning", 0.6f); F(m, "_AO", 0.35f);   // cand3: longer core fuzz softens the spiky lock silhouette
                 F(m, "_Curl", 0.25f); F(m, "_Underfur", 0.8f); F(m, "_ClumpAmount", 0.55f); F(m, "_EdgeSoft", 0.16f); F(m, "_SilhouetteFade", 0.3f);
-                C(m, "_RimColor", "#D6B4FF"); F(m, "_Glow", 0.06f); F(m, "_RimStrength", 0.4f);
+                C(m, "_RimColor", "#C878F1"); F(m, "_Glow", 0.06f); F(m, "_RimStrength", 0.4f);
             }, (int)RenderQueue.AlphaTest);
             // static (shell-less) variants, same naming rule as v4 (name + "_Static")
             foreach (var n in new[] { "M_Fur_v5", "M_PomPom_v5" })
