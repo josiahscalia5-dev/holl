@@ -155,8 +155,8 @@ def crown_side(s, seed, big):
     for i in range(n_main):
         top, o, ang = rim[min(len(rim) - 1, int((i + rng.uniform(0.15, 0.85)) * len(rim) / n_main))]
         az = s * (ang + rng.uniform(-18.0, 18.0))
-        el = rng.uniform(40.0, 76.0)
-        L = rng.uniform(0.32, 0.6) * k * (1.15 if 60.0 < ang < 130.0 else 0.9)
+        el = rng.uniform(34.0, 66.0)
+        L = rng.uniform(0.28, 0.52) * k * (1.15 if 60.0 < ang < 130.0 else 0.9)
         strand(E, rng, top, dir_from(az, el), L, rng.uniform(0.016, 0.023), 2 if rng.random() < 0.75 else 1)
     # 3) low WAKE arm (rear view, reference lower right): a thin band lying on the water sweeping outward + back toward the
     #    camera from behind the foot, its rim breaking into low strands that skim outward

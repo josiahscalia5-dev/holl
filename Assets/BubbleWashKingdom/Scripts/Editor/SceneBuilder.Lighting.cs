@@ -392,10 +392,13 @@ namespace BubbleWash.EditorTools
             (0.398f, 0.083f, 0.066f, -12f, 0),   // v2: widths x1.2 (v1 yellow ~55 px vs reference ~70)
             (0.465f, 0.194f, 0.047f, 14f, 1),
             (0.789f, 0.083f, 0.071f, 10f, 0),
-            (0.672f, 0.215f, 0.047f, -12f, 1),   // v3: left of the nudged right yellow (v2: hidden behind it)
-            (0.820f, 0.396f, 0.056f, -8f, 2),
-            (0.641f, 0.285f, 0.020f, 6f, 0),
-            (0.645f, 0.347f, 0.017f, -6f, 2),
+            // S2 pass 7 v2 (R2 07:44 solve, slim master): right cyan back to its reference spot (898, 153) now that the right
+            // yellow is nudged sideways only (v1: (858, 153)); pink 0.056 -> 0.050 wide (reference 1020-1080 = 60 px); the
+            // small yellow / pink measured 37 / 27 px wide at (821, 205) / (826, 251) (v1 rendered 16 / 20 px)
+            (0.702f, 0.213f, 0.047f, -12f, 1),
+            (0.820f, 0.390f, 0.050f, -8f, 2),
+            (0.641f, 0.285f, 0.028f, 6f, 0),
+            (0.645f, 0.349f, 0.021f, -6f, 2),
         };
 
         /// <summary>Screen ALL pass 5: big neon outline stars of the owner's front frames (track distance of the R still, centre
@@ -573,7 +576,7 @@ namespace BubbleWash.EditorTools
                         // may sit from 40.8 m (p3: 41.2 m nudged the right yellow / pink 60-80 px off their reference spots)
                         if (ok && wf.distance > HallMouthD + 0.8f) break;
                         ok = false;
-                        u = Mathf.Lerp(u, 0.58f, 0.05f); v = Mathf.Lerp(v, 0.40f, 0.05f);   // v3: finer steps (closer to the reference spot)
+                        u = Mathf.Lerp(u, 0.58f, 0.05f); v = Mathf.Lerp(v, 0.40f, 0.012f);   // p7 v2: sideways (keeps the reference height; v1 moved the right yellow 60 px down)
                     }
                     if (!ok) { Debug.LogWarning($"[BWK] door star at ({s.x}, {s.y}) found no drum wall behind the hatch"); continue; }
                     var toCam = (r2.pos - pos).normalized;

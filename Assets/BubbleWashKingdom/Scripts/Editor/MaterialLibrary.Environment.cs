@@ -100,7 +100,9 @@ namespace BubbleWash.EditorTools
                 // oval columns in the door drum with finer slots deeper inside (reference: 2-3 columns of big dark ovals
                 // right inside the hatch, thin slot rings in the far sections)
                 F(m, "_DoorAmount", 1f); F(m, "_DoorFadeStart", 78f); F(m, "_DoorFadeEnd", 112f);
-                F(m, "_DoorDesat", 0.12f); m.SetColor("_DoorTint", new Color(0.86f, 0.88f, 1.0f)); F(m, "_DoorHole", 0.42f);
+                // v2: v1 (tint .86/.88/1, holes .42) had the reference hue but ~10 L too dark and flat (patches L 38 / 37.5 vs
+                // 49 / 47.7, p10-p90 11-15 vs 24-28): brighter lit metal (x1.5 linear ~ +8-10 L), holes kept near black
+                F(m, "_DoorDesat", 0.12f); m.SetColor("_DoorTint", new Color(1.30f, 1.30f, 1.42f)); F(m, "_DoorHole", 0.27f);
                 F(m, "_DoorSmooth", 0.82f);
                 F(m, "_DoorSlotNear", 1.15f); F(m, "_DoorSlotFar", 0.72f); F(m, "_DoorSlotStart", 54f); F(m, "_DoorSlotEnd", 70f);
                 F(m, "_DoorRowSpread", 1.45f);
