@@ -123,7 +123,24 @@ of one enormous magical washing machine. These instructions come only from the o
   built from a script in `Tools/Blender/scripts/` (headless: `blender --background --factory-startup
   --python <script>`), exported as FBX to `Assets/BubbleWashKingdom/Art/Models/`, with a preview render in
   `Docs/AssetPreviews/`. Blender working files go to `Tools/Blender/work/` (gitignored).
-- No Unity MCP bridge is connected in Code sessions; drive Unity through batchmode
+- AI integrations (installed 2026-11-27 by lead 72ca2928 on the owner's request; check before reinstalling, avoid duplicates):
+  Node.js 26.13.1 portable `C:\Users\josia\DevTools\node-v26.13.1-win-x64` + uv 0.13.10 `C:\Users\josia\DevTools\uv` (user
+  PATH + `~/bin` shims for Git Bash: node, npm, npx, uv, uvx, worldlabs); World Labs CLI 0.6.0 (`worldlabs`, sign-in pending:
+  the owner runs `worldlabs auth login` himself - the key goes only into its hidden prompt, never into chat). Claude Code
+  plugins (user scope): `worldlabs@worldlabs` 0.2.2 (skills atlas-blender / atlas-flythrough / atlas-splats / worldlabs-cli
+  + the hosted Atlas MCP `plugin:worldlabs:worldlabs`, sign in with /mcp in a new session) and `unity@anthropic-plugin-
+  directory` 0.1.9-beta (33 skills, no MCP). Never run `worldlabs setup` / `worldlabs skills install` (duplicate skills) or
+  `claude mcp add worldlabs` (the plugin already has it). User MCP servers in ~/.claude.json: `unity-editor-mcp` (Unity CLI
+  1.0.1 `C:\Users\josia\AppData\Local\Unity\bin\unity.exe mcp --tool-groups --cli-tools`; Editor tools need the Unity
+  Pipeline package in this project + an open Editor - NOT added: it changes Packages/manifest.json and an open Editor would
+  block the batchmode pipeline; owner decision) and `blender` (`uvx mcp-for-blender`, DISABLE_TELEMETRY=true; add-on
+  blender_mcp v2.0 enabled in Blender 5.3 user prefs, localhost:9876, auto-starts only in the Blender GUI). Atlas Blender
+  extension 0.1.4 (`bl_ext.user_default.worldlabs_atlas`, online access ON; key only in its own settings or WLT_API_KEY).
+  Project Blender scripts run with --factory-startup, so these add-ons never affect builds. Meshy not installed (any
+  generation needs a paid Pro plan). Atlas: uploading reference frames needs the owner's approval each time; results that
+  contain reference pixels stay local (Art/Projected/, Scenes/Private/); investigation notes Captures/agents/_shared/
+  ATLAS_INVESTIGATION_0945.md.
+- Unity is still driven through batchmode by default
   (`Unity.exe -batchmode -projectPath C:\Users\josia\thanksgiving -executeMethod <Class.Method> -logFile <log> -quit`).
   Never run two Unity instances on this project at once.
 - Windows Smart App Control must stay OFF on this PC; when it was on it blocked Unity's unsigned build
