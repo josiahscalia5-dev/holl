@@ -906,7 +906,7 @@ namespace BubbleWash.EditorTools
             foreach (float side in new[] { -1f, 1f })
             {
                 var go = Child(holder, side < 0 ? "CrownL" : "CrownR");
-                go.transform.localPosition = cPos;
+                go.transform.localPosition = cPos + new Vector3(v6 ? side * CrownV6Out : 0f, 0f, 0f);   // p3: beside the body, not over it
                 go.transform.localRotation = cRot;
                 go.transform.localScale = cScl;
                 var mf = go.AddComponent<MeshFilter>();
@@ -927,7 +927,10 @@ namespace BubbleWash.EditorTools
 
         // S2 pass 10f V6 crown frame in runner space (m / deg): sink, pull back toward the camera, lean the top back, taller
         // (p1 -0.16 / -0.3 / -24 / 1.0 x 1.3 x 1.2: lay flat on the water like antlers, the left one hidden by the body + coin)
-        const float CrownV6Drop = -0.1f, CrownV6Back = -0.44f, CrownV6Lean = -8f, CrownV6ScaleX = 1.0f, CrownV6ScaleY = 1.42f, CrownV6ScaleZ = 1.2f;
+        // (p2 -0.1 / -0.44 / -8 / 1.0 x 1.42 x 1.2: rising translucent sprays, but the tall inner fingers covered both sides of
+        // his body up to the arms -> p3 pushed 0.17 m outward per side, a little lower)
+        const float CrownV6Drop = -0.1f, CrownV6Back = -0.44f, CrownV6Lean = -8f, CrownV6ScaleX = 1.0f, CrownV6ScaleY = 1.3f, CrownV6ScaleZ = 1.2f;
+        const float CrownV6Out = 0.17f;
 
         static void BuildCrowns(GameObject fxRoot, RunnerController runner, bool save, Vector3 rootL, Vector3 rootR)
         {

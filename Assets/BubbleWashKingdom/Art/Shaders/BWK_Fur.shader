@@ -150,7 +150,7 @@ Shader "BWK/Fur"
                     // centre per square cell) still read as a quilted lattice of round bumps on the v5 metric UVs; here
                     // every tuft centre is fully jittered and the nearest one wins (3x3 search), so tuft sizes / shapes
                     // vary like real plush and the partings follow the irregular cell borders (f2 - f1).
-                    tuv += (float2(BWK_ValueNoise(tuv * 0.45 + 3.1), BWK_ValueNoise(tuv * 0.45 + 17.9)) - 0.5) * 0.7;
+                    tuv += (float2(BWK_ValueNoise(tuv * 0.45 + 3.1), BWK_ValueNoise(tuv * 0.45 + 17.9)) - 0.5) * (0.7 + 0.6 * _TuftDepth);
                     // tufts ~1.8x longer along v (v5 body UV: v runs up the body) = combed plush locks, not round bobbles
                     const float2 an = float2(1.0, 0.55);
                     float2 auv = tuv * an;
@@ -171,8 +171,7 @@ Shader "BWK/Fur"
                     tRnd = BWK_Hash21(tcell + 11.9);
                     // S2 p10f (_TuftDepth): each lock is lit on its lower (tip) half and shadowed on its upper half where
                     // the lock above overlaps it, and darkens toward the partings = shingled, deep plush instead of velvet
-                    float2 dT = (auv - tc) / an;
-                    tuftShade = 0.5 * saturate(0.5 + (tRnd - 0.5) * 0.4 - dT.y * 0.5) + 0.5 * saturate((f2 - f1) * 2.0);
+                    tuftShade = saturate((f2 - f1) * 2.2);
                     pull = _TuftAmount * h * (0.6 + 0.8 * tRnd);
                     tc.y -= h * 0.3;                                  // the lock's tips converge BELOW its centre (droop)
                     relSkin = (auv - tc) / an;
@@ -234,7 +233,9 @@ Shader "BWK/Fur"
                 col *= lerp(lerp(0.86, 0.74, _StrandContrast), lerp(1.06, 1.12, _StrandContrast), strand);
                 col *= lerp(1.0, lerp(lerp(0.92, 0.86, _StrandContrast), lerp(1.04, 1.07, _StrandContrast), tRnd),
                             saturate(_TuftAmount * 1.6));   // tufts vary a little in tone
-                col *= lerp(1.0, lerp(0.5, 1.18, tuftShade), _TuftDepth);
+                // partings between the locks fall into shade deep in the pile; the strand pattern frays the border
+                half ts = saturate(tuftShade + (strand - 0.5) * 0.6);
+                col *= lerp(1.0, lerp(0.55, 1.1, ts), _TuftDepth * (1.0 - 0.6 * h));
                 half3 light = BWK_WrapLight(i.positionWS, n, _Wrap);
                 half ao = lerp(1.0 - _AO, 1.0, h);
                 half rim = BWK_Fresnel(n, v, _RimPower) * _RimStrength * (0.4 + 0.6 * h);

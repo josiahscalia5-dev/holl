@@ -36,7 +36,7 @@ Material:
     - _Density: 240
     - _EdgeSoft: 0.16
     - _FurLength: 0.078
-    - _Glow: 0.16
+    - _Glow: 0.18
     - _Gravity: 0.035
     - _LenNoise: 0.6
     - _LenNoiseScale: 0.5
@@ -50,17 +50,17 @@ Material:
     - _StrandContrast: 0.45
     - _Thinning: 0.75
     - _TuftAmount: 0.55
-    - _TuftDepth: 0.42
-    - _TuftScale: 15
+    - _TuftDepth: 0.6
+    - _TuftScale: 18
     - _Underfur: 0.8
     - _UseVertexTint: 1
     - _Wrap: 0.6
     m_Colors:
-    - _BaseColor: {r: 1, g: 0.6509804, b: 0.47843137, a: 1}
+    - _BaseColor: {r: 1, g: 0.63529414, b: 0.44705883, a: 1}
     - _PawRootColor: {r: 1, g: 0.9411765, b: 0.8862745, a: 1}
     - _PawTipColor: {r: 1, g: 0.9764706, b: 0.93333334, a: 1}
     - _RimColor: {r: 1, g: 0.8392157, b: 0.8392157, a: 1}
-    - _RootColor: {r: 0.95686275, g: 0.41568628, b: 0.38431373, a: 1}
-    - _TipColor: {r: 1, g: 0.8784314, b: 0.76862746, a: 1}
+    - _RootColor: {r: 0.98039216, g: 0.41568628, b: 0.3529412, a: 1}
+    - _TipColor: {r: 1, g: 0.8862745, b: 0.7607843, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

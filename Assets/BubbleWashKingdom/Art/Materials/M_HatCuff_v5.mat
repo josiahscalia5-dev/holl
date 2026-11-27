@@ -34,8 +34,8 @@ Material:
     - _RimPower: 3
     - _RimStrength: 0.35
     - _Smoothness: 0.05
-    - _StitchU: 88
-    - _StitchV: 60
+    - _StitchU: 66
+    - _StitchV: 52
     - _StripeWidth: 0
     - _Stripes: 4
     - _VioletLift: 1

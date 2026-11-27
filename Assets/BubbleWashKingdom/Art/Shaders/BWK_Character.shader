@@ -154,7 +154,7 @@ Shader "BWK/Character"
                         albedo *= lerp(0.5, 1.1, h0) * lerp(0.92, 1.05, ply) * lerp(0.6, 1.08, facing * facing);
                         occlusion = lerp(0.45, 1.0, h0);
                         half sheen = pow(1.0 - saturate(dot(n, v)), 3.0) * 0.45 + 0.06;
-                        emission = albedo * _Glow + lerp(albedo, half3(1, 1, 1), 0.25) * (sheen * h0 * 0.35);
+                        emission = albedo * (_Glow + sheen * h0 * 0.35);   // prev2: a white sheen greyed the crown (G 81 vs ref 54)
                         half rimK = BWK_Fresnel(n, v, _RimPower) * _RimStrength;
                         return BWK_PBR(i.positionWS, i.positionCS, n, v, albedo, metallic, smooth, occlusion, emission + albedo * rimK, 1.0, i.fog);
                     }

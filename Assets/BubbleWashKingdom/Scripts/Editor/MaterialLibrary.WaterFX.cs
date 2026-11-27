@@ -83,6 +83,9 @@ namespace BubbleWash.EditorTools
                 // #4388B1 grey-blue vs ref #3B8CD0): fewer / wavier / more broken lines, softer crest highlights, red absorption
                 F(m, "_FlowLines", 0.42f); F(m, "_FlowLineDensity", 1.5f); F(m, "_GlossLines", 0.4f); F(m, "_Absorb", 0.7f);
                 F(m, "_FresnelBoost", 0.35f); F(m, "_DepthContrast", 0.7f);
+                // p3 (p2 water crop p50 ours #76BFD7 vs ref #73A8D5, near-left #92DBEB vs #7FA0CA = too green / pale cyan):
+                // bluer crests + turquoise patches, a little less light through the crests
+                C(m, "_CrestColor", "#38AEEA"); C(m, "_TurquoiseColor", "#3EB0E2"); F(m, "_Translucency", 0.25f);
                 // light halos around the decor chevrons: same period / geometry / runway offset as SceneBuilder.BuildDecorChevrons
                 F(m, "_ChevronStart", SceneBuilder.ChevronStart); F(m, "_ChevronSpacing", SceneBuilder.ChevronSpacing);
                 // (v2 notch measured #55B8E5 vs reference deep #3386CC: the arrows now bloom on their own -> fainter, tighter pool)

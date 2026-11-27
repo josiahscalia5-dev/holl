@@ -28,7 +28,7 @@ Material:
     - _ArrowEdge: 0
     - _ArrowFillAlpha: 1
     - _BumpScale: 7
-    - _BumpStrength: 0.75
+    - _BumpStrength: 0.9
     - _DstBlend: 10
     - _FormShade: 0
     - _GlintAmount: 0.5
@@ -37,8 +37,8 @@ Material:
     - _HotFar: 3.5
     - _HotNear: 3
     - _Metallic: 0
-    - _MilkAlpha: 0.88
-    - _MilkEdgeAlpha: 0.3
+    - _MilkAlpha: 0.78
+    - _MilkEdgeAlpha: 0.22
     - _MilkGlass: 0
     - _MilkSoft: 1
     - _MilkWet: 1
