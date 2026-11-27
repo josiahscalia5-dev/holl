@@ -92,6 +92,18 @@ namespace BubbleWash.EditorTools
                 F(m, "_DeepAmount", 1f); F(m, "_DeepStart", 68f); F(m, "_DeepEnd", 92f);
                 m.SetColor("_DeepTint", new Color(0.66f, 0.67f, 0.82f)); F(m, "_DeepHole", 0.45f); F(m, "_DeepEmit", 0.6f);   // sRGB -> linear x(.39, .41, .64): luminance x.42, bluer
                 m.SetColor("_DeepEdgeGlow", new Color(0.30f, 0.40f, 0.70f));   // v4: v3 (.45, .6, 1) drew bright blue ring lines (finale portal, 07)
+                // Screen S2 pass 7 (owner 06:58 s6 + judge gap #10 "paler lilac with small dots, speaker grille"): the S2 door
+                // drum (40 m) fading out by 112 m (S3+ unchanged). R2 wall patches, Lab ours vs reference f_03.00s: (44.0, 20.6,
+                // -25.2) vs (49.0, 37.0, -42.4), (47.4, 26.4, -26.9) vs (47.7, 21.4, -39.0), ceiling (45.5, 22.1, -29.5) vs
+                // (43.1, 19.2, -43.8); L p10-p90 spread 13 vs 24-28 -> keep the light's blue-violet (desat .5 -> .12), polished
+                // metal (smoothness .66 -> .82: probe reflections of the rings / rims), near-black recesses, and bigger, sparser
+                // oval columns in the door drum with finer slots deeper inside (reference: 2-3 columns of big dark ovals
+                // right inside the hatch, thin slot rings in the far sections)
+                F(m, "_DoorAmount", 1f); F(m, "_DoorFadeStart", 78f); F(m, "_DoorFadeEnd", 112f);
+                F(m, "_DoorDesat", 0.12f); m.SetColor("_DoorTint", new Color(0.86f, 0.88f, 1.0f)); F(m, "_DoorHole", 0.42f);
+                F(m, "_DoorSmooth", 0.82f);
+                F(m, "_DoorSlotNear", 1.15f); F(m, "_DoorSlotFar", 0.72f); F(m, "_DoorSlotStart", 54f); F(m, "_DoorSlotEnd", 70f);
+                F(m, "_DoorRowSpread", 1.45f);
             });
             // polished lavender drum lips between the gold rings (SM_DrumRim, m1: fat rolled lip): the stylised BWK/Gold
             // environment shading with a lavender palette - violet body, magenta-pink fresnel edge, soft pink-lavender

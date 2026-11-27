@@ -101,6 +101,19 @@ Shader "BWK/DrumWall"
         _DeepHole ("Deep grade hole brightness", Range(0, 1)) = 1
         _DeepEmit ("Deep grade emission (spill / sheen) multiplier", Range(0, 1)) = 1
         _DeepEdgeGlow ("Deep grade glowing panel edge light", Color) = (0, 0, 0, 1)
+        [Header(Screen S2 pass 7 door drum grade 40 to 110 m)]
+        _DoorAmount ("Door-drum grade amount (0 = off)", Range(0, 1)) = 0
+        _DoorFadeStart ("Door grade fades out from (m along)", Float) = 75
+        _DoorFadeEnd ("Door grade gone at (m along)", Float) = 112
+        _DoorDesat ("Door grade lit desaturation (replaces _LitDesat)", Range(0, 1)) = 0.5
+        _DoorTint ("Door grade multiplier on the lit metal", Color) = (1, 1, 1, 1)
+        _DoorHole ("Door grade hole brightness", Range(0, 1)) = 1
+        _DoorSmooth ("Door grade smoothness (metal)", Range(0, 1)) = 0.66
+        _DoorSlotNear ("Door grade slot size / pitch scale near the door", Float) = 1
+        _DoorSlotFar ("Door grade slot size / pitch scale deeper inside", Float) = 1
+        _DoorSlotStart ("Near -> far slot scale from (m along)", Float) = 52
+        _DoorSlotEnd ("Near -> far slot scale until (m along)", Float) = 72
+        _DoorRowSpread ("Door grade extra column spacing along (near)", Float) = 1
     }
     SubShader
     {
@@ -135,7 +148,17 @@ Shader "BWK/DrumWall"
             half _DeepAmount, _DeepHole, _DeepEmit;
             float _DeepStart, _DeepEnd;
             half4 _DeepTint, _DeepEdgeGlow;
+            half _DoorAmount, _DoorDesat, _DoorHole, _DoorSmooth;
+            float _DoorFadeStart, _DoorFadeEnd, _DoorSlotNear, _DoorSlotFar, _DoorSlotStart, _DoorSlotEnd, _DoorRowSpread;
+            half4 _DoorTint;
         CBUFFER_END
+
+        // Screen S2 pass 7: weight of the S2 door-drum grade at a distance along the tunnel (1 at the door, 0 beyond
+        // _DoorFadeEnd; 0 everywhere while _DoorAmount = 0 or on the plain grid pattern)
+        float BWK_DoorW(float along)
+        {
+            return _DoorAmount * (1.0 - smoothstep(_DoorFadeStart, _DoorFadeEnd, along)) * step(0.5, _Pattern);
+        }
 
         // Round 3: sections between gold rings (_BandLength = gold spacing) split by one lavender rim at _RimPhase
         // (reference f_003.00s: gold ring, broad bay, one big lavender rim, broad bay, next gold ring).
@@ -174,6 +197,15 @@ Shader "BWK/DrumWall"
             float lenA = lerp(_SlotLength, _SideSlotLength, side);
             float widA = lerp(_SlotWidth, _SideSlotWidth, side);
             float rowP = lerp(_RowPitch, _SideRowPitch, side);
+            // Screen S2 pass 7 (owner 06:58 s6: larger nearby ovals, finer distant slots): one scale per drum SECTION (taken at
+            // the section centre, so the row count never changes inside a section) - bigger, sparser ovals in the door drum,
+            // finer slots deeper in, unchanged beyond the door grade (S3-S6 keep their pattern)
+            float secMid = m.y - local + L * 0.5;
+            float dw = BWK_DoorW(secMid);
+            float nearW = 1.0 - smoothstep(_DoorSlotStart, _DoorSlotEnd, secMid);
+            float ks = lerp(1.0, lerp(_DoorSlotFar, _DoorSlotNear, nearW), dw);
+            pitchA *= ks; lenA *= ks; widA *= ks;
+            rowP *= ks * lerp(1.0, _DoorRowSpread, dw * nearW);
             float z0 = _PlainBack;
             float zoneLen = max(L - _PlainFront - z0, 0.2);
             float rows = rowP > 0.05 ? max(1.0, floor(zoneLen / rowP + 0.5)) : max(1.0, _Rows);
@@ -392,7 +424,8 @@ Shader "BWK/DrumWall"
                 holeCol = lerp(holeCol, lerp(bottomCol, wallCol, wallHit), useDepth);
                 half3 albedo = lerp(metal, holeCol, hole);
                 half metallic = lerp(_Metallic, 0.0, hole);
-                half smooth = lerp(_Smoothness, 0.25, hole);
+                half doorW = (half)BWK_DoorW(m.y);                                 // S2 pass 7 door-drum grade weight
+                half smooth = lerp(lerp(_Smoothness, _DoorSmooth, doorW), 0.25, hole);
 
                 half fres = BWK_Fresnel(n, viewDir, 3.0);
                 half3 emission = metal * _Glow * (1.0 - hole)
@@ -433,8 +466,12 @@ Shader "BWK/DrumWall"
                 // back-lit holes keep their colour) toward a value-preserving grey-lavender (max channel x _LitTint), push
                 // the recesses toward black, then add the emission and mix the fog as before
                 half vmax = max(lit.r, max(lit.g, lit.b));
-                lit.rgb = lerp(lit.rgb, vmax * _LitTint.rgb, _LitDesat);
+                lit.rgb = lerp(lit.rgb, vmax * _LitTint.rgb, lerp(_LitDesat, _DoorDesat, doorW));
                 lit.rgb *= lerp(1.0, _HoleDarken, hole);
+                // Screen S2 pass 7 (owner 06:58 s6 / judge gap #10, R2 wall patches Lab ours (44-47, 21-26, -25..-30) vs
+                // reference (43-49, 19-37, -39..-44), L p10-p90 spread 13 vs 24-28): the door drum keeps the light's blue-violet
+                // saturation (less grey-lavender grade), deeper recesses and a polished metal (probe reflections) = contrast
+                lit.rgb *= lerp(half3(1, 1, 1), _DoorTint.rgb * lerp(1.0, _DoorHole, hole), doorW);
                 // Screen ALL pass 5 (judge gap #5): S3-S6 walls read as flat light lilac plates; the video's deep tunnel is
                 // darker slate blue-violet metal with black oval recesses and glowing panel edges. Graded by the distance
                 // along the tunnel (m.y) so the S2 door drum (40-62 m) keeps its look.

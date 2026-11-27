@@ -637,18 +637,25 @@ namespace BubbleWash.EditorTools
                 var e = ps.emission; e.rateOverTime = 120f;
                 var r = ps.GetComponent<ParticleSystemRenderer>(); r.renderMode = ParticleSystemRenderMode.Stretch; r.velocityScale = 0.06f; r.lengthScale = 2f;
             });
+            // S2 pass 7 (owner s18 + recording 26480 at 7-16 s: gold collect sparkles covered his hat / fur for long stretches):
+            // smaller (0.15-0.4 -> 0.05-0.14 m), fewer (SplashFX coinBurst 14 -> 6, gem 22 -> 9), shorter (<= 0.3 s), slower
+            // (travel <= 0.25 m) and restrained (alpha .7); SplashFX.PickupBurstPoint spawns them 0.8 m beside him, low.
             fx.pickupSparkles = Particles(fxRoot, "PickupSparkles", "M_FX_Sparkle", Vector3.zero, Vector3.zero, ps =>
             {
-                var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.25f, 0.5f); m.startSpeed = new ParticleSystem.MinMaxCurve(1f, 3f);
-                m.startSize = new ParticleSystem.MinMaxCurve(0.15f, 0.4f); m.simulationSpace = ParticleSystemSimulationSpace.World; m.maxParticles = 200;
-                var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Sphere; sh.radius = 0.2f;
+                var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.14f, 0.28f); m.startSpeed = new ParticleSystem.MinMaxCurve(0.3f, 0.9f);
+                m.startSize = new ParticleSystem.MinMaxCurve(0.05f, 0.14f); m.simulationSpace = ParticleSystemSimulationSpace.World; m.maxParticles = 60;
+                m.startColor = new Color(1f, 1f, 1f, 0.7f);
+                var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Sphere; sh.radius = 0.1f;
+                var sz = ps.sizeOverLifetime; sz.enabled = true; sz.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.EaseInOut(0f, 1f, 1f, 0f));
                 var e = ps.emission; e.rateOverTime = 0f;
             });
             fx.gemSparkles = Particles(fxRoot, "GemSparkles", "M_FX_GemSparkle", Vector3.zero, Vector3.zero, ps =>
             {
-                var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.3f, 0.7f); m.startSpeed = new ParticleSystem.MinMaxCurve(1.5f, 3.5f);
-                m.startSize = new ParticleSystem.MinMaxCurve(0.2f, 0.5f); m.simulationSpace = ParticleSystemSimulationSpace.World; m.maxParticles = 200;
-                var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Sphere; sh.radius = 0.25f;
+                var m = ps.main; m.startLifetime = new ParticleSystem.MinMaxCurve(0.16f, 0.32f); m.startSpeed = new ParticleSystem.MinMaxCurve(0.4f, 1.0f);
+                m.startSize = new ParticleSystem.MinMaxCurve(0.06f, 0.16f); m.simulationSpace = ParticleSystemSimulationSpace.World; m.maxParticles = 60;
+                m.startColor = new Color(1f, 1f, 1f, 0.7f);
+                var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Sphere; sh.radius = 0.12f;
+                var sz = ps.sizeOverLifetime; sz.enabled = true; sz.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.EaseInOut(0f, 1f, 1f, 0f));
                 var e = ps.emission; e.rateOverTime = 0f;
             });
             // ambient soap bubbles drifting in front of the mascot (small sprites) ...
@@ -740,10 +747,18 @@ namespace BubbleWash.EditorTools
         // beside each sole (the rear frames f_01.25-3.25 s). The rear-traced crowns were flat sheets on the plane of the
         // soles: from the front cameras only their thin backs showed (clear "wings" beside the body). Revert = delete
         // SM_FX_CrownV3_* (the rear-traced pair takes over again).
+        // Screen S2 pass 7 (owner 2026-11-27 item 04 + s13 "the latest splashes still look like rigid clusters of white
+        // fingers"; 26480 sheets: rigid white comb): build_fx_crown_v4.py SM_FX_CrownV4_L/R = branching gravity-bent liquid
+        // strands fanning outward from a connected curved base at each foot, beads, tip beads and separate droplets (the
+        // reference's bigger right spray + low wake arm toward the camera; low forward V bow for the front cameras), same
+        // runner-local frame as V3. Revert = delete SM_FX_CrownV4_*.fbx (V3 takes over again).
         static bool BuildCrownsV2(GameObject fxRoot, RunnerController runner, bool save)
         {
-            var pl = ModelParts("FX", "SM_FX_CrownV3_L");
-            var pr = ModelParts("FX", "SM_FX_CrownV3_R");
+            var pl = ModelParts("FX", "SM_FX_CrownV4_L");
+            var pr = ModelParts("FX", "SM_FX_CrownV4_R");
+            if (pl.Count > 0 && pr.Count > 0 && Mat("M_FX_Milk_v3") != null) return BuildCrownsV3(fxRoot, runner, save, pl[0].mesh, pr[0].mesh);
+            pl = ModelParts("FX", "SM_FX_CrownV3_L");
+            pr = ModelParts("FX", "SM_FX_CrownV3_R");
             bool v3 = pl.Count > 0 && pr.Count > 0 && Mat("M_FX_Milk_v3") != null;
             if (v3) return BuildCrownsV3(fxRoot, runner, save, pl[0].mesh, pr[0].mesh);
             pl = ModelParts("FX", "SM_FX_CrownRear_L");
@@ -793,8 +808,8 @@ namespace BubbleWash.EditorTools
         static bool BuildCrownsV3(GameObject fxRoot, RunnerController runner, bool save, Mesh left, Mesh right)
         {
             var milk = Mat("M_FX_Milk_v3");
-            var framesL = CrownV2FrameMeshes(left, "SM_FX_CrownV3_L", save);
-            var framesR = CrownV2FrameMeshes(right, "SM_FX_CrownV3_R", save);
+            var framesL = CrownV2FrameMeshes(left, left.name.Contains("V4") ? "SM_FX_CrownV4_L" : "SM_FX_CrownV3_L", save);
+            var framesR = CrownV2FrameMeshes(right, right.name.Contains("V4") ? "SM_FX_CrownV4_R" : "SM_FX_CrownV3_R", save);
             var holder = Child(fxRoot, "Crowns");
             var sc = holder.AddComponent<SplashCrowns>();
             sc.runner = runner;
@@ -820,7 +835,7 @@ namespace BubbleWash.EditorTools
             sc.baseScale = new[] { Vector3.one, Vector3.one };
             sc.baseRotation = new[] { Quaternion.identity, Quaternion.identity };
             sc.phase = new[] { 0, CrownV2Frames / 2 };
-            Debug.Log($"[BWK] waterfx crowns V3 MASTER: SM_FX_CrownV3_L/R x{CrownV2Frames} frames ({left.triangles.Length / 3} + {right.triangles.Length / 3} tris), runner-local, M_FX_Milk_v3");
+            Debug.Log($"[BWK] waterfx crowns MASTER: {left.name} / {right.name} x{CrownV2Frames} frames ({left.triangles.Length / 3} + {right.triangles.Length / 3} tris), runner-local, M_FX_Milk_v3");
             return true;
         }
 

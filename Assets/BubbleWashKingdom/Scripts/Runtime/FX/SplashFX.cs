@@ -94,10 +94,29 @@ namespace BubbleWash
             if (speedStreaks) speedStreaks.Play();
         }
 
+        [Tooltip("Collect bursts spawn this far beside the mascot's centre line (m), low, on the item's side: owner s18 " +
+                 "\"reduce excessive collectible sparkle effects that obscure his fur, hat and body\".")]
+        public float pickupSideOffset = 0.8f;
+        public int coinBurst = 6, gemBurst = 9;
+        int pickupAlt;
+
         void OnPickup(TrackItem item)
         {
-            if (item.kind == TrackItemKind.Coin && pickupSparkles) Burst(pickupSparkles, item.transform.position, 14);
-            else if (item.kind == TrackItemKind.Gem && gemSparkles) Burst(gemSparkles, item.transform.position, 22);
+            var pos = PickupBurstPoint(item.transform.position);
+            if (item.kind == TrackItemKind.Coin && pickupSparkles) Burst(pickupSparkles, pos, coinBurst);
+            else if (item.kind == TrackItemKind.Gem && gemSparkles) Burst(gemSparkles, pos, gemBurst);
+        }
+
+        /// <summary>The item is collected where the mascot is, so a burst at the item covers his fur / hat (owner recording
+        /// 26480, 7-16 s): move it beside him (item's side; centre-lane items alternate), at water / paw height.</summary>
+        Vector3 PickupBurstPoint(Vector3 itemPos)
+        {
+            if (runner == null) return itemPos;
+            var rt = runner.transform;
+            var local = rt.InverseTransformPoint(itemPos);
+            float side = Mathf.Abs(local.x) > 0.2f ? Mathf.Sign(local.x) : ((pickupAlt++ & 1) == 0 ? -1f : 1f);
+            float x = side * Mathf.Max(Mathf.Abs(local.x), pickupSideOffset);
+            return rt.TransformPoint(new Vector3(x, 0.28f, Mathf.Clamp(local.z, 0.1f, 0.6f)));
         }
 
         static void Burst(ParticleSystem ps, Vector3 position, int count)
