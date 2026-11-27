@@ -1,4 +1,10 @@
-"""Bubble Wash Kingdom - milk splash crowns v6 from a TRELLIS.2 image-to-3D result (lead 5190fd9a, 2026-11-27).
+"""Bubble Wash Kingdom - TRELLIS.2 splash-crown TEST (lead 5190fd9a, 2026-11-27) - RESULT: REJECTED, never export.
+
+VERDICT 14:02: TRELLIS.2 reconstructed the stylized single-view splash (crop 18 right crown) as a FLAT plate 1.0 x 1.0 x 0.04
+lying on the ground (no depth inferred); from the rear gameplay camera it is an invisible sliver on the water
+(Captures/trellis/splash_right/TRELLIS_flat_vs_V5_rear.png: V5 left, TRELLIS right). The real V6 crowns come from
+build_fx_crown_v6.py (the same outline inflated into a 3D sheet). This script is kept only as the record of the test
+(run it with BWK_FX_QUICK=1; without it, it would overwrite the V6 FBX files with the flat plate).
 
 Owner 13:40 (new account): "use specialized 3D generation technology ... test the most promising alternative on ONE important
 asset" + known problem "water splashes resemble white noodles rather than realistic milky water".
@@ -31,7 +37,7 @@ ROOT = "C:/Users/josia/thanksgiving"
 GLB = os.environ.get("BWK_GLB", ROOT + "/Captures/trellis/splash_right/out_s0/model.glb")
 OUT_DIR = ROOT + "/Assets/BubbleWashKingdom/Art/Projected/FX"
 PV_DIR = os.environ.get("BWK_PV", ROOT + "/Captures/trellis/splash_right")
-QUICK = os.environ.get("BWK_FX_QUICK", "") == "1"
+QUICK = True   # rejected test (flat plate): previews only, never export over the real V6 crowns
 MAX_TRIS = int(os.environ.get("BWK_TRIS", "9000"))
 X0, X1 = float(os.environ.get("BWK_X0", "0.16")), float(os.environ.get("BWK_X1", "1.00"))
 ZC = float(os.environ.get("BWK_ZC", "0.06"))

@@ -406,9 +406,18 @@ namespace BubbleWash.EditorTools
             // sees is now a fluffy bristle hemisphere instead of the open annulus; scale 1.6 -> 1.5 (the drum is fatter)
             const bool S2DrumRollerP10 = true;
             bool drumV2 = S2DrumRollerP10 && ModelPrefab("Machinery", "SM_RollerDrum_s2") != null;
-            float drumScale = drumV2 ? 1.5f : 1.6f;
+            // pass 10 resume (owner 13:50 "change the method"; v3 preview: every strand-mesh drum - p9 spikes, p10 v2 thin
+            // clumps, v3 thick blunt locks - read as coarse paper ribbons with the violet wall between them, corner pink
+            // 21 % vs ref 72): door roller body = SM_RollerFur_s2 (build_s2_rollerfur_p10.py: CLOSED shell-fur capsule with
+            // domed fur ends, own BWK/Fur variant M_RollerFur_s2 = the technique of the soft S1 hall rollers; 27.5k tris);
+            // the strand drum / s2 body stay the fallbacks
+            const bool S2FurRollerP10 = true;
+            bool furDrum = S2FurRollerP10 && ModelPrefab("Machinery", "SM_RollerFur_s2") != null;
+            float drumScale = furDrum ? 1.6f : drumV2 ? 1.5f : 1.6f;
+            string doorBody = furDrum ? "SM_RollerFur_s2"
+                : (S2DrumRollerP9 || drumV2) && ModelPrefab("Machinery", "SM_RollerDrum_s2") != null ? "SM_RollerDrum_s2" : "SM_BrushRoller_s2";
             HallRoller(holder, HallRollerClear(HallScreenPoint(r2, -0.08f, -0.12f, 6.3f), dRot, drumScale, 2.6f, "door/S2", 4.0f), dRot, drumScale, -36f,
-                       (S2DrumRollerP9 || drumV2) && ModelPrefab("Machinery", "SM_RollerDrum_s2") != null ? "SM_RollerDrum_s2" : "SM_BrushRoller_s2");
+                       doorBody);
             // blue machine housing + gold pipe (SM_DoorMachine_s2, build_door_machinery_s2.py): front parallel to the door
             // wall, flange end (asset -X) at the rim; centre at R2 (u .06, v .32), 7 m deep = in front of the wall (40.35 m)
             // (v1 u .03 / v .29: pipe at y ~190 and flange at x ~165; reference pipe y 195-235 reaching the rim at x ~245)

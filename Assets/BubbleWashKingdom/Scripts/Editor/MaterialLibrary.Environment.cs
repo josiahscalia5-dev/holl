@@ -173,6 +173,11 @@ namespace BubbleWash.EditorTools
                 m.SetColor("_MirrorGold", new Color(0.55f, 0.30f, 0.10f)); m.SetColor("_MirrorRim", new Color(0.60f, 0.18f, 0.55f));
                 F(m, "_MirrorRingWidth", 0.30f); F(m, "_MirrorF0", 0.40f);
                 m.SetColor("_DoorSheenColor", new Color(0.09f, 0.06f, 0.20f));
+                // v5: v4 fixed the ceiling (portrait L 148 -> 108, chroma 50 -> 65; ref 98 / 96) but the near side walls beside
+                // the gold ring stay pale (lit lum ~1, L 157) -> body capped just above the blue-violet stop (gloss = the
+                // reflections only); deeper drum darker indigo (x .65 -> .5). v3/v4 far slots (.5) faded out below a pixel
+                // (no slot rows visible deeper in) -> .85: the rows shrink by perspective, as in the reference
+                F(m, "_DoorRampCap", 0.62f); F(m, "_DoorRampFar", 0.5f); F(m, "_DoorSlotFar", 0.85f);
             });
             // polished lavender drum lips between the gold rings (SM_DrumRim, m1: fat rolled lip): the stylised BWK/Gold
             // environment shading with a lavender palette - violet body, magenta-pink fresnel edge, soft pink-lavender

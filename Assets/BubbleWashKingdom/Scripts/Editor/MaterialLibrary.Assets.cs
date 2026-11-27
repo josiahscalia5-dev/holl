@@ -177,6 +177,22 @@ namespace BubbleWash.EditorTools
                 F(m, "_Glow", 0.6f);
             }, (int)RenderQueue.AlphaTest);
 
+            // pass 10 resume: S2 door roller SM_RollerFur_s2 (build_s2_rollerfur_p10.py, closed shell-fur capsule, pink-dominant
+            // LINEAR vertex bands) = own variant of the proven hall-roller look above: same cream ramp against the blue hall
+            // light + colour-true glow, LONGER shaggier fur (crop 02 = long soft strands, ~.4 m at the door), finer strands,
+            // paler tip sheen (the reference's white tips)
+            Mat("M_RollerFur_s2", "BWK/Fur", m =>
+            {
+                C(m, "_RootColor", "#D8C8A8"); C(m, "_BaseColor", "#FFF6C6"); C(m, "_TipColor", "#FFFFE6");
+                F(m, "_UseVertexTint", 1f); F(m, "_StaticMode", 0f);
+                F(m, "_Density", 34f); F(m, "_FurLength", 0.42f); F(m, "_Gravity", 0f); F(m, "_Thinning", 0.45f);
+                F(m, "_ClumpAmount", 0.65f); F(m, "_ClumpScale", 4f); F(m, "_AO", 0.4f); F(m, "_Curl", 0.5f);
+                F(m, "_Underfur", 1.0f); F(m, "_EdgeSoft", 0.26f); F(m, "_SilhouetteFade", 0.12f);
+                F(m, "_TuftScale", 7f); F(m, "_TuftAmount", 0.7f);
+                F(m, "_Wrap", 0.65f); C(m, "_RimColor", "#FFF0F6"); F(m, "_RimPower", 2.2f); F(m, "_RimStrength", 0.35f);
+                F(m, "_Glow", 0.6f);
+            }, (int)RenderQueue.AlphaTest);
+
             // ---------------------------------------------------------------- 01 pink laundry console (r8 v2)
             // v1 still: the console body rendered deep violet #5A28B0 (ref f_00.50s console crop pink 25.6 % #CF64A1, ours
             // 0.9 %): M_HallPink_r7's emission keyword is not saved (m_ValidKeywords empty), so URP Lit pink x the blue hall

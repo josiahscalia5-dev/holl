@@ -156,6 +156,7 @@ Shader "BWK/DrumWall"
         _DoorRampFar ("Door ramp: multiplier on x for the deeper drum", Range(0, 1)) = 1
         _DoorRampNear ("Door ramp: deeper from camera distance (m)", Float) = 12
         _DoorRampFarDist ("Door ramp: deepest at camera distance (m)", Float) = 40
+        _DoorRampCap ("Door ramp: max x (body never brighter than this; gloss comes from the reflections)", Range(0, 1)) = 1
     }
     SubShader
     {
@@ -202,7 +203,7 @@ Shader "BWK/DrumWall"
             float _DoorDeepNear, _DoorDeepFar;
             half _DoorRampAmount, _DoorRampFar;
             half4 _DoorRampDark, _DoorRampMid, _DoorRampHigh;
-            float _DoorRampScale, _DoorRampNear, _DoorRampFarDist;
+            float _DoorRampScale, _DoorRampNear, _DoorRampFarDist, _DoorRampCap;
         CBUFFER_END
 
         // Screen S2 pass 7: weight of the S2 door-drum grade at a distance along the tunnel (1 at the door, 0 beyond
@@ -543,7 +544,7 @@ Shader "BWK/DrumWall"
                 {
                     half lumL = dot(lit.rgb, half3(0.2126, 0.7152, 0.0722));
                     half deepK = lerp(1.0, _DoorRampFar, smoothstep(_DoorRampNear, _DoorRampFarDist, camDist));
-                    half x = (1.0 - exp(-lumL * _DoorRampScale)) * deepK;
+                    half x = min((1.0 - exp(-lumL * _DoorRampScale)) * deepK, _DoorRampCap);   // v5: cap
                     half3 rampC = x < 0.5 ? lerp(_DoorRampDark.rgb, _DoorRampMid.rgb, x * 2.0)
                                           : lerp(_DoorRampMid.rgb, _DoorRampHigh.rgb, x * 2.0 - 1.0);
                     lit.rgb = lerp(lit.rgb, rampC, _DoorRampAmount * doorW * (1.0 - hole));

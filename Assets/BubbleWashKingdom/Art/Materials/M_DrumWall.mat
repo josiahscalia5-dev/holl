@@ -52,17 +52,18 @@ Material:
     - _DoorHole: 0.14
     - _DoorPanelCurve: 0.22
     - _DoorRampAmount: 1
-    - _DoorRampFar: 0.72
+    - _DoorRampCap: 0.62
+    - _DoorRampFar: 0.5
     - _DoorRampFarDist: 40
     - _DoorRampNear: 12
-    - _DoorRampScale: 3.5
+    - _DoorRampScale: 1.5
     - _DoorRibPitch: 0.85
     - _DoorRibTilt: 0.3
     - _DoorRowSpread: 1
     - _DoorSheenPower: 28
     - _DoorSlotAspect: 1.3
     - _DoorSlotEnd: 60
-    - _DoorSlotFar: 0.5
+    - _DoorSlotFar: 0.85
     - _DoorSlotNear: 1.25
     - _DoorSlotStart: 48
     - _DoorSmooth: 0.82
@@ -89,10 +90,10 @@ Material:
     - _Metallic: 0.64
     - _MirrorCoreEnd: 80
     - _MirrorCoreStart: 25
-    - _MirrorF0: 0.45
+    - _MirrorF0: 0.4
     - _MirrorRingA: 50.5
     - _MirrorRingB: 61.7
-    - _MirrorRingWidth: 0.45
+    - _MirrorRingWidth: 0.3
     - _PanelCurve: 0.25
     - _PanelLength: 3
     - _Pattern: 1
@@ -129,10 +130,10 @@ Material:
     - _DeepTint: {r: 0.66, g: 0.67, b: 0.82, a: 1}
     - _DepthTintColor: {r: 0.30588236, g: 0.3529412, b: 0.54901963, a: 1}
     - _DoorDeepTint: {r: 0.62, g: 0.66, b: 0.92, a: 1}
-    - _DoorRampDark: {r: 0.13, g: 0.1, b: 0.36, a: 1}
-    - _DoorRampHigh: {r: 0.88, g: 0.7, b: 1, a: 1}
-    - _DoorRampMid: {r: 0.46, g: 0.34, b: 0.8, a: 1}
-    - _DoorSheenColor: {r: 0.16, g: 0.13, b: 0.26, a: 1}
+    - _DoorRampDark: {r: 0.15, g: 0.11, b: 0.4, a: 1}
+    - _DoorRampHigh: {r: 0.82, g: 0.62, b: 1, a: 1}
+    - _DoorRampMid: {r: 0.48, g: 0.36, b: 0.84, a: 1}
+    - _DoorSheenColor: {r: 0.09, g: 0.06, b: 0.2, a: 1}
     - _DoorTint: {r: 1.02, g: 1, b: 1.16, a: 1}
     - _DoorWarmColor: {r: 0.22, g: 0.12, b: 0.03, a: 1}
     - _FarGlowColor: {r: 0.05, g: 0.05, b: 0.12, a: 1}
@@ -145,8 +146,8 @@ Material:
     - _LitTint: {r: 0.91, g: 0.745, b: 1, a: 1}
     - _MirrorCore: {r: 0.16, g: 0.09, b: 0.42, a: 1}
     - _MirrorFloor: {r: 0.05, g: 0.05, b: 0.2, a: 1}
-    - _MirrorGold: {r: 1, g: 0.62, b: 0.3, a: 1}
-    - _MirrorRim: {r: 1, g: 0.42, b: 0.88, a: 1}
+    - _MirrorGold: {r: 0.55, g: 0.3, b: 0.1, a: 1}
+    - _MirrorRim: {r: 0.6, g: 0.18, b: 0.55, a: 1}
     - _MirrorWall: {r: 0.04, g: 0.035, b: 0.15, a: 1}
     - _PinkSpill: {r: 1, g: 0.43137255, b: 0.8235294, a: 1}
     - _SeamColor: {r: 0.1254902, g: 0.078431375, b: 0.2901961, a: 1}

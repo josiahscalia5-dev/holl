@@ -815,11 +815,13 @@ namespace BubbleWash.EditorTools
             // popcorn fan): build_fx_crown_v5.py SM_FX_CrownV5_L/R = smooth tapering milk fingers with bulb tips fanning
             // outward from a connected band, tall risers, low skimming arms, few varied droplets; same runner-local frame.
             // Revert = delete SM_FX_CrownV5_*.fbx (V4 takes over again).
-            // Lead 5190fd9a 2026-11-27 (owner 13:40: "use specialized 3D generation ... on ONE important asset"; known problem
-            // "splashes resemble white noodles"): build_fx_crown_v6_trellis.py SM_FX_CrownV6_L/R = a TRELLIS.2 (MIT, free hosted)
-            // image-to-3D mesh of ONE isolated crown from library crop 18, cleaned / decimated / fitted into the same runner-local
-            // box beside the foot, mirrored for the left. Reference-derived -> PRIVATE Art/Projected/FX/ (gitignored); used only
-            // when present. Revert = delete Art/Projected/FX/SM_FX_CrownV6_*.fbx (V5 takes over again).
+            // Lead 5190fd9a 2026-11-27 (owner 13:40 known problem "splashes resemble white noodles"): build_fx_crown_v6.py
+            // SM_FX_CrownV6_L/R = the approved crown's exact OUTLINE (one isolated crown, library crop 18) inflated into a closed
+            // 3D milk sheet (thickness ~ sqrt(distance to the outline): soft rounded body, round finger tubes with bulb tips),
+            // standing beside the foot facing the rear rig, bent toward the camera at its outer end; same runner-local box as V5,
+            // mirrored for the left. (The TRELLIS.2 image-to-3D test of the same crown gave a flat 4 % plate - rejected.)
+            // Reference-derived -> PRIVATE Art/Projected/FX/ (gitignored); used only when present.
+            // Revert = delete Art/Projected/FX/SM_FX_CrownV6_*.fbx (V5 takes over again).
             var p6l = ProjectedModelParts("FX", "SM_FX_CrownV6_L");
             var p6r = ProjectedModelParts("FX", "SM_FX_CrownV6_R");
             if (p6l.Count > 0 && p6r.Count > 0 && Mat("M_FX_Milk_v3") != null) return BuildCrownsV3(fxRoot, runner, save, p6l[0].mesh, p6r[0].mesh);

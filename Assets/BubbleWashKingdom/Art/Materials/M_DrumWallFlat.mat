@@ -52,6 +52,7 @@ Material:
     - _DoorHole: 1
     - _DoorPanelCurve: 0.25
     - _DoorRampAmount: 0
+    - _DoorRampCap: 1
     - _DoorRampFar: 1
     - _DoorRampFarDist: 40
     - _DoorRampNear: 12
