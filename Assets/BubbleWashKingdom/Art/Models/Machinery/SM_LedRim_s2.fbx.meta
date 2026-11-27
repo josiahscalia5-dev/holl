@@ -3,11 +3,21 @@ guid: 34593512e40347443ba2a9c1b2cdc067
 ModelImporter:
   serializedVersion: 24300
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_HatchViolet_s2
+    second: {fileID: 2100000, guid: fbe0355f8430b3b4f8718a3cb25b7e36, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_RimLight
+    second: {fileID: 2100000, guid: b95ca930e0172554489000f09990991d, type: 2}
   materials:
     materialImportMode: 2
-    materialName: 0
-    materialSearch: 1
+    materialName: 1
+    materialSearch: 2
     materialLocation: 1
     searchTexturesGlobally: 0
   animations:

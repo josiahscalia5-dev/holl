@@ -3,11 +3,31 @@ guid: ebdeea82f89d12c4d97e0dfdf8fbf3bb
 ModelImporter:
   serializedVersion: 24300
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_BristleCyan_s2
+    second: {fileID: 2100000, guid: ca9bc171a685d5b46a671274a3fffd7e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_BristlePinkTip_s2
+    second: {fileID: 2100000, guid: 6be5f1c7df3df4541902317e9fa95dfd, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_BristlePink_s2
+    second: {fileID: 2100000, guid: ca7c12f7154fe2d44b853e379103c8db, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_BristleWhite_s2
+    second: {fileID: 2100000, guid: 1da7710af69cfcd4281f3c5b0d91532f, type: 2}
   materials:
     materialImportMode: 2
-    materialName: 0
-    materialSearch: 1
+    materialName: 1
+    materialSearch: 2
     materialLocation: 1
     searchTexturesGlobally: 0
   animations:
