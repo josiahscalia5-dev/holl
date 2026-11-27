@@ -163,6 +163,16 @@ namespace BubbleWash.EditorTools
                 // spread (1.45 -> 1.0), fewer dropped dashes, blacker recesses
                 F(m, "_DoorSlotFar", 0.5f); F(m, "_DoorSlotStart", 48f); F(m, "_DoorSlotEnd", 60f); F(m, "_DoorRowSpread", 1.0f);
                 F(m, "_SlotDropout", 0.05f); F(m, "_DoorHole", 0.14f);
+                // v4: v3 (scale 3.5) put the brightly lit near metal (lit lum ~.5) on the pale HIGH stop (portrait ceiling
+                // ~180/155/205, L 133) and the deep walls stayed pale from the mirror's gold / pink ring reflections spreading
+                // wide on grazing walls (concentric pale streaks) -> lum .5 = blue-violet body, rings ~45 %, sheen ~55 %
+                F(m, "_DoorRampScale", 1.5f); F(m, "_DoorRampFar", 0.65f);
+                m.SetColor("_DoorRampDark", new Color(0.15f, 0.11f, 0.40f));
+                m.SetColor("_DoorRampMid", new Color(0.48f, 0.36f, 0.84f));
+                m.SetColor("_DoorRampHigh", new Color(0.82f, 0.62f, 1.0f));
+                m.SetColor("_MirrorGold", new Color(0.55f, 0.30f, 0.10f)); m.SetColor("_MirrorRim", new Color(0.60f, 0.18f, 0.55f));
+                F(m, "_MirrorRingWidth", 0.30f); F(m, "_MirrorF0", 0.40f);
+                m.SetColor("_DoorSheenColor", new Color(0.09f, 0.06f, 0.20f));
             });
             // polished lavender drum lips between the gold rings (SM_DrumRim, m1: fat rolled lip): the stylised BWK/Gold
             // environment shading with a lavender palette - violet body, magenta-pink fresnel edge, soft pink-lavender

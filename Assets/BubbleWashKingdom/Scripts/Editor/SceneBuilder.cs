@@ -421,12 +421,20 @@ namespace BubbleWash.EditorTools
 
         static readonly Dictionary<string, List<Part>> partCache = new Dictionary<string, List<Part>>();
 
-        static List<Part> ModelParts(string group, string name)
+        static List<Part> ModelParts(string group, string name) => ModelPartsAt(ModelsDir, group, name);
+
+        // Lead 5190fd9a 2026-11-27: reference-derived models (e.g. the TRELLIS.2 splash crowns) live in the PRIVATE, gitignored
+        // Art/Projected/<group>/ folder (owner rule 2026-11-26 14:15). Empty list when the file is absent (public clones), so
+        // every caller keeps its normal fallback.
+        const string ProjectedModelsDir = "Assets/BubbleWashKingdom/Art/Projected";
+        static List<Part> ProjectedModelParts(string group, string name) => ModelPartsAt(ProjectedModelsDir, group, name);
+
+        static List<Part> ModelPartsAt(string dir, string group, string name)
         {
-            string key = group + "/" + name;
+            string key = dir + "/" + group + "/" + name;
             if (partCache.TryGetValue(key, out var cached)) return cached;
             var list = new List<Part>();
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{ModelsDir}/{group}/{name}.fbx");
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{dir}/{group}/{name}.fbx");
             if (prefab != null)
             {
                 foreach (var mf in prefab.GetComponentsInChildren<MeshFilter>(true))

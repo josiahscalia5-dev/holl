@@ -96,9 +96,11 @@ namespace BubbleWash.EditorTools
             // v3 albedo ~55 % of the colour, glow ~ the colour (pink / light tip / white / cyan of the reference roller)
             // pass 10 v2: drum v2 preview v1 rendered pale LILAC (corner mean 172/126/182 vs ref hot pink 162/84/136) -> warmer,
             // deeper pink root + pink (not white) tips, weaker pale rim
-            Bristle("M_BristlePink_s2", "#A8185A", "#E62878");
+            // pass 10 v3 (lead_s2p10 R2: the drum read hot MAGENTA-violet spikes, the blue hall light adds blue; crop 02 =
+            // candy pink locks with pale pink-white tips) -> warmer, lighter pink body and pale tips
+            Bristle("M_BristlePink_s2", "#B8306A", "#F04C8C");
             // pass 10 (crop 02 "long soft pink strands with WHITE tips"): lighter, whiter tips
-            Bristle("M_BristlePinkTip_s2", "#B83C78", "#F064A8");
+            Bristle("M_BristlePinkTip_s2", "#D07AA6", "#FFA8CC");
             Bristle("M_BristleWhite_s2", "#888088", "#E6DCE8");
             Bristle("M_BristleCyan_s2", "#3C6E88", "#66B8E0");
 
@@ -132,6 +134,22 @@ namespace BubbleWash.EditorTools
                 F(m, "_Sparkle", 0.1f); F(m, "_SparkleScale", 16f); F(m, "_FogAmount", 0.3f);
                 F(m, "_HighlightSize", 6f); F(m, "_BandSharpness", 16f); F(m, "_LightInfluence", 0.3f);
                 F(m, "_StreakStrength", 0.1f); F(m, "_StreakHeight", 0.6f);
+            });
+
+            // pass 10 resume (owner 13:25 "excessive gold rings"): SM_LedRim_s2 v2 (build_s2_rims_p10.py) = the violet band
+            // steps inside the door. Reference rims glow soft pink-violet along their inner edge with a few tiny white-pink
+            // sparkles (not rows of saturated pink LED dots) -> own emissive looks (BWK/Emissive, no new shader)
+            Mat("M_RimGlow_s2", "BWK/Emissive", m =>
+            {
+                C(m, "_Color", "#E86CF0"); F(m, "_Intensity", 1.7f); F(m, "_CoreWhite", 0.18f); F(m, "_CorePower", 3f);
+                F(m, "_HaloBoost", 0.6f); F(m, "_EdgeSaturate", 0.4f); F(m, "_Chase", 0f); F(m, "_PulseAmount", 0.1f);
+                F(m, "_PulseSpeed", 0.6f); F(m, "_FogAmount", 0.3f);
+            });
+            Mat("M_RimSpark_s2", "BWK/Emissive", m =>
+            {
+                C(m, "_Color", "#FFC8F2"); F(m, "_Intensity", 2.6f); F(m, "_CoreWhite", 0.6f); F(m, "_CorePower", 2.5f);
+                F(m, "_HaloBoost", 0.9f); F(m, "_EdgeSaturate", 0.3f); F(m, "_Chase", 0f); F(m, "_PulseAmount", 0.35f);
+                F(m, "_PulseSpeed", 1.3f); F(m, "_FogAmount", 0.25f);
             });
 
             // ---------------------------------------------------------------- 02 striped fluffy washing roller

@@ -332,6 +332,14 @@ namespace BubbleWash.EditorTools
             }
             void PlaceRing(float d, float scale)
             {
+                // Screen S2 pass 10 resume (owner 13:25 "excessive gold rings", lead 13:50: hero_mouth_9x16 shows 6+ receding
+                // gold bulb rings; the approved frame = ONE thick gold bulb ring a few metres in (SM_MarqueeRing_s2c, 50.5 m),
+                // a thinner amber ring behind it (= our gate at 61.7 m, kept) and then ALTERNATING violet perforated bands
+                // with glowing pink-violet rims + tiny sparkles): the gold marquee rings inside the S2 view (71.5 / 84.25 m)
+                // become violet band steps too (SM_LedRim_s2 v2, build_s2_rims_p10.py: glossy violet step, glowing lip, 20
+                // sparkles instead of 48 LED dots). Rings >= MarqueeRingsUntil (other screens) unchanged.
+                const bool S2VioletBandsP10 = true;
+                if (S2VioletBandsP10 && d > tunnelStart && d < MarqueeRingsUntil && PlaceLedRim(d)) return;
                 if (PlaceMarquee(d, scale)) return;
                 var world = World(d, scale) * Vary(d, 360f / BulbsPerRing);
                 comb.Add(ring, world);

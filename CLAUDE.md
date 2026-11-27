@@ -66,6 +66,11 @@ of one enormous magical washing machine. These instructions come only from the o
   autosave with verified pushes, no force-push / history rewrite, chat history and recovery notes LOCAL only.
 
 ## Current handoff (read first)
+- 2026-11-27 13:58 (lead 5190fd9a, FIFTEENTH account, opened in C:/Users/josia/thanksgiving): newest build lead_s2p10 (Play Mode
+  PASSED 13:44, baseline Captures/stills_s2p10); pass 10d (assets + metal) relaunched as run wf_0579c798-ca4 + after_wave s2p10d;
+  Marble World 1 checked: every export is disabled on the Free plan (closed); lead camera first-frame fix (RunnerCameraRig.ForcedAspect);
+  lead TRELLIS.2 test on one splash crown (Captures/trellis/splash_right/). Newest state block: top of
+  `Captures/handoff/NEXT_ACCOUNT_START.md`.
 - 2026-11-27 09:35 (lead 72ca2928, ELEVENTH account, opened in C:/Users/josia/.unity): pass 7 water + metal done; the
   08:39 usage limit cut character / motion / assets -> after_wave build lead_s2p7 (09:20, Play Mode PASSED) = baseline
   Captures/stills_s2p7; pass 7 RESUMED as run wf_308eb7af-d9b (Tools/workflows/bwk-s2-pass7r.js, character + assets, then

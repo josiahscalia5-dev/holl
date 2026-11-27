@@ -815,6 +815,14 @@ namespace BubbleWash.EditorTools
             // popcorn fan): build_fx_crown_v5.py SM_FX_CrownV5_L/R = smooth tapering milk fingers with bulb tips fanning
             // outward from a connected band, tall risers, low skimming arms, few varied droplets; same runner-local frame.
             // Revert = delete SM_FX_CrownV5_*.fbx (V4 takes over again).
+            // Lead 5190fd9a 2026-11-27 (owner 13:40: "use specialized 3D generation ... on ONE important asset"; known problem
+            // "splashes resemble white noodles"): build_fx_crown_v6_trellis.py SM_FX_CrownV6_L/R = a TRELLIS.2 (MIT, free hosted)
+            // image-to-3D mesh of ONE isolated crown from library crop 18, cleaned / decimated / fitted into the same runner-local
+            // box beside the foot, mirrored for the left. Reference-derived -> PRIVATE Art/Projected/FX/ (gitignored); used only
+            // when present. Revert = delete Art/Projected/FX/SM_FX_CrownV6_*.fbx (V5 takes over again).
+            var p6l = ProjectedModelParts("FX", "SM_FX_CrownV6_L");
+            var p6r = ProjectedModelParts("FX", "SM_FX_CrownV6_R");
+            if (p6l.Count > 0 && p6r.Count > 0 && Mat("M_FX_Milk_v3") != null) return BuildCrownsV3(fxRoot, runner, save, p6l[0].mesh, p6r[0].mesh);
             var p5l = ModelParts("FX", "SM_FX_CrownV5_L");
             var p5r = ModelParts("FX", "SM_FX_CrownV5_R");
             if (p5l.Count > 0 && p5r.Count > 0 && Mat("M_FX_Milk_v3") != null) return BuildCrownsV3(fxRoot, runner, save, p5l[0].mesh, p5r[0].mesh);
@@ -872,7 +880,7 @@ namespace BubbleWash.EditorTools
         static bool BuildCrownsV3(GameObject fxRoot, RunnerController runner, bool save, Mesh left, Mesh right)
         {
             var milk = Mat("M_FX_Milk_v3");
-            string ver = left.name.Contains("V5") ? "V5" : left.name.Contains("V4") ? "V4" : "V3";
+            string ver = left.name.Contains("V6") ? "V6" : left.name.Contains("V5") ? "V5" : left.name.Contains("V4") ? "V4" : "V3";
             var framesL = CrownV2FrameMeshes(left, $"SM_FX_Crown{ver}_L", save);
             var framesR = CrownV2FrameMeshes(right, $"SM_FX_Crown{ver}_R", save);
             var holder = Child(fxRoot, "Crowns");
