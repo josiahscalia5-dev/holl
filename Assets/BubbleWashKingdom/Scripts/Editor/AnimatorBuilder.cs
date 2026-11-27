@@ -14,9 +14,18 @@ namespace BubbleWash.EditorTools
     /// </summary>
     public static class AnimatorBuilder
     {
-        // OWNER 2026-11-26 21:15 approved the v4 mascot in-game (pale hat band, raised arms, rounder fluffy body; same 17
-        // bones, 13 takes, 11 material names as SK_Mascot.fbx, which stays as the fallback). Was SK_Mascot.fbx.
-        public const string FbxPath = "Assets/BubbleWashKingdom/Art/Models/Characters/SK_Mascot_v4.fbx";
+        // OWNER 2026-11-26 21:15 / 21:25: TEST the v4 mascot in-game (pale hat band, raised arms, rounder fluffy body; same
+        // 17 bones, 13 takes, 11 material names) and keep the previous model + all animations as the fallback: set
+        // UseMascotV4 = false and run a full build to go back to SK_Mascot.fbx (v3). Never delete either FBX.
+        public const bool UseMascotV4 = true;
+        public const string FbxPathV3 = "Assets/BubbleWashKingdom/Art/Models/Characters/SK_Mascot.fbx";
+        public const string FbxPathV4 = "Assets/BubbleWashKingdom/Art/Models/Characters/SK_Mascot_v4.fbx";
+        public const string FbxPath = UseMascotV4 ? FbxPathV4 : FbxPathV3;
+        // Lead 2026-11-26 21:40: SK_Mascot_v4.fbx was exported with the TEST-ONLY BWK_RIG_TEST_YAW=180 of
+        // build_mascot_rig.py (its Armature object has yaw -180 in Blender, SK_Mascot.fbx has 0), so in-game the rear camera
+        // saw its face while sliding and its back in the celebration (s2p3 recording). SceneBuilder turns the model root by
+        // this yaw so v4 faces the travel direction like v3. A re-export without the test yaw must set this back to 0.
+        public const float ModelYaw = UseMascotV4 ? 180f : 0f;
         public const string ControllerPath = "Assets/BubbleWashKingdom/Animation/Mascot.controller";
 
         [MenuItem("Bubble Wash/Setup/4 Build Animator")]

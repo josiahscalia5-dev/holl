@@ -200,20 +200,34 @@ namespace BubbleWash.EditorTools
                     int cw = Mathf.RoundToInt(refTex.height * 9f / 16f);
                     refCrop = Resize(Crop(refTex, Mathf.RoundToInt(refTex.width * 0.49f - cw * 0.5f), 0, cw, refTex.height), 720, 1280);
                 }
-                for (int i = 0; i < variants.Count; i++)
+                // lead 2026-11-26 21:45 (owner 21:25: keep PORTRAIT, optimise the gameplay camera to reveal more scenery):
+                //   -bwkCamDistances "35,105.5,215" renders every variant at each track distance -> cam_d<d>_v<i>_9x16.png
+                var dists = new List<float>();
+                string dspec = ArgValue("-bwkCamDistances");
+                if (!string.IsNullOrEmpty(dspec))
+                    foreach (var s in dspec.Split(','))
+                        dists.Add(float.Parse(s.Trim(), System.Globalization.CultureInfo.InvariantCulture));
+                bool multi = dists.Count > 0;
+                if (!multi) dists.Add(best);
+                foreach (float d in dists)
                 {
-                    var v = variants[i];
-                    rig.distanceBackPortrait = v[0]; rig.heightPortrait = v[1]; rig.pitchDownPortrait = v[2]; rig.fovPortrait = v[3];
-                    rig.aspectOverride = 720f / 1280f;
-                    rig.Snap();
-                    var lens = rig.vcam.Lens;
-                    cam.transform.SetPositionAndRotation(rig.transform.position, rig.transform.rotation * Quaternion.Euler(0f, 0f, lens.Dutch));
-                    cam.fieldOfView = lens.FieldOfView;
-                    string path = $"{outDir}/cam_v{i}_9x16.png";
-                    Render(cam, 720, 1280, path);
-                    if (refCrop != null) SaveSideBySide(new[] { refCrop, LoadPng(path) }, $"{outDir}/cam_v{i}_vs_reference_9x16.png");
-                    Debug.Log($"[BWK] camera variant v{i}: back {v[0]} height {v[1]} pitch {v[2]} fov {v[3]}");
+                    if (multi) { PoseHero(runner, d); HideCollectedItems(runner); }
+                    for (int i = 0; i < variants.Count; i++)
+                    {
+                        var v = variants[i];
+                        rig.distanceBackPortrait = v[0]; rig.heightPortrait = v[1]; rig.pitchDownPortrait = v[2]; rig.fovPortrait = v[3];
+                        rig.aspectOverride = 720f / 1280f;
+                        rig.Snap();
+                        var lens = rig.vcam.Lens;
+                        cam.transform.SetPositionAndRotation(rig.transform.position, rig.transform.rotation * Quaternion.Euler(0f, 0f, lens.Dutch));
+                        cam.fieldOfView = lens.FieldOfView;
+                        string path = multi ? $"{outDir}/cam_d{d:000}_v{i}_9x16.png" : $"{outDir}/cam_v{i}_9x16.png";
+                        Render(cam, 720, 1280, path);
+                        if (!multi && refCrop != null) SaveSideBySide(new[] { refCrop, LoadPng(path) }, $"{outDir}/cam_v{i}_vs_reference_9x16.png");
+                        Debug.Log($"[BWK] camera variant v{i} at {d:F1} m: back {v[0]} height {v[1]} pitch {v[2]} fov {v[3]}");
+                    }
                 }
+                if (multi) PoseHero(runner, best);
                 rig.distanceBackPortrait = saved[0]; rig.heightPortrait = saved[1]; rig.pitchDownPortrait = saved[2]; rig.fovPortrait = saved[3];
                 rig.aspectOverride = 0f;
 

@@ -66,6 +66,12 @@ namespace BubbleWash.Tests
             runner.LaneChanged += onLane; runner.Jumped += onJump; runner.Landed += onLand; runner.Bumped += onBump;
             var mascotAnim = runner.GetComponentInChildren<Animator>();
             var animStates = new System.Collections.Generic.HashSet<int>();
+            // 2026-11-26 21:40 lead: the v4 FBX arrived with a 180 deg test yaw and the rear camera saw the mascot's FACE while
+            // sliding (and its back in the celebration) although every other assert passed. While running, the eyes must sit
+            // AHEAD of the body along the travel direction (the camera sees the back of the hat, the pom-pom and the soles).
+            Transform eyeL = null;
+            foreach (var t in runner.GetComponentsInChildren<Transform>(true)) if (t.name == "eye.L") { eyeL = t; break; }
+            int faceChecks = 0, faceBackward = 0;
             while (frames < 30 * 75)
             {
                 yield return null;
@@ -80,6 +86,11 @@ namespace BubbleWash.Tests
                 {
                     rearChecks++;
                     if (Vector3.Dot(cam.transform.forward, runner.transform.forward) < 0.35f) rearViolations++;
+                    if (eyeL != null && runner.visual != null)
+                    {
+                        faceChecks++;
+                        if (Vector3.Dot(eyeL.position - runner.visual.position, runner.transform.forward) < 0f) faceBackward++;
+                    }
                 }
                 if (mascotAnim != null && frames % 3 == 0) animStates.Add(mascotAnim.GetCurrentAnimatorStateInfo(0).shortNameHash);
                 // 2026-11-26 finishing sequence: brake in front of the portal, turn, banner, slow push-in (~7 s recorded)
@@ -96,9 +107,12 @@ namespace BubbleWash.Tests
                 $"coins={gm.items.Coins}\ngems={gm.items.Gems}\nrearChecks={rearChecks}\nrearViolations={rearViolations}\nfinished={gm.Celebrating}\n" +
                 $"celebrationPose={runner.InCelebrationPose}\nfinishRest={runner.FinishRestDistance:F1}\nmaxCameraPastPortal={maxCamPastPortal:F2}\n");
             runner.LaneChanged -= onLane; runner.Jumped -= onJump; runner.Landed -= onLand; runner.Bumped -= onBump;
+            // celebration: the mascot has turned to the camera, so its eyes must now point toward the camera
+            bool faceToCameraAtEnd = eyeL == null || runner.visual == null ||
+                Vector3.Dot(eyeL.position - runner.visual.position, cam.transform.position - runner.visual.position) > 0f;
             File.AppendAllText(Path.Combine(OutDir, "run_summary.txt"),
                 $"laneChanges={laneChanges}\nlanesVisited={minLane}..{maxLane}\njumps={jumps}\nlandings={landings}\nbumps={bumps}\n" +
-                $"animatorStates={animStates.Count}\n");
+                $"animatorStates={animStates.Count}\nfaceChecks={faceChecks}\nfaceBackward={faceBackward}\nfaceToCameraAtEnd={faceToCameraAtEnd}\n");
             Assert.Greater(runner.Distance - startDistance, runner.track.Length * 0.8f, "mascot did not travel the section");
             Assert.AreEqual(0, rearViolations, "camera was not behind the mascot during gameplay");
             Assert.IsTrue(gm.Celebrating, "run did not reach the finish");
@@ -109,6 +123,8 @@ namespace BubbleWash.Tests
             Assert.GreaterOrEqual(jumps, 1, "the mascot never jumped");
             Assert.GreaterOrEqual(landings, 1, "the mascot never landed after a jump");
             Assert.GreaterOrEqual(animStates.Count, 3, "the mascot animator did not cycle through slide / jump / celebration states");
+            Assert.LessOrEqual(faceBackward, faceChecks / 20, "the mascot faced the rear camera instead of the travel direction");
+            Assert.IsTrue(faceToCameraAtEnd, "the celebration did not turn the mascot's face toward the camera");
         }
 
         [UnityTest, Timeout(600000)]

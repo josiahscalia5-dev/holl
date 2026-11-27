@@ -234,6 +234,7 @@ namespace BubbleWash.EditorTools
                 var m = Spawn(mascotPrefab);
                 m.name = "SK_Mascot";
                 m.transform.SetParent(visual.transform, false);
+                m.transform.localRotation = Quaternion.Euler(0f, AnimatorBuilder.ModelYaw, 0f);   // v4 export yaw fix (21:40)
                 animator = m.GetComponentInChildren<Animator>();
                 if (animator == null) animator = m.transform.GetChild(0).gameObject.AddComponent<Animator>();
                 mascotHolder = m.transform;
