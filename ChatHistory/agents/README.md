@@ -89,5 +89,7 @@ One file per agent (lead brief + agent statements + tool actions), grouped by le
 - [skeptic S2 s2p2](2026-11-27_46a804a0/0200_skeptic_S2_s2p2_ad6e35d7.md)
 - [assets ALL pass 4](2026-11-27_8670dda0/0239_assets_ALL_pass_4_a8f26ef5.md)
 - [water ALL pass 4](2026-11-27_8670dda0/0239_water_ALL_pass_4_afcef308.md)
+- [judge S1-S2](2026-11-27_8670dda0/0323_judge_S1_S2_afdda209.md)
+- [judge S3-S5](2026-11-27_8670dda0/0323_judge_S3_S5_a00f0481.md)
 - [judge S2 s2p1](2026-11-27_c8eeab8b/0006_judge_S2_s2p1_ab0c67df.md)
 - [skeptic S2 s2p1](2026-11-27_c8eeab8b/0006_skeptic_S2_s2p1_a4dda9d4.md)
