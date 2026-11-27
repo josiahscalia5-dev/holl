@@ -366,3 +366,31 @@ Now the foam master: switch the bank / mound from many small bubbles to a few bi
 **Agent (2026-11-27 03:06 UTC):**
 
 > _tool: Bash - Straighten wake fingers, rebuild crowns, run final preview p4_
+
+**Agent (2026-11-27 03:09 UTC):**
+
+> _tool: Bash - Measure final p4 crowns and build comparison sheets_
+
+**Agent (2026-11-27 03:09 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_ALL_p4/p4/hero_mouth_9x16.png_
+
+**Agent (2026-11-27 03:09 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/waterfx/screen_ALL_p4/S2_crowns_ref_before_p4.png_
+
+**Agent (2026-11-27 03:09 UTC):**
+
+> _tool: Bash - Check asset artist requests and log final notes_
+
+**Agent (2026-11-27 03:10 UTC):**
+
+> _tool: Bash - Read asset artist rail gradient request and shader mode 1 hooks_
+
+**Agent (2026-11-27 03:10 UTC):**
+
+> _tool: Bash - Correct NOTES line and list changed files_
+
+**Agent (2026-11-27 03:10 UTC):**
+
+> _tool: StructuredOutput_
