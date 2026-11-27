@@ -1941,11 +1941,11 @@ def export_game_model():
 # build_mascot_rig.py tags only M_PomPom faces as shell fur) around a mid-violet core (M_PomPom shells = fuzz between
 # the locks). Derived from mascot_v4_game.blend/.json, so mascot_v4_game.*, SK_Mascot_v4.fbx and SK_Mascot.fbx stay
 # untouched. Rig: BWK_RIG_MODEL_BLEND/JSON = the v5 files, BWK_RIG_FBX = SK_Mascot_v5.fbx.
-V5_POM_TIP_R = 0.262      # yarn tip radius (p7 run 2: Unity R2 s2p7 pom-pom width 0.42 x cuff width vs reference 0.50 -> +18 %)
-V5_POM_CORE_R = 0.195     # core sphere (v4 0.148, p6 0.150, p7 0.165; run 2 keeps core / tip = 0.74)
+V5_POM_TIP_R = 0.272      # p9: was .262 (soft ball: core .232 + shells reach past the tips); yarn tip radius (p7 run 2: Unity R2 s2p7 pom-pom width 0.42 x cuff width vs reference 0.50 -> +18 %)
+V5_POM_CORE_R = 0.232     # p9: was .195 - locks protrude only ~4 cm, the core fuzz (5 cm shells) forms the soft round outline; core sphere (v4 0.148, p6 0.150, p7 0.165; run 2 keeps core / tip = 0.74)
 # ---- S2 pass 7 (2026-11-27 08:30, owner: big glossy eyes / cheerful smile in the finish pose, plush fur WITHOUT streaks
 #      or blocky patches, a soft round pom-pom instead of an urchin)
-V7_YARN_N = 1150          # Fibonacci directions for the finer, curlier, blunt yarn locks (p6: 560 pointed 4-sided locks)
+V7_YARN_N = 1600          # p9: was 1150 (denser = no dark gaps between locks); Fibonacci directions for the finer, curlier, blunt yarn locks (p6: 560 pointed 4-sided locks)
 V7_MOUTH_K = 1.22         # open smile scaled in the face plane (reference mouth ~0.30 x face width; ours read small)
 V7_NOSE_K = 1.5           # the tiny nose was invisible in Unity (reference: small but clearly readable)
 V7_EYE_CLEAR = 1.14       # rig fur mask around the eyes x this: shells stop at the eye rim (pink fuzz covered the iris edge)
@@ -1967,7 +1967,7 @@ V5_ARM_FORE = 70.0        # deg elevation of the forearm + mitt beside the brim 
 V5_ARM_EXTRA = 0.110      # m added to the shoulder->mitt segment only (v4 0.13 m stub): mitts clear the brim edge
 V5_ARM_CUFF_TOL = 0.015   # rig cuff-solve tolerance (contract 'arm_cuff_tol'; v4 default -0.004)
 V5_SOLE_FUR = 0.18        # rig (contract 'sole_fur'): sole-side paw fur scaled to 18 % -> smooth white sole + pink pads
-V5_CUFF_ROLL = 0.012      # folded brim: outer rib surface pushed out up to 1.2 cm mid-height = thicker rolled cuff
+V5_CUFF_ROLL = 0.022      # p9: was .012 (reference: THICK folded brim clearly wider than the crown); folded brim: outer rib surface pushed out up to 1.2 cm mid-height = thicker rolled cuff
 GAME5_BLEND = os.path.join(OUT, "mascot_v5_game.blend")
 GAME5_JSON = os.path.join(OUT, "mascot_v5_game.json")
 
@@ -2054,7 +2054,7 @@ def _soft_yarn_locks(c, ax, n, r_tip, seed=23):
         if d.dot(ax) < -0.30:
             continue
         L = r_tip * rng.uniform(0.92, 1.04)
-        w = rng.uniform(0.0065, 0.0105)
+        w = rng.uniform(0.0085, 0.0125)   # p9: was .0065-.0105 (denser, softer ball)
         t1 = d.cross(Vector((0.31, 0.57, 0.76))).normalized()
         t2 = d.cross(t1).normalized()
         ph = rng.uniform(0.0, 2.0 * math.pi)

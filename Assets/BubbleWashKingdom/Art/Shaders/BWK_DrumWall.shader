@@ -115,6 +115,18 @@ Shader "BWK/DrumWall"
         _DoorSlotEnd ("Near -> far slot scale until (m along)", Float) = 72
         _DoorRowSpread ("Door grade extra column spacing along (near)", Float) = 1
         _DoorPanelCurve ("Door grade curved panels (replaces _PanelCurve)", Range(0, 0.8)) = 0.25
+        // Screen S2 pass 9: polished drum reflecting the luminous far end (grazing reflection down the tunnel axis) through
+        // shallow lathe ribs (circumferential sheen streaks), warm gold / bulb pickup beside the rims, far-end glow
+        _DoorSheenColor ("Door grade far-end reflection colour", Color) = (0, 0, 0, 1)
+        _DoorSheenPower ("Door grade reflection tightness", Float) = 6
+        _DoorRibPitch ("Door grade lathe rib pitch (m)", Float) = 0.7
+        _DoorRibTilt ("Door grade lathe rib normal tilt", Range(0, 0.6)) = 0.2
+        _DoorWarmColor ("Door grade warm rim pickup", Color) = (0, 0, 0, 1)
+        _DoorWarmWidth ("Door grade warm pickup width (m)", Float) = 0.5
+        _FarGlowColor ("Far-end glow (walls far from the camera, before _FarGlowEnd m along)", Color) = (0, 0, 0, 1)
+        _FarGlowNear ("Far glow starts at camera distance (m)", Float) = 30
+        _FarGlowFar ("Far glow full at camera distance (m)", Float) = 70
+        _FarGlowEnd ("Far glow gone at (m along)", Float) = 150
     }
     SubShader
     {
@@ -152,6 +164,8 @@ Shader "BWK/DrumWall"
             half _DoorAmount, _DoorDesat, _DoorHole, _DoorSmooth, _DoorPanelCurve;
             float _DoorFadeStart, _DoorFadeEnd, _DoorSlotNear, _DoorSlotFar, _DoorSlotStart, _DoorSlotEnd, _DoorRowSpread;
             half4 _DoorTint;
+            half4 _DoorSheenColor, _DoorWarmColor, _FarGlowColor;
+            float _DoorSheenPower, _DoorRibPitch, _DoorRibTilt, _DoorWarmWidth, _FarGlowNear, _FarGlowFar, _FarGlowEnd;
         CBUFFER_END
 
         // Screen S2 pass 7: weight of the S2 door-drum grade at a distance along the tunnel (1 at the door, 0 beyond

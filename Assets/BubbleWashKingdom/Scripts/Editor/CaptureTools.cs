@@ -630,6 +630,9 @@ namespace BubbleWash.EditorTools
             runner.TeleportTo(SceneBuilder.HeroMouthDistance, 0f);
             if (slide != null) slide.SampleAnimation(animator.gameObject, 0.25f);
             SimulateSlideFX(runner);
+            // lead 84b218d4 2026-11-27: coins the mascot has just collected in his lane vanish in play - hide them here too (the
+            // s2p9a hero_mouth_9x16 showed a giant already-collected coin right in front of the portrait camera)
+            var collectedMouth = HideCollectedItems(runner);
             foreach (var (w, h, tag) in new[] { (1280, 720, "16x9"), (720, 1280, "9x16") })
             {
                 rig.aspectOverride = w / (float)h;
@@ -647,6 +650,7 @@ namespace BubbleWash.EditorTools
                 cam.fieldOfView = R2Fov;
                 RenderWithBackground(cam, 1280, 720, stillsDir, "R2_rear_S2_like_3s_16x9.png", MascotRenderers(runner));
             }
+            foreach (var r in collectedMouth) r.enabled = true;
             rig.aspectOverride = 0f;
             runner.TeleportTo(best, 0f);
             rig.Snap();
@@ -848,6 +852,79 @@ namespace BubbleWash.EditorTools
         /// its own lane (between the camera and the mascot) float in front of the lens - lead 2026-11-26 21:10: 07_chambers
         /// showed one filling the portrait frame. Hides those for the still (re-enable the returned renderers afterwards);
         /// items in the other lanes, which the player really sees passing by, stay visible.</summary>
+        /// <summary>
+        /// Lead 84b218d4 2026-11-27 (owner 10:48: "show the scenery from additional angles to prove it is genuine 3D"): renders
+        /// the S2 door area of the SAVED scene (nothing is saved) with the mascot at HeroMouthDistance from extra camera angles,
+        /// plus CLAY copies (every renderer's materials swapped in memory for one neutral grey URP Lit material) that show the
+        /// bare 3D geometry without textures or glow. Run via:
+        ///   Tools/unity_run.sh BubbleWash.EditorTools.CaptureTools.S2ProofViewsBatch lead_s2proof -bwkOut Captures/proof_s2p9a
+        /// </summary>
+        public static void S2ProofViewsBatch()
+        {
+            try
+            {
+                string outDir = ArgValue("-bwkOut") ?? "Captures/proof";
+                Directory.CreateDirectory(outDir);
+                EditorSceneManager.OpenScene(SceneBuilder.ScenePath);
+                var runner = Object.FindFirstObjectByType<RunnerController>();
+                var cam = Camera.main;
+                if (runner == null || cam == null) { Debug.LogError("[BWK] proof: scene objects missing"); EditorApplication.Exit(1); return; }
+                var brain = cam.GetComponent<CinemachineBrain>();
+                if (brain) brain.enabled = false;
+                runner.track.Rebuild();
+                foreach (var ps in Object.FindObjectsByType<ParticleSystem>(FindObjectsSortMode.None))
+                    if (ps.name == "AmbientBubbles") ps.Simulate(4f, true, true);
+                runner.TeleportTo(SceneBuilder.HeroMouthDistance, 0f);
+                var animator = runner.GetComponentInChildren<Animator>();
+                AnimationClip slide = null;
+                if (animator != null && animator.runtimeAnimatorController != null)
+                    slide = animator.runtimeAnimatorController.animationClips.FirstOrDefault(c => c.name == "Slide");
+                if (slide != null) slide.SampleAnimation(animator.gameObject, 0.25f);
+                SimulateSlideFX(runner);
+                HideCollectedItems(runner);   // as in play: coins just collected in his lane are gone
+                var fr = runner.Frame;
+                Vector3 fwd = Vector3.ProjectOnPlane(fr.forward, Vector3.up).normalized, right = Vector3.Cross(Vector3.up, fwd), up = Vector3.up;
+                Vector3 p = runner.transform.position;
+                Quaternion r2 = Quaternion.LookRotation(fwd, up) * Quaternion.Euler(R2Pitch, R2Yaw, 0f);
+                var views = new (string name, Vector3 pos, Vector3 look, float fov, bool clay)[]
+                {
+                    ("A_matched_R2", p - fwd * R2Back + up * R2Height + right * R2Lat, Vector3.zero, R2Fov, true),
+                    ("B_high_rear_left", p - fwd * 6.5f + up * 4.2f - right * 3.2f, p + fwd * 6f + up * 0.6f, 60f, true),
+                    ("C_side_right_low", p - fwd * 1.0f + up * 1.3f + right * 3.4f, p + fwd * 2.5f - right * 0.8f + up * 0.5f, 70f, false),
+                    ("D_ahead_looking_back", p + fwd * 7f + up * 1.6f + right * 0.4f, p - fwd * 3f + up * 0.6f, 62f, true),
+                    ("E_hall_wide_from_behind", p - fwd * 14f + up * 5.5f + right * 1.5f, p + fwd * 4f + up * 1.2f, 58f, false),
+                };
+                foreach (var v in views)
+                {
+                    cam.transform.SetPositionAndRotation(v.pos, v.name.StartsWith("A_") ? r2 : Quaternion.LookRotation(v.look - v.pos, up));
+                    cam.fieldOfView = v.fov;
+                    Render(cam, 1280, 720, $"{outDir}/{v.name}.png");
+                }
+                // clay pass: same cameras, all materials replaced in memory by one neutral grey lit material (geometry only)
+                var clay = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                clay.SetColor("_BaseColor", new Color(0.80f, 0.78f, 0.76f));
+                clay.SetFloat("_Smoothness", 0.35f);
+                clay.EnableKeyword("_EMISSION");
+                clay.SetColor("_EmissionColor", new Color(0.10f, 0.10f, 0.11f));
+                var all = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);
+                var saved = all.Select(r => r.sharedMaterials).ToArray();
+                try
+                {
+                    foreach (var r in all) r.sharedMaterials = Enumerable.Repeat(clay, Mathf.Max(1, r.sharedMaterials.Length)).ToArray();
+                    foreach (var v in views.Where(v => v.clay))
+                    {
+                        cam.transform.SetPositionAndRotation(v.pos, v.name.StartsWith("A_") ? r2 : Quaternion.LookRotation(v.look - v.pos, up));
+                        cam.fieldOfView = v.fov;
+                        Render(cam, 1280, 720, $"{outDir}/{v.name}_clay.png");
+                    }
+                }
+                finally { for (int i = 0; i < all.Length; i++) if (all[i] != null) all[i].sharedMaterials = saved[i]; }
+                Debug.Log("[BWK] S2 proof views written to " + Path.GetFullPath(outDir));
+                EditorApplication.Exit(0);
+            }
+            catch (System.Exception e) { Debug.LogError("[BWK] S2 proof views failed: " + e); EditorApplication.Exit(1); }
+        }
+
         static List<Renderer> HideCollectedItems(RunnerController runner)
         {
             var hidden = new List<Renderer>();
