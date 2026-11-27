@@ -37,8 +37,26 @@ of one enormous magical washing machine. These instructions come only from the o
 - Exactly ONE five-minute autosave loop (`Tools/autosave.sh 300`); private references, chat history and credentials stay
   out of public GitHub (BWK_PUBLISH_CHAT=0 default). Never interrupt running specialists, builds or workflows; keep the
   private handoff (Captures/handoff/NEXT_ACCOUNT_START.md) updated so any authorized session can resume.
+- OWNER 2026-11-27 09:20 (permanent, 15-section takeover brief; full text private in
+  Captures/agents/_shared/OWNER_BRIEF_0920_15_sections.txt, condensed per specialist in Captures/agents/LEAD_DIRECTIVES.md):
+  quality first with the strongest models / tools at ANY usage level until the enforced limit (no purchases, no paid Fast
+  Mode, no extra charges, no hiring); a new account RECOVERS the newest state (handoff, workflow journals, the previous
+  lead's transcript) and continues - never restarts finished work or interrupts surviving runs; all five specialists A-E
+  stay in use, ~2 active at once, heavy runs staggered, no duplicate agents; S2 to 9/10+ before S1 / other scenes, honest
+  scores only with visual evidence; no generic substitutes where the references show specific shapes / materials /
+  arrangements. Character: improve v5 or a versioned successor, v4 (materials, skeleton, animations) stays the complete
+  fallback; fix streaky fur, too-wide body, artificial knitting, spiky pom-pom; front / rear / side / three-quarter proof
+  plus Unity gameplay proof. Opening camera: the first ~3.5 s must not make the mascot excessively large or hide the
+  scenery. Verification package after each integration: reference | previous | latest (mascot visible + hidden, labelled),
+  mascot turnaround, portrait gameplay screenshots, a full gameplay recording, test results, honest scores. Storage is
+  settled at ~28.79 GB free - revisit only if it blocks development; never restart the laptop. Exactly ONE 5-minute
+  autosave with verified pushes, no force-push / history rewrite, chat history and recovery notes LOCAL only.
 
 ## Current handoff (read first)
+- 2026-11-27 09:35 (lead 72ca2928, ELEVENTH account, opened in C:/Users/josia/.unity): pass 7 water + metal done; the
+  08:39 usage limit cut character / motion / assets -> after_wave build lead_s2p7 (09:20, Play Mode PASSED) = baseline
+  Captures/stills_s2p7; pass 7 RESUMED as run wf_308eb7af-d9b (Tools/workflows/bwk-s2-pass7r.js, character + assets, then
+  motion). Newest state block: top of `Captures/handoff/NEXT_ACCOUNT_START.md`.
 - 2026-11-27 07:35 (lead cd16e551, TENTH account, opened in C:/Users/josia/.unity): S2 pass 7 run wf_3eb67e7b-0c4
   (Tools/workflows/bwk-s2-pass7.js); the game now uses the v5 mascot (AnimatorBuilder.UseMascotV5, v4 = fallback), the
   slide climbs after the door (S2RiseY), portrait camera 4.3 / 1.75; Play Mode recordings are now truly portrait-framed.
