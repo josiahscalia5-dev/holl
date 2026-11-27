@@ -1,7 +1,9 @@
 #!/bin/bash
 # Auto-save to GitHub every N seconds (default 300 = 5 minutes), as the owner requested on 2026-11-25.
-#   1. exports the Claude chat history as text (Tools/export_chat.py -> ChatHistory/, no images / tool outputs / e-mails);
-#      since 2026-11-26 12:35 it stays LOCAL (owner decision) and is removed from the public tree
+#   1. exports the Claude chat history as text (Tools/export_chat.py -> ChatHistory/, no images / tool outputs / system
+#      context; e-mails and tokens redacted). OWNER DECISION 2026-11-26 20:03 ("Yes, publish it", after being told the
+#      repo is public and history is never rewritten): ChatHistory/ is PUBLISHED with every snapshot again (it was local
+#      only from 12:35 to 20:03). BWK_PUBLISH_CHAT=0 keeps it local - only on the owner's request.
 #   2. snapshots the whole working tree (everything not in .gitignore) into the local branch "github-main" through a
 #      separate index, leaving out PRIVATE_PATHS (files that show frames of the private reference video)
 #   3. pushes github-main to origin/main (public repo) - only when something changed.
@@ -24,10 +26,10 @@ snapshot() {
   [ -f "$INDEX" ] || GIT_INDEX_FILE="$INDEX" git read-tree "$(git rev-parse -q --verify $PUBLIC_REF || echo $BASE)"
   GIT_INDEX_FILE="$INDEX" git add -A >> "$LOG" 2>&1
   for p in "${PRIVATE_PATHS[@]}"; do GIT_INDEX_FILE="$INDEX" git rm -q --cached --ignore-unmatch -- "$p"; done
-  # Chat history stays LOCAL (owner decision 2026-11-26 12:35, "Yes, remove it"): exports are still written to ChatHistory/
-  # on this PC for the next Claude account, but the public tree no longer contains ChatHistory/. Older public snapshots keep
-  # it in git history (history is never rewritten). BWK_PUBLISH_CHAT=1 would publish it again - only on the owner's request.
-  if [ "${BWK_PUBLISH_CHAT:-0}" != 1 ]; then
+  # Chat history: PUBLISHED since the owner's decision 2026-11-26 20:03 (default BWK_PUBLISH_CHAT=1). From 12:35 to 20:03
+  # it was local only ("Yes, remove it"). BWK_PUBLISH_CHAT=0 keeps ChatHistory/ out of the public tree again - only on the
+  # owner's request (older public snapshots keep it in git history; history is never rewritten).
+  if [ "${BWK_PUBLISH_CHAT:-1}" != 1 ]; then
     GIT_INDEX_FILE="$INDEX" git rm -r -q --cached --ignore-unmatch -- ChatHistory >> "$LOG" 2>&1
   fi
   # Second line of defence (2026-11-26): the repo is public, so any video file, and any image whose file name looks like a
@@ -59,7 +61,7 @@ snapshot() {
   parent=$(git rev-parse -q --verify $PUBLIC_REF || git rev-parse $BASE)
   if [ "$(git rev-parse "$parent^{tree}")" != "$tree" ]; then
     commit=$(git commit-tree "$tree" -p "$parent" -m "Autosave $(date '+%Y-%m-%d %H:%M')" \
-      -m "Automatic 5-minute snapshot of the Bubble Wash Kingdom project (chat history stays local)." \
+      -m "Automatic 5-minute snapshot of the Bubble Wash Kingdom project (text chat history included, e-mails and tokens redacted)." \
       -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>") || return 1
     git update-ref $PUBLIC_REF "$commit"
     echo "$(date '+%F %T') committed $commit" >> "$LOG"
