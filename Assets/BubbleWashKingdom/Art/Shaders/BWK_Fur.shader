@@ -32,18 +32,14 @@ Shader "BWK/Fur"
         _PawGlow ("Paw Coat Self Glow", Range(0, 1)) = 0
         _TuftScale ("Tuft Cells per UV unit", Float) = 24
         _TuftAmount ("Tuft Clumping (0 = off)", Range(0, 0.9)) = 0
-        _PlushMode ("Tufts: 0 = v4 cells, 1 = Voronoi locks (p7), 2 = fine radial clumps (p10g)", Range(0, 2)) = 0
+        _PlushMode ("Irregular Voronoi Tufts (0 = v4 cells)", Range(0, 1)) = 0
         _StrandContrast ("Extra Strand / Tuft Contrast (0 = v4)", Range(0, 1)) = 0
         _TuftDepth ("Tuft Depth Shading (0 = off)", Range(0, 1)) = 0
         _LenNoise ("Per-Tuft Pile Length Variation (0 = off)", Range(0, 1)) = 0
         _LenNoiseScale ("Length Variation Scale (x tuft cells)", Float) = 0.5
         _RimSelf ("Unlit Soft Rim (0 = off)", Range(0, 1)) = 0
-        // S2 p10g (SK_Mascot_v5 only; defaults = off, v4 / older materials unchanged)
-        _FlowRadial ("Mode 2: radial lean from the back whorl (0 = straight down)", Range(0, 1)) = 0
-        _FlowCentre ("Mode 2: whorl position (base UV x, y)", Vector) = (0.92, 0.52, 0, 0)
-        _TuftLean ("Mode 2: lock tip lean along the flow (clump cells)", Range(0, 1.5)) = 0
-        _StrandFlow ("Mode 2: strands combed along the flow (strand cells)", Range(0, 4)) = 0
-        _Fray ("Mode 2: frayed lock borders", Range(0, 1)) = 0
+        // S2 p10g soft plush (SK_Mascot_v5 only; defaults = off, v4 / older materials unchanged)
+        _SoftBreakup ("Gentle low-frequency tone breakup (0 = off)", Range(0, 0.5)) = 0
         _SeatLight ("Lower body toward the seat colour (0 = off)", Range(0, 1)) = 0
         _SeatColor ("Seat / lower belly colour", Color) = (1, 0.9, 0.92, 1)
         _SeatRange ("Seat gradient: body v from (x) to (y)", Vector) = (0.42, 0.3, 0, 0)
@@ -65,8 +61,8 @@ Shader "BWK/Fur"
             half _PlushMode, _StrandContrast;
             half _TuftDepth, _LenNoise, _RimSelf;
             float _LenNoiseScale;
-            half _FlowRadial, _TuftLean, _StrandFlow, _Fray, _SeatLight, _BrimShade;
-            float4 _FlowCentre, _SeatRange, _BrimRange;
+            half _SoftBreakup, _SeatLight, _BrimShade;
+            float4 _SeatRange, _BrimRange;
             half4 _SeatColor;
         CBUFFER_END
         ENDHLSL
@@ -158,7 +154,7 @@ Shader "BWK/Fur"
                 half tRnd, parting;
                 half tuftShade = 0.5;
                 float pull;
-                float over = 0.0;                 // mode 2: how far the strand root lies past its clump border (frayed below)
+                float overM2 = 0.0;               // mode 2: how far the strand root lies past its clump border (frayed below)
                 float2 fdir = float2(0.0, -1.0);  // mode 2: fur flow direction in base UV (v runs up the body)
                 if (_PlushMode > 1.5)
                 {
@@ -192,7 +188,7 @@ Shader "BWK/Fur"
                     tc += fdir * (h * _TuftLean);                          // the clump's tips lean along the flow
                     relSkin = tuv - tc;
                     rel = relSkin / max(1.0 - pull, 0.2);
-                    over = g1 * pull / max(1.0 - pull, 0.2) - 0.5 * (g2 - g1);
+                    overM2 = g1 * pull / max(1.0 - pull, 0.2) - 0.5 * (g2 - g1);
                     parting = 1.0;                                         // frayed per strand below
                 }
                 else if (_PlushMode > 0.5)
@@ -253,8 +249,8 @@ Shader "BWK/Fur"
                 float d = length(frac(suv) - 0.5 - jit * 0.4 - lean);
                 half rnd = BWK_Hash21(cell + 3.1);
                 if (_PlushMode > 1.5 && _TuftAmount > 0.001 && h > 0.001)   // p10g: frayed clump borders, strand by strand
-                    parting = lerp(1.0, saturate(1.0 - (over - (rnd - 0.5) * _Fray) * 3.0), saturate(h * 1.6));
-                half clump =BWK_ValueNoise(float2(i.uv.x * 2.0, i.uv.y) * _ClumpScale);
+                    parting = lerp(1.0, saturate(1.0 - (overM2 - (rnd - 0.5) * _Fray) * 3.0), saturate(h * 1.6));
+                half clump = BWK_ValueNoise(float2(i.uv.x * 2.0, i.uv.y) * _ClumpScale);
                 half lenVar = lerp(1.0, 0.55 + clump * 0.9, _ClumpAmount) * (0.72 + 0.28 * rnd);
                 lenVar *= lerp(1.0, 0.62 + 0.62 * tRnd, saturate(_TuftAmount * 1.6));   // every tuft has its own length
                 half guard = saturate(1.0 - d * 1.75) * lenVar;

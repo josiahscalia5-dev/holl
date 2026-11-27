@@ -196,6 +196,18 @@ namespace BubbleWash.EditorTools
                 F(m, "_SeatLight", 0.85f); C(m, "_SeatColor", "#FFE2E6"); m.SetVector("_SeatRange", new Vector4(0.42f, 0.30f, 0f, 0f));
                 F(m, "_BrimShade", 0.5f); m.SetVector("_BrimRange", new Vector4(0.614f, 0.07f, 0.0333f, 0f));
                 F(m, "_RimPower", 3.0f); F(m, "_RimSelf", 0.35f);
+                // p10g prev1: cells gone (fine radiating strands), brim shade OK (168/81/125 vs ref 173/73/115), but still dusty
+                // rose 192/98/143 L54 (ref 207/103/144 L57), shaggy 'wet' gaps, seat too faint (191/115/163 vs 172/134/174).
+                // LEAD 16:58 (clay proves the v5 body mesh is round and smooth): SOFT PLUSH PILE = tuft depth off, subtle
+                // breakup only, short-medium dense pile, fuller softer strand tips, light fluffy fringe at the outline, soft
+                // bright rim; warmer lighter salmon albedo, stronger cream-pink seat
+                F(m, "_TuftDepth", 0f); F(m, "_TuftAmount", 0.3f); F(m, "_TuftLean", 0.4f); F(m, "_StrandFlow", 1.6f);
+                F(m, "_LenNoise", 0.4f); F(m, "_FurLength", 0.062f); F(m, "_Gravity", 0.02f); F(m, "_Curl", 0.6f);
+                F(m, "_Thinning", 0.62f); F(m, "_EdgeSoft", 0.22f); F(m, "_Underfur", 0.95f); F(m, "_StrandContrast", 0.4f);
+                F(m, "_AO", 0.2f); F(m, "_Glow", 0.24f); F(m, "_SilhouetteFade", 0.25f);
+                C(m, "_RootColor", "#F8756A"); C(m, "_BaseColor", "#FF9E70"); C(m, "_TipColor", "#FFDCC0");
+                F(m, "_SeatLight", 1f); C(m, "_SeatColor", "#FFE8EE"); m.SetVector("_SeatRange", new Vector4(0.47f, 0.32f, 0f, 0f));
+                C(m, "_RimColor", "#FFE2DC"); F(m, "_RimStrength", 0.65f); F(m, "_RimSelf", 0.5f);
             }, (int)RenderQueue.AlphaTest);
             Mat("M_PomPom_v5", "BWK/Fur", m =>
             {

@@ -30,11 +30,14 @@ Material:
     m_Ints: []
     m_Floats:
     - _AO: 0.2
+    - _BrimShade: 0
     - _ClumpAmount: 0.8
     - _ClumpScale: 5
     - _Curl: 1.5
     - _Density: 200
     - _EdgeSoft: 0.16
+    - _FlowRadial: 0
+    - _Fray: 0
     - _FurLength: 0.052
     - _Glow: 0.2
     - _Gravity: 0.012
@@ -45,22 +48,29 @@ Material:
     - _RimPower: 2.6
     - _RimSelf: 0
     - _RimStrength: 0.5
+    - _SeatLight: 0
     - _SilhouetteFade: 0.45
     - _StaticMode: 0
     - _StrandContrast: 0
+    - _StrandFlow: 0
     - _Thinning: 0.8
     - _TuftAmount: 0.3
     - _TuftDepth: 0
+    - _TuftLean: 0
     - _TuftScale: 20
     - _Underfur: 0.8
     - _UseVertexTint: 1
     - _Wrap: 0.6
     m_Colors:
     - _BaseColor: {r: 0.9490196, g: 0.54901963, b: 0.49411765, a: 1}
+    - _BrimRange: {r: 0.614, g: 0.07, b: 0.0333, a: 0}
+    - _FlowCentre: {r: 0.92, g: 0.52, b: 0, a: 0}
     - _PawRootColor: {r: 1, g: 0.9411765, b: 0.8862745, a: 1}
     - _PawTipColor: {r: 1, g: 0.9764706, b: 0.93333334, a: 1}
     - _RimColor: {r: 1, g: 0.8156863, b: 0.78431374, a: 1}
     - _RootColor: {r: 0.8156863, g: 0.42352942, b: 0.4, a: 1}
+    - _SeatColor: {r: 1, g: 0.9, b: 0.92, a: 1}
+    - _SeatRange: {r: 0.42, g: 0.3, b: 0, a: 0}
     - _TipColor: {r: 1, g: 0.8156863, b: 0.7607843, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

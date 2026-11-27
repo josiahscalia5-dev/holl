@@ -27,7 +27,7 @@ Material:
     m_Floats:
     - _BumpScale: 6
     - _BumpStrength: 1.2
-    - _Glow: 0.08
+    - _Glow: 0.06
     - _Metallic: 0
     - _Mode: 2
     - _PurlDepth: 1.8
@@ -39,12 +39,12 @@ Material:
     - _StripeWidth: 0
     - _Stripes: 4
     - _VioletLift: 1
-    - _WoolAbsorb: 0.72
+    - _WoolAbsorb: 0.6
     - _Wrap: 0.5
     - _YarnRelief: 1
     m_Colors:
-    - _ColorA: {r: 0.7058824, g: 0.3372549, b: 0.7607843, a: 1}
-    - _ColorB: {r: 0.7058824, g: 0.3372549, b: 0.7607843, a: 1}
+    - _ColorA: {r: 0.5882353, g: 0.2509804, b: 0.77254903, a: 1}
+    - _ColorB: {r: 0.5882353, g: 0.2509804, b: 0.77254903, a: 1}
     - _ColorC: {r: 0.54999995, g: 0.29999998, b: 0.85, a: 1}
     - _ShadowColor: {r: 0.62, g: 0.62, b: 0.95, a: 1}
   m_BuildTextureStacks: []
