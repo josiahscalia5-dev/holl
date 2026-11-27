@@ -194,6 +194,20 @@ def crown_side(s, seed, big):
         az = s * rng.uniform(40.0, 85.0)
         strand(E, rng, (p[0] + s * 0.02, h, p[2]), dir_from(az, rng.uniform(25.0, 55.0)), rng.uniform(0.16, 0.3) * k,
                rng.uniform(0.018, 0.024), 1)
+    # 6) SIDE RISERS (p3 08:09: from the rear camera the strands rising at the feet hide behind the body - ours rose ~40-60 px
+    #    above the soles vs the reference ~120 px beside the body to arm height): roots beside the body edge (|x| .42-.62,
+    #    z .02 -> -.25 toward the camera) joined to the foot base by a low milk band, steep strands leaning outward
+    n_s = 6 if big else 4
+    prev = (fx + s * 0.16, 0.012, fz - 0.02)
+    for j in range(n_s):
+        u = (j + 0.5) / n_s
+        root = (s * (0.42 + 0.2 * u * k), 0.0, 0.02 - 0.27 * u)
+        E.capsule(prev, (root[0], 0.012, root[2]), 0.026 * (1.0 - 0.3 * u))
+        prev = (root[0], 0.012, root[2])
+        h = 0.06 + 0.04 * rng.random()
+        E.capsule((root[0], 0.006, root[2]), (root[0] + s * 0.02, h, root[2]), 0.03)
+        strand(E, rng, (root[0] + s * 0.02, h, root[2]), dir_from(s * rng.uniform(80.0, 140.0), rng.uniform(44.0, 70.0)),
+               rng.uniform(0.32, 0.5) * k, rng.uniform(0.024, 0.032), 2 if rng.random() < 0.6 else 1)
     # 5) loose droplet cloud around the spray (varied sizes, never on the lane centre)
     for _ in range(26 if big else 18):
         az = s * rng.uniform(20.0, 160.0)
