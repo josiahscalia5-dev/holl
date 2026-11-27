@@ -65,6 +65,28 @@ namespace BubbleWash.EditorTools
             new Vector4(0.170f, 0.530f, 0.022f, -2.3f), new Vector4(0.845f, 0.560f, 0.024f, -2.3f),
         };
 
+        // S2 pass 2: reference 3.0 s bubbles at the door, (px x, px y, radius px) on the 1280 x 720 frame + depth (m) from the
+        // S2 comparison camera; the first two are the big iridescent ones, the rest small ones beside the mascot / over the foam
+        static readonly Vector4[] S2BubbleSpots =
+        {
+            new Vector4(1115f, 110f, 45f, 4.0f), new Vector4(20f, 250f, 45f, 3.5f),
+            new Vector4(40f, 105f, 18f, 3.2f), new Vector4(870f, 325f, 16f, 3.0f), new Vector4(888f, 292f, 10f, 3.0f),
+            new Vector4(1090f, 600f, 12f, 2.0f), new Vector4(530f, 650f, 13f, 1.5f), new Vector4(548f, 690f, 9f, 1.4f),
+            new Vector4(805f, 688f, 13f, 1.5f), new Vector4(232f, 455f, 9f, 2.4f), new Vector4(175f, 245f, 8f, 3.0f),
+        };
+
+        /// <summary>Runner-local point on the S2 comparison camera's ray through pixel (px, py) of a 1280 x 720 frame at camera
+        /// depth z (CaptureTools R2_rear_S2_like_3s: runner - 2.75 fwd + 1.0 up + 0.3 right, Euler(6, -9, 0), vFOV 58).</summary>
+        static Vector3 S2CamPoint(float px, float py, float z)
+        {
+            float ty = Mathf.Tan(29f * Mathf.Deg2Rad);
+            var dir = new Vector3((px / 1280f - 0.5f) * 2f * ty * (16f / 9f), (0.5f - py / 720f) * 2f * ty, 1f);
+            return new Vector3(0.3f, 1.0f, -2.75f) + Quaternion.Euler(6f, -9f, 0f) * (dir * z);
+        }
+
+        /// <summary>Diameter (m) of a sphere of radius rPx pixels at camera depth z in the S2 comparison camera (720 px tall).</summary>
+        static float S2CamSize(float rPx, float z) => 2f * rPx / 360f * Mathf.Tan(29f * Mathf.Deg2Rad) * z;
+
         // ==================================================================== hero camera (screen-space placement)
         /// <summary>The owner-approved hero camera in the runner's local space (= FX root space) at the hero distance.</summary>
         struct HeroCam
@@ -322,10 +344,40 @@ namespace BubbleWash.EditorTools
                 // along each rail (1.3 m steps, banks ~1.9 m long overlap), a taller back row of mounds stacked against the
                 // wall base and small pillows spilling onto the rail top - reference 8.00-10.00 s: 0.3-0.45 m tall cumulus
                 // banks of 17-33 px bubbles at 720p on BOTH sides from S3 on; the hall keeps wider scattered clusters.
+                // S2 pass 2 (owner 20:15 item 3 "LARGE, SOFT, THREE-DIMENSIONAL FOAM BANKS"; reference 3.0 s at the door: big
+                // rounded clustered banks on the LEFT bank outside the hatch (screen x 0-450, y 270-450, white 59 % vs ours 37 %)
+                // and a smaller cluster on the right rail (x 1040-1150, y 380-450, ref 35 % vs ours 0 %)): extra big v2 banks
+                // at the door, measured through the S2 camera (front row tops ~1.1 m at lat -2.85, back-row mounds behind),
+                // all outside the water (inner edges >= 1.95 m from the centre line), with their own rng (the rest of the
+                // foam layout keeps its draws)
+                var rm = new System.Random(3571);
+                float RM(float a, float b) => Mathf.Lerp(a, b, (float)rm.NextDouble());
+                void MouthBank(float dm, float lat, float h, float sc, int vi)
+                {
+                    var fm = track.Evaluate(dm);
+                    var rot = fm.FlatRotation * Quaternion.Euler(0, 90f + RM(-8f, 8f) + (rm.NextDouble() < 0.5 ? 180f : 0f), 0);
+                    var mm = Matrix4x4.TRS(fm.FlatPoint(lat, h), rot, new Vector3(sc, sc * RM(1.05f, 1.25f), sc));
+                    comb0.Add(lod0[vi], mm);
+                    comb1.Add(lod1[Mathf.Min(vi, lod1.Length - 1)], mm);
+                }
+                bool mouthDone = false;
                 for (float d = 0f; d < L; d += (d < tunnelStart ? 1.6f : 1.3f))
                 {
                     var f = track.Evaluate(d);
                     heroD = d;
+                    if (!mouthDone && d >= HeroMouthDistance - 1f)
+                    {
+                        mouthDone = true;
+                        float d0 = HeroMouthDistance;
+                        for (float dm = d0 - 0.8f; dm < d0 + 5.0f; dm += 0.9f)
+                        {
+                            float near = Mathf.InverseLerp(d0 + 5.0f, d0 - 0.8f, dm);              // 1 = nearest the camera
+                            MouthBank(dm, -RM(2.78f, 2.95f), RM(0.36f, 0.46f), Mathf.Lerp(1.35f, 1.8f, near) * RM(0.92f, 1.08f), 0);
+                            MouthBank(dm + 0.45f, -RM(3.35f, 3.9f), RM(0.38f, 0.6f), Mathf.Lerp(1.7f, 2.4f, near) * RM(0.92f, 1.08f), 1);
+                        }
+                        MouthBank(d0 + 1.6f, RM(2.62f, 2.72f), RM(0.42f, 0.5f), 1.25f, 1);
+                        MouthBank(d0 + 2.3f, RM(2.66f, 2.78f), RM(0.46f, 0.56f), 1.05f, 2);
+                    }
                     bool hall = d < tunnelStart;
                     foreach (int side in new[] { -1, 1 })
                     {
@@ -491,6 +543,25 @@ namespace BubbleWash.EditorTools
                     b.transform.localPosition = p;
                     b.transform.localRotation = Quaternion.Euler(0f, i * 47f, 0f);
                     b.transform.localScale = Vector3.one * heroCam.WidthAt(s.z, depth);
+                    b.AddComponent<MeshFilter>().sharedMesh = hbMesh;
+                    var mr = b.AddComponent<MeshRenderer>();
+                    mr.sharedMaterial = Mat("M_Bubble");
+                    mr.shadowCastingMode = ShadowCastingMode.Off;
+                    mr.receiveShadows = false;
+                    list.Add(b.transform);
+                }
+                // S2 pass 2 (owner 20:15 item 4 "beautiful transparent iridescent bubbles"; reference 3.0 s at the door: two
+                // BIG ones, upper right (1115,110) r45 px and at the left edge (20,250) r45, small ones around the mascot):
+                // placed through the S2 comparison camera (CaptureTools R2: 2.75 back, 1.0 up, 0.3 right, pitch 6, yaw -9,
+                // vFOV 58, 16:9) in runner space. The big pair floats outside the 9:16 hero frame (x +2.5 / -3.6 m, beside
+                // the slide, never over the lanes); SplashFX bobs / drifts / pops them like the other hero bubbles.
+                for (int i = 0; i < S2BubbleSpots.Length; i++)
+                {
+                    var s = S2BubbleSpots[i];
+                    var b = Child(hb, $"BubbleS2_{i:00}");
+                    b.transform.localPosition = S2CamPoint(s.x, s.y, s.w);
+                    b.transform.localRotation = Quaternion.Euler(0f, 23f + i * 61f, 0f);
+                    b.transform.localScale = Vector3.one * S2CamSize(s.z, s.w);
                     b.AddComponent<MeshFilter>().sharedMesh = hbMesh;
                     var mr = b.AddComponent<MeshRenderer>();
                     mr.sharedMaterial = Mat("M_Bubble");

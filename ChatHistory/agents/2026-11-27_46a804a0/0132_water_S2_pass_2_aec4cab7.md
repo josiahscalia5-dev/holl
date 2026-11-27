@@ -131,3 +131,87 @@ _Text-only export: the lead's brief, the agent's statements and one line per too
 **Agent (2026-11-27 01:36 UTC):**
 
 > _tool: Bash - Read decor chevron mesh builder_
+
+**Agent (2026-11-27 01:38 UTC):**
+
+> _tool: Bash - Back up the four files before editing_
+
+**Agent (2026-11-27 01:38 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Art/Shaders/BWK_Water.shader_
+
+**Agent (2026-11-27 01:38 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Art/Shaders/BWK_Water.shader_
+
+**Agent (2026-11-27 01:38 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Art/Shaders/BWK_Water.shader_
+
+**Agent (2026-11-27 01:38 UTC):**
+
+> _tool: Bash - Read soft shader properties and CBUFFER_
+
+**Agent (2026-11-27 01:38 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Art/Shaders/BWK_Soft.shader_
+
+**Agent (2026-11-27 01:38 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Art/Shaders/BWK_Soft.shader_
+
+**Agent (2026-11-27 01:38 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Art/Shaders/BWK_Soft.shader_
+
+**Agent (2026-11-27 01:39 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Art/Shaders/BWK_Soft.shader_
+
+**Agent (2026-11-27 01:39 UTC):**
+
+> _tool: Bash - Check material helper signature and arrow usage_
+
+**Agent (2026-11-27 01:39 UTC):**
+
+Now the material values.
+
+**Agent (2026-11-27 01:39 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/MaterialLibrary.WaterFX.cs_
+
+**Agent (2026-11-27 01:39 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/MaterialLibrary.WaterFX.cs_
+
+**Agent (2026-11-27 01:39 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/MaterialLibrary.WaterFX.cs_
+
+**Agent (2026-11-27 01:39 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/MaterialLibrary.WaterFX.cs_
+
+**Agent (2026-11-27 01:40 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.WaterFX.cs_
+
+**Agent (2026-11-27 01:40 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.WaterFX.cs_
+
+**Agent (2026-11-27 01:40 UTC):**
+
+Now the foam banks at the door.
+
+**Agent (2026-11-27 01:40 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.WaterFX.cs_
+
+**Agent (2026-11-27 01:41 UTC):**
+
+> _tool: Bash - Run the C# compile check_
+
+**Agent (2026-11-27 01:41 UTC):**
+
+> _tool: Bash - Run agent preview 1 for the S2 water pass_

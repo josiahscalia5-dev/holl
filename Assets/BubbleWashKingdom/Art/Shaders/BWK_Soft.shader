@@ -45,6 +45,9 @@ Shader "BWK/Soft"
         _MilkEdgeAlpha ("Milk opacity at thin / grazing edges (mode 6)", Range(0,1)) = 1
         _MilkSoft ("Round-8 rounded milk volume shading (mode 6, 0 = off)", Range(0,1)) = 0
         _MilkThin ("Thin milk edge, lit through by the water (mode 6, _MilkSoft)", Color) = (0.49, 0.75, 0.91, 1)
+        _MilkGlass ("S2 p2 thin liquid sheet shading (mode 6, 0 = off)", Range(0,1)) = 0
+        _ArrowEdge ("S2 p2 two-tone chevron: HDR edge band (mode 7, 0 = off)", Range(0,4)) = 0
+        _ArrowFillAlpha ("S2 p2 two-tone chevron fill opacity (mode 7)", Range(0,1)) = 1
         // blend state (defaults = opaque; round 4: M_FX_Milk renders translucent with SrcAlpha / OneMinusSrcAlpha)
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 1
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 0
@@ -64,6 +67,7 @@ Shader "BWK/Soft"
             half _MilkAlpha, _MilkEdgeAlpha, _SrcBlend, _DstBlend, _ZWrite;
             half4 _MilkThin;
             half _MilkSoft;
+            half _MilkGlass, _ArrowEdge, _ArrowFillAlpha;
         CBUFFER_END
         ENDHLSL
         Pass
@@ -274,6 +278,21 @@ Shader "BWK/Soft"
                     float pulse = frac(along * 0.8 + _Time.y * _StreakSpeed * 0.5);            // light racing toward the apex
                     half beam = smoothstep(0.0, 0.15, pulse) * smoothstep(0.5, 0.15, pulse);
                     col += _ColorC.rgb * beam * _StreakAmount * (0.3 + 0.7 * core);
+                    if (_ArrowEdge > 0.001)
+                    {
+                        // S2 pass 2 (owner 20:15: ONE clean glowing cyan chevron, "bright cyan edges, two-tone, integrated
+                        // into the water - not pale white-cyan blocks"): a saturated turquoise-cyan fill (_ColorA) that lets
+                        // the water's ripples and light pool show through (_ArrowFillAlpha), a crisp bright aqua edge band
+                        // around every arm (_ColorC x _ArrowEdge: only the edge blooms), the forward light pulse on the
+                        // fill; no white-hot block near the camera.
+                        half edgeBand = smoothstep(0.6, 0.88, e);
+                        half3 fill = _ColorA.rgb * (0.82 + 0.35 * beam * _StreakAmount) + _ColorB.rgb * 0.18 * core;
+                        half3 c2 = lerp(fill, _ColorC.rgb * _ArrowEdge, edgeBand);
+                        half fr2 = BWK_Fresnel(n, v, 4.0);
+                        c2 += GlossyEnvironmentReflection(reflect(-v, n), i.positionWS, 0.05h, 1.0h, GetNormalizedScreenSpaceUV(i.positionCS)) * (0.05 + fr2 * 0.4) * _ReflectBoost;
+                        c2 *= _Glow * 4.0;
+                        return half4(MixFog(c2, i.fog), lerp(_ArrowFillAlpha, 1.0, edgeBand));
+                    }
                     // lights up mint-white as it passes under the mascot (the camera rides a fixed distance behind him)
                     half hot = smoothstep(_HotFar, _HotNear, distance(i.positionWS, _WorldSpaceCameraPos));
                     col = lerp(col, _ColorC.rgb, hot * (0.6 + 0.3 * core));
@@ -293,6 +312,40 @@ Shader "BWK/Soft"
 #endif
                     half3 light = BWK_WrapLight(i.positionWS, n, _Wrap);
                     half lum = saturate(dot(light, half3(0.3, 0.5, 0.2)));
+                    if (_MilkGlass > 0.001)
+                    {
+                        // S2 pass 2 (owner 20:15: "THIN, CURVED, PARTLY TRANSLUCENT liquid splash crowns with natural rounded
+                        // edges and droplet beads"; judge: our crowns = opaque white plaster, white coverage 25 % vs ref 11 %):
+                        // a LIQUID shading model replaces the milk volume. Like a thin water sheet the crown TRANSMITS where it
+                        // faces the camera (the turquoise water behind shows through, tinted _MilkThin) and REFLECTS toward
+                        // its silhouette (Fresnel: bright white rounded rims, opaque); milky ribs (object-space streak noise
+                        // along the rise) keep white cores in the fingers; sharp sun / key glints + a crisp probe reflection
+                        // give the wet specular; the alpha follows the same Fresnel + rib mask (see-through centres).
+                        half gv = saturate(dot(n, v));
+                        half gfr = pow(1.0 - gv, _RimPower);
+                        float3 gq = i.positionOS * _BumpScale;
+                        half g1 = BWK_ValueNoise3(gq * float3(1.0, 0.4, 1.0) + float3(0.0, _Time.y * 0.5, 0.0));
+                        half g2 = BWK_ValueNoise3(gq * 2.3 + 7.1);
+                        half rib = saturate((g1 * 0.65 + g2 * 0.35 - 0.5) * 3.2 + 0.45) * saturate(_BumpStrength);
+                        half3 film = _MilkThin.rgb * (0.7 + 0.45 * lum);
+                        half3 milkC = lerp(_ShadowColor.rgb, _ColorA.rgb, smoothstep(0.0, 0.8, lum + 0.25));
+                        half body = saturate(rib * 0.75 + gfr * 1.1);
+                        half3 gcol = lerp(film, milkC, body);
+                        half3 gdown = _ColorB.rgb * saturate(-n.y * 0.8 + 0.1) * 0.35;        // turquoise bounce from the water
+                        gcol += gdown * (1.0 - body);
+                        half3 genv = GlossyEnvironmentReflection(reflect(-v, n), i.positionWS, 0.06h, 1.0h, GetNormalizedScreenSpaceUV(i.positionCS));
+                        gcol += genv * (0.06 + 0.55 * gfr) * _ReflectBoost;
+                        half3 ghv = normalize(L.direction + v);
+                        half gnh = saturate(dot(n, ghv));
+                        half3 gnv = mul((float3x3)UNITY_MATRIX_V, n);
+                        half gkey = saturate(dot(gnv, half3(-0.4, 0.6, 0.69)));
+                        gcol += (pow(gnh, 180.0) * 1.8 * L.shadowAttenuation + pow(gkey, 70.0) * 1.3 + pow(gkey, 10.0) * 0.1) * _SpecStrength;
+                        half3 gtint = i.color.a > 0.001 ? i.color.rgb : half3(1, 1, 1);
+                        gcol = gcol * gtint + _ColorA.rgb * _Glow;
+                        half galpha = lerp(_MilkEdgeAlpha, _MilkAlpha, saturate(body * 1.15));
+                        galpha = saturate(galpha + saturate(pow(gnh, 180.0) + pow(gkey, 70.0)) * 0.5);   // glints stay visible
+                        return half4(MixFog(gcol, i.fog), galpha);
+                    }
                     half3 col = lerp(_ShadowColor.rgb, _ColorA.rgb, smoothstep(0.0, 0.7, lum + 0.2));
                     half down = saturate(-dot(n, half3(0, 1, 0)) * 0.8 + 0.1);
                     col = lerp(col, _ColorB.rgb, down * 0.6);                            // cool water bounce from below

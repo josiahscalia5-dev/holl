@@ -53,6 +53,9 @@ Shader "BWK/Water"
         _WeaveAmp ("Chevron Runway Weave (m)", Float) = 0
         _WeaveLen ("Chevron Runway Weave Length (m)", Float) = 22
         _WeaveZero ("Chevron Runway Weave Zero (m)", Float) = 0
+        // S2 pass 2: water absorption hue lock (the lit water keeps its luminance, blue-violet hues turn toward _HueTarget)
+        _HueLock ("Turquoise Hue Lock", Range(0,1)) = 0
+        _HueTarget ("Turquoise Hue (deg)", Range(170,220)) = 198
     }
     SubShader
     {
@@ -71,6 +74,7 @@ Shader "BWK/Water"
             half _PatchAmount, _DetailStrength;
             float _ChevronHalfLen, _ChevronHalfWidth, _ChevronThick, _ChevronOffset, _ChevronEndX;
             float _WeaveAmp, _WeaveLen, _WeaveZero;
+            half _HueLock, _HueTarget;
         CBUFFER_END
 
         // flowing height field: long swells stretched along the flow + a finer, faster chop
@@ -285,7 +289,34 @@ Shader "BWK/Water"
                 half3 refl = GlossyEnvironmentReflection(reflect(-viewDir, n), i.positionWS, 0.06h, 1.0h, GetNormalizedScreenSpaceUV(i.positionCS));
                 emission += refl * _ReflectTint.rgb * (0.12 + fres * 0.88) * _ReflectBoost * (1.0 - foam);
 
-                return BWK_PBR(i.positionWS, i.positionCS, n, viewDir, albedo, 0.0, smooth, 1.0, emission, 1.0, i.fog);
+                half4 lit = BWK_PBR_Lit(i.positionWS, i.positionCS, n, viewDir, albedo, 0.0, smooth, 1.0, emission, 1.0, i.fog);
+                // ---- S2 pass 2 (owner 20:15 "rich vivid turquoise flowing water"; measured lane under the mascot ours #7099D3
+                //      hue 215 / gameplay rig hue 228 vs reference #7ABADE hue 202): the lavender drum, violet bulbs and the
+                //      pink back light reach the water through the PBR reflection + GI and turn the whole lit lane periwinkle.
+                //      Water absorbs red: its lit colour is hue-locked toward turquoise (Rodrigues rotation about the grey axis,
+                //      mean value kept), only for blue-violet hues (target .. ~285 deg), never the pink / rainbow banks or foam.
+                if (_HueLock > 0.001)
+                {
+                    half3 c = lit.rgb;
+                    half mx = max(c.r, max(c.g, c.b)), mn = min(c.r, min(c.g, c.b));
+                    half chroma = mx - mn;
+                    half hue = 0;
+                    if (chroma > 1e-4)
+                    {
+                        if (mx == c.b) hue = 60.0 * ((c.r - c.g) / chroma + 4.0);
+                        else if (mx == c.g) hue = 60.0 * ((c.b - c.r) / chroma + 2.0);
+                        else hue = 60.0 * fmod((c.g - c.b) / chroma + 6.0, 6.0);
+                    }
+                    half band = smoothstep(_HueTarget, _HueTarget + 6.0, hue) * (1.0 - smoothstep(262.0, 292.0, hue));
+                    half lockMask = (1.0 - smoothstep(0.6, 0.92, across)) * (1.0 - foam);
+                    half ang = radians(-(hue - _HueTarget) * band * _HueLock * lockMask);
+                    const half3 k = half3(0.57735, 0.57735, 0.57735);
+                    half ca = cos(ang), sa = sin(ang);
+                    c = c * ca + cross(k, c) * sa + k * dot(k, c) * (1.0 - ca);
+                    lit.rgb = max(c, 0.0);
+                }
+                lit.rgb = MixFog(lit.rgb, i.fog);
+                return lit;
             }
             ENDHLSL
         }

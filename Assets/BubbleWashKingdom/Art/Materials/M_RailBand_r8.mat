@@ -25,28 +25,31 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
+    - _ArrowEdge: 0
+    - _ArrowFillAlpha: 1
     - _BumpScale: 6
     - _BumpStrength: 0.5
     - _DstBlend: 0
     - _GlintAmount: 0.5
-    - _Glow: 0.24
+    - _Glow: 0.3
     - _HotBoost: 0.6
     - _HotFar: 3.5
     - _HotNear: 3
     - _Metallic: 0
     - _MilkAlpha: 1
     - _MilkEdgeAlpha: 1
+    - _MilkGlass: 0
     - _MilkSoft: 0
     - _Mode: 1
-    - _ReflectBoost: 0.9
+    - _ReflectBoost: 1
     - _RimPower: 3
-    - _RimStrength: 0.3
-    - _Smoothness: 0.95
+    - _RimStrength: 0.35
+    - _Smoothness: 0.96
     - _SpecStrength: 1
     - _SrcBlend: 1
     - _StitchU: 64
     - _StitchV: 26
-    - _StreakAmount: 0.9
+    - _StreakAmount: 1.25
     - _StreakSpeed: 7
     - _StripeWidth: 0.35
     - _Stripes: 4
@@ -55,9 +58,9 @@ Material:
     - _Wrap: 0.5
     - _ZWrite: 1
     m_Colors:
-    - _ColorA: {r: 1, g: 0.5568628, b: 0.7529412, a: 1}
-    - _ColorB: {r: 1, g: 0.7019608, b: 0.34117648, a: 1}
-    - _ColorC: {r: 1, g: 0.38431373, b: 0.6666667, a: 1}
+    - _ColorA: {r: 1, g: 0.30980393, b: 0.68235296, a: 1}
+    - _ColorB: {r: 1, g: 0.8235294, b: 0.36862746, a: 1}
+    - _ColorC: {r: 1, g: 0.23921569, b: 0.61960787, a: 1}
     - _MilkThin: {r: 0.49, g: 0.75, b: 0.91, a: 1}
     - _ShadowColor: {r: 0.62, g: 0.62, b: 0.95, a: 1}
   m_BuildTextureStacks: []

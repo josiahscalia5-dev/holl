@@ -141,3 +141,35 @@ _Text-only export: the lead's brief, the agent's statements and one line per too
 **Agent (2026-11-27 01:37 UTC):**
 
 > _tool: Read - C:/Users/josia/thanksgiving/Docs/AssetPreviews/SM_DoorMachine_s2.png_
+
+**Agent (2026-11-27 01:39 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.Hall.cs_
+
+**Agent (2026-11-27 01:39 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.Hall.cs_
+
+**Agent (2026-11-27 01:39 UTC):**
+
+> _tool: Edit - C:/Users/josia/thanksgiving/Assets/BubbleWashKingdom/Scripts/Editor/SceneBuilder.Hall.cs_
+
+**Agent (2026-11-27 01:39 UTC):**
+
+> _tool: Bash - Compile-check the edited C# files_
+
+**Agent (2026-11-27 01:39 UTC):**
+
+> _tool: Bash - Run agent preview with hall rebuild and stills_
+
+**Agent (2026-11-27 01:42 UTC):**
+
+> _tool: Read - C:/Users/josia/thanksgiving/Captures/agents/assets/screen_S2_p2/v1/R2_rear_S2_like_3s_16x9.png_
+
+**Agent (2026-11-27 01:42 UTC):**
+
+> _tool: Bash - Inspect roller r8 band layout along its axis_
+
+**Agent (2026-11-27 01:43 UTC):**
+
+> _tool: Bash - Measure crops: reference, before, v1_

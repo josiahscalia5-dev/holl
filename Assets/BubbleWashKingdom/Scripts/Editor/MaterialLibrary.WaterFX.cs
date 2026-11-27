@@ -48,6 +48,15 @@ namespace BubbleWash.EditorTools
                 // gloss, the extra probe reflection tinted by the water's own cyan (lavender walls read blue in it), a little
                 // more body glow (we are darker than the reference there)
                 F(m, "_Smoothness", 0.45f); C(m, "_ReflectTint", "#6CD8FF"); F(m, "_ReflectBoost", 0.5f); F(m, "_Glow", 0.14f);
+                // S2 pass 2 (owner 20:15 "rich vivid turquoise flowing water with realistic reflections and depth"; lane under the
+                // mascot measured ours #7099D3 hue 215 (gameplay rig hue 228) vs reference #7ABADE hue 202): the lit water is
+                // hue-locked toward turquoise (BWK_Water _HueLock: the lavender drum / violet light reflections stop turning the
+                // lane periwinkle), cyan-leaning body + patches, crisper glossy reflection (smoothness .45 -> .62), more visible
+                // white flow streaks and subsurface caustic depth
+                F(m, "_HueLock", 0.9f); F(m, "_HueTarget", 197f);
+                C(m, "_DeepColor", "#0C74BE"); C(m, "_ShallowColor", "#16A2D4"); C(m, "_TurquoiseColor", "#20CCDC"); F(m, "_PatchAmount", 0.5f);
+                F(m, "_Smoothness", 0.62f); F(m, "_ReflectBoost", 0.55f); C(m, "_ReflectTint", "#7FF0FF");
+                C(m, "_StreakColor", "#E6FCFF"); F(m, "_StreakAmount", 0.42f); F(m, "_CausticAmount", 0.4f); F(m, "_Glow", 0.16f);
                 // light halos around the decor chevrons: same period / geometry / runway offset as SceneBuilder.BuildDecorChevrons
                 F(m, "_ChevronStart", SceneBuilder.ChevronStart); F(m, "_ChevronSpacing", SceneBuilder.ChevronSpacing);
                 // (v2 notch measured #55B8E5 vs reference deep #3386CC: the arrows now bloom on their own -> fainter, tighter pool)
@@ -94,7 +103,14 @@ namespace BubbleWash.EditorTools
                 F(m, "_Mode", 7); C(m, "_ColorA", "#9CF5EA"); C(m, "_ColorB", "#16D4EE"); C(m, "_ColorC", "#C2FFF2");
                 F(m, "_Glow", 0.5f); F(m, "_StreakAmount", 0.08f); F(m, "_StreakSpeed", 1.6f); F(m, "_ReflectBoost", 0.15f);
                 F(m, "_HotNear", 1.75f); F(m, "_HotFar", 2.15f); F(m, "_HotBoost", 0.12f);
-            });
+                // S2 pass 2 (judge: "big pale cyan-white blocks"; reference = ONE glowing two-tone cyan chevron, bright cyan
+                // edges, integrated into the water; crop (500,560,800,720) cyan pixels ref 68 % vs ours 13 %): two-tone mode -
+                // saturated turquoise-cyan fill at 72 % opacity (the water's ripples + light pool show through), a crisp
+                // bright aqua HDR edge band, no white-hot near-camera block; blended over the water (Transparent queue)
+                F(m, "_ArrowEdge", 1.8f); F(m, "_ArrowFillAlpha", 0.72f);
+                C(m, "_ColorA", "#0DB2D8"); C(m, "_ColorB", "#18D8EE"); C(m, "_ColorC", "#8CFFF4"); F(m, "_Glow", 0.42f);
+                F(m, "_SrcBlend", (float)BlendMode.SrcAlpha); F(m, "_DstBlend", (float)BlendMode.OneMinusSrcAlpha); F(m, "_ZWrite", 1f);
+            }, (int)RenderQueue.Transparent);
             Mat("M_Foam", "BWK/Soft", m =>
             {
                 // soap suds (Mode 5): white-pink puffs, lavender crevices (#A197C4 in the reference), satin gloss, bubble glints
@@ -117,6 +133,10 @@ namespace BubbleWash.EditorTools
                 F(m, "_Wobble", 0.01f); F(m, "_WobbleFreq", 7f);
                 F(m, "_MilkAlpha", 0.97f); F(m, "_MilkEdgeAlpha", 0.45f);
                 F(m, "_SrcBlend", (float)BlendMode.SrcAlpha); F(m, "_DstBlend", (float)BlendMode.OneMinusSrcAlpha); F(m, "_ZWrite", 1f);
+                // S2 pass 2: the 3D droplets thrown off the crowns = clear water beads (liquid sheet shading: see-through
+                // turquoise centre, white Fresnel rim, sharp glints)
+                F(m, "_MilkGlass", 1f); C(m, "_MilkThin", "#9FE6F4"); F(m, "_MilkEdgeAlpha", 0.3f); F(m, "_BumpStrength", 0f);
+                F(m, "_RimPower", 2.2f); F(m, "_SpecStrength", 1.3f); F(m, "_ReflectBoost", 0.6f); F(m, "_Glow", 0.05f); C(m, "_ColorB", "#3CC8E0");
             }, (int)RenderQueue.Transparent);
             // round 6 shot 8.25 s test (NEW materials for SM_FX_Crown_v2_* / SM_Foam_v2_*; the level's materials above are unchanged)
             Mat("M_FX_Milk_v2", "BWK/Soft", m =>
@@ -142,6 +162,13 @@ namespace BubbleWash.EditorTools
                 C(m, "_MilkThin", "#A6DCF2"); C(m, "_ColorA", "#EAFAFD"); F(m, "_Wrap", 0.52f); F(m, "_SpecStrength", 1.35f); F(m, "_Glow", 0.08f);
                 F(m, "_MilkAlpha", 1f); F(m, "_MilkEdgeAlpha", 0.3f);
                 F(m, "_SrcBlend", (float)BlendMode.SrcAlpha); F(m, "_DstBlend", (float)BlendMode.OneMinusSrcAlpha); F(m, "_ZWrite", 1f);
+                // S2 pass 2 (owner 20:15 "thin, curved, partly translucent liquid crowns", judge #3: opaque white plaster, white
+                // coverage 25 % vs reference 11 % in (380,380,960,720)): LIQUID sheet shading (BWK_Soft _MilkGlass) - see-through
+                // water-lit film where the crown faces the camera (alpha .24), opaque white Fresnel rims + milky ribs along
+                // the fingers, sharp wet glints and a crisp probe reflection; turquoise bounce from the water below
+                F(m, "_MilkGlass", 1f); C(m, "_MilkThin", "#A4E6F4"); F(m, "_MilkEdgeAlpha", 0.24f); F(m, "_MilkAlpha", 0.96f);
+                F(m, "_RimPower", 2.4f); F(m, "_BumpScale", 11f); F(m, "_BumpStrength", 0.9f); F(m, "_SpecStrength", 1.4f);
+                F(m, "_ReflectBoost", 0.6f); F(m, "_Glow", 0.05f); C(m, "_ColorB", "#3CC8E0"); C(m, "_ColorA", "#F2FCFF");
             }, (int)RenderQueue.Transparent);
             Mat("M_Foam_v2", "BWK/Soft", m =>
             {

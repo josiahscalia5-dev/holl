@@ -25,7 +25,7 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _CausticAmount: 0.28
+    - _CausticAmount: 0.4
     - _CenterGlow: 0.06
     - _ChevronEndX: 0.38
     - _ChevronGlow: 0.32
@@ -42,15 +42,17 @@ Material:
     - _EdgeFoam: 0.6
     - _EdgeTintAmount: 0.28
     - _FlowSpeed: 7.5
-    - _Glow: 0.14
+    - _Glow: 0.16
+    - _HueLock: 0.9
+    - _HueTarget: 197
     - _NearBrighten: 0.05
-    - _PatchAmount: 0.44
+    - _PatchAmount: 0.5
     - _RainbowAmount: 0.32
-    - _ReflectBoost: 0.5
+    - _ReflectBoost: 0.55
     - _RippleStrength: 1.15
-    - _Smoothness: 0.45
+    - _Smoothness: 0.62
     - _SparkleAmount: 0.9
-    - _StreakAmount: 0.22
+    - _StreakAmount: 0.42
     - _StreakDensity: 1.25
     - _VTile: 4
     - _WaveHeight: 0.025
@@ -61,11 +63,11 @@ Material:
     m_Colors:
     - _CausticColor: {r: 0.49803922, g: 0.9137255, b: 1, a: 1}
     - _ChevronColor: {r: 0.14117648, g: 0.8784314, b: 0.85490197, a: 1}
-    - _DeepColor: {r: 0.078431375, g: 0.42352942, b: 0.7372549, a: 1}
+    - _DeepColor: {r: 0.047058824, g: 0.45490196, b: 0.74509805, a: 1}
     - _EdgeTint: {r: 0.9019608, g: 0.41568628, b: 0.78431374, a: 1}
-    - _ReflectTint: {r: 0.42352942, g: 0.84705883, b: 1, a: 1}
-    - _ShallowColor: {r: 0.101960786, g: 0.5568628, b: 0.8, a: 1}
-    - _StreakColor: {r: 0.72156864, g: 0.9647059, b: 1, a: 1}
-    - _TurquoiseColor: {r: 0.17254902, g: 0.7529412, b: 0.8627451, a: 1}
+    - _ReflectTint: {r: 0.49803922, g: 0.9411765, b: 1, a: 1}
+    - _ShallowColor: {r: 0.08627451, g: 0.63529414, b: 0.83137256, a: 1}
+    - _StreakColor: {r: 0.9019608, g: 0.9882353, b: 1, a: 1}
+    - _TurquoiseColor: {r: 0.1254902, g: 0.8, b: 0.8627451, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -25,6 +25,8 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
+    - _ArrowEdge: 0
+    - _ArrowFillAlpha: 1
     - _BumpScale: 6
     - _BumpStrength: 0.5
     - _DstBlend: 0
@@ -36,6 +38,7 @@ Material:
     - _Metallic: 0
     - _MilkAlpha: 1
     - _MilkEdgeAlpha: 1
+    - _MilkGlass: 0
     - _MilkSoft: 0
     - _Mode: 1
     - _ReflectBoost: 0.65
