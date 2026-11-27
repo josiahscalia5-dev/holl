@@ -892,7 +892,8 @@ def clip_celebrate(t, D=1.2):
         P.hand[tag] = [10.0 + 14.0 * s1(4 * p + ph), 0.0, 0.0]
         P.leg[tag] = [8.0 + 10.0 * s1(2 * p + ph), 0.0, 0.0]
         P.foot[tag] = [10.0 * s1(4 * p + ph), 0.0, 0.0]
-        P.eye_scl[tag] = [1.10, 0.9, 0.22]
+        # optional contract key (v5, owner 2026-11-27: "squinting slit eyes" in the finish): big open happy eyes
+        P.eye_scl[tag] = [1.06, 1.0, 1.06] if CONTRACT.get('celebrate_eye_open') else [1.10, 0.9, 0.22]
     P.tail_rot = [10.0, 18.0 * s1(4 * p), 0.0]
     P.tip_rot, P.pom_rot = [-4.0, 0.0, 0.0], [-6.0, 0.0, 0.0]
     return P

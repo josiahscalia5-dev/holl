@@ -1942,7 +1942,14 @@ def export_game_model():
 # the locks). Derived from mascot_v4_game.blend/.json, so mascot_v4_game.*, SK_Mascot_v4.fbx and SK_Mascot.fbx stay
 # untouched. Rig: BWK_RIG_MODEL_BLEND/JSON = the v5 files, BWK_RIG_FBX = SK_Mascot_v5.fbx.
 V5_POM_TIP_R = 0.222      # yarn tip radius (reference rear: pom-pom diameter ~0.42-0.45 x brim width 0.98 m)
-V5_POM_CORE_R = 0.150     # core sphere (v4 0.148): its shells fill between the locks
+V5_POM_CORE_R = 0.165     # core sphere (v4 0.148, p6 0.150; p7 bigger: its shell fuzz fills between the finer locks)
+# ---- S2 pass 7 (2026-11-27 08:30, owner: big glossy eyes / cheerful smile in the finish pose, plush fur WITHOUT streaks
+#      or blocky patches, a soft round pom-pom instead of an urchin)
+V7_YARN_N = 1150          # Fibonacci directions for the finer, curlier, blunt yarn locks (p6: 560 pointed 4-sided locks)
+V7_MOUTH_K = 1.22         # open smile scaled in the face plane (reference mouth ~0.30 x face width; ours read small)
+V7_NOSE_K = 1.5           # the tiny nose was invisible in Unity (reference: small but clearly readable)
+V7_EYE_CLEAR = 1.14       # rig fur mask around the eyes x this: shells stop at the eye rim (pink fuzz covered the iris edge)
+V7_UV_S = math.pi * 0.5   # metres per shader base unit: BWK_Fur samples (2u, v) and expects square cells in metres
 V5_POM_SINK = 0.50        # fraction of the tip radius sunk into the crown (reference: ball sits ON the crown, no neck)
 V5_YARN_N = 560           # Fibonacci directions; locks pointing into the crown are skipped (never seen)
 V5_ARM_UPPER = 18.0       # deg elevation of the upper arm (runs out under the brim; v4 straight arm 40.5)
@@ -2018,6 +2025,142 @@ def _yarn_locks(c, ax, n, r_tip, seed=11):
     return dict(V=V, F=F, M=["M_PawPad"] * len(F), UV=UV, CO=CO)
 
 
+def _soft_yarn_locks(c, ax, n, r_tip, seed=23):
+    """Pass 7: a SOFT ROUND yarn ball. Many thin (3-sided) curly locks with BLUNT rounded ends and only +-6 % length
+    variation, so the silhouette is round and fluffy instead of the p6 urchin (fewer, thicker, pointed straight spikes)."""
+    import random
+    rng = random.Random(seed)
+    V, F, UV, CO = [], [], [], []
+    golden = math.pi * (3.0 - math.sqrt(5.0))
+    rings = ((0.42, 0.85), (0.70, 1.00), (0.90, 0.95), (0.985, 0.62))   # (fraction of the lock length, radius scale)
+    cols = ((0.060, 0.018, 0.135), (0.235, 0.080, 0.500), (0.420, 0.230, 0.760), (0.540, 0.380, 0.880))
+    tip_col = (0.600, 0.450, 0.920)
+    sides = 3
+    for k in range(n):
+        z = 1.0 - 2.0 * (k + 0.5) / n
+        rr = math.sqrt(max(0.0, 1.0 - z * z))
+        d = Vector((rr * math.cos(golden * k), rr * math.sin(golden * k), z))
+        d = (d + Vector((rng.gauss(0, 0.05), rng.gauss(0, 0.05), rng.gauss(0, 0.05)))).normalized()
+        if d.dot(ax) < -0.30:
+            continue
+        L = r_tip * rng.uniform(0.92, 1.04)
+        w = rng.uniform(0.0065, 0.0105)
+        t1 = d.cross(Vector((0.31, 0.57, 0.76))).normalized()
+        t2 = d.cross(t1).normalized()
+        ph = rng.uniform(0.0, 2.0 * math.pi)
+        bend = (t1 * math.cos(ph) + t2 * math.sin(ph)) * rng.uniform(0.012, 0.040)
+        ph2 = ph + rng.uniform(1.2, 2.0)
+        wig = (t1 * math.cos(ph2) + t2 * math.sin(ph2)) * rng.uniform(0.004, 0.012)   # S-curl: yarn plies, not spikes
+        tone = rng.uniform(0.88, 1.10)
+        twist = rng.uniform(0.0, 2.0 * math.pi)
+        base = len(V)
+
+        def ctr(s, d=d, L=L, bend=bend, wig=wig):
+            return c + d * (L * s) + bend * (s * s) + wig * math.sin(math.pi * s * 1.6)
+        for s, sc in rings:
+            cc = ctr(s)
+            for j in range(sides):
+                a = twist + 2.0 * math.pi * j / sides
+                V.append(cc + (t1 * math.cos(a) + t2 * math.sin(a)) * (w * sc))
+        V.append(ctr(1.0))
+        tip = len(V) - 1
+        for ri in range(len(rings) - 1):
+            for j in range(sides):
+                a0, a1 = base + ri * sides + j, base + ri * sides + (j + 1) % sides
+                b0, b1 = a0 + sides, a1 + sides
+                F.append((a0, a1, b1, b0))
+                UV.append([(j / sides, rings[ri][0]), ((j + 1) / sides, rings[ri][0]),
+                           ((j + 1) / sides, rings[ri + 1][0]), (j / sides, rings[ri + 1][0])])
+                c0 = tuple(min(1.0, x * tone) for x in cols[ri]) + (1.0,)
+                c1_ = tuple(min(1.0, x * tone) for x in cols[ri + 1]) + (1.0,)
+                CO.append([c0, c0, c1_, c1_])
+        last = base + (len(rings) - 1) * sides
+        for j in range(sides):
+            F.append((last + j, last + (j + 1) % sides, tip))
+            UV.append([(j / sides, 0.985), ((j + 1) / sides, 0.985), ((j + 0.5) / sides, 1.0)])
+            c0 = tuple(min(1.0, x * tone) for x in cols[-1]) + (1.0,)
+            ct = tuple(min(1.0, x * tone) for x in tip_col) + (1.0,)
+            CO.append([c0, c0, ct])
+    return dict(V=V, F=F, M=["M_PawPad"] * len(F), UV=UV, CO=CO)
+
+
+def _v7_face_and_fur_uv(contract):
+    """Pass 7 (v5 only): bigger open smile + readable nose (moved ON the body surface), clean eye rims, and a metric
+    UV layout for the shell fur. BWK_Fur samples strands at (2u, v) and expects square cells in metres; the game body
+    carried the master's SMART-UV islands (isotropic, arbitrary orientation per island) -> 2:1 stretched strand cells
+    whose direction changed per island = the streaks / blocky patches the owner saw. Body = equirectangular around the
+    body centre (seam at the FRONT centre line: never seen by the rear gameplay camera), arms = cylindrical about each
+    arm's root->mitt axis (seam underneath), both at V7_UV_S metres per base unit."""
+    body = bpy.data.objects["Body"]
+    bme = body.data
+    bvh = BVHTree.FromPolygons([v.co.copy() for v in bme.vertices], [tuple(p.vertices) for p in bme.polygons])
+
+    def on_face(p, ref):
+        """Re-project p onto the body surface keeping its height above the surface at `ref` (ray along -y)."""
+        h0 = bvh.ray_cast(Vector((ref.x, ref.y - 0.4, ref.z)), Vector((0.0, 1.0, 0.0)))
+        h1 = bvh.ray_cast(Vector((p.x, p.y - 0.4, p.z)), Vector((0.0, 1.0, 0.0)))
+        if h0[0] is None or h1[0] is None:
+            return p
+        return Vector((p.x, h1[0].y + (ref.y - h0[0].y), p.z))
+    mc, nc = Vector(contract["mouth_c"]), Vector(contract["nose_c"])
+    nm = nn = 0
+    for name in ("Mouth", "Tongue"):
+        me = bpy.data.objects[name].data
+        for v in me.vertices:
+            p = v.co.copy()
+            if name == "Mouth" and (p - nc).length < 0.045:          # nose (rides in the Mouth object)
+                q = nc + (p - nc) * V7_NOSE_K
+                v.co = q                                             # small ellipsoid: scaled in 3D
+                nn += 1
+            elif (p - mc).length < 0.16 and p.z < nc.z - 0.02:       # mouth rings + tongue (lashes are > 0.2 m away)
+                q = Vector((mc.x + (p.x - mc.x) * V7_MOUTH_K, p.y, mc.z + (p.z - mc.z) * V7_MOUTH_K))
+                v.co = on_face(q, p)
+                nm += 1
+        me.update()
+    contract["mouth_scale"] = contract.get("mouth_scale", 1.0) * V7_MOUTH_K
+    contract["eye_scale"] = contract.get("eye_scale", 1.0) * V7_EYE_CLEAR
+    contract["celebrate_eye_open"] = 1        # rig: the finish (Celebrate) keeps the big eyes open (v4 squeezed to 22 %)
+    # ---- metric fur UVs
+    bc = Vector(contract["BODY_C"])
+
+    def write_uv(me, fn, seam_wrap):
+        uvl = me.uv_layers.get("UVMap") or me.uv_layers.new(name="UVMap")
+        for pl in me.polygons:
+            uvs = [fn(me.vertices[me.loops[li].vertex_index].co) for li in pl.loop_indices]
+            if seam_wrap:
+                us = [u for u, _ in uvs]
+                if max(us) - min(us) > seam_wrap * 0.5:
+                    uvs = [(u + seam_wrap if u < seam_wrap * 0.5 else u, vv) for u, vv in uvs]
+            for li, uv in zip(pl.loop_indices, uvs):
+                uvl.data[li].uv = uv
+
+    def body_uv(p):
+        d = p - bc
+        phi = math.atan2(-d.x, d.y)                              # 0 at the back, +-pi at the front centre line
+        theta = math.acos(max(-1.0, min(1.0, -d.z / max(d.length, 1e-6))))   # 0 = seat pole, pi = crown pole
+        r_eq = 0.46
+        # u spans the circumference 2*pi*r_eq -> base x = 2u = arc / S ; v = polar arc / S (r ~0.5)
+        return (0.5 + phi / (2.0 * math.pi)) * (math.pi * r_eq / V7_UV_S), theta * 0.5 / V7_UV_S
+    write_uv(bme, body_uv, (math.pi * 0.46 / V7_UV_S))
+    for tag in ('L', 'R'):
+        a = contract["arms"][tag]
+        root, palm = Vector(a["root"]), Vector(a["palm_c"])
+        axis = (palm - root).normalized()
+        up = Vector((0.0, 0.0, 1.0))
+        b1 = (up - axis * up.dot(axis)).normalized()
+        b2 = axis.cross(b1)
+
+        def arm_uv(p, root=root, axis=axis, b1=b1, b2=b2):
+            q = p - root
+            t = q.dot(axis)
+            ang = math.atan2(q.dot(b2), q.dot(b1))               # 0 on top, seam (+-pi) underneath
+            return ((ang + math.pi) * 0.085 / V7_UV_S) * 0.5, t / V7_UV_S + 3.3
+        write_uv(bpy.data.objects["Arm." + tag].data, arm_uv, math.pi * 0.085 / V7_UV_S)
+    print("CHECK v7 face: mouth/tongue verts %d x%.2f, nose verts %d x%.2f, eye_scale %.3f mouth_scale %.3f; fur UVs "
+          "body equirect + arm cylinders at %.3f m/unit" % (nm, V7_MOUTH_K, nn, V7_NOSE_K, contract["eye_scale"],
+                                                             contract["mouth_scale"], V7_UV_S))
+
+
 def export_game_model_v5():
     bpy.ops.wm.open_mainfile(filepath=GAME_BLEND)
     with open(GAME_JSON) as fh:
@@ -2035,7 +2178,7 @@ def export_game_model_v5():
     k = V5_POM_CORE_R / hat["pompom_r"]
     g["V"] = [c1 + (Vector(v) - c0) * k for v in g["V"]]
     g["CO"] = [[(1.0, 1.0, 1.0, 1.0)] * len(f) for f in g["CO"]]
-    locks = _yarn_locks(c1, ax, V5_YARN_N, V5_POM_TIP_R)
+    locks = _soft_yarn_locks(c1, ax, V7_YARN_N, V5_POM_TIP_R)
     bpy.data.objects.remove(old, do_unlink=True)
     _emit("PomPom", _merge(g, locks), coll)
     hat["pompom_c"] = list(c1)
@@ -2105,6 +2248,7 @@ def export_game_model_v5():
             me.vertices[vi].co = co + rv.normalized() * push
             moved += 1
     me.update()
+    _v7_face_and_fur_uv(contract)            # ---- 4. pass 7: face (smile, nose, eye rims) + metric fur UVs
     contract["sole_fur"] = V5_SOLE_FUR
     contract["arm_cuff_tol"] = V5_ARM_CUFF_TOL
     objs = [o for o in bpy.data.objects if o.type == 'MESH']
