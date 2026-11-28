@@ -397,11 +397,11 @@ def mat_emit(name, hexcol, strength, base_hex=None):
 
 
 def mat_chevron():
-    """Glowing cyan boost chevron: luminous turquoise glass panel, paler cyan-white toward the facing centre."""
+    """Glowing cyan boost chevron: saturated luminous turquoise panel, slightly paler at grazing edges."""
     b = NT("WFX_Chevron")
     lw = b.n("ShaderNodeLayerWeight"); lw.inputs["Blend"].default_value = 0.4
-    col = b.mix(srgb("#B8FBFF"), srgb("#2FD9EA"), b.ramp(lw.outputs["Facing"], [(0.1, (0, 0, 0, 1)), (0.8, (1, 1, 1, 1))]).outputs[0])
-    p = b.principled(Base_Color=col, Roughness=0.1, Coat_Weight=1.0, Emission_Color=col, Emission_Strength=1.6)
+    col = b.mix(srgb("#1FD3E6"), srgb("#9AF4FF"), b.ramp(lw.outputs["Facing"], [(0.5, (0, 0, 0, 1)), (1.0, (1, 1, 1, 1))]).outputs[0])
+    p = b.principled(Base_Color=col, Roughness=0.1, Coat_Weight=1.0, Emission_Color=col, Emission_Strength=1.5)
     b.link(p.outputs[0], b.out.inputs["Surface"])
     return b.m
 
@@ -504,20 +504,20 @@ def build_fx(ctx, mascot, crowns, milk, drop_mat, bub_mat):
                 cells[k] = p
         tips = list(cells.values())
         rng.shuffle(tips)
-        for p in tips[:14]:
+        for p in tips[:10]:
             v = Vector(p)
-            r = rng.uniform(0.018, 0.03)
+            r = rng.uniform(0.012, 0.02)
             if bvh and occludes(v, cams, bvh):
                 n_rej += 1
                 continue
-            add_drop(coll, me_drop, milk, v + Vector((0, 0, r * 0.4)), r, "WFX_CrownTip")
+            add_drop(coll, me_drop, milk, v + Vector((0, 0, r * 0.3)), r, "WFX_CrownTip")
             n_tip += 1
-        # detached droplets thrown up / outward from the tips
-        for i in range(22):
+        # detached droplets thrown up / outward from the tips (few, small, close to the crown like the original)
+        for i in range(9):
             base = Vector(rng.choice(tips)) if tips else ctr
-            off = right * side * rng.uniform(0.04, 0.45) + up * rng.uniform(0.05, 0.42) - fwd * rng.uniform(-0.05, 0.35)
+            off = right * side * rng.uniform(0.06, 0.32) + up * rng.uniform(0.03, 0.2) - fwd * rng.uniform(0.0, 0.25)
             p = base + off
-            r = rng.uniform(0.014, 0.042)
+            r = rng.uniform(0.012, 0.03)
             if bvh and occludes(p, cams, bvh):
                 n_rej += 1
                 continue
@@ -534,14 +534,14 @@ def build_fx(ctx, mascot, crowns, milk, drop_mat, bub_mat):
             if abs(lat) < 0.35:
                 continue
             p = mc + right * lat - fwd * rng.uniform(-0.2, 2.2)
-            p.z = zw + rng.uniform(0.04, 0.5)
-            r = rng.uniform(0.02, 0.07)
+            p.z = zw + rng.uniform(0.03, 0.35)
+            r = rng.uniform(0.015, 0.05)
             if bvh and occludes(p, cams, bvh):
                 n_rej += 1
                 continue
             add_drop(coll, me_b, drop_mat, p, r, "WFX_WaterBubble")
             n_b += 1
-            if n_b >= 26:
+            if n_b >= 16:
                 break
     print("%s fx: crown tips %d, detached droplets %d, water bubbles %d, rejected (over mascot) %d" % (LOG, n_tip, n_det, n_b, n_rej))
     return coll
@@ -634,6 +634,12 @@ def apply(ctx):
     milk = mat_milk()
     n = assign(crowns, {"M_FX_Milk_v3"}, milk)
     for cr in crowns:
+        # liquid read: relax the faceted V7 sheet and round every edge / tip (look test; Unity would get the re-exported mesh)
+        sm = cr.modifiers.new("WFX_relax", "SMOOTH"); sm.factor = 0.6; sm.iterations = 3
+        sd = cr.modifiers.new("WFX_round", "SUBSURF"); sd.levels = sd.render_levels = 1
+        for f in cr.data.polygons:
+            f.use_smooth = True
+    for cr in crowns:
         bb = [cr.matrix_world @ Vector(c) for c in cr.bound_box]
         lo = Vector((min(p.x for p in bb), min(p.y for p in bb), min(p.z for p in bb)))
         hi = Vector((max(p.x for p in bb), max(p.y for p in bb), max(p.z for p in bb)))
@@ -642,3 +648,33 @@ def apply(ctx):
         bb = [body.matrix_world @ Vector(c) for c in body.bound_box]
         print("%s mascot bbox %s .. %s" % (LOG, tuple(round(min(p[i] for p in bb), 2) for i in range(3)), tuple(round(max(p[i] for p in bb), 2) for i in range(3))))
     build_fx(ctx, body, crowns, milk, mat_droplet(), bub)
+    preview_light_if_no_lighting(ctx)
+
+
+def preview_light_if_no_lighting(ctx):
+    """ONLY while the lighting-artist's s2v1_lighting.py does not exist: a neutral violet-tunnel preview light so the water /
+    gold / foam materials can be judged at all (emission-only renders hide gloss and metal). Removed automatically as soon as the
+    lighting module exists (it owns world + lights)."""
+    import os
+    if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "s2v1_lighting.py")):
+        return
+    sc = ctx["scene"]
+    w = bpy.data.worlds.new("WFX_TEMP_world")
+    w.use_nodes = True
+    bg = next(n for n in w.node_tree.nodes if n.type == "BACKGROUND")
+    bg.inputs[0].default_value = srgb("#6A55B8"); bg.inputs[1].default_value = 0.9
+    sc.world = w
+    cam = bpy.data.objects.get("CAM_R2_16x9")
+    if cam is None:
+        return
+    m3 = cam.matrix_world.to_3x3()
+    fwd = (m3 @ Vector((0, 0, -1))).normalized(); upv = (m3 @ Vector((0, 1, 0))).normalized()
+    base = cam.matrix_world.translation
+    for name, off, col, e, size in (("WFX_TEMP_key", fwd * 1.0 + upv * 2.5, "#FFE9F6", 220.0, 3.0),
+                                    ("WFX_TEMP_door", fwd * 9.0 + upv * 1.5, "#FFC870", 400.0, 4.0),
+                                    ("WFX_TEMP_core", fwd * 22.0 + upv * 1.0, "#A88BFF", 600.0, 5.0)):
+        ld = bpy.data.lights.new(name, "AREA"); ld.energy = e; ld.color = srgb(col)[:3]; ld.size = size
+        lo = bpy.data.objects.new(name, ld); sc.collection.objects.link(lo)
+        lo.location = base + off
+        lo.rotation_euler = (-upv).to_track_quat("-Z", "Y").to_euler()
+    print("%s TEMP preview light (no s2v1_lighting.py yet)" % LOG)
