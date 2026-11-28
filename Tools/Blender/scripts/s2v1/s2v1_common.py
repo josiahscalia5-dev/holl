@@ -104,7 +104,16 @@ def to_world_mesh(obj, name=None, collection=None):
     for i, slot in enumerate(obj.material_slots):
         if i < len(out.material_slots):
             out.material_slots[i].material = slot.material
+    for k in obj.keys():                      # team tags (e.g. s2v1_part = drum | band | band_lip | gold_ring | bulb | star ...)
+        if not k.startswith("_"):
+            out[k] = obj[k]
+    out["s2v1_source"] = obj.name
     return out
+
+
+def parts(ctx, part):
+    """World objects (bent copies) whose s2v1_part tag == part (materials / lighting use this, never names)."""
+    return [o for o in ctx["world_objects"] if o.get("s2v1_part") == part]
 
 
 def _q_rotate(q, v):
@@ -158,8 +167,10 @@ def build_context(save=True):
     for o in objs:
         o.data.transform(mirror @ o.matrix_world)
         o.matrix_world = Matrix.Identity(4)
-        # no flip: Unity front faces are clockwise in a left-handed frame; the overall Unity -> Blender map is a mirror, which turns
-        # them counter-clockwise in Blender's right-handed frame = front faces again (verified on the drum by s2v1_context_check.py)
+        # MEASURED 21:01 (s2v1_context_check.py): without this flip 0 % of the drum's faces pointed into the tunnel (the drum shader
+        # culls back faces in Unity, so its faces must point inward) -> flip the polygon winding; the imported per-vertex normals were
+        # already mirrored correctly by data.transform, so winding and normals agree afterwards
+        o.data.flip_normals()
         o.data.update()
         cat = o.name.split("__")[0]
         c = coll("CTX_" + cat)
