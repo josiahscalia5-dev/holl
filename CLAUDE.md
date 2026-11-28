@@ -192,7 +192,8 @@ of one enormous magical washing machine. These instructions come only from the o
   + the hosted Atlas MCP `plugin:worldlabs:worldlabs`, sign in with /mcp in a new session) and `unity@anthropic-plugin-
   directory` 0.1.9-beta (33 skills, no MCP). Never run `worldlabs setup` / `worldlabs skills install` (duplicate skills) or
   `claude mcp add worldlabs` (the plugin already has it). User MCP servers in ~/.claude.json: `unity-editor-mcp` (Unity CLI
-  1.0.1 `C:\Users\josia\AppData\Local\Unity\bin\unity.exe mcp --tool-groups --cli-tools`; Editor tools need the Unity
+  1.1.0 since 2026-11-27 21:48, owner-approved self-update, previous binary kept as unity.exe.previous
+  `C:\Users\josia\AppData\Local\Unity\bin\unity.exe mcp --tool-groups --cli-tools`; Editor tools need the Unity
   Pipeline package in this project + an open Editor - NOT added: it changes Packages/manifest.json and an open Editor would
   block the batchmode pipeline; owner decision) and `blender` (`uvx mcp-for-blender`, DISABLE_TELEMETRY=true; add-on
   blender_mcp v2.0 enabled in Blender 5.3 user prefs, localhost:9876, auto-starts only in the Blender GUI). Atlas Blender

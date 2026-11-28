@@ -35,26 +35,36 @@ TRIM_OLD = ["CTX_old_tunnel_wall", "CTX_old_tunnel_rings", "CTX_old_tunnel_stars
 BAKES = "C:/Users/josia/thanksgiving/Tools/Blender/work/s2v1/bakes"
 
 # ---------------------------------------------------------------- layout (track space), measured on the ORIGINAL through R2
-# screen radii around the near vanishing centre (707, 212): band A lip 256 px, band B 207 px, gold ring 1 bulbs ~123 px, gold ring 2 ~63 px
+# Measured 2026-11-27 22:0x on the ORIGINAL (gridded zoom, Captures/s2v1/env/grid_orig.png): the original's rings are concentric
+# around ~(752, 215) px; the track-centred tunnel projects around (707..725, 205..225) for d 41..55 (camera / track-bend offset,
+# lead-owned) -> we match the ring RADII (mean of horizontal / vertical screen radius) and keep the drum on the track axis.
+#   thick band: outer edge ~247 h / ~195 v px, inner (crest) ~190 / ~175  -> front face d 42.55 (R 4.2 = 244 px), crest R 3.65
+#   fainter band ~163 px -> d 47.2 crest R 3.9;  gold ring 1: outer 143 / 125, bulbs ~124 / 117, inner ~107 / 104 -> d 52.5,
+#   radial depth 0.84 m (inner face R 3.36);  gold ring 2: ~95 h / ~57 v px (mean ~76 + stars Y_s / P_s inside it) -> d 61.5
 BANDS = [  # (name, d centre, half width, depth, lips)
-    ("A", 41.05, 0.50, 0.40, ("crest", "front")),
-    ("B", 43.70, 0.36, 0.30, ("crest",)),
-    ("C", 72.80, 0.34, 0.28, ("crest",)),
-    ("D", 79.55, 0.36, 0.30, ("crest",)),
+    ("A", 43.10, 0.55, 0.55, ("crest", "front")),
+    ("B", 47.20, 0.32, 0.30, ("crest",)),
+    ("C", 68.50, 0.30, 0.28, ("crest",)),
+    ("D", 76.00, 0.30, 0.28, ("crest",)),
 ]
-GOLD = [  # (name, d centre, scale of the profile, bulbs, bulb radius)
-    ("G1", 52.50, 1.00, 28, 0.085),
-    ("G2", 74.40, 0.92, 24, 0.080),
+GOLD = [  # (name, d centre, radial scale, width scale, bulbs, bulb radius)
+    ("G1", 52.50, 1.40, 1.25, 28, 0.12),
+    ("G2", 60.80, 1.15, 1.00, 24, 0.10),
 ]
-STARS = [  # (name, d, angle deg (0 top, + right), size m (tip to tip), colour, roll deg)
-    ("Y_UL", 41.9, -52, 1.10, "yellow", 0),
-    ("Y_UR", 40.75, 64, 1.15, "yellow", 0),
-    ("C_L", 49.2, -49, 1.15, "cyan", 0),
-    ("C_R", 44.9, 71, 1.20, "cyan", 0),
-    ("P_R", 41.0, 100, 0.95, "pink", 0),
-    ("Y_s", 64.0, 62, 1.00, "yellow", 0),
-    ("P_s", 67.8, 112, 1.05, "pink", 0),
+# stars: polar position around the original's ring centre mapped onto the track tunnel's centre (solve_stars2.py);
+# neon SIGNS facing down the tunnel (plane normal = -d tilted GAMMA toward the axis), on a short stem to the wall
+# solve_stars2.py: C_L / C_R / Y_s / P_s fit within 2 px; the 3 big near-door stars (polar r 291-306 px) lie beyond the drum ->
+# they lean back toward the wall (gamma 55) right behind the door (still ~20-40 px inside the original's radius)
+STARS = [  # (name, d, angle deg (0 top, + right), size m (tip to tip), colour, roll deg, gamma deg = lean toward the wall)
+    ("Y_UL", 40.75, -56, 1.00, "yellow", -6, 55),
+    ("Y_UR", 40.75, 60, 1.15, "yellow", 4, 55),
+    ("C_L", 44.2, -59, 1.20, "cyan", -8, 22),
+    ("C_R", 45.4, 67, 1.40, "cyan", 10, 22),
+    ("P_R", 40.65, 101, 0.90, "pink", 8, 55),
+    ("Y_s", 67.2, 83, 1.10, "yellow", 6, 22),
+    ("P_s", 63.2, 116, 1.10, "pink", 12, 22),
 ]
+STAR_GAMMA = 22.0      # deg: default lean (star plane normal = -d tilted toward the tunnel axis)
 # perforation zones (between the elements; each zone has its own tile grid, its seams lie under a band / ring)
 SLOT_BIG = dict(pu=0.62, pv=0.50, hu=0.21, hv=0.13, n=2.3)      # big ovals near the door
 SLOT_DASH = dict(pu=0.50, pv=0.38, hu=0.17, hv=0.055, n=2.8)     # the rows of small dashes deeper in
@@ -100,8 +110,11 @@ def ph_mat(key):
 
 # ---------------------------------------------------------------- generic mesh helpers
 def cyl(theta, r, d):
-    """track-space point(s) on a cylinder around the tunnel axis: angle theta (0 top, + right), radius r, distance d."""
-    return np.stack([r * np.sin(theta), d, AXIS_Z + r * np.cos(theta)], -1)
+    """track-space point(s) on a cylinder around the tunnel axis: angle theta (0 top, + right), radius r, distance d
+    (any mix of scalars / equal-shape arrays; broadcast first - np.stack needs equal shapes)."""
+    th, rr, dd = np.broadcast_arrays(np.asarray(theta, dtype=np.float64), np.asarray(r, dtype=np.float64),
+                                     np.asarray(d, dtype=np.float64))
+    return np.stack([rr * np.sin(th), dd, AXIS_Z + rr * np.cos(th)], -1)
 
 
 def make_obj(name, verts, faces, part, mats, coll, loop_uv=None, mat_idx=None, smooth=True, sharp_deg=None):
@@ -335,32 +348,35 @@ def build_band(name, d, hw, dep, lips, coll):
 
 
 # ---------------------------------------------------------------- gold rings, sockets, bulbs
-def gold_profile(s):
-    """multi-step polished ring profile (dy, r); front = -dy (toward the camera). s scales the radial depth / width."""
+def gold_profile(s, sw=None):
+    """multi-step polished ring profile (dy, r); front = -dy (toward the camera). s scales the radial depth, sw the width along d."""
     rw = R_WALL
+    sw = s if sw is None else sw
     w = lambda x: x * s
     pts = [
-        (0.36 * s, rw + 0.08),            # back, behind the wall
-        (0.36 * s, rw - 0.06),            # back flange
-        (0.24 * s, rw - w(0.10)),
-        (0.22 * s, rw - w(0.46)),         # back face down
-        (0.12 * s, rw - w(0.58)),         # inner roll (back)
-        (-0.16 * s, rw - w(0.60)),        # inner face
-        (-0.30 * s, rw - w(0.54)),        # inner raised lip (front)
-        (-0.30 * s, rw - w(0.44)),
-        (-0.22 * s, rw - w(0.41)),        # step down into the bulb channel
-        (-0.22 * s, rw - w(0.15)),        # channel floor (bulbs sit here)
-        (-0.32 * s, rw - w(0.12)),        # outer raised roll
-        (-0.32 * s, rw - w(0.02)),
-        (-0.24 * s, rw + 0.00),
-        (-0.24 * s, rw + 0.08),
+        (0.36 * sw, rw + 0.08),            # back, behind the wall
+        (0.36 * sw, rw - 0.06),            # back flange
+        (0.24 * sw, rw - w(0.10)),
+        (0.22 * sw, rw - w(0.46)),         # back face down
+        (0.12 * sw, rw - w(0.58)),         # inner roll (back)
+        (-0.16 * sw, rw - w(0.60)),        # inner face
+        (-0.30 * sw, rw - w(0.54)),        # inner raised lip (front)
+        (-0.30 * sw, rw - w(0.44)),
+        (-0.22 * sw, rw - w(0.41)),        # step down into the bulb channel
+        (-0.22 * sw, rw - w(0.15)),        # channel floor (bulbs sit here)
+        (-0.32 * sw, rw - w(0.12)),        # outer raised roll
+        (-0.32 * sw, rw - w(0.02)),
+        (-0.24 * sw, rw + 0.00),
+        (-0.24 * sw, rw + 0.08),
     ]
-    radii = [0, 0.03, 0.04, 0.05, 0.07, 0.07, 0.04, 0.035, 0.02, 0.02, 0.035, 0.04, 0.02, 0]
-    return fillet(pts, radii, n=4), (-0.22 * s, rw - w(0.28))   # profile, bulb seat (dy, r)
+    k = min(s, sw)
+    radii = [0, 0.03 * k, 0.04 * k, 0.05 * k, 0.07 * k, 0.07 * k, 0.04 * k, 0.035 * k, 0.02 * k, 0.02 * k, 0.035 * k, 0.04 * k,
+             0.02 * k, 0]
+    return fillet(pts, radii, n=4), (-0.22 * sw, rw - w(0.28))   # profile, bulb seat (dy, r)
 
 
-def build_gold(name, d, s, nb, rb, coll):
-    prof, (sdy, sr) = gold_profile(s)
+def build_gold(name, d, s, sw, nb, rb, coll):
+    prof, (sdy, sr) = gold_profile(s, sw)
     objs = [lathe("S2V1_gold_" + name, prof, d, 120, "gold_ring", [ph_mat("gold_ring")], coll, urep=10.0, sharp_deg=60)]
     # sockets: small lathed cups, axis = -d (facing the camera), sitting on the channel floor
     cup = fillet([(0.0, rb * 0.06), (0.0, rb * 1.45), (-0.035, rb * 1.42), (-0.045, rb * 1.18), (-0.02, rb * 1.05), (-0.02, rb * 0.06)],
@@ -432,50 +448,76 @@ def star_outline(size, ri_frac=0.47, n_fil=5):
     return np.array(out)
 
 
-def build_star(name, d, ang, size, colour, roll, coll, standoff=0.10):
+def sweep_tube(C, rad, nt, closed=True):
+    """circular tube (radius rad, nt sides) swept along a polyline C (n, 3); returns verts, faces, uv (parallel-transport frames)."""
+    n = len(C)
+    T = np.roll(C, -1, 0) - np.roll(C, 1, 0) if closed else np.gradient(C, axis=0)
+    T /= np.linalg.norm(T, axis=1, keepdims=True)
+    ref = np.array([0.0, 0.0, 1.0]) if abs(T[0][2]) < 0.9 else np.array([1.0, 0.0, 0.0])
+    N = np.cross(T[0], ref); N /= np.linalg.norm(N)
+    V = []
+    for i in range(n):
+        N = N - T[i] * (N @ T[i]); N /= np.linalg.norm(N)
+        B = np.cross(T[i], N)
+        for m in range(nt):
+            a = 2 * math.pi * m / nt
+            V.append(C[i] + rad * (math.cos(a) * N + math.sin(a) * B))
+    faces, uv = grid_faces(n, nt, closed, True, np.linspace(0, 6, n + 1), np.linspace(0, 1, nt + 1))
+    return np.array(V), faces, uv
+
+
+def build_star(name, d, ang, size, colour, roll, coll, gamma=None):
+    """neon star SIGN: a round tube along a rounded 5-point outline in a plane facing down the tunnel (normal = -d tilted gamma
+    toward the axis, star 'up' = world up projected into the plane), its outer tips 6 cm off the wall, a backplate (star_glow)
+    3 cm behind the tube and a stem to the wall (no floating parts)."""
+    gamma = math.radians(STAR_GAMMA if gamma is None else gamma)
     th0 = math.radians(ang)
-    up_sign = -1.0 if ang > 0 else 1.0      # screen-up on the wall = toward the ceiling along the circumference
-    if abs(ang) > 150:
-        up_sign = 1.0
+    r_out = np.array([math.sin(th0), 0.0, math.cos(th0)])          # radial outward
+    nrm = -np.array([0.0, 1.0, 0.0]) * math.cos(gamma) - r_out * math.sin(gamma)
+    nrm /= np.linalg.norm(nrm)
+    up = np.array([0.0, 0.0, 1.0]) - nrm * nrm[2]; up /= np.linalg.norm(up)
+    across = np.cross(up, nrm)
     o2 = star_outline(size)
     rl = math.radians(roll)
     rot = np.array([[math.cos(rl), -math.sin(rl)], [math.sin(rl), math.cos(rl)]])
     o2 = o2 @ rot.T
-    # 2D (x = across, y = up) -> wall (arc u along the circumference, v along d); up = circumferential toward the ceiling,
-    # tilted toward the camera a little so the star reads upright from the gameplay / R2 cameras
-    tilt = 0.35 * abs(math.cos(th0))
-    across = -1.0 if ang > 0 else 1.0      # screen-right on the right wall = toward the camera (-d)
-    du = up_sign * o2[:, 1] * math.cos(tilt)
-    dv = -o2[:, 1] * math.sin(tilt) + o2[:, 0] * across
-    R = R_WALL - standoff
-    C = cyl(th0 + du / R, R, d + dv)                      # centre line on the cylinder
-    n = len(C)
-    tube_r = 0.040 * size / 1.1
-    nt = 8
-    V = []
-    for i in range(n):
-        p = C[i]; T = C[(i + 1) % n] - C[i - 1]; T /= np.linalg.norm(T)
-        N = np.array([-p[0], 0.0, AXIS_Z - p[2]]); N /= np.linalg.norm(N)
-        N = N - T * (N @ T); N /= np.linalg.norm(N)
-        B = np.cross(T, N)
-        for m in range(nt):
-            a = 2 * math.pi * m / nt
-            V.append(p + tube_r * (math.cos(a) * N + math.sin(a) * B))
-    faces, uv = grid_faces(n, nt, True, True, np.linspace(0, 6, n + 1), np.linspace(0, 1, nt + 1))
+    tube_r = 0.045 * size / 1.1
+    # centre: start on the wall, move inward until the whole outline (+ tube) clears the wall by 6 cm
+    rc = R_WALL - 0.5 * size
+    for _ in range(6):
+        cen = cyl(th0, rc, d)
+        P = cen + o2[:, :1] * across + o2[:, 1:2] * up
+        rad = np.hypot(P[:, 0], P[:, 2] - AXIS_Z).max() + tube_r
+        rc -= rad - (R_WALL - 0.06)
+    cen = cyl(th0, rc, d)
+    C = cen + o2[:, :1] * across + o2[:, 1:2] * up
+    V, faces, uv = sweep_tube(C, tube_r, 10)
     key = "star_" + colour
-    t = make_obj("S2V1_star_" + name, np.array(V), faces, "star", [ph_mat(key)], coll, loop_uv=uv)
+    t = make_obj("S2V1_star_" + name, V, faces, "star", [ph_mat(key)], coll, loop_uv=uv)
     orient(t, "solid")
     t["s2v1_color"] = colour
-    # filled backplate (star_glow): fan from the centre, slightly inset, wrapped onto the drum just in front of the wall
-    o_in = o2 * 0.93
-    du2 = up_sign * o_in[:, 1] * math.cos(tilt); dv2 = -o_in[:, 1] * math.sin(tilt) + o_in[:, 0] * across
-    Rg = R_WALL - 0.025
-    G = np.vstack([cyl(np.array([th0]), Rg, np.array([d])), cyl(th0 + du2 / Rg, Rg, d + dv2)])
-    gf = [(0, 1 + i, 1 + (i + 1) % len(o_in)) for i in range(len(o_in))]
-    g = make_obj("S2V1_starglow_" + name, G, gf, "star_glow", [ph_mat("star_glow")], coll)
-    orient(g, "in")
+    # backplate (star_glow): a thin filled star 3 cm behind the tube, slightly inset (front + back faces = a 1 cm slab)
+    o_in = o2 * 0.90
+    back = -nrm * 0.03
+    ring_f = cen + back + o_in[:, :1] * across + o_in[:, 1:2] * up
+    ring_b = ring_f - nrm * 0.01
+    m = len(o_in)
+    G = np.vstack([[cen + back], ring_f, [cen + back - nrm * 0.01], ring_b])
+    gf = [(0, 1 + i, 1 + (i + 1) % m) for i in range(m)]
+    gf += [(m + 1, m + 2 + (i + 1) % m, m + 2 + i) for i in range(m)]
+    gf += [(1 + i, 1 + (i + 1) % m, m + 2 + (i + 1) % m, m + 2 + i) for i in range(m)]
+    guv = [(0.5 + 0.5 * (G[v] - cen) @ across / size, 0.5 + 0.5 * (G[v] - cen) @ up / size) for f in gf for v in f]
+    g = make_obj("S2V1_starglow_" + name, G, gf, "star_glow", [ph_mat("star_glow")], coll, loop_uv=guv)
+    orient(g, "solid")
     g["s2v1_color"] = colour
-    return [t, g]
+    # stem: from behind the plate radially out into the wall (2 cm embedded)
+    a = cen + back - nrm * 0.01
+    b = a + r_out * ((R_WALL + 0.02) - np.hypot(a[0], a[2] - AXIS_Z))
+    Cs = np.array([a + (b - a) * s for s in np.linspace(0, 1, 4)])
+    SV, SF, SUV = sweep_tube(Cs, 0.035, 8, closed=False)
+    s = make_obj("S2V1_starstem_" + name, SV, SF, "other", [ph_mat("bulb_socket")], coll, loop_uv=SUV)
+    orient(s, "solid")
+    return [t, g, s]
 
 
 # ---------------------------------------------------------------- old tunnel trim + drum render view
@@ -570,10 +612,10 @@ def build(ctx):
         out += objs; nslots += n
     for name, d, hw, dep, lips in BANDS:
         out += build_band(name, d, hw, dep, lips, coll)
-    for name, d, s, nb, rb in GOLD:
-        out += build_gold(name, d, s, nb, rb, coll)
-    for name, d, ang, size, colour, roll in STARS:
-        out += build_star(name, d, ang, size, colour, roll, coll)
+    for name, d, s, sw, nb, rb in GOLD:
+        out += build_gold(name, d, s, sw, nb, rb, coll)
+    for name, d, ang, size, colour, roll, gam in STARS:
+        out += build_star(name, d, ang, size, colour, roll, coll, gam)
     ntrim = trim_old(C, D0, D1)
     # drum view handler (replace an older copy of this function)
     hs = bpy.app.handlers.render_pre
