@@ -74,7 +74,9 @@ def processes():
 
 
 def top_level(rows, needle):
-    hit = [r for r in rows if needle in r["cmd"] and "grep" not in r["cmd"] and "/usr/bin/bash -c" not in r["cmd"]]
+    # lead 8d2d815d 20:38: skip every shell COMMAND STRING (" -c "): a Claude tool shell whose command text merely mentions
+    # Tools/autosave.sh was counted as a second autosave loop (false "2 loops - CHECK!"); real loops run as `bash Tools/autosave.sh 300`
+    hit = [r for r in rows if needle in r["cmd"] and "grep" not in r["cmd"] and "/usr/bin/bash -c" not in r["cmd"] and " -c " not in r["cmd"]]
     pids = {r["pid"] for r in hit}
     return [r for r in hit if r["ppid"] not in pids]
 
