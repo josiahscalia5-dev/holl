@@ -88,11 +88,6 @@ namespace BubbleWash.EditorTools
                 MaterialLibrary.Run();
                 EditorSceneManager.OpenScene(SceneBuilder.ScenePath);
                 SceneBuilder.PreviewRefreshDomains();
-                // lead 8d2d815d 2026-11-27 19:30 (owner: ChatGPT's experimental S2 optics patches, "use the protected preview,
-                // enable only for S2"): optional -bwkS2Optics drum|water|both = _S2OpticsPreview 1 on the in-memory BWK/DrumWall
-                // and / or BWK/Water materials of this preview only (the shaders confine it to the door drum / S2 water zone);
-                // reset to 0 before exit and never saved, so builds and other previews keep the legacy look
-                ApplyS2OpticsPreview(ArgValue("-bwkS2Optics"));
                 CaptureHero(outDir, outDir);
                 // lead 2026-11-26 17:55: optional -bwkStills = also render every section still (+ bg/) of the in-memory
                 // refreshed level into DIR/stills (no save, ~5 extra minutes), so one preview shows a change in all sections
@@ -104,37 +99,9 @@ namespace BubbleWash.EditorTools
                 // cameras), so the character artist judges the whole plush look without a lead build (~20 s extra)
                 if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-bwkMascotViews") >= 0)
                     CaptureMascotViews(outDir + "/mascot");
-                ResetS2OpticsPreview();
                 EditorApplication.Exit(0);
             }
-            catch (System.Exception e) { ResetS2OpticsPreview(); Debug.LogError("[BWK] agent preview failed: " + e); EditorApplication.Exit(1); }
-        }
-
-        static readonly List<Material> s2OpticsTouched = new List<Material>();
-
-        /// <summary>-bwkS2Optics drum|water|both: in-memory only (see AgentPreviewBatch).</summary>
-        static void ApplyS2OpticsPreview(string mode)
-        {
-            if (string.IsNullOrEmpty(mode)) return;
-            bool drum = mode == "drum" || mode == "both", water = mode == "water" || mode == "both";
-            var seen = new HashSet<Material>();
-            foreach (var r in Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-                foreach (var m in r.sharedMaterials)
-                {
-                    if (m == null || m.shader == null || !seen.Add(m) || !m.HasProperty("_S2OpticsPreview")) continue;
-                    bool hit = (drum && m.shader.name == "BWK/DrumWall") || (water && m.shader.name == "BWK/Water");
-                    if (!hit) continue;
-                    m.SetFloat("_S2OpticsPreview", 1f);
-                    s2OpticsTouched.Add(m);
-                }
-            Debug.Log("[BWK] S2 optics preview '" + mode + "' ON (in memory, not saved): "
-                      + string.Join(", ", s2OpticsTouched.Select(m => m.name + " [" + m.shader.name + "]")));
-        }
-
-        static void ResetS2OpticsPreview()
-        {
-            foreach (var m in s2OpticsTouched) if (m != null) m.SetFloat("_S2OpticsPreview", 0f);
-            s2OpticsTouched.Clear();
+            catch (System.Exception e) { Debug.LogError("[BWK] agent preview failed: " + e); EditorApplication.Exit(1); }
         }
 
         /// <summary>Mascot alone (M1 rear, M2 side right, M3 front, M4 three-quarter) at the S2 hero spot in the Slide pose,

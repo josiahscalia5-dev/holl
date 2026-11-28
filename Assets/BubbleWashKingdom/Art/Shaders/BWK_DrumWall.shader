@@ -165,7 +165,6 @@ Shader "BWK/DrumWall"
         _DoorRampDeepBlue ("Door ramp: deeper drum body -> the cobalt ceiling body (by camera distance, _DoorRampNear.._DoorRampFarDist)", Range(0, 1)) = 0
         _DoorBaySheen ("Door drum: bay sheen multiplier (glossy blue band on the ceiling bays)", Float) = 1
         _DoorDeepPink ("Door drum: pink rim spill / rim mirror kept on the deeper walls", Range(0, 1)) = 1
-        _S2OpticsPreview ("S2 optical response experiment (0 legacy, 1 candidate)", Range(0, 1)) = 0
     }
     SubShader
     {
@@ -215,7 +214,6 @@ Shader "BWK/DrumWall"
             float _DoorRampScale, _DoorRampNear, _DoorRampFarDist, _DoorRampCap;
             half4 _DoorRampCeil;
             half _DoorRampCeilAmount, _DoorThinSlots, _DoorRampDeepBlue, _DoorBaySheen, _DoorDeepPink;
-            half _S2OpticsPreview;
         CBUFFER_END
 
         // Screen S2 pass 7: weight of the S2 door-drum grade at a distance along the tunnel (1 at the door, 0 beyond
@@ -526,8 +524,7 @@ Shader "BWK/DrumWall"
                     half topW = smoothstep(_CeilingWidth, 0.0, around);
                     // v8: the door drum's ceiling bays carry a brighter glossy blue band (reference: light cyan-blue sheen
                     // band between the dark slot rows); S3+ unchanged (doorW 0)
-                    emission += _BaySheenColor.rgb * _BaySheen * lerp(1.0, _DoorBaySheen, doorW) * exp(-bx * bx) * topW * (1.0 - hole)
-                              * lerp(1.0h, 0.45h, saturate(_S2OpticsPreview) * doorW);
+                    emission += _BaySheenColor.rgb * _BaySheen * lerp(1.0, _DoorBaySheen, doorW) * exp(-bx * bx) * topW * (1.0 - hole);
                 }
                 // a few holes lit from behind (light leaking through the drum)
                 half flicker = 0.8 + 0.2 * sin(_Time.y * 2.3 + m.x * 1.7 + m.y * 0.9);
@@ -565,10 +562,6 @@ Shader "BWK/DrumWall"
                 // veil). Lighting still shapes it (panel sheen bands, key falloff, probe streaks = glossy highlight bands), but
                 // the colours stay saturated and the deeper drum slides down the ramp (value contrast against bulbs / neon).
                 // Holes keep their own near-black recess shading.
-                // Opt-in S2 experiment: preserve some actual colored lighting / probe response
-                // instead of reducing all of it to scalar luminance in the ramp.
-                half opticsW = saturate(_S2OpticsPreview) * doorW;
-                half3 preRampLit = lit.rgb;
                 if (_DoorRampAmount > 0.001)
                 {
                     half lumL = dot(lit.rgb, half3(0.2126, 0.7152, 0.0722));
@@ -582,12 +575,6 @@ Shader "BWK/DrumWall"
                     midC = lerp(midC, _DoorRampCeil.rgb, _DoorRampDeepBlue * deepS);
                     half3 rampC = x < 0.5 ? lerp(_DoorRampDark.rgb, midC, x * 2.0)
                                           : lerp(midC, _DoorRampHigh.rgb, x * 2.0 - 1.0);
-                    // Match the ramp luminance, while recovering the chromatic detail of the
-                    // actual lit surface. This avoids merely making every wall brighter.
-                    half rampL = dot(rampC, half3(0.2126, 0.7152, 0.0722));
-                    half3 litChroma = preRampLit * (rampL / max(lumL, 0.015h));
-                    half3 opticalRamp = lerp(rampC, min(litChroma, rampC * 2.0h), 0.45h);
-                    rampC = lerp(rampC, opticalRamp, opticsW);
                     lit.rgb = lerp(lit.rgb, rampC, _DoorRampAmount * doorW * (1.0 - hole));
                 }
                 // Screen ALL pass 5 (judge gap #5): S3-S6 walls read as flat light lilac plates; the video's deep tunnel is
@@ -631,8 +618,7 @@ Shader "BWK/DrumWall"
                             half warm = exp(-secLocal / ww) + exp(-(secLen - secLocal) / ww);
                             emission += _DoorWarmColor.rgb * saturate(warm) * doorW * (1.0 - hole);
                         }
-                        emission += _FarGlowColor.rgb * farW * (1.0 - hole * 0.6)
-                                  * lerp(1.0h, 0.35h, opticsW);
+                        emission += _FarGlowColor.rgb * farW * (1.0 - hole * 0.6);
                         // Screen S2 pass 10: the polished drum mirrors the tunnel (see _Mirror*). Cylinder of radius R0 around the
                         // axis; in the cross-section the reflected ray leaves the wall at signed angle th to the inward normal and
                         // meets the wall again after a chord 2 R0 cos(th) -> along offset tHit * Ra (always deeper: the camera
@@ -672,14 +658,7 @@ Shader "BWK/DrumWall"
                         half nv = saturate(dot(n, viewDir));
                         half fr = _MirrorF0 + (1.0 - _MirrorF0) * pow(1.0 - nv, 5.0);
                         half wipe = lerp(0.55, 1.0, BWK_Fbm(float2(m.x * 0.9, m.y * 0.22) + 3.1));
-                        // The PBR term already samples the reflection probes. Do not add a
-                        // second full environment as emission: retain only localized ring accents.
-                        half3 ringAccents = (_MirrorGold.rgb * gW + _MirrorRim.rgb * rW *
-                            lerp(1.0, _DoorDeepPink, doorW * smoothstep(_DoorRampNear, _DoorRampFarDist, camDist)))
-                            * (1.0 - floorH * 0.7);
-                        ringAccents *= 1.0 - smoothstep(_MirrorCoreStart, _MirrorCoreEnd, dAl);
-                        half3 opticalEnv = ringAccents * 0.65h;
-                        emission += lerp(env, opticalEnv, opticsW) * fr * wipe * sheenW * (1.0 - hole);
+                        emission += env * fr * wipe * sheenW * (1.0 - hole);
                     }
                 }
                 lit.rgb = MixFog(lit.rgb + emission, i.fog);

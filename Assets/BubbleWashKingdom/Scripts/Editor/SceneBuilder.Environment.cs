@@ -227,11 +227,7 @@ namespace BubbleWash.EditorTools
         const float RimLamps = 24f;                           // SM_DrumRim pink LED lamps (build_track RIM_LEDS, r4: was 32)
         internal const float RimPhase = 0.40f;
         internal const float GoldRingSpacing = 12.75f;
-        // lead tunnel lane 2b L5 (owner 17:35 section 5): 90 -> 100 m so the 97 m ring becomes an SM_LedRim_s2 violet band
-        // (PlaceRing -> PlaceLedRim) instead of the combined gold SM_Ring = the original 3.00 s frame shows only TWO gold bulb
-        // rings (50.5 m thick ring + the 61.7 m gate) and then violet depth; ours added a third small bulb ring at the
-        // vanishing point. The 102.1 m rim stays SM_DrumRim (>= 100); rings >= 109.75 m (other screens) unchanged.
-        const float MarqueeRingsUntil = 100f;                 // S2 pass 6: gate + rings 71.5 / 84.25 m = SM_MarqueeRing_s2 (was 90)
+        const float MarqueeRingsUntil = 90f;                  // S2 pass 6: gate + rings 71.5 / 84.25 m = SM_MarqueeRing_s2
         const float ChamberStart = 160f, ChamberEnd = 314f;   // r7: window gaps 160.75-301 m (S4-S6), 1-2 windows / gap
         const float ChamberPlaneRadius = 3.62f;               // SM_Porthole fallback: window plane distance from the axis
         const float ChamberWindowPlaneRadius = 3.40f;         // SM_ChamberWindow (build_machinery CW_PLANE_R, 1.4x porthole)
