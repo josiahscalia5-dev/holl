@@ -55,7 +55,7 @@ namespace BubbleWash.EditorTools
                 C(m, "_DoorRampMid", "#7E3CC0"); C(m, "_DoorRampCeil", "#2A28C6"); C(m, "_DoorRampHigh", "#B070E8");
                 C(m, "_DoorRampDark", "#0E0A44");
                 F(m, "_DoorRampCap", 0.70f); F(m, "_DoorRampDeepBlue", 0.95f); F(m, "_DoorRampFar", 0.85f);
-                F(m, "_DoorRampNear", 11f); F(m, "_DoorRampFarDist", 20f);
+                F(m, "_DoorRampNear", 12f); F(m, "_DoorRampFarDist", 17f);   // cobalt from just behind the first violet band
                 C(m, "_BaySheenColor", "#4466FF"); F(m, "_BaySheen", 0.15f);
                 // P2.2: darker recesses, curved pressed panels a little deeper (soft sheen band per panel, value step at seams)
                 F(m, "_DoorHole", 0.10f); F(m, "_DoorPanelCurve", 0.30f);
@@ -76,7 +76,33 @@ namespace BubbleWash.EditorTools
                 C(m, "_BaseColor", "#34226E"); C(m, "_HighlightColor", "#58449A"); F(m, "_SheenStrength", 0.05f);
                 C(m, "_SheenColor", "#9A5CFF"); F(m, "_Sparkle", 0f); F(m, "_BaySheen", 0f); F(m, "_Glow", 0.03f);
             }, c.log);
+            MetalMouthBand(c);
             MetalMid(c, "walls");
+        }
+
+        /// <summary>P2.4 / P2.3: the ORIGINAL 3.00 s shows a thick glossy VIOLET band with pink lights between the hatch and the
+        /// gold bulb ring (R2 x ~517-555 on the left), the cobalt-blue drum section behind it. SceneBuilder.Hall places
+        /// SM_LedRim_s2 there ("MouthLedRim_s2", 46 m, lead lane 2b L4) but the saved scene predates it: the same existing
+        /// band master is placed in memory exactly as the builder does (track frame at HallMouthD + 6, tunnel centre 2.3 m,
+        /// renderers only, inner apex 3.655 m = clear of the rails, mascot and camera).</summary>
+        static void MetalMouthBand(Ctx c)
+        {
+            var all = Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            if (all.Any(t => t.name.StartsWith("MouthLedRim_s2"))) { c.log.AppendLine("  metal mouth band: already in the scene"); return; }
+            var src = all.FirstOrDefault(t => t.name == "LedRim_s2");
+            var tp = Object.FindFirstObjectByType<TrackPath>();
+            if (src == null || tp == null) { c.log.AppendLine("  metal mouth band: no LedRim_s2 / TrackPath - skipped"); return; }
+            var go = Object.Instantiate(src.gameObject, src.parent);
+            go.name = "MouthLedRim_s2art";
+            const float tunnelCenter = 2.3f;   // SceneBuilder.TunnelCenter
+            var f = tp.Evaluate(SceneBuilder.HallMouthD + 6f);
+            go.transform.SetPositionAndRotation(f.FlatPoint(0f, tunnelCenter), f.FlatRotation);
+            go.transform.localScale = src.localScale;
+            foreach (var r in go.GetComponentsInChildren<Renderer>(true)) r.shadowCastingMode = ShadowCastingMode.Off;
+            foreach (var lg in go.GetComponentsInChildren<LODGroup>(true)) lg.RecalculateBounds();
+            foreach (var col in go.GetComponentsInChildren<Collider>(true)) Object.DestroyImmediate(col);
+            c.log.AppendLine(string.Format(IC, "  metal mouth band: {0} copied to {1:0.0} m ({2} renderers) at {3}", src.name,
+                SceneBuilder.HallMouthD + 6f, go.GetComponentsInChildren<Renderer>(true).Length, go.transform.position));
         }
 
         // ------------------------------------------------------------------------------------------------ P2.3 P2.4 (bands)
@@ -111,6 +137,40 @@ namespace BubbleWash.EditorTools
             }, c.log);
             // far-end lavender haze over the ring zone (R2 ring zone >.9 bright 27 % vs ORIGINAL 12.5 %)
             Swap("metal vanish glow", m => Named(m, "M_VanishGlow"), m => { Mul(m, "_Strength", 0.6f); }, c.log);
+            // the first band inside the hatch (ORIGINAL: bright pink-white LED dots + a pink glowing lip along the violet band)
+            // keeps strong lights; the deeper bands stay subtle (per-renderer variants of the edited clones)
+            var mouth = Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+                .FirstOrDefault(t => t.name.StartsWith("MouthLedRim_s2"));
+            if (mouth != null)
+            {
+                Material lipV = null, sparkV = null;
+                int n = 0;
+                foreach (var r in mouth.GetComponentsInChildren<Renderer>(true))
+                {
+                    var mats = r.sharedMaterials;
+                    for (int i = 0; i < mats.Length; i++)
+                    {
+                        if (mats[i] == null) continue;
+                        var src = srcOf.TryGetValue(mats[i], out var s0) ? s0 : mats[i];
+                        if (src.name == "M_RimGlow_s2")
+                        {
+                            if (lipV == null) { lipV = new Material(mats[i]) { name = "M_RimGlow_s2_mouth" }; F(lipV, "_Intensity", 2.3f); F(lipV, "_FogAmount", 0.4f); }
+                            mats[i] = lipV; n++;
+                        }
+                        else if (src.name == "M_RimSpark_s2")
+                        {
+                            if (sparkV == null)
+                            {
+                                sparkV = new Material(mats[i]) { name = "M_RimSpark_s2_mouth" };
+                                C(sparkV, "_Color", "#FF6CD6"); F(sparkV, "_Intensity", 2.4f); F(sparkV, "_CoreWhite", 0.35f); F(sparkV, "_FogAmount", 0.4f);
+                            }
+                            mats[i] = sparkV; n++;
+                        }
+                    }
+                    r.sharedMaterials = mats;
+                }
+                c.log.AppendLine($"  metal mouth band lights: {n} slots (bright pink lip + LED dots)");
+            }
             Swap("metal rim leds", m => Named(m, "M_RimLight"), m => { F(m, "_FogAmount", 0.6f); }, c.log);
             // S3-S7 drum lips (BWK/Gold violet): no square sparkle cells, deeper violet body
             Swap("metal drum lips", m => Named(m, "M_DrumRim"), m =>
