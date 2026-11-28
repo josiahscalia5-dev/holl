@@ -244,6 +244,7 @@ def track_coords(objs, C, attr="wfx_trk"):
             dd = ((co[s:s + 4096, None, :] - pos[None]) ** 2).sum(-1)
             idx[s:s + 4096] = dd.argmin(1)
         d = ds[idx] + ((co - pos[idx]) * fw[idx]).sum(1)
+        valid = (d > ds[0] + 0.25) & (d < ds[-1] - 0.25)       # the exported frames only cover d 20..80
         d = np.clip(d, ds[0], ds[-1])
         i = np.clip(np.searchsorted(ds, d) - 1, 0, len(ds) - 2)
         t = ((d - ds[i]) / (ds[i + 1] - ds[i]))[:, None]
@@ -252,10 +253,71 @@ def track_coords(objs, C, attr="wfx_trk"):
         U = up[i] * (1 - t) + up[i + 1] * t; U /= np.linalg.norm(U, axis=1, keepdims=True)
         lat = ((co - P) * R).sum(1)
         h = ((co - P) * U).sum(1)
+        if (~valid).any() and me.uv_layers:
+            # outside the exported frames (far modules up the tunnel / behind the camera): fall back to the module UVs
+            # (water u = across, ~3.6 m per u; v ~ 4 m) - rails there get a constant pink (they are tiny on screen)
+            nl = len(me.loops)
+            lv = np.empty(nl, dtype=np.int64); me.loops.foreach_get("vertex_index", lv)
+            uv = np.empty(nl * 2); me.uv_layers.active.data.foreach_get("uv", uv); uv = uv.reshape(nl, 2)
+            vu = np.zeros((n, 2)); vu[lv] = uv
+            bad = ~valid
+            lat[bad] = (vu[bad, 0] - 0.5) * 3.0
+            d[bad] = vu[bad, 1] * 4.0
         a = me.attributes.get(attr) or me.attributes.new(attr, "FLOAT_VECTOR", "POINT")
         a.data.foreach_set("vector", np.stack([lat, d, h], 1).astype(np.float32).ravel())
-        out[o.name] = (lat, d, h)
+        out[o.name] = (lat, d, h, valid)
     return out
+
+
+def lift_chevrons(chevrons, water, clear=0.02):
+    """The near chevron's arm lies ON the banked water surface -> z-fighting speckles. Raise every chevron island so its top
+    surface clears the water by `clear` m (raycast down onto the M_Water faces). In Unity the chevrons are drawn over the water."""
+    verts, polys = [], []
+    for o in water:
+        me = o.data
+        mw = o.matrix_world
+        wi = {i for i, m in enumerate(o.data.materials) if base_name(m) == "M_Water"}   # mesh materials (slots are WFX_* by now)
+        base = len(verts)
+        verts.extend(mw @ v.co for v in me.vertices)
+        polys.extend([base + i for i in p.vertices] for p in me.polygons if p.material_index in wi)
+    if not polys:
+        return 0
+    bvh = BVHTree.FromPolygons(verts, polys)
+    down = Vector((0, 0, -1))
+    n_lift = 0
+    for o in chevrons:
+        bm = bmesh.new(); bm.from_mesh(o.data)
+        bm.verts.ensure_lookup_table()
+        seen = set()
+        mw = o.matrix_world
+        for v0 in bm.verts:
+            if v0.index in seen:
+                continue
+            isl, stack = [], [v0]
+            seen.add(v0.index)
+            while stack:
+                v = stack.pop(); isl.append(v)
+                for e in v.link_edges:
+                    w = e.other_vert(v)
+                    if w.index not in seen:
+                        seen.add(w.index); stack.append(w)
+            gaps = []
+            for v in isl:
+                p = mw @ v.co
+                hit = bvh.ray_cast(p + Vector((0, 0, 0.6)), down, 2.0)
+                if hit[0] is not None:
+                    gaps.append(p.z - hit[0].z)
+            if len(gaps) < 3:
+                continue
+            top = float(np.percentile(gaps, 90))
+            if top < clear and top > -0.5:
+                dz = clear - top
+                for v in isl:
+                    v.co.z += dz
+                n_lift += 1
+        bm.to_mesh(o.data); bm.free()
+        o.data.update()
+    return n_lift
 
 
 def per_material_lat(o, lat, names):
@@ -273,7 +335,9 @@ def per_material_lat(o, lat, names):
             vi = np.unique(lv[lm == i])
             if len(vi):
                 al = np.abs(lat[vi])
-                res[nm] = (float(np.percentile(al, 2)), float(np.percentile(al, 98)))
+                al = al[np.isfinite(al)]
+                if len(al) > 8:
+                    res[nm] = (float(np.percentile(al, 2)), float(np.percentile(al, 98)))
     return res
 
 
@@ -300,12 +364,12 @@ def mat_water():
     n1 = b.noise(b.vec(b.math("MULTIPLY", latw, 1.3), b.math("MULTIPLY", d, 0.045), 0.0), 1.0, detail=1.2, rough=0.4)
     n2 = b.noise(b.vec(b.math("MULTIPLY", latw, 2.4), b.math("MULTIPLY", d, 0.07), 9.1), 1.0, detail=0.8, rough=0.35)
     band1 = b.smooth(n1, 0.47, 0.68)                  # wide turquoise bands ~0.5 m x ~20 m
-    band2 = b.smooth(n2, 0.56, 0.74)                  # sparser soft white-cyan sheen bands
+    band2 = b.smooth(n2, 0.52, 0.72)                  # soft white-cyan sheen bands (orig p90 #D9F0F7)
     edge = b.smooth(t, 0.35, 1.0)
     body = b.mix(srgb("#3497DC"), srgb("#2364C6"), edge)                       # turquoise-blue centre -> deep blue at the rails
     body = b.mix(body, srgb("#5CCCF2"), b.math("MULTIPLY", band1, 0.62))
-    body = b.mix(body, srgb("#C8F4FC"), b.math("MULTIPLY", band2, 0.48))
-    body = b.mix(body, srgb("#A867D0"), b.math("MULTIPLY", b.smooth(t, 0.82, 1.0), 0.30))   # rail / tunnel pink-violet reflection
+    body = b.mix(body, srgb("#CDF5FC"), b.math("MULTIPLY", band2, 0.62))
+    body = b.mix(body, srgb("#C27AD8"), b.math("MULTIPLY", b.smooth(t, 0.86, 1.0), 0.18))   # rail / tunnel pink-violet reflection
     # elongated ripples -> stretched glossy highlights along the flow
     rip = b.noise(b.vec(b.math("MULTIPLY", lat, 3.0), b.math("MULTIPLY", d, 0.30), 2.1), 1.0, detail=2.0, rough=0.5)
     bump = b.n("ShaderNodeBump"); bump.inputs["Strength"].default_value = 0.16; bump.inputs["Distance"].default_value = 0.03
@@ -326,9 +390,9 @@ def mat_rail_band():
     prm = b.sep(b.attr("wfx_p", "OBJECT").outputs["Vector"])           # y, z = band |lateral| range (m)
     t = b.math("DIVIDE", b.math("SUBTRACT", b.math("ABSOLUTE", lat), prm[1]),
                b.math("MAXIMUM", b.math("SUBTRACT", prm[2], prm[1]), 0.05), clamp=True)
-    stripes = b.ramp(t, [(0.00, srgb("#FFCDE8")), (0.06, srgb("#F77CBA")), (0.30, srgb("#EC64A8")),
-                         (0.42, srgb("#FF9C82")), (0.50, srgb("#FFC46A")), (0.58, srgb("#FF9C86")),
-                         (0.70, srgb("#EF6AB0")), (0.88, srgb("#D8509E")), (1.00, srgb("#C8449A"))], "EASE").outputs[0]
+    stripes = b.ramp(t, [(0.00, srgb("#FFCDE8")), (0.06, srgb("#F27FB6")), (0.30, srgb("#E46BA6")),
+                         (0.42, srgb("#FA9C88")), (0.50, srgb("#FFC46E")), (0.58, srgb("#FA9C8A")),
+                         (0.70, srgb("#E870AE")), (0.88, srgb("#D25A9E")), (1.00, srgb("#C24A96"))], "EASE").outputs[0]
     warp = b.noise(b.vec(b.math("MULTIPLY", lat, 0.5), b.math("MULTIPLY", d, 0.03), 4.4), 1.0, detail=1.0)
     tw = b.math("ADD", t, b.math("MULTIPLY", b.math("SUBTRACT", warp, 0.5), 0.25))
     st = b.smooth(b.noise(b.vec(b.math("MULTIPLY", tw, 7.0), b.math("MULTIPLY", d, 0.05), 3.3), 1.0, detail=1.0, rough=0.4), 0.52, 0.74)
@@ -374,8 +438,8 @@ def mat_foam(shade=False):
     nz = b.sep(geo.outputs["Normal"])[2]
     lw = b.n("ShaderNodeLayerWeight"); lw.inputs["Blend"].default_value = 0.5
     top = b.smooth(nz, -0.35, 0.75)
-    col = b.mix(srgb("#C995BC"), srgb("#F5F0F8"), top)
-    col = b.mix(col, srgb("#B9A6E6"), b.math("MULTIPLY", b.smooth(lw.outputs["Facing"], 0.55, 1.0), 0.35))   # cool rim
+    col = b.mix(srgb("#C9A0C2"), srgb("#F3EFF5"), top)
+    col = b.mix(col, srgb("#B4A8E2"), b.math("MULTIPLY", b.smooth(lw.outputs["Facing"], 0.55, 1.0), 0.30))   # cool rim
     if shade:
         col = b.mix(col, srgb("#B98AB4"), 0.25)
     dark = b.mix(col, (0.0, 0.0, 0.0, 1.0), 0.55)
@@ -439,8 +503,8 @@ def mat_milk():
     nz = b.sep(geo.outputs["Normal"])[2]
     lw = b.n("ShaderNodeLayerWeight"); lw.inputs["Blend"].default_value = 0.45
     edge = b.smooth(lw.outputs["Facing"], 0.35, 0.92)
-    col = b.mix(srgb("#C9DDEE"), srgb("#F7FBFF"), b.smooth(nz, -0.4, 0.8))          # form: lit tops, cooler undersides
-    col = b.mix(col, srgb("#7DB6E6"), b.math("MULTIPLY", edge, 0.55))                  # thin / grazing = translucent blue
+    col = b.mix(srgb("#B9D3EA"), srgb("#F2F8FD"), b.smooth(nz, -0.4, 0.8))          # form: lit tops, cooler undersides
+    col = b.mix(col, srgb("#78B2E4"), b.math("MULTIPLY", edge, 0.62))                  # thin / grazing = translucent blue
     dark = b.mix(col, (0.0, 0.0, 0.0, 1.0), 0.55)
     p = b.principled(Base_Color=dark, Roughness=0.08, Subsurface_Weight=0.6, Subsurface_Radius=(0.6, 0.8, 1.0),
                      Subsurface_Scale=0.05, Coat_Weight=1.0, Coat_Roughness=0.02, Specular_IOR_Level=0.9,
@@ -458,8 +522,8 @@ def mat_gold_coin():
     lw = b.n("ShaderNodeLayerWeight"); lw.inputs["Blend"].default_value = 0.3
     face = b.smooth(lw.outputs["Facing"], 0.15, 0.75)                 # 0 = facing the camera, 1 = grazing rim
     nz = b.sep(geo.outputs["Normal"])[2]
-    col = b.mix(srgb("#F4C64C"), srgb("#C07A26"), face)
-    col = b.mix(col, srgb("#FFE590"), b.math("MULTIPLY", b.smooth(nz, 0.5, 0.95), 0.5))   # upper bevel catches the tunnel light
+    col = b.mix(srgb("#EAB646"), srgb("#A96A22"), face)
+    col = b.mix(col, srgb("#FFE08A"), b.math("MULTIPLY", b.smooth(nz, 0.5, 0.95), 0.45))   # upper bevel catches the tunnel light
     p = b.principled(Base_Color=srgb("#7A5418"), Metallic=1.0, Roughness=0.16, Coat_Weight=0.5, Coat_Roughness=0.04,
                      Emission_Color=col, Emission_Strength=0.9)
     b.link(p.outputs[0], b.out.inputs["Surface"])
@@ -500,8 +564,11 @@ def mat_chevron():
     """Glowing cyan boost chevron (ORIGINAL p10 #36B7D5, p50 #AEFAF5, p90 #C8FDF8): pale luminous cyan core, saturated cyan edges."""
     b = NT("WFX_Chevron")
     lw = b.n("ShaderNodeLayerWeight"); lw.inputs["Blend"].default_value = 0.4
+    geo = b.n("ShaderNodeNewGeometry")
+    nz = b.sep(geo.outputs["Normal"])[2]
     col = b.mix(srgb("#A8FAF4"), srgb("#22BCDD"), b.smooth(lw.outputs["Facing"], 0.35, 0.9))
-    p = b.principled(Base_Color=srgb("#0C4E5C"), Roughness=0.08, Coat_Weight=1.0, Emission_Color=col, Emission_Strength=1.15)
+    col = b.mix(srgb("#10A9D8"), col, b.smooth(nz, 0.6, 0.9))                         # bevels / sides = saturated cyan
+    p = b.principled(Base_Color=srgb("#0C4E5C"), Roughness=0.08, Coat_Weight=1.0, Emission_Color=col, Emission_Strength=1.2)
     b.link(p.outputs[0], b.out.inputs["Surface"])
     return b.m
 
@@ -564,13 +631,27 @@ def occludes(p, cams, bvh, eps=0.04):
     return near[0] is not None and near[3] < 0.05
 
 
-def build_fx(ctx, mascot, crowns, milk, drop_mat, bub_mat):
+def bvh_of(objs, dg):
+    """One world-space BVH over several objects (evaluated meshes)."""
+    verts, polys = [], []
+    for o in objs:
+        ev = o.evaluated_get(dg)
+        me = ev.to_mesh()
+        base = len(verts)
+        verts.extend(o.matrix_world @ v.co for v in me.vertices)
+        polys.extend([base + i for i in p.vertices] for p in me.polygons)
+        ev.to_mesh_clear()
+    return BVHTree.FromPolygons(verts, polys) if polys else None
+
+
+def build_fx(ctx, mascot, crowns, milk, drop_mat, bub_mat, shield=()):
+    """shield = extra objects (near coins) that droplets must never be drawn over, like the mascot."""
     sc = ctx["scene"]
     coll = bpy.data.collections.get("S2V1_WFX") or bpy.data.collections.new("S2V1_WFX")
     if coll.name not in sc.collection.children:
         sc.collection.children.link(coll)
     dg = bpy.context.evaluated_depsgraph_get()
-    bvh = BVHTree.FromObject(mascot, dg) if mascot else None
+    bvh = bvh_of(([mascot] if mascot else []) + list(shield), dg)
     cams = [o.matrix_world.translation.copy() for o in bpy.data.objects if o.type == "CAMERA" and o.name.startswith("CAM_")]
     me_drop = sphere_mesh("WFX_sphere", 20, 12)
     me_drop.materials.clear(); me_drop.materials.append(milk)
@@ -667,10 +748,14 @@ def apply(ctx):
     for o in water:
         if o.name not in tc:
             continue
-        lat = tc[o.name][0]
-        r = per_material_lat(o, lat, {"M_Water", "M_RailBand_r8", "M_RailTube_r8", "M_SlideShell"})
-        w_half = r.get("M_Water", (0.0, 1.6))[1]
-        b0, b1 = r.get("M_RailBand_r8", (w_half, w_half + 0.9))
+        lat, _d, _h, valid = tc[o.name]
+        if valid.mean() > 0.3:
+            r = per_material_lat(o, np.where(valid, lat, np.nan), {"M_Water", "M_RailBand_r8", "M_RailTube_r8", "M_SlideShell"})
+            w_half = r.get("M_Water", (0.0, 1.45))[1]
+            b0, b1 = r.get("M_RailBand_r8", (1.41, 1.77))
+        else:
+            r = {}
+            w_half, b0, b1 = 1.5, -2.0, 50.0             # far module (UV fallback): constant pink rail, t ~ 0.07
         o["wfx_p"] = (float(w_half), float(b0), float(b1))
         dd = tc[o.name][1]
         print("%s slide %s d %.1f..%.1f |lat| %s" % (LOG, o.name[:24], float(dd.min()), float(dd.max()),
@@ -696,6 +781,8 @@ def apply(ctx):
     n += assign(pickups, {"M_Gem"}, mat_gem())
     print("%s pickup slots %d" % (LOG, n))
 
+    chev = [o for o in context if any(base_name(sl.material) == "M_Arrow" for sl in o.material_slots)]
+    print("%s chevrons lifted above the water: %d islands" % (LOG, lift_chevrons(chev, water)))
     n = assign(context, {"M_Arrow"}, mat_chevron())
     print("%s chevron slots %d" % (LOG, n))
 
@@ -739,7 +826,11 @@ def apply(ctx):
     if body is not None:
         bb = [body.matrix_world @ Vector(c) for c in body.bound_box]
         print("%s mascot bbox %s .. %s" % (LOG, tuple(round(min(p[i] for p in bb), 2) for i in range(3)), tuple(round(max(p[i] for p in bb), 2) for i in range(3))))
-    build_fx(ctx, body, crowns, milk, mat_droplet(), bub)
+    near_coins = []
+    if body is not None:
+        bc = sum((body.matrix_world @ Vector(c) for c in body.bound_box), Vector()) / 8.0
+        near_coins = [o for o in pickups if (sum((o.matrix_world @ Vector(c) for c in o.bound_box), Vector()) / 8.0 - bc).length < 7.0]
+    build_fx(ctx, body, crowns, milk, mat_droplet(), bub, shield=near_coins)
     preview_light_if_no_lighting(ctx)
 
 
