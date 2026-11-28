@@ -5,6 +5,14 @@ of one enormous magical washing machine. These instructions come only from the o
 (`Docs/ProjectBrief.md`) and the approved Google Flow video `25982.mp4`.
 
 ## Owner standing rules (2026-11-27, follow in every session)
+- OWNER 2026-11-28 06:15 MANDATORY - APPROVAL BEFORE CREDITS (verbatim, private: Captures/agents/_shared/
+  OWNER_BRIEF_0615_approval_art05_groom_skills.txt; NEWEST): never launch another experiment, programming task, agent or workflow
+  without the owner's approval - first explain the specific artistic action, why it will visibly improve the game and the expected
+  result. Priority = the scenery / background / tunnel appearance of the approved Google Flow video inside the EXISTING Unity game
+  (the owner's annotated blueprint: Captures/agents/_shared/BLUEPRINT_ANNOTATED_1128.md). Approved queue (one improvement at a time,
+  Unity before / after, reject anything worse, never repeat failed methods): selective art05 integration with a protected rollback,
+  then Blender hair grooming, then liquid simulation. Scenery is not locked. Keep running work uninterrupted; queue only what conflicts.
+  Say directly when a quality cannot be delivered instead of repeating unsuccessful attempts. No purchases, paid tools or hiring.
 - OWNER 2026-11-27 23:33 MANDATORY - STOP UNNECESSARY RECONSTRUCTION (verbatim, private:
   Captures/agents/_shared/OWNER_BRIEF_2333_stop_reconstruction.txt; NEWEST, governs every production decision): do NOT rebuild the game or
   reconstruct scenery from scratch (the Blender S2 Tunnel v1 reconstruction is NOT to be continued unless the owner asks). Transform the
@@ -106,6 +114,11 @@ of one enormous magical washing machine. These instructions come only from the o
   autosave with verified pushes, no force-push / history rewrite, chat history and recovery notes LOCAL only.
 
 ## Current handoff (read first)
+- 2026-11-28 06:25 (session 470ca906 = LEAD): owner 06:00 annotated blueprint (6 pages, 28 arrows) -> workflow wf_78dd5087-d10
+  (Tools/workflows/bwk-annotated-blueprint.js: A metal / B machinery / C water+light, asset-critic, one revise round) transforms the
+  EXISTING scene in memory via the partial S2ArtPass tool (protected test scene only). Owner 06:15: approval rule above; helpers
+  installed in .claude/skills (reference-look-calibration, source-part-segmentation, reference-analysis-validator, hair-groom); Unity CLI
+  1.1.0, no live Editor connection. Newest state block: top of Captures/handoff/NEXT_ACCOUNT_START.md (STATE 06:25).
 - 2026-11-28 00:30 (session 470ca906 = LEAD, new account, opened in C:/Users/josia/thanksgiving): lighting artist finished its S2 v1 pass
   once (run wf_ac218155-1b5; Unity mapping Captures/s2v1/NOTES_lighting.md). Owner 23:36 art pass on the EXISTING Unity scene:
   Assets/BubbleWashKingdom/Scripts/Editor/S2ArtPass.cs (in-memory, cloned materials only, cumulative steps splash / glow / depth /
