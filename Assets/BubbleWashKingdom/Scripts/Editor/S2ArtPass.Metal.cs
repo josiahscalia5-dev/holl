@@ -50,18 +50,23 @@ namespace BubbleWash.EditorTools
                 F(m, "_SheenStrength", 0.07f); C(m, "_SheenColor", "#B266FF"); F(m, "_Sparkle", 0.3f);
                 // ORIGINAL 3.00 s: violet near drum, COBALT blue section behind the first band (P2.3 arrow), glossy cyan-blue
                 // band on the blue ceiling ("colorful reflections"), lavender-violet gloss; body stops kept under the bloom knee
-                C(m, "_DoorRampCeil", "#2C2CC4"); C(m, "_DoorRampHigh", "#A46CE6"); C(m, "_DoorRampDark", "#0E0A44");
-                F(m, "_DoorRampCap", 0.66f); F(m, "_DoorRampDeepBlue", 0.95f); F(m, "_DoorRampFar", 0.85f);
+                // bp_A_1 -> 2: the scene's warm bloom veil lifts R / G (hole bottoms #6c4a67 vs ORIGINAL #432a68), so the body is
+                // pushed purple on the side walls (ORIGINAL #9161ad vs ours #7d63b2: +R -B) and low-green cobalt on the ceiling
+                C(m, "_DoorRampMid", "#7E3CC0"); C(m, "_DoorRampCeil", "#2A28C6"); C(m, "_DoorRampHigh", "#B070E8");
+                C(m, "_DoorRampDark", "#0E0A44");
+                F(m, "_DoorRampCap", 0.70f); F(m, "_DoorRampDeepBlue", 0.95f); F(m, "_DoorRampFar", 0.85f);
                 F(m, "_DoorRampNear", 11f); F(m, "_DoorRampFarDist", 20f);
-                C(m, "_BaySheenColor", "#3E8EFF"); F(m, "_BaySheen", 0.22f);
+                C(m, "_BaySheenColor", "#4466FF"); F(m, "_BaySheen", 0.15f);
                 // P2.2: darker recesses, curved pressed panels a little deeper (soft sheen band per panel, value step at seams)
                 F(m, "_DoorHole", 0.10f); F(m, "_DoorPanelCurve", 0.30f);
-                // colourful reflections: warmer gold / pinker rim pickup in the polished door drum
-                C(m, "_MirrorGold", "#A8561A"); C(m, "_MirrorRim", "#A82AA0"); F(m, "_MirrorF0", 0.42f);
+                // colourful reflections: warmer gold / pinker rim pickup in the polished door drum, a little wider
+                C(m, "_MirrorGold", "#A8561A"); C(m, "_MirrorRim", "#A82AA0"); F(m, "_MirrorF0", 0.42f); F(m, "_MirrorRingWidth", 0.40f);
+                C(m, "_PinkSpill", "#D050FF");
                 // P4.3 / P6.4 deep tunnel (S3-S7, graded from 68 m): magenta-mauve -> slate blue-violet metal (ORIGINAL 7.5 s
-                // #514580 hue 252, 14 s #4b508a hue 235), blacker elongated holes, dark seams, less pink emission
-                C(m, "_LitTint", "#B8BDFF"); F(m, "_LitDesat", 0.62f);
-                C(m, "_DeepTint", "#99A8EB"); F(m, "_DeepHole", 0.30f); F(m, "_DeepEmit", 0.45f);
+                // #514580 hue 252, 14 s #4b508a hue 235), black elongated holes, dark seams, less pink emission
+                // (bp_A_1 .62 / #B8BDFF / #99A8EB moved hue 287-307 -> 271-285: half way)
+                C(m, "_LitTint", "#A2A8FF"); F(m, "_LitDesat", 0.74f);
+                C(m, "_DeepTint", "#8E9EF0"); F(m, "_DeepHole", 0.12f); F(m, "_DeepEmit", 0.35f);
                 C(m, "_SeamColor", "#0A0620");
             }, c.log);
             // the dark recessed violet band seen through the gap between the hatch and the mouth drum (ORIGINAL: #3A2A80 groove)
@@ -85,7 +90,9 @@ namespace BubbleWash.EditorTools
                 C(m, "_MidColor", "#7434D6"); C(m, "_LowColor", "#1E0A52"); C(m, "_HighColor", "#C68CFF");
                 C(m, "_BandColor", "#9A5CEB"); C(m, "_RimColor", "#F055D8");
                 F(m, "_EnvReflect", 0.22f); F(m, "_EnvTint", 0.8f); F(m, "_Sparkle", 0f); F(m, "_Contrast", 1.9f);
-                F(m, "_Brightness", 1.0f); F(m, "_StreakStrength", 0.45f);
+                F(m, "_StreakStrength", 0.45f);
+                // bp_A_1: the arches still read close to the wall -> self-lit violet lacquer, less fog on the deeper ones
+                F(m, "_Brightness", 1.1f); F(m, "_Emission", 0.2f); F(m, "_FogAmount", 0.3f);
             }, c.log);
             Swap("metal hatch crest", m => Named(m, "M_HatchCrest_s2"), m =>
             {
@@ -94,13 +101,16 @@ namespace BubbleWash.EditorTools
             // band lips: pink-magenta glow (never pale white hoops); the far hoops fade into the violet depth
             Swap("metal band lips", m => Named(m, "M_RimGlow_s2"), m =>
             {
-                C(m, "_Color", "#FF46D2"); F(m, "_Intensity", 1.9f); F(m, "_CoreWhite", 0f); F(m, "_EdgeSaturate", 1f);
-                F(m, "_HaloBoost", 0.7f); F(m, "_FogAmount", 0.85f);
+                // bp_A_1 (1.9): eight crisp magenta hoops -> softer, the band body carries the arch
+                C(m, "_Color", "#FF46D2"); F(m, "_Intensity", 1.4f); F(m, "_CoreWhite", 0f); F(m, "_EdgeSaturate", 1f);
+                F(m, "_HaloBoost", 1.0f); F(m, "_FogAmount", 1f);
             }, c.log);
             Swap("metal band glints", m => Named(m, "M_RimSpark_s2"), m =>
             {
-                C(m, "_Color", "#FF4CC8"); F(m, "_Intensity", 1.5f); F(m, "_CoreWhite", 0f); F(m, "_EdgeSaturate", 1f); F(m, "_FogAmount", 0.85f);
+                C(m, "_Color", "#FF4CC8"); F(m, "_Intensity", 1.0f); F(m, "_CoreWhite", 0f); F(m, "_EdgeSaturate", 1f); F(m, "_FogAmount", 1f);
             }, c.log);
+            // far-end lavender haze over the ring zone (R2 ring zone >.9 bright 27 % vs ORIGINAL 12.5 %)
+            Swap("metal vanish glow", m => Named(m, "M_VanishGlow"), m => { Mul(m, "_Strength", 0.6f); }, c.log);
             Swap("metal rim leds", m => Named(m, "M_RimLight"), m => { F(m, "_FogAmount", 0.6f); }, c.log);
             // S3-S7 drum lips (BWK/Gold violet): no square sparkle cells, deeper violet body
             Swap("metal drum lips", m => Named(m, "M_DrumRim"), m =>
@@ -216,9 +226,35 @@ namespace BubbleWash.EditorTools
                 for (int s = 0; s < centres.Count; s++) { float d = (cen - centres[s]).sqrMagnitude; if (d < bd) { bd = d; best = s; } }
                 if (best >= 0) pivotOf[root] = best;
             }
+            // bp_A_1 moved 960 parts on LOD0 (expected ~5 per lamp): keep only parts that lie ENTIRELY inside the lamp's
+            // neighbourhood and are either bulb-slot parts or real sub-objects (>= 12 verts: sockets, collars), so no split
+            // face strip of the gold band / flange near a lamp can ever be pulled out of the surface
+            var compSub = new Dictionary<int, int>();
+            for (int sm = 0; sm < m.subMeshCount; sm++)
+                foreach (int ix in m.GetIndices(sm)) { int rt = Find(ix); if (!compSub.ContainsKey(rt)) compSub[rt] = sm; }
+            var vcount = new Dictionary<int, int>();
+            var reach = new Dictionary<int, float>();
+            for (int i = 0; i < v.Length; i++)
+            {
+                int rt = Find(i);
+                if (!pivotOf.TryGetValue(rt, out int s0)) continue;
+                vcount[rt] = vcount.TryGetValue(rt, out int n0) ? n0 + 1 : 1;
+                float d = (v[i] - centres[s0]).magnitude;
+                reach[rt] = reach.TryGetValue(rt, out float r0) ? Mathf.Max(r0, d) : d;
+            }
+            var subParts = new int[m.subMeshCount];
+            foreach (var rt in pivotOf.Keys.ToList())
+            {
+                int sub = compSub.TryGetValue(rt, out int sb) ? sb : -1;
+                bool ok = reach[rt] <= lampR * 1.6f && (sub == bulbSub || vcount[rt] >= 12);
+                if (!ok) pivotOf.Remove(rt);
+                else if (sub >= 0) subParts[sub]++;
+            }
             int moved = 0;
             for (int i = 0; i < v.Length; i++)
                 if (pivotOf.TryGetValue(Find(i), out int s)) { v[i] = centres[s] + (v[i] - centres[s]) * k; moved++; }
+            if (moved == 0) { Object.DestroyImmediate(m); return false; }
+            log.AppendLine($"  metal lamps {mf.name}: parts per slot [{string.Join(", ", Enumerable.Range(0, subParts.Length).Select(i => (i < mats.Length && mats[i] ? mats[i].name : "-") + " " + subParts[i]))}]");
             m.vertices = v;
             m.RecalculateBounds();
             m.name = src.name + "_lampsx" + k.ToString("0.00", IC);
