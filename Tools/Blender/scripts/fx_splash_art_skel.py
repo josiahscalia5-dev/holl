@@ -133,7 +133,7 @@ def side_skeleton(side, frame, rng_seed):
             frac = (y - YW) / max(hb, 1e-3)
             hole = (math.sin(23.0 * t + 5.1 * y * 10.0 + tau * ph) + math.sin(41.0 * t * 0.7 - 13.0 * y + 2.3 + side)
                     + math.sin(7.0 * t + 29.0 * y - tau * ph * 0.5)) / 3.0
-            if frac > 0.30 and hole > 0.38:
+            if frac > 0.35 and hole > 0.52:
                 y += 0.016
                 continue
             rv = 0.019 * (1.1 - 0.4 * frac)
@@ -145,8 +145,11 @@ def side_skeleton(side, frame, rng_seed):
 
     # 2) crown of branching fingers fanning from the sole: lean outward, some forward, some back toward the camera; bend
     #    under gravity; a fork on about half of them; round bulb tips; beads about to leave
+    chains = []
+
     def finger(p, d0, L, r0, r1, bend, phi, depth):
         steps = 20 if depth == 0 else 12
+        chain = []
         dk = d0
         fork_at = 8 + int(rng.random() * 6)
         do_fork = depth == 0 and rng.random() < 0.55
@@ -159,20 +162,23 @@ def side_skeleton(side, frame, rng_seed):
             p = p + dk * (L / steps)
             rv = (r0 + (r1 - r0) * u) * (1.0 + 0.14 * math.sin(11.0 * u + 7.0 * phi))
             balls.append((p[0], p[1], p[2], rv / VIS))
+            chain.append((p.copy(), rv))
             if do_fork and k == fork_at:
                 side_dir = np.cross(dk, UP)
                 n_ = np.linalg.norm(side_dir)
                 side_dir = side_dir / n_ if n_ > 1e-6 else out
                 fd = dk * 0.75 + side_dir * 0.65 * fork_sign + UP * 0.15
                 finger(p.copy(), fd / np.linalg.norm(fd), L * fork_len, rv * 0.9, r1 * 0.9, bend * 1.2, phi + 0.37, 1)
+        if depth == 0:
+            chains.append(chain)
         tip = p + dk * 0.010
-        rb = (0.026 + 0.012 * rng.random()) * (0.85 if depth else 1.0)
+        rb = (0.032 + 0.012 * rng.random()) * (0.85 if depth else 1.0)
         balls.append((tip[0], tip[1], tip[2], rb / VIS))
         if rng.random() < 0.5:                                     # bead about to leave the finger
             q = tip + dk * (0.045 + 0.04 * ((ph + phi) % 1.0))
             drops.append((q[0], q[1], q[2], 0.012 + 0.008 * rng.random()))
 
-    n_f = 15 if side > 0 else 11
+    n_f = 10 if side > 0 else 7
     for i in range(n_f):
         t = 0.62 * ((i + 0.5 * rng.random()) / n_f) ** 1.25
         b, tan, nrm = frame_at(t)
@@ -185,18 +191,32 @@ def side_skeleton(side, frame, rng_seed):
         d0 /= np.linalg.norm(d0)
         bend = math.radians(15.0 + 40.0 * rng.random())
         p0 = b + UP * (hb * 0.7) + nrm * (math.tan(lean) * hb * 0.7)
-        finger(p0, d0, L, 0.028 + 0.006 * rng.random(), 0.015, bend, phi, 0)
+        finger(p0, d0, L, 0.034 + 0.008 * rng.random(), 0.018, bend, phi, 0)
+
+    # 2a) milk WEB between neighbouring fingers near their base: the crown is a liquid sheet that tears into fingers at the top
+    for ca, cb in zip(chains[:-1], chains[1:]):
+        n = min(len(ca), len(cb))
+        for k in range(0, int(n * 0.5)):
+            (pa, ra), (pb, rb_) = ca[k], cb[k]
+            gap = np.linalg.norm(pa - pb)
+            if gap > 0.22:
+                continue
+            web_h = 1.0 - k / (n * 0.5)
+            for f in (0.25, 0.5, 0.75):
+                q = pa * (1 - f) + pb * f
+                rr = (ra * (1 - f) + rb_ * f) * (0.55 + 0.35 * web_h)
+                balls.append((q[0], q[1], q[2], rr / VIS))
 
     # 2b) the far wake: separate milk tendrils on the water that leave the lip toward the camera (no straight ribbon)
     for t0 in ((0.52, 0.70, 0.88) if side > 0 else (0.55, 0.80)):
         b, tan, nrm = frame_at(t0)
-        L = 1.4 * (0.10 + 0.10 * rng.random())
+        L = 1.0 * (0.10 + 0.10 * rng.random())
         dirv = tan * 0.8 + nrm * (0.6 * (rng.random() - 0.3))
         dirv = dirv / np.linalg.norm(dirv)
         steps = 14
         for k in range(steps + 1):
             u = k / float(steps)
-            rv = (0.024 - 0.006 * u) * (1.0 + 0.12 * math.sin(9.0 * u + t0 * 13.0))
+            rv = (0.030 - 0.008 * u) * (1.0 + 0.2 * math.sin(9.0 * u + t0 * 13.0))
             p = b + dirv * L * u + nrm * 0.02 * math.sin(3.0 * u + tau * ph)
             balls.append((p[0], YW + LIFT + rv * 0.6 + 0.015 * (1.0 - u), p[2], rv / VIS))
         tip = b + dirv * (L + 0.015)
@@ -215,17 +235,21 @@ def side_skeleton(side, frame, rng_seed):
     # 3) branching milk splats lying on the water toward the camera
     for (u, v) in (SPLATS_R if side > 0 else SPLATS_L):
         c = CAM.water(u, v)
+        for k in range(4):                                       # central milk puddle
+            o = np.array([rng.random() - 0.5, 0.0, rng.random() - 0.5]) * 0.07
+            rr = 0.026 + 0.016 * rng.random()
+            balls.append((c[0] + o[0], YW + LIFT + rr * 0.45, c[2] + o[2], rr / VIS))
         n_b = 3
         base_ang = rng.random() * tau
         for j in range(n_b):
             ang = base_ang + tau * j / n_b + 0.6 * (rng.random() - 0.5)
             dirv = np.array([math.cos(ang), 0.0, math.sin(ang) * 1.3])
             dirv /= np.linalg.norm(dirv)
-            Lb = 1.35 * (0.07 + 0.09 * rng.random()) * (1.0 + 0.15 * math.sin(tau * (ph + j * 0.3)))
+            Lb = 1.0 * (0.06 + 0.08 * rng.random()) * (1.0 + 0.15 * math.sin(tau * (ph + j * 0.3)))
             steps = 11
             for k in range(steps + 1):
                 uu = k / float(steps)
-                rv = (0.021 - 0.005 * uu) * (1.0 + 0.12 * math.sin(8.0 * uu + j * 2.1))
+                rv = (0.026 - 0.008 * uu) * (1.0 + 0.22 * math.sin(8.0 * uu + j * 2.1))
                 p = c + dirv * Lb * uu
                 balls.append((p[0], YW + LIFT + rv * 0.5, p[2], rv / VIS))
             tip = c + dirv * (Lb + 0.012)
