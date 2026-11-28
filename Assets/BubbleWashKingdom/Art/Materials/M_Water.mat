@@ -56,10 +56,19 @@ Material:
     - _HueLowStart: 168
     - _HueTarget: 212
     - _NearBrighten: 0
+    - _OutFlowLines: 0.42
+    - _OutFoamStreaks: 0
+    - _OutHueLockLow: 0
+    - _OutHueLowStart: 172
+    - _OutHueTarget: 203
+    - _OutNearBrighten: 0.16
     - _PatchAmount: 0.42
     - _RainbowAmount: 0.32
     - _ReflectBoost: 0.38
     - _RippleStrength: 1.45
+    - _S2ZoneEnd: 52
+    - _S2ZoneFade: 3
+    - _S2ZoneStart: 29
     - _Smoothness: 0.62
     - _SparkleAmount: 1.05
     - _StreakAmount: 0.2
@@ -78,6 +87,10 @@ Material:
     - _DeepColor: {r: 0.039215688, g: 0.40784314, b: 0.78431374, a: 1}
     - _EdgeTint: {r: 0.9019608, g: 0.41568628, b: 0.78431374, a: 1}
     - _FoamStreakColor: {r: 0.8862745, g: 0.9490196, b: 1, a: 1}
+    - _OutCausticColor: {r: 0.49803922, g: 0.9137255, b: 1, a: 1}
+    - _OutCrestColor: {r: 0.21960784, g: 0.68235296, b: 0.91764706, a: 1}
+    - _OutDeepColor: {r: 0.039215688, g: 0.40784314, b: 0.78431374, a: 1}
+    - _OutReflectTint: {r: 0.49803922, g: 0.9411765, b: 1, a: 1}
     - _ReflectTint: {r: 0.5019608, g: 0.8, b: 1, a: 1}
     - _ShallowColor: {r: 0.11764706, g: 0.61960787, b: 0.84705883, a: 1}
     - _StreakColor: {r: 0.9019608, g: 0.9882353, b: 1, a: 1}

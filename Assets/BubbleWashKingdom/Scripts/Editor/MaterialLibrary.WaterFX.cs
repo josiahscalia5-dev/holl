@@ -97,6 +97,15 @@ namespace BubbleWash.EditorTools
                 // 203) sits at hue ~211; our output #46C3DB = linear ~195): target the linear hue of the original, full low lock,
                 // no near-camera brightening (lowL V .87 vs .78)
                 F(m, "_HueTarget", 212f); F(m, "_HueLockLow", 1f); F(m, "_HueLowStart", 168f); F(m, "_NearBrighten", 0f);
+                // S2 pass 10i (lead 19:05: landmark_check L1 -> L2 lost "cyan glass / cyan neon" in S1 01_hall_start, S3, S5,
+                // S6, 07_chambers - the pass-10h S2 water look recoloured the WHOLE slide): the S2 look above now lives only in
+                // the door zone (track 29 .. 52 m, 3 m fades; hero_mouth mascot at 33.5 m, its nearest visible water ~30.5 m,
+                // the hatch at ~40 m); everywhere else the _Out* values = the reviewed s2p10g water (pass 10f p3 values).
+                F(m, "_S2ZoneStart", 29f); F(m, "_S2ZoneEnd", 52f); F(m, "_S2ZoneFade", 3f);
+                F(m, "_OutFlowLines", 0.42f); F(m, "_OutFoamStreaks", 0f); F(m, "_OutNearBrighten", 0.16f);
+                F(m, "_OutHueTarget", 203f); F(m, "_OutHueLockLow", 0f); F(m, "_OutHueLowStart", 172f);
+                C(m, "_OutReflectTint", "#7FF0FF"); C(m, "_OutCausticColor", "#7FE9FF");
+                C(m, "_OutDeepColor", "#0A68C8"); C(m, "_OutCrestColor", "#38AEEA");
                 // light halos around the decor chevrons: same period / geometry / runway offset as SceneBuilder.BuildDecorChevrons
                 F(m, "_ChevronStart", SceneBuilder.ChevronStart); F(m, "_ChevronSpacing", SceneBuilder.ChevronSpacing);
                 // (v2 notch measured #55B8E5 vs reference deep #3386CC: the arrows now bloom on their own -> fainter, tighter pool)

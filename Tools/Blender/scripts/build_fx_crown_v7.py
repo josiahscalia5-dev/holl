@@ -119,6 +119,42 @@ def dil(a, r=1):
     return o
 
 
+HOLE_MAX = int(os.environ.get("BWK_HOLE", "260"))   # enclosed gaps up to this many px are milk (the approved sheets are solid)
+
+
+def fill_small_holes(m, max_px):
+    """Fill enclosed background pockets smaller than max_px (the first Blender preview read as a perforated curtain,
+    a look the owner rejected in round 3); bigger gaps, where the water shows through the crown, stay open."""
+    ys, xs = np.nonzero(m)
+    y0, y1, x0, x1 = max(0, ys.min() - 2), min(H, ys.max() + 3), max(0, xs.min() - 2), min(W, xs.max() + 3)
+    sub = m[y0:y1, x0:x1]
+    bg = ~sub
+    seen = np.zeros_like(bg)
+    hh, ww = bg.shape
+    filled = 0
+    for sy in range(hh):
+        for sx in range(ww):
+            if not bg[sy, sx] or seen[sy, sx]:
+                continue
+            stack, comp, edge = [(sy, sx)], [], False
+            seen[sy, sx] = True
+            while stack:
+                cy, cx = stack.pop()
+                comp.append((cy, cx))
+                if cy == 0 or cx == 0 or cy == hh - 1 or cx == ww - 1:
+                    edge = True
+                for ny, nx in ((cy + 1, cx), (cy - 1, cx), (cy, cx + 1), (cy, cx - 1)):
+                    if 0 <= ny < hh and 0 <= nx < ww and bg[ny, nx] and not seen[ny, nx]:
+                        seen[ny, nx] = True
+                        stack.append((ny, nx))
+            if not edge and len(comp) <= max_px:
+                for cy, cx in comp:
+                    sub[cy, cx] = True
+                filled += len(comp)
+    print("CHECK filled %d px of small enclosed gaps" % filled)
+    return m
+
+
 def crown_masks():
     ref = load_ref()
     r, g, b = ref[..., 0], ref[..., 1], ref[..., 2]
@@ -136,8 +172,9 @@ def crown_masks():
     out = {}
     for side, pts in regions.items():
         m = milky & poly_mask(pts) & ~excl
-        m = ~dil(~dil(m, 2), 2)          # close pinholes
+        m = ~dil(~dil(m, 3), 3)          # close pinholes and thin bluish seams inside the sheet
         m = dil(~dil(~m, 1), 1)          # drop 1-px specks
+        m = fill_small_holes(m, HOLE_MAX)
         ys, xs = np.nonzero(m)
         print("CHECK mask %s: %d px, x %d-%d y %d-%d" % (side, m.sum(), xs.min(), xs.max(), ys.min(), ys.max()))
         out[side] = m

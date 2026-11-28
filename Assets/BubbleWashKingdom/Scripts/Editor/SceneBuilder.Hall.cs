@@ -328,7 +328,11 @@ namespace BubbleWash.EditorTools
                 // pass 9 (judge gap #3 "first rings inside the hatch read as rows of small pink-white dots"): the LED rim's
                 // 48 pink LEDs were exactly that row of dots at r ~180 px; the reference shows the perforated violet drum
                 // wall there, then the THICK gold bulb ring (r ~145 px) -> no rim at +6 m, the first ring = SM_MarqueeRing_s2c
-                bool ledRimHere = false;
+                // lead tunnel lane 2b L4 (owner 17:35 section 5): false -> true = SM_LedRim_s2 v3 (violet D-section step rho
+                // 3.68-4.32, glow lip, sparkle domes; sparks dimmed by L2) back at +6 m = 46.0 m, a lattice slot of M_DrumWall
+                // (_BandOffset 71.5 - 2 x 12.75): the reference's first thick glowing violet band between the hatch and the gold
+                // bulb ring (R2 r ~211-250 px) is plain wall in ours today. Renderers only, inner apex 3.655 m (no collider)
+                bool ledRimHere = true;
                 var led = ledRimHere ? HallPlace(holder, "Machinery", "SM_LedRim_s2", frm.FlatPoint(0f, TunnelCenter), frm.FlatRotation, 1.0f) : null;
                 if (led != null) { led.name = "MouthLedRim_s2"; HallOwnMaterials(led); HallLods(led, "LedRim_LOD0", "LedRim_LOD1"); }
                 if (led == null && ledRimHere)

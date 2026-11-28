@@ -229,6 +229,7 @@ def main():
     previews.sort(key=os.path.getmtime, reverse=True)
     chats = newest("ChatHistory/*.md", 4)
     diag = f"{ROOT}/Captures/diagnostic/Bubble_Wash_Kingdom_Mascot_Diagnostic.zip"
+    envz = f"{ROOT}/Captures/diagnostic/Bubble_Wash_Kingdom_S2_Environment_Diagnostic.zip"
     pushed = ""
     try:
         with open(f"{ROOT}/Logs/autosave.log", encoding="utf-8", errors="replace") as f:
@@ -297,6 +298,8 @@ def main():
           *[f"- chat export (LOCAL only) {rel(c)} ({hm(os.path.getmtime(c))}, {os.path.getsize(c) // 1024} KB)" for c in chats],
           f"- ChatGPT mascot diagnostic ZIP: " + (f"{rel(diag)} ({ts(os.path.getmtime(diag))}, {os.path.getsize(diag) / 1048576:.1f} MB; copy in "
                                                    "C:/Users/josia/Downloads)" if os.path.exists(diag) else "not built"),
+          f"- ChatGPT S2 environment diagnostic ZIP: " + (f"{rel(envz)} ({ts(os.path.getmtime(envz))}, {os.path.getsize(envz) / 1048576:.1f} MB; "
+                                                          "copy in C:/Users/josia/Downloads)" if os.path.exists(envz) else "not built"),
           "", "## Approved references (authoritative first)",
           "- Reference/google_flow_pack_1735/ (ORIGINAL Google Flow pack: Frames/frame_03.00s = S2, 04.00s = face / front, 07.50s = angled; Crops/)",
           "- Reference/frames4k/, Reference/frames4k_720/ (4K export of the same video); Reference/owner_sheets_1735/ (generated sheets: unseen angles only)",
@@ -345,8 +348,9 @@ def main():
             "{{RUNNING}}": "\n".join(run_lines("   - ")),
             "{{NEXT_PASS_HINT}}": hint,
             "{{SHEETS}}": "; ".join(f"{rel(x)} ({ts(os.path.getmtime(x))})" for x in sheets) or "none yet",
-            "{{DIAG_ZIP}}": (f"{rel(diag)} ({ts(os.path.getmtime(diag))}, copy C:\\Users\\josia\\Downloads\\Bubble_Wash_Kingdom_Mascot_Diagnostic.zip)"
-                             if os.path.exists(diag) else "not built yet - build it from existing files (< 30 MB, no credentials / chats)"),
+            "{{DIAG_ZIP}}": ((f"{rel(diag)} ({ts(os.path.getmtime(diag))})" if os.path.exists(diag) else "mascot ZIP not built")
+                             + (f"; S2 environment package {rel(envz)} ({ts(os.path.getmtime(envz))})" if os.path.exists(envz) else "")
+                             + " - copies in C:\\Users\\josia\\Downloads; existing files only, < 30 MB, no credentials / chats / reference frames"),
         }
         for k, v in rep.items():
             tpl = tpl.replace(k, v)

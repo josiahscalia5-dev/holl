@@ -748,6 +748,12 @@ namespace BubbleWash.EditorTools
             }
 
             BuildCrowns(fxRoot, runner, save, crownL, crownR);
+            if (UseCrownV7(out _, out _))
+            {
+                // S2 pass 10i: the V7 crowns stand 0.6-1.1 m toward the camera along the wake -> droplets from their upper outer fingers
+                dropsL.transform.position = fxRoot.transform.TransformPoint(crownV7DropL);
+                dropsR.transform.position = fxRoot.transform.TransformPoint(crownV7DropR);
+            }
             if (InWaterFxPreview) RebuildEnvironmentFxPreview();
             return fx;
         }
@@ -828,6 +834,9 @@ namespace BubbleWash.EditorTools
             // mirrored for the left. (The TRELLIS.2 image-to-3D test of the same crown gave a flat 4 % plate - rejected.)
             // Reference-derived -> PRIVATE Art/Projected/FX/ (gitignored); used only when present.
             // Revert = delete Art/Projected/FX/SM_FX_CrownV6_*.fbx (V5 takes over again).
+            // S2 pass 10i: V7 = the S2 frame's own two crowns as 3D wake walls (build_fx_crown_v7.py); preferred when present.
+            // Revert = delete Art/Projected/FX/SM_FX_CrownV7_*.fbx (or CrownV7On false): the V6 p10h frame takes over again.
+            if (UseCrownV7(out var p7l, out var p7r)) return BuildCrownsV7(fxRoot, runner, save, p7l, p7r);
             var p6l = ProjectedModelParts("FX", "SM_FX_CrownV6_L");
             var p6r = ProjectedModelParts("FX", "SM_FX_CrownV6_R");
             if (p6l.Count > 0 && p6r.Count > 0 && Mat("M_FX_Milk_v3") != null) return BuildCrownsV3(fxRoot, runner, save, p6l[0].mesh, p6r[0].mesh);
@@ -994,6 +1003,74 @@ namespace BubbleWash.EditorTools
         static readonly Vector3 CrownV6PosL = new Vector3(-0.30f, -0.02f, -0.50f), CrownV6PosR = new Vector3(0.30f, -0.02f, -0.80f);
         static readonly Vector3 CrownV6RotL = new Vector3(0f, 20f, 0f), CrownV6RotR = new Vector3(0f, 10f, 0f);   // Euler (lean, yaw, 0)
         static readonly Vector3 CrownV6SclL = new Vector3(0.9f, 0.9f, 0.9f), CrownV6SclR = new Vector3(0.6f, 0.75f, 0.6f);
+
+        // S2 pass 10i (lead 18:45 read of p10h: "crowns still SMALL and on the RIGHT only, the left foot shows no crown"; every
+        // V6 placement search topped out at IoU ~.31 because V6 is ONE crown outline from another shot): SM_FX_CrownV7_L/R =
+        // the approved S2 frame's OWN two crowns (milky pixels of each crown cast back through the R2 camera onto a vertical
+        // wake wall whose base follows the crown's lower envelope on the water: from the foot back toward the camera,
+        // diverging outward), inflated into round milky tubes / sheets (build_fx_crown_v7.py). Authored in runner space through
+        // the same Blender axis mapping as V6 -> CrownSheet(dx 0) turns the ModelPartsAt Fix back; each crown pivots on its
+        // own base centre on the water so the runtime SplashCrowns scale / yaw jitter keeps it standing on the water.
+        static readonly bool CrownV7On = true;
+        static Vector3 crownV7DropL = new Vector3(-0.62f, 0.38f, -0.85f), crownV7DropR = new Vector3(0.78f, 0.42f, -0.95f);
+
+        static bool UseCrownV7(out Mesh left, out Mesh right)
+        {
+            left = right = null;
+            if (!CrownV7On || Mat("M_FX_Milk_v3") == null) return false;
+            var l = ProjectedModelParts("FX", "SM_FX_CrownV7_L");
+            var r = ProjectedModelParts("FX", "SM_FX_CrownV7_R");
+            if (l.Count == 0 || r.Count == 0) return false;
+            left = l[0].mesh; right = r[0].mesh;
+            return true;
+        }
+
+        static bool BuildCrownsV7(GameObject fxRoot, RunnerController runner, bool save, Mesh left, Mesh right)
+        {
+            var milk = Mat("M_FX_Milk_v3");
+            var holder = Child(fxRoot, "Crowns");
+            var sc = holder.AddComponent<SplashCrowns>();
+            sc.runner = runner;
+            sc.fps = 12f;
+            var crowns = new List<MeshFilter>();
+            var fams = new List<Mesh>[2];
+            var srcs = new[] { left, right };
+            for (int i = 0; i < 2; i++)
+            {
+                var turned = CrownSheet(srcs[i], 0f);
+                var b = turned.bounds;
+                var pivot = new Vector3(b.center.x, 0f, b.center.z);
+                var vs = turned.vertices;
+                for (int k = 0; k < vs.Length; k++) vs[k] -= pivot;
+                turned.vertices = vs;
+                turned.RecalculateBounds();
+                string side = i == 0 ? "L" : "R";
+                fams[i] = CrownV2FrameMeshes(turned, $"SM_FX_CrownV7_{side}", save);
+                var go = Child(holder, "Crown" + side);
+                go.transform.localPosition = pivot;
+                go.transform.localRotation = Quaternion.identity;
+                go.transform.localScale = Vector3.one;
+                var mf = go.AddComponent<MeshFilter>();
+                mf.sharedMesh = fams[i][i == 0 ? 0 : CrownV2Frames / 2];
+                var mr = go.AddComponent<MeshRenderer>();
+                mr.sharedMaterial = milk;
+                mr.shadowCastingMode = ShadowCastingMode.Off;
+                mr.receiveShadows = true;
+                crowns.Add(mf);
+                // droplets leave from the crown's upper outer part
+                var top = new Vector3(i == 0 ? b.min.x + 0.12f : b.max.x - 0.12f, b.min.y + 0.7f * b.size.y, b.center.z);
+                if (i == 0) crownV7DropL = top; else crownV7DropR = top;
+                Debug.Log($"[BWK] waterfx crown V7 {side}: runner-space bounds {b.min} .. {b.max}, pivot {pivot}, {turned.triangles.Length / 3} tris, drops at {top}");
+            }
+            sc.frames = fams[0].ToArray();
+            sc.framesRight = fams[1].ToArray();
+            sc.crowns = crowns.ToArray();
+            sc.baseScale = new[] { Vector3.one, Vector3.one };
+            sc.baseRotation = new[] { Quaternion.identity, Quaternion.identity };
+            sc.phase = new[] { 0, CrownV2Frames / 2 };
+            Debug.Log("[BWK] waterfx crowns MASTER V7 (S2 wake walls, build_fx_crown_v7.py), M_FX_Milk_v3");
+            return true;
+        }
 
         static void BuildCrowns(GameObject fxRoot, RunnerController runner, bool save, Vector3 rootL, Vector3 rootR)
         {
