@@ -141,6 +141,12 @@ if (!matR && !lightR) {
   return { stopped: 'look', build: { modeler: modelR, water: waterR }, look: { materials: matR, lighting: lightR } }
 }
 
+// owner 23:33 / 23:36: stop the reconstruction rounds; let the Look artists finish, then end (args.look_only)
+if (A.look_only) {
+  log('look_only (owner 23:36): Look finished - no review / refine rounds')
+  return { stopped: 'look_only', build: { modeler: modelR, water: waterR }, look: { materials: matR, lighting: lightR } }
+}
+
 const ROLE = { modeler: 'environment-modeler', materials: 'materials-artist', lighting: 'lighting-artist', water: 'water-fx-artist' }
 const PREV = { modeler: modelR, materials: matR, lighting: lightR, water: waterR }
 const REVIEWS = DONE.reviews || {}

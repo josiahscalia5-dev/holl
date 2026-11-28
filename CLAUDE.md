@@ -5,6 +5,16 @@ of one enormous magical washing machine. These instructions come only from the o
 (`Docs/ProjectBrief.md`) and the approved Google Flow video `25982.mp4`.
 
 ## Owner standing rules (2026-11-27, follow in every session)
+- OWNER 2026-11-27 23:33 MANDATORY - STOP UNNECESSARY RECONSTRUCTION (verbatim, private:
+  Captures/agents/_shared/OWNER_BRIEF_2333_stop_reconstruction.txt; NEWEST, governs every production decision): do NOT rebuild the game or
+  reconstruct scenery from scratch (the Blender S2 Tunnel v1 reconstruction is NOT to be continued unless the owner asks). Transform the
+  EXISTING Unity scene, assets, geometry, textures, materials and lighting to look like the approved Google Flow screen (= the blueprint;
+  no redesign / reinterpretation) with the simplest effective reference-matching method: reference-driven art, existing textured assets,
+  selective replacement of only what genuinely needs it, professional materials, texture baking, cinematic lighting, VFX; Blender only
+  where it is genuinely superior and cannot reasonably be done with the existing assets. Stop endless experiments with minor geometry,
+  rings, stars and technical infrastructure; judge the WHOLE screen. No projection, static backgrounds, flat substitutes or video -
+  genuine interactive 3D. Do not interrupt / duplicate specialists (complete + preserve their useful work). Preserve gameplay, camera,
+  controls, collisions, animations, the recovery system; no spending. Target a visible 7.5-8/10 inside Unity, then 9+; show real results.
 - OWNER 2026-11-27 23:11 MANDATORY, PERMANENT - ARTISTIC PRODUCTION FIRST (verbatim, private:
   Captures/agents/_shared/OWNER_BRIEF_2311_artistic_production_first.txt). This is an ARTISTIC PRODUCTION, not a programming
   assignment: the game already works; the job is to make it visually beautiful and match the approved Google Flow screens. Work like a
