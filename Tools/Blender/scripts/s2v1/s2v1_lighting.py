@@ -26,24 +26,29 @@ P = {
     "view": "Standard",            # Unity parity: URP Tonemapping None + HDR bloom; team materials are authored as emission = sRGB target
     "exposure": 0.0,
     # world = Unity Environment Lighting (Ambient Color) + skybox reflection fallback
-    "world_hex": "#2E1F58", "world_strength": 1.5,
+    # pass 6: ambient 1.5 -> 1.25 = deeper violet shade between the emitters (mid rings r 120-240 were +4.5..+6.9 L*)
+    "world_hex": "#2E1F58", "world_strength": 1.25,
     # distance fog = Unity linear fog (RenderSettings.fogMode Linear, fogStartDistance / fogEndDistance, fogColor)
-    "fog_start": 12.0, "fog_end": 120.0, "fog_hex": "#5E3F98",   # pass 5: darker violet - bloom (pass 3/4) had lifted r 25-120 px by +6..+9 L*
-    # bloom = URP Bloom (threshold in linear here; URP threshold is gamma: 0.9 lin ~ 0.95 gamma)
-    # pass 3 (1.1 / 0.75) veiled the core (+7..+10 L* at r 25-120) -> pass 4 between pass 2 and 3; saturation 1.0 (near walls were +10 C*)
-    "bloom_threshold": 0.9, "bloom_strength": 0.9, "bloom_size": 0.65, "saturation": 1.0,
+    # pass 5: darker violet #5E3F98 (bloom had lifted r 25-120 px) -> core r 0-25 -5.8 L* / -8 C*; pass 6: richer, more saturated #6A44A8
+    "fog_start": 12.0, "fog_end": 120.0, "fog_hex": "#6A44A8",
+    # bloom = URP Bloom (threshold in linear here; URP threshold is gamma: 1.0 lin = 1.0 gamma)
+    # pass 3 (1.1 / 0.75) veiled the core (+7..+10 L* at r 25-120) -> pass 4/5 0.9 / 0.65 = halos too small (bulbs = hard white dots).
+    # pass 6: threshold 1.0 (the lips 0.94 x lavender and every lit wall stay OUT) + hotter bulbs / neon + wider size = soft halos
+    # around the emitters only, no veil over the core.
+    "bloom_threshold": 1.0, "bloom_strength": 1.15, "bloom_size": 0.85, "saturation": 1.0,
     # emission strengths (Blender multiplier; Unity HDR intensity = log2(strength))
     # pass 2: the materials-artist tags m["s2v1_emit_kind"] + m["s2v1_emit_default"] -> lighting scales THEIR default per kind
-    "km_lip": 0.70, "km_bulb": 1.15, "km_neon": 1.5, "km_glow": 1.0, "km_gold": 1.8, "km_band": 2.5, "km_crest": 0.8,
+    # pass 6: bulbs 2.99 -> 4.2, neon 2.55 -> 3.7 (energy above the threshold = the halo), star glow backplates 0.10 -> 0.25
+    "km_lip": 0.70, "km_bulb": 1.6, "km_neon": 2.2, "km_glow": 2.5, "km_gold": 1.8, "km_band": 2.5, "km_crest": 0.8,
     "km_ctx_bulb": 1.15, "km_roller": 1.0, "km_core": 1.0,
     # fallback absolute strengths (parts whose material has no s2v1_emit_kind tag)
     "emit_bulb": 3.0, "emit_band_lip": 0.95, "emit_star": 2.3, "emit_star_glow": 0.10,
-    "emit_ctx_bulb": 3.0, "emit_ctx_rim": 1.1, "emit_ctx_neon": 2.4, "emit_ctx_core": 2.0,
+    "emit_ctx_bulb": 4.0, "emit_ctx_rim": 1.1, "emit_ctx_neon": 3.4, "emit_ctx_core": 2.0,   # pass 6: deep bulbs / neon = halos too
     # emitter-motivated point lights (Blender W per ring = total, split over the sectors; no shadows = Unity mobile additional lights)
     "g1_total_w": 350.0, "g1_sectors": 8, "g2_total_w": 200.0, "g2_sectors": 6,
     "lipA_total_w": 450.0, "lip_total_w": 200.0, "lip_sectors": 8, "lip_radius": 0.8,
     "door_total_w": 300.0, "door_sectors": 6,
-    "star_w": 35.0, "core_w": 300.0,
+    "star_w": 55.0, "core_w": 300.0,   # pass 6: stars 35 -> 55 W = coloured spill on the wall around each sign (original)
     # motivated foreground: machine-hall ceiling glow above the mascot + warm spill out of the door (both soft area lights)
     "hall_w": 150.0, "door_glow_w": 300.0, "fg_spec": 0.0,
 }
