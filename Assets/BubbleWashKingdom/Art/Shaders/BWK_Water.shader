@@ -232,6 +232,8 @@ Shader "BWK/Water"
                 half3 reflectT = lerp(_OutReflectTint.rgb, _ReflectTint.rgb, zone);
                 half nearB = lerp(_OutNearBrighten, _NearBrighten, zone);
                 half flowLinesK = lerp(_OutFlowLines, _FlowLines, zone) * (1.0h - opticsW);
+                // lead 8d2d815d 19:45: tested WITHOUT this foam cut (preview water2): the thin white swirl / scratch lines in the
+                // portrait gameplay view came back - they are these foam streaks, so the .45 cut stays as ChatGPT sent it
                 half foamStreaksK = lerp(_OutFoamStreaks, _FoamStreaks, zone) * lerp(1.0h, 0.45h, opticsW);
                 half hueTarget = lerp(_OutHueTarget, _HueTarget, zone);
                 half hueLockLow = lerp(_OutHueLockLow, _HueLockLow, zone);

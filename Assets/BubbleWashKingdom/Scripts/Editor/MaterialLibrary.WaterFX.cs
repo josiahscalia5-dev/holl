@@ -112,6 +112,11 @@ namespace BubbleWash.EditorTools
                 // original = deep cobalt water with SOFT, wide, low-contrast light bands along the flow, its whites are the crowns +
                 // round droplets): no thin flow lines, gloss contours / thin streaks nearly off, the soft foam bands a little bluer
                 F(m, "_FlowLines", 0f); F(m, "_GlossLines", 0.1f); F(m, "_StreakAmount", 0.05f); C(m, "_FoamStreakColor", "#D2E6FA");
+                // lead 8d2d815d 2026-11-27 19:45 (owner 19:2x: ChatGPT's BWK_S2_Water_Optics_Preview.patch, keep only on a visible
+                // improvement): KEPT after the protected preview (Captures/lead/s2_optics/NOTES.md) - inside the S2 zone the thin white
+                // swirl / scratch lines on the gameplay-camera water mostly vanish (foam streaks x.45, ridge paint x.25, gloss x.2,
+                // probe reflection x.35, no fresnel reflection) = deeper, smoother blue like the original; outside the zone unchanged
+                F(m, "_S2OpticsPreview", 1f);
                 // light halos around the decor chevrons: same period / geometry / runway offset as SceneBuilder.BuildDecorChevrons
                 F(m, "_ChevronStart", SceneBuilder.ChevronStart); F(m, "_ChevronSpacing", SceneBuilder.ChevronSpacing);
                 // (v2 notch measured #55B8E5 vs reference deep #3386CC: the arrows now bloom on their own -> fainter, tighter pool)
