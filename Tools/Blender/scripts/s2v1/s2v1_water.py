@@ -715,19 +715,19 @@ def build_fx(ctx, mascot, crowns, milk, drop_mat, bub_mat, shield=()):
         me_b = sphere_mesh("WFX_sphere_clear", 24, 14)
         me_b.materials.clear(); me_b.materials.append(drop_mat)
         zw = min((min((cr.matrix_world @ Vector(c)).z for c in cr.bound_box) for cr in crowns), default=mc.z - 0.3)
-        for i in range(60):
-            lat = rng.uniform(-1.7, 1.7)
-            if abs(lat) < 0.35:
+        for i in range(90):
+            lat = rng.uniform(-1.6, 1.6)
+            if abs(lat) < 0.3:
                 continue
             p = mc + right * lat - fwd * rng.uniform(-0.2, 2.2)
-            p.z = zw + rng.uniform(0.03, 0.35)
-            r = rng.uniform(0.015, 0.05)
+            p.z = zw + rng.uniform(0.03, 0.32)
+            r = rng.uniform(0.02, 0.055)
             if bvh and occludes(p, cams, bvh):
                 n_rej += 1
                 continue
             add_drop(coll, me_b, drop_mat, p, r, "WFX_WaterBubble")
             n_b += 1
-            if n_b >= 16:
+            if n_b >= 24:
                 break
     print("%s fx: crown tips %d, detached droplets %d, water bubbles %d, rejected (over mascot) %d" % (LOG, n_tip, n_det, n_b, n_rej))
     return coll
@@ -881,6 +881,8 @@ def preview_light_if_no_lighting(ctx):
                                     ("WFX_TEMP_R", fwd * 4.0 + upv * 1.6 + rgt * 2.6, "#FF9AD8", 120.0, 2.0),
                                     ("WFX_TEMP_core", fwd * 22.0 + upv * 1.0, "#A88BFF", 500.0, 5.0)):
         ld = bpy.data.lights.new(name, "AREA"); ld.energy = e; ld.color = srgb(col)[:3]; ld.size = size
+        if name == "WFX_TEMP_key":
+            ld.specular_factor = 0.2       # its mirror image on the water + the mascot's soft-shadow noise = speckled patch (water_04/05)
         lo = bpy.data.objects.new(name, ld); sc.collection.objects.link(lo)
         lo.location = base + off
         lo.rotation_euler = (-upv).to_track_quat("-Z", "Y").to_euler()
