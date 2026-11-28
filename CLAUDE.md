@@ -106,6 +106,12 @@ of one enormous magical washing machine. These instructions come only from the o
   autosave with verified pushes, no force-push / history rewrite, chat history and recovery notes LOCAL only.
 
 ## Current handoff (read first)
+- 2026-11-28 00:30 (session 470ca906 = LEAD, new account, opened in C:/Users/josia/thanksgiving): lighting artist finished its S2 v1 pass
+  once (run wf_ac218155-1b5; Unity mapping Captures/s2v1/NOTES_lighting.md). Owner 23:36 art pass on the EXISTING Unity scene:
+  Assets/BubbleWashKingdom/Scripts/Editor/S2ArtPass.cs (in-memory, cloned materials only, cumulative steps splash / glow / depth /
+  roller / walls / foam / bubbles; -bwkSave 1 -> protected Scenes/Private/S2v1_Test.unity) + metaball milk splash
+  Tools/Blender/scripts/fx_splash_art_skel.py + build_fx_splash_art.py. Renders Captures/s2art/art0N/, owner sheets Captures/sections/
+  OWNER_S2_art_pass_*.png. Main scene and shared .mat assets untouched. Newest state block: top of Captures/handoff/NEXT_ACCOUNT_START.md.
 - 2026-11-27 19:05 (session 9e4e986e = LEAD, new account, opened in C:/Users/josia/thanksgiving): the previous account hit its 5-hour
   limit at 18:10 -> pass 10h + tunnel lane cut; relaunched ONCE as pass 10i run wf_0a7050be-d2e (Tools/workflows/bwk-s2-pass10i.js:
   character = seam-free rose groom bake -> SK_Mascot_v5 re-export -> Unity plush path; water = crowns at both feet; then Accept judge +

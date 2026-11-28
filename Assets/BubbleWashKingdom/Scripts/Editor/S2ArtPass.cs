@@ -192,7 +192,7 @@ namespace BubbleWash.EditorTools
             Swap("roller", m => Starts(m, "M_RollerFur"), m =>
             {
                 F(m, "_UseVertexTint", 0f);
-                C(m, "_RootColor", "#B8246E"); C(m, "_BaseColor", "#F2479C"); C(m, "_TipColor", "#FFC2E2");
+                C(m, "_RootColor", "#C2275E"); C(m, "_BaseColor", "#FF4A88"); C(m, "_TipColor", "#FFC6DC");
                 F(m, "_Glow", 0.95f); F(m, "_StrandContrast", 1f); F(m, "_AO", 0.5f);
                 C(m, "_RimColor", "#FFE4F2"); F(m, "_RimStrength", 0.6f); F(m, "_RimPower", 2.0f);
             }, log);
@@ -223,6 +223,54 @@ namespace BubbleWash.EditorTools
                 F(m, "_BumpScale", 22f); F(m, "_BumpStrength", 0.12f); F(m, "_SpecStrength", 1.1f); F(m, "_GlintAmount", 0.45f);
                 F(m, "_ReflectBoost", 0.4f); F(m, "_RimStrength", 0.45f);
             }, log);
+        }
+
+        /// <summary>ORIGINAL 3.00 s: floating iridescent soap bubbles at the left edge, top left by the roller, along the right wall and
+        /// over the left foam (ours: two). Plain spheres (no collider) with the scene's own bubble material, placed in WORLD space
+        /// through the R2 camera at the original's screen positions (decor in the door section; gameplay passes them).</summary>
+        static void Bubbles(Camera cam, RunnerController runner, StringBuilder log)
+        {
+            var mat = MaterialLibrary.Get("M_Bubble") ?? MaterialLibrary.Get("M_FX_Bubble");
+            if (mat == null) { log.AppendLine("  bubbles: no bubble material - skipped"); return; }
+            S2v1TestScene.PoseR2(runner, cam);
+            float aspect = cam.aspect;
+            cam.aspect = 1280f / 720f;
+            float f = 360f / Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            var parent = new GameObject("S2Art_Bubbles");
+            var env = GameObject.Find("Level01_RainbowRush");
+            if (env != null) parent.transform.SetParent(env.transform, true);
+            // (u, v, radius px, depth m) read off the ORIGINAL frame
+            var spec = new (float u, float v, float r, float d)[] { (18, 258, 46, 3.6f), (52, 106, 18, 5f), (878, 320, 14, 9f), (866, 292, 8, 9.5f),
+                (905, 342, 6, 9.2f), (405, 150, 7, 8f), (182, 246, 8, 5f), (232, 300, 6, 4.6f), (1188, 300, 10, 6f), (1010, 470, 9, 4.2f) };
+            int n = 0;
+            foreach (var b in spec)
+            {
+                var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                Object.DestroyImmediate(go.GetComponent<Collider>());
+                go.name = $"S2Art_Bubble_{n:00}";
+                go.transform.SetParent(parent.transform, true);
+                go.transform.position = cam.ViewportToWorldPoint(new Vector3(b.u / 1280f, 1f - b.v / 720f, b.d));
+                float radius = b.r * b.d / f;
+                go.transform.localScale = Vector3.one * (2f * radius);
+                var mr = go.GetComponent<MeshRenderer>();
+                mr.sharedMaterial = mat;
+                mr.shadowCastingMode = ShadowCastingMode.Off;
+                n++;
+            }
+            cam.aspect = aspect;
+            log.AppendLine($"  bubbles: {n} floating soap bubbles ({mat.name}) placed through R2 at the original's screen positions");
+        }
+
+        /// <summary>art04: the milk crowns still read ~15 % smaller than the original's sprays -> the game's own SplashCrowns base scale.</summary>
+        static void BigSplash(RunnerController runner, StringBuilder log)
+        {
+            var sc = runner.GetComponentsInChildren<SplashCrowns>(true).FirstOrDefault(c => c.crowns != null && c.crowns.Length >= 2);
+            if (sc == null) return;
+            var s3 = new Vector3(1.15f, 1.12f, 1.15f);
+            sc.baseScale = new[] { s3, s3 };
+            foreach (var mf in sc.crowns) if (mf != null) mf.transform.localScale = s3;
+            EditorUtility.SetDirty(sc);
+            log.AppendLine($"  bigsplash: crown base scale {s3}");
         }
 
         // ------------------------------------------------------------------------------------------- what sits under key R2 pixels
@@ -344,6 +392,12 @@ namespace BubbleWash.EditorTools
                 if (brain) brain.enabled = false;
                 var rig = Object.FindFirstObjectByType<RunnerCameraRig>(FindObjectsInactive.Include);
                 var mascot = S2v1TestScene.MascotRenderers(runner);
+                // the scene's own start state (restored before -bwkSave: art04's saved scene kept the brain OFF and the camera frozen
+                // at the last capture pose, so its Play Mode recording showed a static camera)
+                float runnerStart = runner.Distance;
+                var runnerPos = runner.transform.position; var runnerRot = runner.transform.rotation;
+                var camPos = cam.transform.position; var camRot = cam.transform.rotation; float camFov = cam.fieldOfView;
+                Vector3 rigPos = rig ? rig.transform.position : Vector3.zero; Quaternion rigRot = rig ? rig.transform.rotation : Quaternion.identity;
 
                 S2v1TestScene.PoseR2(runner, cam);
                 Pick(cam, log);
@@ -361,15 +415,21 @@ namespace BubbleWash.EditorTools
                         case "roller": Roller(log); break;
                         case "walls": Walls(log); break;
                         case "foam": Foam(log); break;
+                        case "bubbles": Bubbles(cam, runner, log); break;
+                        case "bigsplash": BigSplash(runner, log); break;
                         default: log.AppendLine("  unknown step - skipped"); continue;
                     }
                     acc = acc.Length == 0 ? st : acc + "+" + st;
                     RenderSet(runner, cam, $"{outDir}/art_{acc}", dists, mascot);
                     log.AppendLine($"rendered art_{acc}");
                 }
-                if (rig) rig.aspectOverride = 0f;
-                if (save) SaveIsolated(scene, log);
+                if (rig) { rig.aspectOverride = 0f; rig.transform.SetPositionAndRotation(rigPos, rigRot); }
+                runner.TeleportTo(runnerStart, 0f);
+                runner.transform.SetPositionAndRotation(runnerPos, runnerRot);
+                cam.transform.SetPositionAndRotation(camPos, camRot); cam.fieldOfView = camFov;
                 if (brain) brain.enabled = true;
+                log.AppendLine(string.Format(IC, "restored start state: runner d {0:0.0}, camera + rig pose, CinemachineBrain {1}", runnerStart, brain ? brain.enabled.ToString() : "-"));
+                if (save) SaveIsolated(scene, log);
                 File.WriteAllText($"{outDir}/summary.txt", log.ToString());
                 Debug.Log("[BWK] S2 art pass:\n" + log);
                 EditorApplication.Exit(0);
