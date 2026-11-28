@@ -1,0 +1,1 @@
+Source: https://github.com/arjun988/blender-skills (MIT) .claude/skills/hair-groom @ 904f095d8f36a6e72adaebb08d07f884a074743d, installed 2026-11-28 by lead 470ca906 on the owner's request
