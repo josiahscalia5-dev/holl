@@ -371,11 +371,12 @@ def mat_water():
     body = b.mix(body, srgb("#CDF5FC"), b.math("MULTIPLY", band2, 0.62))
     body = b.mix(body, srgb("#C27AD8"), b.math("MULTIPLY", b.smooth(t, 0.86, 1.0), 0.18))   # rail / tunnel pink-violet reflection
     # elongated ripples -> stretched glossy highlights along the flow
-    rip = b.noise(b.vec(b.math("MULTIPLY", lat, 3.0), b.math("MULTIPLY", d, 0.30), 2.1), 1.0, detail=2.0, rough=0.5)
-    bump = b.n("ShaderNodeBump"); bump.inputs["Strength"].default_value = 0.16; bump.inputs["Distance"].default_value = 0.03
+    # pass 05: LOW-frequency swell only (detail 0) - the detail-2 ripples made sparkling white specular 'snow' under the lights
+    rip = b.noise(b.vec(b.math("MULTIPLY", lat, 1.4), b.math("MULTIPLY", d, 0.12), 2.1), 1.0, detail=0.0, rough=0.5)
+    bump = b.n("ShaderNodeBump"); bump.inputs["Strength"].default_value = 0.10; bump.inputs["Distance"].default_value = 0.04
     b.link(rip, bump.inputs["Height"])
     dark = b.mix(body, (0.0, 0.0, 0.0, 1.0), 0.8)
-    p = b.principled(Base_Color=dark, Roughness=0.05, IOR=1.33, Coat_Weight=0.45, Coat_Roughness=0.02,
+    p = b.principled(Base_Color=dark, Roughness=0.07, IOR=1.33, Coat_Weight=0.35, Coat_Roughness=0.04,
                      Emission_Color=body, Emission_Strength=1.0, Specular_IOR_Level=0.6)
     b.link(bump.outputs["Normal"], p.inputs["Normal"])
     b.link(p.outputs[0], b.out.inputs["Surface"])
@@ -566,9 +567,10 @@ def mat_chevron():
     lw = b.n("ShaderNodeLayerWeight"); lw.inputs["Blend"].default_value = 0.4
     geo = b.n("ShaderNodeNewGeometry")
     nz = b.sep(geo.outputs["Normal"])[2]
-    col = b.mix(srgb("#A8FAF4"), srgb("#22BCDD"), b.smooth(lw.outputs["Facing"], 0.35, 0.9))
-    col = b.mix(srgb("#10A9D8"), col, b.smooth(nz, 0.6, 0.9))                         # bevels / sides = saturated cyan
-    p = b.principled(Base_Color=srgb("#0C4E5C"), Roughness=0.08, Coat_Weight=1.0, Emission_Color=col, Emission_Strength=1.2)
+    col = b.mix(srgb("#86F2F4"), srgb("#1DBEE0"), b.smooth(lw.outputs["Facing"], 0.3, 0.85))
+    col = b.mix(srgb("#0E9FD0"), col, b.smooth(nz, 0.6, 0.9))                         # bevels / sides = saturated cyan
+    p = b.principled(Base_Color=srgb("#06323C"), Roughness=0.22, Coat_Weight=0.2, Specular_IOR_Level=0.3,
+                     Emission_Color=col, Emission_Strength=1.2)
     b.link(p.outputs[0], b.out.inputs["Surface"])
     return b.m
 

@@ -70,18 +70,22 @@ SLOT_BIG = dict(pu=0.62, pv=0.50, hu=0.21, hv=0.13, n=2.3)      # big ovals near
 SLOT_DASH = dict(pu=0.50, pv=0.38, hu=0.17, hv=0.055, n=2.8)     # the rows of small dashes deeper in
 
 PH = {  # flat placeholder colours by tag (materials-artist owns the real materials)
-    "drum": ((0.388, 0.310, 0.608), 0.9, 0.3, 0.0),
-    "slot": ((0.06, 0.045, 0.10), 0.0, 0.8, 0.0),
-    "band": ((0.48, 0.36, 0.75), 0.3, 0.35, 0.0),
-    "band_lip": ((0.87, 0.82, 0.90), 0.0, 0.3, 6.0),
-    "gold_ring": ((0.78, 0.58, 0.31), 1.0, 0.22, 0.0),
-    "bulb_socket": ((0.55, 0.36, 0.17), 1.0, 0.3, 0.0),
-    "bulb": ((0.95, 0.85, 0.51), 0.0, 0.1, 12.0),
-    "star_yellow": ((0.94, 0.84, 0.44), 0.0, 0.2, 10.0),
-    "star_cyan": ((0.35, 0.79, 0.86), 0.0, 0.2, 10.0),
-    "star_pink": ((0.88, 0.45, 0.71), 0.0, 0.2, 10.0),
-    "star_glow": ((0.55, 0.45, 0.70), 0.0, 0.5, 0.6),
+    # (sRGB colour, metallic, roughness, emission) - low metallic so the FORMS read under any temp light (pass 2)
+    "drum": ((0.43, 0.36, 0.66), 0.35, 0.40, 0.0),
+    "slot": ((0.05, 0.035, 0.09), 0.0, 0.8, 0.0),
+    "band": ((0.50, 0.38, 0.78), 0.15, 0.35, 0.0),
+    "band_lip": ((0.84, 0.74, 0.97), 0.0, 0.3, 2.5),
+    "gold_ring": ((0.85, 0.62, 0.30), 0.70, 0.28, 0.0),
+    "bulb_socket": ((0.60, 0.40, 0.18), 0.70, 0.30, 0.0),
+    "bulb": ((1.00, 0.86, 0.52), 0.0, 0.1, 5.0),
+    "star_yellow": ((0.98, 0.86, 0.30), 0.0, 0.2, 4.0),
+    "star_cyan": ((0.30, 0.86, 0.95), 0.0, 0.2, 4.0),
+    "star_pink": ((0.97, 0.45, 0.78), 0.0, 0.2, 4.0),
+    "star_glow_yellow": ((0.80, 0.50, 0.25), 0.0, 0.5, 0.5),
+    "star_glow_cyan": ((0.25, 0.45, 0.65), 0.0, 0.5, 0.5),
+    "star_glow_pink": ((0.70, 0.32, 0.62), 0.0, 0.5, 0.5),
 }
+TRIM_FROM = {"CTX_old_tunnel_stars": 38.0}   # the old near-door stars sit in the door mouth at d 38.9-41 (r up to 6.3 m)
 
 
 def srgb_to_lin(c):
@@ -338,11 +342,14 @@ def build_band(name, d, hw, dep, lips, coll):
     prof = band_profile(hw, dep)
     objs = [lathe("S2V1_band_" + name, prof, d, 112, "band", [ph_mat("band")], coll, urep=12.0)]
     crest_r = R_WALL - dep
+    big = dep > 0.4
     for lip in lips:
-        if lip == "crest":
-            dy, r, rt = -0.10 * hw, crest_r + 0.012, 0.042
+        if lip == "crest":   # luminous lip along the crest, half embedded (reads as a lit rounded edge, not a hoop)
+            rt = 0.075 if big else 0.05
+            dy, r = -0.10 * hw, crest_r + 0.45 * rt
         else:   # front shoulder: on the bulge facing the camera
-            dy, r, rt = -0.78 * hw, R_WALL - 0.07 - (dep - 0.07) * 0.55, 0.036
+            rt = 0.05
+            dy, r = -0.78 * hw, R_WALL - 0.07 - (dep - 0.07) * 0.55 + 0.3 * rt
         objs.append(torus("S2V1_bandlip_%s_%s" % (name, lip), d + dy, r, rt, 112, 8, "band_lip", [ph_mat("band_lip")], coll))
     return objs
 
@@ -377,11 +384,11 @@ def gold_profile(s, sw=None):
 
 def build_gold(name, d, s, sw, nb, rb, coll):
     prof, (sdy, sr) = gold_profile(s, sw)
-    objs = [lathe("S2V1_gold_" + name, prof, d, 120, "gold_ring", [ph_mat("gold_ring")], coll, urep=10.0, sharp_deg=60)]
+    objs = [lathe("S2V1_gold_" + name, prof, d, 96, "gold_ring", [ph_mat("gold_ring")], coll, urep=10.0, sharp_deg=60)]
     # sockets: small lathed cups, axis = -d (facing the camera), sitting on the channel floor
     cup = fillet([(0.0, rb * 0.06), (0.0, rb * 1.45), (-0.035, rb * 1.42), (-0.045, rb * 1.18), (-0.02, rb * 1.05), (-0.02, rb * 0.06)],
-                 [0, 0.008, 0.01, 0.008, 0.005, 0], n=2, closed=False)
-    nc = 12
+                 [0, 0.008, 0.01, 0.008, 0.005, 0], n=1, closed=False)
+    nc = 10
     SV, SF = [], []
     BV, BF = [], []
     sph_lat, sph_lon = 7, 12
@@ -507,7 +514,7 @@ def build_star(name, d, ang, size, colour, roll, coll, gamma=None):
     gf += [(m + 1, m + 2 + (i + 1) % m, m + 2 + i) for i in range(m)]
     gf += [(1 + i, 1 + (i + 1) % m, m + 2 + (i + 1) % m, m + 2 + i) for i in range(m)]
     guv = [(0.5 + 0.5 * (G[v] - cen) @ across / size, 0.5 + 0.5 * (G[v] - cen) @ up / size) for f in gf for v in f]
-    g = make_obj("S2V1_starglow_" + name, G, gf, "star_glow", [ph_mat("star_glow")], coll, loop_uv=guv)
+    g = make_obj("S2V1_starglow_" + name, G, gf, "star_glow", [ph_mat("star_glow_" + colour)], coll, loop_uv=guv)
     orient(g, "solid")
     g["s2v1_color"] = colour
     # stem: from behind the plate radially out into the wall (2 cm embedded)
@@ -545,7 +552,7 @@ def trim_old(C, da, db):
                 dd = ((U - pos[k]) ** 2).sum(1)
                 m = dd < bestd; bestd[m] = dd[m]; best[m] = k
             dest = D[best] + ((U - pos[best]) * fwd[best]).sum(1)
-            kill = (dest >= da) & (dest <= db) & (np.sqrt(bestd) < 9.0)
+            kill = (dest >= TRIM_FROM.get(cname, da)) & (dest <= db) & (np.sqrt(bestd) < 9.0)
             if not kill.any():
                 continue
             bm = bmesh.new(); bm.from_mesh(me); bm.faces.ensure_lookup_table()
