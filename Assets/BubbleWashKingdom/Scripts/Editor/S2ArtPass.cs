@@ -31,11 +31,74 @@ namespace BubbleWash.EditorTools
     ///     [-bwkSteps "splash,glow,depth,roller"] [-bwkSplash Tools/Blender/work/s2art/splash] [-bwkDists 33.5,38.5,44] [-bwkSave 1]
     /// Writes DIR/current/... and DIR/art_&lt;steps so far&gt;/R2_16x9.png, R2_bg_16x9.png, rig_dXX.X_9x16.png (Tools/s2v1_unity_sheet.py
     /// makes the labelled owner sheets) + DIR/summary.txt (incl. what sits under key R2 pixels).
+    /// 2026-11-28 (owner 06:00 annotated blueprint): extra steps live in partial files S2ArtPass.&lt;Domain&gt;.cs, one owner each,
+    /// registered by [ArtStep("name")] on a static void Method(Ctx c); -bwkStillsAt "current,bubbles,metal" renders every section
+    /// still (CaptureTools.CaptureStills: rear gameplay 16x9 + 9x16, R3-R6 / C1-C5 front comparison cameras, finale, + bg/ with the
+    /// mascot hidden) into DIR/stills_&lt;name&gt;/ after the current render / after those cumulative steps; -bwkR2Each 0 renders the
+    /// R2 + rig set only for current and the last step. Step folders are DIR/art_NN_&lt;step&gt; (NN = cumulative position).
     /// </summary>
-    public static class S2ArtPass
+    public static partial class S2ArtPass
     {
         const string AssetDir = "Assets/BubbleWashKingdom/Art/S2v1Test/Art";
         static readonly CultureInfo IC = CultureInfo.InvariantCulture;
+
+        /// <summary>Marks a static void Method(Ctx c) in any S2ArtPass partial file as an art step usable in -bwkSteps.</summary>
+        [System.AttributeUsage(System.AttributeTargets.Method)]
+        internal sealed class ArtStep : System.Attribute { public readonly string Name; public ArtStep(string name) { Name = name; } }
+
+        /// <summary>What an art step may use (the scene is open in memory; edit only CLONES via Swap, never the .mat assets).</summary>
+        internal sealed class Ctx
+        {
+            public RunnerController runner; public Camera cam; public StringBuilder log; public string outDir; public List<Renderer> mascot;
+        }
+
+        static Dictionary<string, System.Reflection.MethodInfo> registry;
+        static Dictionary<string, System.Reflection.MethodInfo> Registry()
+        {
+            if (registry != null) return registry;
+            registry = new Dictionary<string, System.Reflection.MethodInfo>();
+            const System.Reflection.BindingFlags BF = System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
+            foreach (var m in typeof(S2ArtPass).GetMethods(BF))
+                foreach (ArtStep a in m.GetCustomAttributes(typeof(ArtStep), false)) registry[a.Name] = m;
+            return registry;
+        }
+
+        static void Stills(Ctx c, CinemachineBrain brain, string name)
+        {
+            var t0 = System.DateTime.Now;
+            CaptureTools.CaptureStills($"{c.outDir}/stills_{name}");
+            if (brain) brain.enabled = false;   // CaptureStills re-enables it at its end
+            c.log.AppendLine(string.Format(IC, "stills_{0} rendered ({1:0} s)", name, (System.DateTime.Now - t0).TotalSeconds));
+        }
+
+        /// <summary>For art steps that CREATE a texture: writes it as a PNG asset under Art/S2v1Test/Art/Textures (gitignored) and
+        /// returns the imported asset, so a later -bwkSave keeps the reference (a runtime-only Texture2D would be lost).</summary>
+        static Texture2D SaveTex(Texture2D tex, string name, bool linear = false, bool normalMap = false)
+        {
+            string dir = AssetDir + "/Textures";
+            Directory.CreateDirectory(dir);
+            string path = $"{dir}/{name}.png";
+            File.WriteAllBytes(path, tex.EncodeToPNG());
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+            if (AssetImporter.GetAtPath(path) is TextureImporter ti)
+            {
+                ti.textureType = normalMap ? TextureImporterType.NormalMap : TextureImporterType.Default;
+                ti.sRGBTexture = !linear && !normalMap;
+                ti.wrapMode = TextureWrapMode.Repeat;
+                ti.mipmapEnabled = true;
+                ti.SaveAndReimport();
+            }
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+        }
+
+        /// <summary>For selective mesh replacement: loads a .bwkm (S2v1TestScene.ReadBwkm: positions, normals, optional UV0 / UV1,
+        /// submeshes) and registers it in newMeshes so -bwkSave persists it.</summary>
+        static Mesh LoadArtMesh(string path, out int[] subMat)
+        {
+            var m = S2v1TestScene.ReadBwkm(path, out subMat);
+            newMeshes.Add(m);
+            return m;
+        }
 
         static string Arg(string key)
         {
@@ -399,13 +462,20 @@ namespace BubbleWash.EditorTools
                 var camPos = cam.transform.position; var camRot = cam.transform.rotation; float camFov = cam.fieldOfView;
                 Vector3 rigPos = rig ? rig.transform.position : Vector3.zero; Quaternion rigRot = rig ? rig.transform.rotation : Quaternion.identity;
 
+                var stillsAt = new HashSet<string>((Arg("-bwkStillsAt") ?? "").Split(',').Select(x => x.Trim()).Where(x => x.Length > 0));
+                bool r2Each = Arg("-bwkR2Each") != "0";
+                var ctx = new Ctx { runner = runner, cam = cam, log = log, outDir = outDir, mascot = mascot };
+                var stepList = steps.Split(',').Select(x => x.Trim()).Where(x => x.Length > 0).ToList();
+
                 S2v1TestScene.PoseR2(runner, cam);
                 Pick(cam, log);
                 RenderSet(runner, cam, $"{outDir}/current", dists, mascot);
                 log.AppendLine("rendered current");
-                string acc = "";
-                foreach (var st in steps.Split(',').Select(x => x.Trim()).Where(x => x.Length > 0))
+                if (stillsAt.Contains("current")) Stills(ctx, brain, "current");
+                int idx = 0;
+                foreach (var st in stepList)
                 {
+                    idx++;
                     log.AppendLine($"step {st}:");
                     switch (st)
                     {
@@ -417,11 +487,20 @@ namespace BubbleWash.EditorTools
                         case "foam": Foam(log); break;
                         case "bubbles": Bubbles(cam, runner, log); break;
                         case "bigsplash": BigSplash(runner, log); break;
-                        default: log.AppendLine("  unknown step - skipped"); continue;
+                        default:
+                            if (!Registry().TryGetValue(st, out var mi)) { log.AppendLine("  unknown step - skipped"); continue; }
+                            try { mi.Invoke(null, new object[] { ctx }); }
+                            catch (System.Reflection.TargetInvocationException te)
+                            {
+                                log.AppendLine($"  STEP FAILED {st}: {te.InnerException}");
+                                Debug.LogError($"[BWK] art step {st} failed: {te.InnerException}");
+                                continue;
+                            }
+                            break;
                     }
-                    acc = acc.Length == 0 ? st : acc + "+" + st;
-                    RenderSet(runner, cam, $"{outDir}/art_{acc}", dists, mascot);
-                    log.AppendLine($"rendered art_{acc}");
+                    string vd = string.Format(IC, "{0}/art_{1:00}_{2}", outDir, idx, st);
+                    if (r2Each || idx == stepList.Count) { RenderSet(runner, cam, vd, dists, mascot); log.AppendLine($"rendered {vd}"); }
+                    if (stillsAt.Contains(st)) Stills(ctx, brain, st);
                 }
                 if (rig) { rig.aspectOverride = 0f; rig.transform.SetPositionAndRotation(rigPos, rigRot); }
                 runner.TeleportTo(runnerStart, 0f);
