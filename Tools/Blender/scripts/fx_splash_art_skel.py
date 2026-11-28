@@ -131,23 +131,24 @@ def side_skeleton(side, frame, rng_seed):
         y = YW - 0.01
         while y < hb:
             frac = (y - YW) / max(hb, 1e-3)
-            hole = math.sin(19.0 * t + tau * ph) * math.sin(37.0 * y - tau * ph * 0.5 + 1.3 * side)
-            if frac > 0.28 and hole > 0.42:
-                y += 0.020
+            hole = (math.sin(23.0 * t + 5.1 * y * 10.0 + tau * ph) + math.sin(41.0 * t * 0.7 - 13.0 * y + 2.3 + side)
+                    + math.sin(7.0 * t + 29.0 * y - tau * ph * 0.5)) / 3.0
+            if frac > 0.30 and hole > 0.38:
+                y += 0.016
                 continue
             rv = 0.019 * (1.1 - 0.4 * frac)
             p = b + UP * y + nrm * (math.tan(lean) * (y - YW))
             balls.append((p[0], p[1], p[2], rv / VIS))
-            y += 0.020
+            y += 0.016
         p = b + nrm * 0.025
         balls.append((p[0], p[1], p[2], 0.024 / VIS))              # rolled foot of the lip on the water
 
     # 2) crown of branching fingers fanning from the sole: lean outward, some forward, some back toward the camera; bend
     #    under gravity; a fork on about half of them; round bulb tips; beads about to leave
     def finger(p, d0, L, r0, r1, bend, phi, depth):
-        steps = 10 if depth == 0 else 6
+        steps = 20 if depth == 0 else 12
         dk = d0
-        fork_at = 4 + int(rng.random() * 3)
+        fork_at = 8 + int(rng.random() * 6)
         do_fork = depth == 0 and rng.random() < 0.55
         fork_sign = 1.0 if rng.random() < 0.5 else -1.0
         fork_len = 0.4 + 0.25 * rng.random()
@@ -156,7 +157,7 @@ def side_skeleton(side, frame, rng_seed):
             dk = d0 * math.cos(bend * u) - UP * math.sin(bend * u) * 0.9 + out * math.sin(bend * u) * 0.35
             dk = dk / np.linalg.norm(dk)
             p = p + dk * (L / steps)
-            rv = r0 + (r1 - r0) * u
+            rv = (r0 + (r1 - r0) * u) * (1.0 + 0.14 * math.sin(11.0 * u + 7.0 * phi))
             balls.append((p[0], p[1], p[2], rv / VIS))
             if do_fork and k == fork_at:
                 side_dir = np.cross(dk, UP)
@@ -192,10 +193,10 @@ def side_skeleton(side, frame, rng_seed):
         L = 1.4 * (0.10 + 0.10 * rng.random())
         dirv = tan * 0.8 + nrm * (0.6 * (rng.random() - 0.3))
         dirv = dirv / np.linalg.norm(dirv)
-        steps = 7
+        steps = 14
         for k in range(steps + 1):
             u = k / float(steps)
-            rv = 0.024 - 0.006 * u
+            rv = (0.024 - 0.006 * u) * (1.0 + 0.12 * math.sin(9.0 * u + t0 * 13.0))
             p = b + dirv * L * u + nrm * 0.02 * math.sin(3.0 * u + tau * ph)
             balls.append((p[0], YW + LIFT + rv * 0.6 + 0.015 * (1.0 - u), p[2], rv / VIS))
         tip = b + dirv * (L + 0.015)
@@ -205,8 +206,8 @@ def side_skeleton(side, frame, rng_seed):
         fb = dirv * 0.6 + side_dir * (0.8 if rng.random() < 0.5 else -0.8)
         fb = fb / np.linalg.norm(fb)
         m = b + dirv * L * 0.5
-        for k in range(1, 5):
-            p = m + fb * 0.018 * k
+        for k in range(1, 9):
+            p = m + fb * 0.010 * k
             balls.append((p[0], YW + LIFT + 0.012, p[2], 0.018 / VIS))
         q = m + fb * 0.11
         balls.append((q[0], YW + LIFT + 0.014, q[2], 0.025 / VIS))
@@ -221,10 +222,10 @@ def side_skeleton(side, frame, rng_seed):
             dirv = np.array([math.cos(ang), 0.0, math.sin(ang) * 1.3])
             dirv /= np.linalg.norm(dirv)
             Lb = 1.35 * (0.07 + 0.09 * rng.random()) * (1.0 + 0.15 * math.sin(tau * (ph + j * 0.3)))
-            steps = 6
+            steps = 11
             for k in range(steps + 1):
                 uu = k / float(steps)
-                rv = 0.021 - 0.005 * uu
+                rv = (0.021 - 0.005 * uu) * (1.0 + 0.12 * math.sin(8.0 * uu + j * 2.1))
                 p = c + dirv * Lb * uu
                 balls.append((p[0], YW + LIFT + rv * 0.5, p[2], rv / VIS))
             tip = c + dirv * (Lb + 0.012)

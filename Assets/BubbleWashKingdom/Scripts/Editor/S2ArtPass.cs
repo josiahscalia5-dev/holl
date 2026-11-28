@@ -145,8 +145,8 @@ namespace BubbleWash.EditorTools
             var src = MaterialLibrary.Get("M_FX_Milk_v3");
             milkArt = new Material(src) { name = "M_FX_Milk_art" };
             C(milkArt, "_ColorA", "#F4F9FD"); C(milkArt, "_ShadowColor", "#A9C2DE"); C(milkArt, "_ColorB", "#86C6EA"); C(milkArt, "_MilkThin", "#B4DAF0");
-            F(milkArt, "_MilkAlpha", 1f); F(milkArt, "_MilkEdgeAlpha", 0.85f); F(milkArt, "_Glow", 0.10f);
-            F(milkArt, "_MilkSoft", 1f); F(milkArt, "_MilkGlass", 0f); F(milkArt, "_BumpScale", 6f); F(milkArt, "_BumpStrength", 0.12f);
+            F(milkArt, "_MilkAlpha", 1f); F(milkArt, "_MilkEdgeAlpha", 0.72f); F(milkArt, "_Glow", 0.10f);
+            F(milkArt, "_MilkSoft", 1f); F(milkArt, "_MilkGlass", 0f); F(milkArt, "_BumpScale", 6f); F(milkArt, "_BumpStrength", 0.22f);
             F(milkArt, "_MilkWet", 0.8f); F(milkArt, "_SpecStrength", 1.0f); F(milkArt, "_Wrap", 0.62f); F(milkArt, "_RimStrength", 0.22f);
             F(milkArt, "_Wobble", 0.002f);
             srcOf[milkArt] = src;
@@ -205,7 +205,7 @@ namespace BubbleWash.EditorTools
             Swap("walls drum metal", m => Named(m, "M_DrumWall", "M_DrumWallFlat"), m =>
             {
                 C(m, "_BaseColor", "#8A6CC4"); C(m, "_HighlightColor", "#CDB6F5"); C(m, "_SheenColor", "#E6C8FF");
-                F(m, "_SheenStrength", 0.32f); F(m, "_Sparkle", 1.0f); F(m, "_Metallic", 0.68f); F(m, "_Smoothness", 0.70f);
+                F(m, "_SheenStrength", 0.32f); F(m, "_Sparkle", 0.6f); F(m, "_Metallic", 0.68f); F(m, "_Smoothness", 0.70f);
                 F(m, "_BaySheen", 0.28f); F(m, "_Glow", 0.05f);
             }, log);
             Swap("walls violet bands", m => Named(m, "M_HatchViolet_s2"), m =>
@@ -213,6 +213,16 @@ namespace BubbleWash.EditorTools
                 C(m, "_HighColor", "#CFA2F2"); Mul(m, "_SpecStrength", 1.4f); F(m, "_Sparkle", 0.6f); F(m, "_Brightness", 0.9f); F(m, "_GlintStrength", 1.3f);
             }, log);
             Swap("walls gold", m => Named(m, "M_Gold", "M_GoldDark", "M_DrumRim"), m => { Mul(m, "_GlintStrength", 1.4f); Mul(m, "_Sparkle", 1.6f); Mul(m, "_Brightness", 1.06f); }, log);
+        }
+
+        static void Foam(StringBuilder log)
+        {
+            // ORIGINAL foam banks = glossy wet soap suds (many small shiny bubbles with bright glints); ours = matte white cloud puffs
+            Swap("foam suds", m => Named(m, "M_Foam_v2", "M_Foam"), m =>
+            {
+                F(m, "_BumpScale", 22f); F(m, "_BumpStrength", 0.12f); F(m, "_SpecStrength", 1.1f); F(m, "_GlintAmount", 0.45f);
+                F(m, "_ReflectBoost", 0.4f); F(m, "_RimStrength", 0.45f);
+            }, log);
         }
 
         // ------------------------------------------------------------------------------------------- what sits under key R2 pixels
@@ -350,6 +360,7 @@ namespace BubbleWash.EditorTools
                         case "depth": Depth(log); break;
                         case "roller": Roller(log); break;
                         case "walls": Walls(log); break;
+                        case "foam": Foam(log); break;
                         default: log.AppendLine("  unknown step - skipped"); continue;
                     }
                     acc = acc.Length == 0 ? st : acc + "+" + st;
