@@ -24,10 +24,10 @@ namespace BubbleWash.EditorTools
     /// </summary>
     public static partial class S2ArtPass
     {
-        /// <summary>Intermediate R2 (mascot hidden) + one portrait rig render after a metal step (bp_A judges each step).</summary>
+        /// <summary>Intermediate R2 (mascot hidden) + one portrait rig render after a metal step (-bwkMetalMid 1).</summary>
         static void MetalMid(Ctx c, string tag)
         {
-            if (Arg("-bwkMetalMid") == "0") return;
+            if (Arg("-bwkMetalMid") != "1") return;   // opt-in (bp_A previews used it; the lead's combined runs skip it)
             string vd = $"{c.outDir}/metal_mid_{tag}";
             Directory.CreateDirectory(vd);
             S2v1TestScene.PoseR2(c.runner, c.cam);
@@ -159,19 +159,14 @@ namespace BubbleWash.EditorTools
                             if (lipV == null) { lipV = new Material(mats[i]) { name = "M_RimGlow_s2_mouth" }; F(lipV, "_Intensity", 2.3f); F(lipV, "_FogAmount", 0.4f); }
                             mats[i] = lipV; n++;
                         }
-                        else if (src.name == "M_RimSpark_s2")
-                        {
-                            if (sparkV == null)
-                            {
-                                sparkV = new Material(mats[i]) { name = "M_RimSpark_s2_mouth" };
-                                C(sparkV, "_Color", "#FF6CD6"); F(sparkV, "_Intensity", 2.4f); F(sparkV, "_CoreWhite", 0.35f); F(sparkV, "_FogAmount", 0.4f);
-                            }
-                            mats[i] = sparkV; n++;
-                        }
+                        // bp_A_3 judged: a bright LED variant (x2.4, white core .35) read as crisp pink-WHITE dots = the "fairy lights" the
+                        // owner forbade (17:35 section E); the ORIGINAL band shows SOFT pink glows -> the band keeps the shared soft
+                        // pink glint clone (x1.0, no white core; rendered on the deeper bands in bp_A_3)
+                        else if (src.name == "M_RimSpark_s2" && sparkV != null) { mats[i] = sparkV; n++; }
                     }
                     r.sharedMaterials = mats;
                 }
-                c.log.AppendLine($"  metal mouth band lights: {n} slots (bright pink lip + LED dots)");
+                c.log.AppendLine($"  metal mouth band lights: {n} slots (bright pink lip)");
             }
             Swap("metal rim leds", m => Named(m, "M_RimLight"), m => { F(m, "_FogAmount", 0.6f); }, c.log);
             // S3-S7 drum lips (BWK/Gold violet): no square sparkle cells, deeper violet body
