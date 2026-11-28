@@ -14,7 +14,9 @@ Run (heavy, foreground, through the lock):
   OUT=Tools/Blender/work/s2v1/unity_v1/<name> bash Tools/blender_run.sh Tools/Blender/scripts/s2v1/s2v1_export_unity.py s2v1_export_unity
 Env: OUT (default Tools/Blender/work/s2v1/unity_v1/latest), SRC (a Captures/s2v1/renders/<TAG>/_src folder = export exactly that preserved
      state, e.g. the BEST one; default = the live modules), CONTEXT (1 = open context.blend first like the assembly, needed when
-     materials / lighting touch context objects; default 1), PARTS (comma list of s2v1_part tags to export; default all but drum_hp).
+     materials / lighting touch context objects; default 1), PARTS (comma list of s2v1_part tags to export; default all but drum_hp),
+     SKIP_MODULES (comma list, e.g. s2v1_materials,s2v1_lighting = geometry-only export that never runs a module which might bake
+     while its artist works).
 .bwkm layout (little-endian): b"BWKM", int32 version 1, int32 vertexCount, int32 flags (1 = uv0, 2 = uv1), float32 pos[3n], float32 nrm[3n],
   [float32 uv0[2n]], [float32 uv1[2n]], int32 submeshCount, per submesh: int32 materialIndex (manifest "materials"), int32 indexCount,
   uint32 indices[indexCount].
@@ -47,6 +49,7 @@ if not os.path.isabs(OUT):
 OUT = OUT.replace("\\", "/")
 PARTS = [p.strip() for p in (os.environ.get("PARTS") or "").split(",") if p.strip()]
 CONTEXT = os.environ.get("CONTEXT", "1") != "0"
+SKIP_MODULES = {m.strip() for m in (os.environ.get("SKIP_MODULES") or "").split(",") if m.strip()}
 SKIP_PARTS = {"drum_hp"}
 
 
@@ -241,6 +244,9 @@ for o in track_objs:
 for o in track_objs:
     o.hide_render = True; o.hide_viewport = True
 for name in ("s2v1_materials", "s2v1_lighting"):
+    if name in SKIP_MODULES:
+        print("EXPORT module %s skipped (SKIP_MODULES)" % name)
+        continue
     mod = load_module(name)
     if mod is None:
         continue
@@ -324,10 +330,40 @@ manifest = {
     "trim_old": getattr(env, "TRIM_OLD", []),
     "trim_from": getattr(env, "TRIM_FROM", {}),
     "parts": parts, "materials": materials, "lights": lights, "world": world, "render": render, "glare": glare,
-    "errors": errors,
+    "errors": errors, "skipped_modules": sorted(SKIP_MODULES),
 }
 with open(OUT + "/manifest.json", "w", encoding="utf-8") as f:
     json.dump(manifest, f, indent=1)
+
+
+# flat, fixed-schema copy for Unity's JsonUtility (S2v1TestScene.cs): no dicts, every field always present
+def _flat_mat(m):
+    v, t = m.get("values", {}), m.get("textures", {})
+
+    def col(k, n):
+        x = v.get(k)
+        x = [float(a) for a in x][:n] if isinstance(x, list) else [0.0] * n
+        return x + [1.0] * (n - len(x))
+
+    num = lambda k, dflt: float(v[k]) if isinstance(v.get(k), (int, float)) and not isinstance(v.get(k), bool) else dflt
+    tex = lambda k: (t.get(k) or {}).get("file", "")
+    return {"name": m["name"], "shader": m.get("shader") or "", "procedural": ",".join(sorted(m.get("procedural", {}).keys())),
+            "base_color": col("Base Color", 4), "metallic": num("Metallic", 0.0), "roughness": num("Roughness", 0.5),
+            "emission_color": col("Emission Color", 3), "emission_strength": num("Emission Strength", 0.0), "alpha": num("Alpha", 1.0),
+            "coat": num("Coat Weight", 0.0), "transmission": num("Transmission Weight", 0.0),
+            "normal_strength": float((t.get("Normal") or {}).get("normal_strength", 1.0)),
+            "tex_base": tex("Base Color"), "tex_normal": tex("Normal"), "tex_roughness": tex("Roughness"), "tex_metallic": tex("Metallic"),
+            "tex_emission": tex("Emission Color"), "tex_ao": ""}
+
+
+flat = {"built": manifest["built"], "source_modules": manifest["source_modules"],
+        "replaced_d0": float(manifest["replaced_d"][0]), "replaced_d1": float(manifest["replaced_d"][1]),
+        "stars_from": float((manifest["trim_from"] or {}).get("CTX_old_tunnel_stars", manifest["replaced_d"][0])),
+        "parts": [{"name": p["name"], "part": p["part"], "color": p.get("color") or "", "file": p["file"], "tris": int(p["tris"]),
+                   "hide_render": bool(p.get("hide_render"))} for p in parts],
+        "materials": [_flat_mat(m) for m in materials]}
+with open(OUT + "/manifest_unity.json", "w", encoding="utf-8") as f:
+    json.dump(flat, f, indent=1)
 by = {}
 for p in parts:
     by.setdefault(p["part"], [0, 0]); by[p["part"]][0] += 1; by[p["part"]][1] += p["tris"]

@@ -63,6 +63,9 @@ desktop.ini
 /Assets/BubbleWashKingdom/Art/Projected.meta
 /Assets/BubbleWashKingdom/Scenes/Private/
 /Assets/BubbleWashKingdom/Scenes/Private.meta
+# S2 Tunnel v1 Unity transfer test assets (lead a557ee90 2026-11-27, owner 22:33): isolated until the owner approves a replacement
+/Assets/BubbleWashKingdom/Art/S2v1Test/
+/Assets/BubbleWashKingdom/Art/S2v1Test.meta
 # Player builds
 /Builds/
 
