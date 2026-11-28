@@ -90,7 +90,7 @@ namespace BubbleWash.EditorTools
             return f;
         }
 
-        static Mesh ReadBwkm(string path, out int[] subMat)
+        internal static Mesh ReadBwkm(string path, out int[] subMat)
         {
             using (var br = new BinaryReader(File.OpenRead(path)))
             {
@@ -515,7 +515,7 @@ namespace BubbleWash.EditorTools
         }
 
         // ------------------------------------------------------------------------------------------- cameras (= ProjectionS2Test / CaptureHero)
-        static void PoseRunner(RunnerController runner, float d)
+        internal static void PoseRunner(RunnerController runner, float d)
         {
             runner.TeleportTo(d, 0f);
             var animator = runner.GetComponentInChildren<Animator>();
@@ -526,7 +526,7 @@ namespace BubbleWash.EditorTools
             }
         }
 
-        static void PoseR2(RunnerController runner, Camera cam)
+        internal static void PoseR2(RunnerController runner, Camera cam)
         {
             PoseRunner(runner, SceneBuilder.HeroMouthDistance);
             var f = runner.Frame;
@@ -536,7 +536,7 @@ namespace BubbleWash.EditorTools
             cam.fieldOfView = CaptureTools.R2Fov;
         }
 
-        static void PoseRig(RunnerController runner, Camera cam, float d, float aspect)
+        internal static void PoseRig(RunnerController runner, Camera cam, float d, float aspect)
         {
             PoseRunner(runner, d);
             var rig = Object.FindFirstObjectByType<RunnerCameraRig>(FindObjectsInactive.Include);
@@ -547,7 +547,7 @@ namespace BubbleWash.EditorTools
             cam.fieldOfView = lens.FieldOfView;
         }
 
-        static List<Renderer> MascotRenderers(RunnerController runner) =>
+        internal static List<Renderer> MascotRenderers(RunnerController runner) =>
             runner.GetComponentsInChildren<Renderer>(true).Where(r => r.enabled && !(r is ParticleSystemRenderer) && !(r is TrailRenderer)).ToList();
 
         static (string name, HashSet<string> groups, string flavour) ParseVariant(string spec)
