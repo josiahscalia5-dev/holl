@@ -141,7 +141,10 @@ namespace BubbleWash.EditorTools
                 m.SetColor("_MirrorWall", new Color(0.14f, 0.12f, 0.34f));
                 m.SetColor("_DoorDeepTint", new Color(0.62f, 0.66f, 0.92f)); F(m, "_DoorDeepNear", 14f); F(m, "_DoorDeepFar", 30f);
                 // crop 07: near ovals bigger and ~2:1 (ours 1.35:1)
-                F(m, "_DoorSlotNear", 1.25f); F(m, "_DoorSlotAspect", 1.3f);
+                // lead tunnel lane 2b L3 (owner 17:35 section 5): near door-drum slots smaller + denser (size / pitch 1.25 -> 1.0,
+                // area x.64, count x1.56; ref near-right 10.4 slits / 10k px vs ours 7.1, area p90 193 vs 282 px) = "smaller and
+                // more refined than the previous large oval holes"; aspect 1.3 kept
+                F(m, "_DoorSlotNear", 1.0f); F(m, "_DoorSlotAspect", 1.3f);
                 // Screen S2 pass 10 v3 (lead 13:50 #1 defect: PALE lavender arc in the upper third of the portrait frame, s2p10
                 // ceiling (170,90)-(640,250) L 148 / chroma 50 vs s2p9r 102 / 78, R2 ceiling L 169 vs reference 98 / chroma
                 // 96; owner 13:25 (4) washed-out deep tunnel L 167 vs 121). Cause: v1/v2 mirror term - the ceiling mirrors the

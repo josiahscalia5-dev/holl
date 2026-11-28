@@ -5,6 +5,21 @@ of one enormous magical washing machine. These instructions come only from the o
 (`Docs/ProjectBrief.md`) and the approved Google Flow video `25982.mp4`.
 
 ## Owner standing rules (2026-11-27, follow in every session)
+- OWNER 2026-11-27 18:36 PERMANENT AUTOMATIC RECOVERY RULE (verbatim, private: Captures/agents/_shared/OWNER_RULE_1836_autosave_recovery_diagnostic.txt):
+  at the START of every session verify that exactly ONE `Tools/autosave.sh 300` loop runs (never a duplicate; start one only if none
+  runs) and make an immediate recovery checkpoint (a new STATE block in the private Captures/handoff/NEXT_ACCOUNT_START.md + one
+  `Tools/export_chat.py` run) - never wait 5 minutes for the first save. The ONE loop then refreshes every 5 minutes: the local chat
+  export, and (Tools/export_chat.py -> Tools/recovery_checkpoint.py) Captures/handoff/AUTO_STATUS.md (running specialists / workflow
+  IDs, watchers, Unity / Blender jobs, builds, previews, owner sheets, modified files, chat backups, references, tools, the newest
+  lead STATE block), the AUTO-STATUS block of NEXT_ACCOUNT_START.md and the complete ready-to-copy Captures/handoff/NEXT_ACCOUNT_PROMPT.md
+  (rendered from NEXT_ACCOUNT_PROMPT_TEMPLATE.md, mirrored to C:\Users\josia\Downloads\NEXT_ACCOUNT_PROMPT.md). Leads register every
+  workflow they launch in Captures/handoff/RUNS.json, keep writing STATE blocks with decisions / scores, edit the TEMPLATE (never the
+  generated prompt) when priorities change, and on any usage warning run one extra lightweight checkpoint at once (new STATE block +
+  `python -I Tools/recovery_checkpoint.py`). Never interrupt, cancel, restart or duplicate running specialists, workflows, watchers,
+  Unity or Blender jobs; no quality reduction because usage is high; respect enforced limits. ChatGPT mascot diagnostic package
+  (owner 18:36): Captures/diagnostic/Bubble_Wash_Kingdom_Mascot_Diagnostic.zip (< 30 MB, existing files only, no credentials / chats;
+  copy in Downloads) - rebuild it the same way only when asked. NO ADDITIONAL MONEY, NO DUPLICATE AUTOSAVES, NO INTERRUPTING
+  SPECIALISTS, NO REPEATED FAILED METHODS, NO WASTED CREDITS, QUALITY FIRST.
 - OWNER 2026-11-27 12:36 STRICT PERMANENT USAGE AND QUALITY RULE (verbatim in Captures/agents/_shared/OWNER_RULE_1236_usage_quality.txt):
   never voluntarily stop, wrap up, pause development or reduce quality because usage reaches 61 / 75 / 85 / 90 / 95 / 99 % -
   continue productive development until 100 % of the included usage is exhausted or the enforced limit stops the work (usage is
@@ -66,6 +81,12 @@ of one enormous magical washing machine. These instructions come only from the o
   autosave with verified pushes, no force-push / history rewrite, chat history and recovery notes LOCAL only.
 
 ## Current handoff (read first)
+- 2026-11-27 19:05 (session 9e4e986e = LEAD, new account, opened in C:/Users/josia/thanksgiving): the previous account hit its 5-hour
+  limit at 18:10 -> pass 10h + tunnel lane cut; relaunched ONCE as pass 10i run wf_0a7050be-d2e (Tools/workflows/bwk-s2-pass10i.js:
+  character = seam-free rose groom bake -> SK_Mascot_v5 re-export -> Unity plush path; water = crowns at both feet; then Accept judge +
+  skeptic) and tunnel lane run wf_a3b3ff1f-446 (Tools/workflows/bwk-s2-tunnel2b-r.js, levers L2-L5), GATE=1 watcher after_wave s2p10i.
+  Live status: private Captures/handoff/AUTO_STATUS.md (auto every 5 min); ready-to-paste prompt Captures/handoff/NEXT_ACCOUNT_PROMPT.md
+  (auto); newest lead STATE block at the top of Captures/handoff/NEXT_ACCOUNT_START.md.
 - 2026-11-27 18:05 (session 6d001969 = LEAD, opened in C:/Users/josia/thanksgiving): ready-to-paste prompt for the next account =
   private `Captures/handoff/NEXT_ACCOUNT_PROMPT.md`. Running: S2 pass 10h run wf_48cc4b5b-713 (character = Blender groom + bake ->
   smooth plush mascot, water = crowns + flow; then an independent judge + skeptic Accept phase), tunnel 2b lead lane run

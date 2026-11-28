@@ -220,3 +220,15 @@ if __name__ == "__main__":
     done = [n for n in (export(p) for p in mains) if n]
     agents = export_agents()
     print("exported:", ", ".join(done) if done else "nothing", "| agents:", len(agents))
+    # OWNER 2026-11-27 18:36 (permanent): every 5-minute autosave also refreshes the recovery files - Captures/handoff/AUTO_STATUS.md,
+    # the AUTO-STATUS block of NEXT_ACCOUNT_START.md and the ready-to-copy NEXT_ACCOUNT_PROMPT.md (Tools/recovery_checkpoint.py).
+    # Separate process with a time limit: a failure there can never break the chat export or the git snapshot.
+    try:
+        import subprocess
+        import sys
+        here = os.path.dirname(os.path.abspath(__file__))
+        rc = os.path.join(here, "recovery_checkpoint.py")
+        if os.path.exists(rc):
+            subprocess.run([sys.executable, "-I", rc], timeout=120, cwd=os.path.dirname(here))
+    except Exception as e:  # noqa: BLE001
+        print("recovery_checkpoint not run:", type(e).__name__, e)

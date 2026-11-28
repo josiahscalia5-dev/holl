@@ -68,7 +68,7 @@ Material:
     - _DoorSlotAspect: 1.3
     - _DoorSlotEnd: 60
     - _DoorSlotFar: 1.1
-    - _DoorSlotNear: 1.25
+    - _DoorSlotNear: 1
     - _DoorSlotStart: 48
     - _DoorSmooth: 0.82
     - _DoorThinSlots: 1

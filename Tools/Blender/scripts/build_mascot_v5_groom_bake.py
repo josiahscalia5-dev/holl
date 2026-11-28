@@ -36,13 +36,16 @@ ROOT = r"C:/Users/josia/thanksgiving"
 SRC = ROOT + "/Tools/Blender/work/mascot_v4/mascot_v5_game.blend"
 SRC_JSON = ROOT + "/Tools/Blender/work/mascot_v4/mascot_v5_game.json"
 TEX_DIR = ROOT + "/Assets/BubbleWashKingdom/Art/Textures/Characters"
-PREV_DIR = ROOT + "/Captures/agents/character/screen_S2_p10h"
-N = int(os.environ.get("BWK_GROOM_N", "150000"))
+PREV_DIR = ROOT + "/Captures/agents/character/" + os.environ.get("BWK_GROOM_OUT", "screen_S2_p10i")
+N = int(os.environ.get("BWK_GROOM_N", "120000"))
 W = int(os.environ.get("BWK_GROOM_W", "2048"))
-H = int(os.environ.get("BWK_GROOM_H", "1024"))
+H = int(os.environ.get("BWK_GROOM_H", "2048"))
 RENDERS = os.environ.get("BWK_GROOM_RENDERS", "1") == "1"
 U_PERIOD = 0.92            # body UV u span of one revolution (build_mascot_v4.py body_uv: pi * 0.46 / (pi / 2))
-EXTRUDE = 0.036            # bake cage extrusion (m) > tallest groom point above the skin
+EXTRUDE = 0.040            # bake cage extrusion (m) > tallest groom point above the skin
+LAMBERT_R = 0.985          # p10i: seam-free groom layout = Lambert azimuthal equal-area disk centred on the SEAT pole
+                           # (from UV0: phi = 2 pi u / 0.92, colatitude = pi v); the only cut (disk rim) = the crown pole
+                           # under the beanie. BWK_Fur computes the same per vertex (_GroomMix path).
 SEED = 1027
 
 # colours: LINEAR albedo (picked in sRGB, decoded). Under the tunnel's violet light the p10g salmon coat rendered the
@@ -52,11 +55,14 @@ def srgb(h):
     return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
 
 
-SKIN = srgb("#D45A66")
-ROOTC = srgb("#E35C66")
-MIDC = srgb("#F7806C")
-TIPC = srgb("#FBB4A6")
-SEATC = srgb("#F1C6CF")    # cream-pink toward the seat (approved lower back is lighter cream-pink)
+# p10i (lead 18:45: 10h albedo mean 228/116/112 = coral): ROSE pink, deeper rose roots, light pink tips, cream-pink seat.
+# Unity's violet tunnel light lifts blue (gate s2p10h: albedo #FA8682 rendered 203/106/162 vs reference 207/103/144),
+# so blue stays near green here; M_Fur_v5 _GroomTint fine-tunes the rendered hue against the reference boxes.
+SKIN = srgb("#9E3E56")
+ROOTC = srgb("#C24E66")
+MIDC = srgb("#F28482")
+TIPC = srgb("#FAC0BC")
+SEATC = srgb("#F2CDC8")    # cream-pink toward the seat (approved lower back is lighter cream-pink)
 SEAT_V0, SEAT_V1 = 0.30, 0.46   # body v (= polar angle / pi from the seat pole) of the seat blend (BWK_Fur _SeatRange)
 
 
@@ -156,7 +162,7 @@ def hat_alpha(P):
 
 
 P, NR = sample(int(N * 1.25))
-keep = hat_alpha(P) > CUFF_A - 5.0            # no strands deep under the beanie (never seen)
+keep = hat_alpha(P) > CUFF_A - 14.0           # p10i: strands reach 14 deg under the cuff (no jagged hat line)
 P, NR = P[keep][:N], NR[keep][:N]
 n = len(P)
 log("strands %d (area %.2f m2)" % (n, area.sum()))
@@ -193,8 +199,8 @@ def strands(P, NR, L, lift0, seed):
 
 
 lnoise = vnoise3(P, 9.0, 5) * 0.7 + vnoise3(P, 31.0, 9) * 0.3
-L = 0.016 + 0.016 * lnoise + rng.normal(0.0, 0.0022, n)
-L = np.clip(L, 0.010, 0.036)
+L = 0.018 + 0.016 * lnoise + rng.normal(0.0, 0.0018, n)
+L = np.clip(L, 0.012, 0.038)
 face = smoothstep(-0.18, -0.32, P[:, 1]) * smoothstep(0.30, 0.42, P[:, 2]) * smoothstep(0.90, 0.80, P[:, 2])
 L *= 1.0 - 0.45 * face                          # short velvet pile on the face (eyes / smile sit on it)
 vpol = np.degrees(np.arccos(np.clip(normalize(P - BODY_C)[:, 2] * -1.0, -1, 1))) / 180.0   # 0 = seat pole
@@ -204,15 +210,17 @@ lift0 = np.clip(0.42 + (vnoise3(P, 14.0, 11) - 0.5) * 0.30 + rng.normal(0, 0.06,
 S, T = strands(P, NR, L, lift0, 21)
 
 # gentle clumping: each strand's tip leans toward its clump guide (~2 cm clumps, strength 0.15-0.45, never closed locks)
-nc = max(500, n // 28)
+nc = max(500, n // 100)        # p10i: ~1200 soft clumps (~5 cm) instead of 4670 (speckle)
 ci = rng.choice(n, nc, replace=False)
 kd = KDTree(nc)
 for j, idx in enumerate(ci):
     kd.insert(Vector(P[idx]), j)
 kd.balance()
 near = np.array([kd.find(Vector(p))[1] for p in P], np.int64)
+cs = np.clip(0.58 + (vnoise3(P, 5.0, 17) - 0.5) * 0.3 + rng.normal(0, 0.05, n), 0.35, 0.80)
+clen = 0.85 + 0.30 * rng.random(nc)            # p10i: every clump has its own pile length (soft irregular outline)
+S = S[:, :1] + (S - S[:, :1]) * clen[near][:, None, None]
 G = S[ci[near]]
-cs = np.clip(0.30 + (vnoise3(P, 5.0, 17) - 0.5) * 0.4 + rng.normal(0, 0.05, n), 0.12, 0.48)
 for k in (1, 2, 3):
     f = cs * (k / 3.0) ** 1.6
     target = G[:, k] + (S[:, 0] - G[:, 0]) * (1.0 - 0.75 * (k / 3.0))
@@ -225,16 +233,20 @@ log("pile length %.1f-%.1f mm (mean %.1f), clumps %d, max height %.1f mm" % (
     L.min() * 1e3, L.max() * 1e3, L.mean() * 1e3, nc, np.max(np.sum((S[:, 3] - S[:, 0]) * NR, axis=1)) * 1e3))
 
 # strand colours (per point): root -> mid -> tip, per-strand / per-clump tone, cream-pink toward the seat
-tone = np.clip(1.0 + rng.normal(0, 0.045, n) + (vnoise3(P, 7.0, 23) - 0.5) * 0.10 + (rng.random(nc)[near] - 0.5) * 0.06, 0.85, 1.12)
-ramp = [ROOTC, (ROOTC + MIDC) * 0.5, MIDC, TIPC]
+dcl = np.linalg.norm(P - P[ci[near]], axis=1)
+cfall = np.clip(1.0 - dcl / 0.035, 0.0, 1.0)      # 1 at the clump centre -> 0 at its parting
+tone = np.clip(1.0 + rng.normal(0, 0.025, n) + (vnoise3(P, 4.0, 23) - 0.5) * 0.10 + (rng.random(nc)[near] - 0.5) * 0.10
+               + (cfall - 0.5) * 0.10, 0.82, 1.15)
+ramp = [ROOTC, ROOTC * 0.35 + MIDC * 0.65, MIDC, TIPC]
 cols = np.zeros((n, 4, 4))
 for k in range(4):
     c = ramp[k][None, :] * tone[:, None]
-    cols[:, k, :3] = c
+    sk = smoothstep(0.0, 1.0, seat)[:, None] * (0.55 + 0.45 * k / 3.0)     # cream-pink seat, strongest at the tips
+    cols[:, k, :3] = c * (1.0 - sk) + SEATC[None, :] * tone[:, None] * sk
 cols[:, :, 3] = 1.0
 
 # ribbon mesh: V profile (left, raised middle, right) per ring, 2 quads per segment
-wid = np.array([0.0032, 0.0028, 0.0020, 0.0010])
+wid = np.array([0.0048, 0.0042, 0.0030, 0.0014])   # p10i: wider soft strands (6 spp speckle)
 Vv = np.zeros((n, 4, 3, 3))
 for k in range(4):
     d = S[:, min(k + 1, 3)] - S[:, max(k - 1, 0)]
@@ -322,20 +334,14 @@ bme = bake.data
 uv0 = bme.uv_layers["UVMap"]
 buv = bme.uv_layers.new(name="BakeUV")
 arr = np.zeros(len(bme.loops) * 2); uv0.data.foreach_get("uv", arr); arr = arr.reshape(-1, 2)
-arr[:, 0] /= U_PERIOD
+uv_v = arr[:, 1].copy()
+phi = 2.0 * np.pi * arr[:, 0] / U_PERIOD
+rr = LAMBERT_R * np.sin(0.5 * np.pi * np.clip(uv_v, 0.0, 1.0))
+arr = np.stack([0.5 + 0.5 * rr * np.cos(phi), 0.5 + 0.5 * rr * np.sin(phi)], axis=1)
 buv.data.foreach_set("uv", arr.ravel())
-bm = bmesh.new(); bm.from_mesh(bme)
-bl = bm.loops.layers.uv["BakeUV"]
-seam = [f for f in bm.faces if max(l[bl].uv.x for l in f.loops) > 1.0]
-ret = bmesh.ops.duplicate(bm, geom=seam)
-for g in ret["geom"]:
-    if isinstance(g, bmesh.types.BMFace):
-        for l in g.loops:
-            l[bl].uv.x -= 1.0
-bm.to_mesh(bme); bm.free()
+log("bake proxy: Lambert layout from UV0 (v range %.3f-%.3f, u range %.3f-%.3f)" % (uv_v.min(), uv_v.max(), phi.min() / 6.2832 * U_PERIOD, phi.max() / 6.2832 * U_PERIOD))
 bme.uv_layers["BakeUV"].active = True
 bme.uv_layers["BakeUV"].active_render = True
-log("bake proxy: %d seam faces duplicated (u - 1)" % len(seam))
 bm_mat = bpy.data.materials.new("M_BakeTarget"); bm_mat.use_nodes = True
 bme.materials.clear(); bme.materials.append(bm_mat)
 img_node = bm_mat.node_tree.nodes.new("ShaderNodeTexImage")
@@ -359,7 +365,7 @@ try:
     bk.max_ray_distance = 0.08
 except AttributeError:
     pass
-bk.margin = 12
+bk.margin = 16
 try:
     bk.margin_type = 'EXTEND'
 except (AttributeError, TypeError):
@@ -389,25 +395,25 @@ def pixels(im):
 def run_bake(kind, samples, **kw):
     scene.cycles.samples = samples
     t = time.time()
-    bpy.ops.object.bake(type=kind, use_selected_to_active=True, cage_extrusion=EXTRUDE, margin=12, use_clear=True, **kw)
+    bpy.ops.object.bake(type=kind, use_selected_to_active=True, cage_extrusion=EXTRUDE, margin=16, use_clear=True, **kw)
     log("bake %s %dx%d %d spp %.0f s" % (kind, W, H, samples, time.time() - t))
 
 
 im_col = new_img("bake_col", False)
 bk.use_pass_direct = False; bk.use_pass_indirect = False; bk.use_pass_color = True
-run_bake('DIFFUSE', 6, pass_filter={'COLOR'})
+run_bake('DIFFUSE', 16, pass_filter={'COLOR'})
 COL = pixels(im_col)
 im_nrm = new_img("bake_nrm", True)
 bk.normal_space = 'TANGENT'
 bk.normal_r, bk.normal_g, bk.normal_b = 'POS_X', 'POS_Y', 'POS_Z'
-run_bake('NORMAL', 6, normal_space='TANGENT')
+run_bake('NORMAL', 12, normal_space='TANGENT')
 NRM = pixels(im_nrm)
 im_ao = new_img("bake_ao", True)
 gattr = next(nd for nd in groom.data.materials[0].node_tree.nodes if nd.type == "ATTRIBUTE")
 gattr.attribute_name = "gdep"
 sk_bsdf = next(nd for nd in skin.data.materials[0].node_tree.nodes if nd.type == "BSDF_PRINCIPLED")
 sk_bsdf.inputs["Base Color"].default_value = (0.52, 0.52, 0.52, 1.0)
-run_bake('DIFFUSE', 6, pass_filter={'COLOR'})
+run_bake('DIFFUSE', 12, pass_filter={'COLOR'})
 AO = pixels(im_ao)
 gattr.attribute_name = "gcol"
 sk_bsdf.inputs["Base Color"].default_value = (SKIN[0], SKIN[1], SKIN[2], 1.0)
@@ -419,7 +425,7 @@ os.makedirs(TEX_DIR, exist_ok=True)
 def blur(x, r):
     """Separable box blur x3 (~gaussian), wraps in u (the map is periodic around the body), clamps in v."""
     for _ in range(3):
-        c = np.cumsum(np.concatenate([x[:, -r - 1:], x, x[:, :r]], axis=1), axis=1)
+        c = np.cumsum(np.concatenate([np.repeat(x[:, :1], r + 1, 1), x, np.repeat(x[:, -1:], r, 1)], axis=1), axis=1)
         x = (c[:, 2 * r + 1:] - c[:, :-2 * r - 1]) / (2 * r + 1)
         p = np.concatenate([np.repeat(x[:1], r + 1, 0), x, np.repeat(x[-1:], r, 0)], axis=0)
         c = np.cumsum(p, axis=0)
@@ -443,12 +449,13 @@ valid = COL[:, :, 3] > 0.5
 log("valid texels %.1f %%" % (100.0 * valid.mean()))
 COL = pushpull(COL, valid); NRM = pushpull(NRM, valid); AO = pushpull(AO, valid)
 nxy = NRM[:, :, :2] * 2.0 - 1.0
-nxy_hp = nxy - blur(nxy, 24)               # high-pass: keep the strand / clump relief, drop the global comb tilt
+nxy_hp = blur(nxy, 1) - blur(nxy, 24)    # p10i: + 1 px soft blur (no per-texel speckle)               # high-pass: keep the strand / clump relief, drop the global comb tilt
 nz = np.sqrt(np.clip(1.0 - np.sum(nxy_hp ** 2, axis=2), 0.05, 1.0))
 nrm8 = np.concatenate([(np.clip(nxy_hp * 0.5 + 0.5, 0, 1)), (nz * 0.5 + 0.5)[:, :, None]], axis=2)
 ao = AO[:, :, 0]
 ao = np.clip(ao, 0, 1)
-col = COL[:, :, :3]
+col = blur(COL[:, :, :3], 1)                 # p10i: soft 1 px blur = plush, not speckle
+ao = blur(ao, 1)
 alb8 = np.concatenate([lin2srgb(col), ao[:, :, None]], axis=2)
 write_png(TEX_DIR + "/T_MascotV5_GroomAlbedo.png", np.round(alb8 * 255).astype(np.uint8))
 write_png(TEX_DIR + "/T_MascotV5_GroomNormal.png", np.round(nrm8 * 255).astype(np.uint8))
@@ -500,8 +507,10 @@ if RENDERS:
     scene.world.use_nodes = True
     bg = next(nd for nd in scene.world.node_tree.nodes if nd.type == "BACKGROUND")
     bg.inputs["Color"].default_value = (0.05, 0.035, 0.08, 1.0); bg.inputs["Strength"].default_value = 1.0
-    for nm_, loc, en in (("Key", (-1.6, -2.0, 2.6), 900.0), ("Fill", (2.2, -1.2, 1.2), 300.0), ("Back", (0.5, 2.4, 2.2), 500.0)):
-        ld = bpy.data.lights.new(nm_, 'AREA'); ld.energy = en; ld.size = 1.5
+    # p10i: lights tinted like the S2 tunnel (lavender key, pink fill, violet back rim) - the game never lights him white
+    for nm_, loc, en, lc in (("Key", (-1.6, -2.0, 2.6), 520.0, (0.93, 0.84, 1.0)), ("Fill", (2.2, -1.2, 1.2), 220.0, (1.0, 0.80, 0.88)),
+                             ("Back", (0.5, 2.4, 2.2), 420.0, (0.80, 0.72, 1.0)), ("Key2", (1.6, 2.4, 2.6), 380.0, (0.93, 0.84, 1.0))):
+        ld = bpy.data.lights.new(nm_, 'AREA'); ld.energy = en; ld.size = 1.5; ld.color = lc
         lo = bpy.data.objects.new(nm_, ld); lo.location = loc; coll.objects.link(lo)
         lo.rotation_euler = (Vector((0.0, 0.0, 0.55)) - Vector(loc)).to_track_quat('-Z', 'Y').to_euler()
     cd = bpy.data.cameras.new("Cam"); cd.type = 'ORTHO'; cd.ortho_scale = 1.42
@@ -516,7 +525,16 @@ if RENDERS:
         pass
     scene.view_settings.view_transform = 'Standard'
     tgt = Vector((0.0, 0.0, 0.50))
+    flat_fur = mat_flat("M_ProofFur", MIDC * 0.85)
+    for o in bpy.data.objects:
+        if o.type != 'MESH' or o.name in ("Body", "Groom", "GroomSkin", "BakeBody"):
+            continue
+        o.hide_render = False
+        for i, m in enumerate(o.data.materials):
+            if m is not None and m.name.startswith("M_Fur"):
+                o.data.materials[i] = flat_fur
     views = {"rear": Vector((0.0, 3.0, 0.62)), "side": Vector((3.0, 0.0, 0.62)), "front": Vector((0.0, -3.0, 0.62))}
+    cd.ortho_scale = 1.9; tgt = Vector((0.0, 0.0, 0.62))
     for vn, pos in views.items():
         cam.location = tgt + pos
         cam.rotation_euler = (tgt - cam.location).to_track_quat('-Z', 'Y').to_euler()
