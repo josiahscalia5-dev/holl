@@ -50,7 +50,14 @@ def block(caption, img, width):
     return [caption_bar(caption, width, px), img, np.full((GAP, width, 3), BG, np.uint8)]
 
 
+NAMES = {"milk_bwk": "V1 MILK MATERIAL ON TODAY'S CROWNS", "splash_bwk": "V1 SPLASH SHAPES, TODAY'S MILK",
+         "splash_urp": "V1 SPLASH CROWNS + DROPLETS (V1 MILK)", "drum_urp": "V1 DRUM (BAKED PERFORATED METAL)",
+         "drum+bands+gold+stars+splash_urp": "ALL V1 PARTS (V1 MATERIALS)", "drum+bands+gold+stars+splash_urp+lights": "ALL V1 PARTS + V1 LIGHTS"}
+
+
 def label(v):
+    if v in NAMES:
+        return NAMES[v]
     return v.replace("_bwk", " (V1 SHAPES, UNITY MATERIALS)").replace("_urp", " (V1 SHAPES + V1 MATERIALS)").replace("+", " + ").upper()
 
 
