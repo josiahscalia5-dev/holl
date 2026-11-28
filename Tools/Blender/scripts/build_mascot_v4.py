@@ -1960,7 +1960,7 @@ V7B_LOCK_TIP = (0.428, 0.067, 0.689)
 V7B_ARM_THIN = 0.80       # limb cross-section (rear R2: our arms ~60 px thick vs reference ~35 px = boxy blocks at the brim)
 V7B_MITT_THIN = 0.90      # round mitt keeps more of its size (reference: round paws wider than the limb)
 V7B_ARM_FUR = 0.60        # rig contract 'arm_fur': arm shell-fur length x this (prev2: 5.2 cm shells on the slim arm = fat blocks)
-V7B_TAPER_Z0, V7B_TAPER_Z1, V7B_TAPER_K = 0.42, 0.10, 0.92   # p10h: K .82 -> .92 (lead s2p10g read: the front / side views taper to a point between the feet = inverted teardrop; the original 4.00 s front is a round bottom-heavy ball that SITS); p9: K was .90, Z1 .12 (R2 s2p9a: straight sides, reference rear rounds in to ~0.70 x brim at the seat); lower body narrows in x to 90 % at the seat (owner: too wide / squat)
+V7B_TAPER_Z0, V7B_TAPER_Z1, V7B_TAPER_K = 0.42, 0.10, 0.96   # p10i: K .92 -> .96 (lead 18:45: still an inverted teardrop in front / side); p10h: K .82 -> .92 (lead s2p10g read: the front / side views taper to a point between the feet = inverted teardrop; the original 4.00 s front is a round bottom-heavy ball that SITS); p9: K was .90, Z1 .12 (R2 s2p9a: straight sides, reference rear rounds in to ~0.70 x brim at the seat); lower body narrows in x to 90 % at the seat (owner: too wide / squat)
 V5_YARN_N = 560           # Fibonacci directions; locks pointing into the crown are skipped (never seen)
 V5_ARM_UPPER = 18.0       # deg elevation of the upper arm (runs out under the brim; v4 straight arm 40.5)
 V5_ARM_FORE = 70.0        # deg elevation of the forearm + mitt beside the brim (reference rear: paws at brim/stripe height)
@@ -1968,7 +1968,7 @@ V5_ARM_EXTRA = 0.110      # m added to the shoulder->mitt segment only (v4 0.13 
 V5_ARM_CUFF_TOL = 0.015   # rig cuff-solve tolerance (contract 'arm_cuff_tol'; v4 default -0.004)
 V5_SOLE_FUR = 0.18        # rig (contract 'sole_fur'): sole-side paw fur scaled to 18 % -> smooth white sole + pink pads
 V5_CUFF_ROLL = 0.022      # p9: was .012 (reference: THICK folded brim clearly wider than the crown); folded brim: outer rib surface pushed out up to 1.2 cm mid-height = thicker rolled cuff
-V10H_BULGE, V10H_BULGE_Z, V10H_BULGE_W = 0.05, 0.24, 0.15   # p10h: lower-flank widening (x), centre height, gaussian width (m)
+V10H_BULGE, V10H_BULGE_Z, V10H_BULGE_W = 0.08, 0.22, 0.16   # p10i: .05 / .24 / .15 -> .08 / .22 / .16 (round bottom-heavy ball that sits); p10h: lower-flank widening (x), centre height, gaussian width (m)
 V10H_UV_LEG_V, V10H_UV_TAIL_V = 5.0, 7.0   # p10h: leg / tail / mouth-fur UV.y offsets (outside the body's 0..1 baked groom map)
 GAME5_BLEND = os.path.join(OUT, "mascot_v5_game.blend")
 GAME5_JSON = os.path.join(OUT, "mascot_v5_game.json")

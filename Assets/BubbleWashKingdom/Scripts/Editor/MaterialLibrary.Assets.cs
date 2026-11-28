@@ -158,10 +158,10 @@ namespace BubbleWash.EditorTools
                 F(m, "_HaloBoost", 1.0f); F(m, "_EdgeSaturate", 0.75f); F(m, "_Chase", 0f); F(m, "_PulseAmount", 0.1f);
                 F(m, "_PulseSpeed", 0.6f); F(m, "_FogAmount", 0.25f);
             });
-            // lead tunnel lane 2b L2 (owner 17:35 section 5): _Intensity 3.4 -> 1.6, _CoreWhite .6 -> .25, _PulseAmount .35 -> .15
-            // = the 32 sparkle domes per SM_LedRim_s2 read as concentric rows of white-pink dots inside the gold ring (the
-            // forbidden 'fairy-light strings', busiest thing at the R2 / portrait focal centre; DEEP inside-ring hiF .152 vs ref
-            // .035) -> faint pink glints; 1.6 (not 1.4) keeps the few tiny lip sparkles the reference shows
+            // lead tunnel lane 2b L2 (owner 17:35 section 5): _Intensity 3.4 -> 1.6, _CoreWhite .6 -> .25, _PulseAmount
+            // .35 -> .15 = the 32 sparkle domes per SM_LedRim_s2 read as rows of white-pink "fairy lights" (owner section E
+            // forbids them) at the focal centre; the reference keeps only a few faint pink lip glints (1.6, not 1.4, so they
+            // survive); the glow stays on the M_RimGlow_s2 lips
             Mat("M_RimSpark_s2", "BWK/Emissive", m =>
             {
                 C(m, "_Color", "#FFC8F2"); F(m, "_Intensity", 1.6f); F(m, "_CoreWhite", 0.25f); F(m, "_CorePower", 2.5f);
