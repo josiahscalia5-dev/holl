@@ -48,8 +48,8 @@ BANDS = [  # (name, d centre, half width, depth, lips)
     ("D", 76.00, 0.30, 0.28, ("crest",)),
 ]
 GOLD = [  # (name, d centre, radial scale, width scale, bulbs, bulb radius)
-    ("G1", 52.50, 1.40, 1.25, 28, 0.12),
-    ("G2", 60.80, 1.15, 1.00, 24, 0.10),
+    ("G1", 52.50, 1.40, 1.25, 28, 0.14),     # pass 3: bigger bulbs (the original's read as glowing blobs ~10 px)
+    ("G2", 60.80, 1.15, 1.00, 24, 0.11),
 ]
 # stars: polar position around the original's ring centre mapped onto the track tunnel's centre (solve_stars2.py);
 # neon SIGNS facing down the tunnel (plane normal = -d tilted GAMMA toward the axis), on a short stem to the wall
@@ -66,8 +66,10 @@ STARS = [  # (name, d, angle deg (0 top, + right), size m (tip to tip), colour, 
 ]
 STAR_GAMMA = 22.0      # deg: default lean (star plane normal = -d tilted toward the tunnel axis)
 # perforation zones (between the elements; each zone has its own tile grid, its seams lie under a band / ring)
-SLOT_BIG = dict(pu=0.62, pv=0.50, hu=0.21, hv=0.13, n=2.3)      # big ovals near the door
-SLOT_DASH = dict(pu=0.50, pv=0.38, hu=0.17, hv=0.055, n=2.8)     # the rows of small dashes deeper in
+# pass 3: model_02 read as a dense regular grille -> fewer, longer slots, per-slot length variation (var = min factor) and random
+# blanks (pblank) so plain metal dominates like the original (sparse dark dashes; tall ovals in ~3 columns next to the door)
+SLOT_BIG = dict(pu=0.85, pv=0.62, hu=0.30, hv=0.16, n=2.2, var=0.80, pblank=0.12)      # big ovals near the door
+SLOT_DASH = dict(pu=0.80, pv=0.50, hu=0.30, hv=0.085, n=3.0, var=0.50, pblank=0.22)    # sparse long dashes deeper in
 
 PH = {  # flat placeholder colours by tag (materials-artist owns the real materials)
     # (sRGB colour, metallic, roughness, emission) - low metallic so the FORMS read under any temp light (pass 2)
@@ -268,11 +270,14 @@ def perforated(name, da, db, coll, spec, blank_fn=None, depth=0.045, bevel=0.010
     rim_u = hu * np.sign(c) * np.abs(c) ** ex
     rim_v = hv * np.sign(s) * np.abs(s) ** ex
     rings = [(0.0, 0.0), (bevel, bevel * 0.8), (bevel * 1.4, depth)]   # (inset m, depth m)
+    rng = np.random.default_rng(sum(map(ord, name)) * 7919)          # deterministic per zone
+    var, pblank = spec.get("var", 1.0), spec.get("pblank", 0.0)
     for iu in range(Nu):
         for iv in range(Nv):
             b_ids = [lid[(4 * iu + a) % LU, 4 * iv + b] for a, b in BOUND]
             thc = (iu + 0.5) * pu_ang; dc = da + (iv + 0.5) * pv
-            if blank_fn is not None and blank_fn(iu, iv, Nu, Nv, thc, dc):
+            f = rng.uniform(var, 1.0); rb_ = rng.random()
+            if (blank_fn is not None and blank_fn(iu, iv, Nu, Nv, thc, dc)) or rb_ < pblank:
                 verts.append(cyl(np.array([thc]), R_WALL, np.array([dc])))
                 cid = nv; nv += 1
                 for k in range(16):
@@ -280,8 +285,9 @@ def perforated(name, da, db, coll, spec, blank_fn=None, depth=0.045, bevel=0.010
                 continue
             prev = b_ids
             for ri, (inset, dep) in enumerate(rings):
-                sc_u = max(hu - inset, 0.01) / hu; sc_v = max(hv - inset, 0.01) / hv
-                ru = rim_u * sc_u; rv = rim_v * sc_v
+                hut = hu * f
+                sc_u = max(hut - inset, 0.01) / hut; sc_v = max(hv - inset, 0.01) / hv
+                ru = rim_u * f * sc_u; rv = rim_v * sc_v
                 P = cyl(thc + ru / R_WALL, R_WALL + dep, dc + rv)
                 ids = list(range(nv, nv + 16)); verts.append(P); nv += 16
                 for k in range(16):
@@ -386,7 +392,7 @@ def build_gold(name, d, s, sw, nb, rb, coll):
     prof, (sdy, sr) = gold_profile(s, sw)
     objs = [lathe("S2V1_gold_" + name, prof, d, 96, "gold_ring", [ph_mat("gold_ring")], coll, urep=10.0, sharp_deg=60)]
     # sockets: small lathed cups, axis = -d (facing the camera), sitting on the channel floor
-    cup = fillet([(0.0, rb * 0.06), (0.0, rb * 1.45), (-0.035, rb * 1.42), (-0.045, rb * 1.18), (-0.02, rb * 1.05), (-0.02, rb * 0.06)],
+    cup = fillet([(0.0, rb * 0.06), (0.0, rb * 1.30), (-0.035, rb * 1.27), (-0.045, rb * 1.08), (-0.02, rb * 0.98), (-0.02, rb * 0.06)],
                  [0, 0.008, 0.01, 0.008, 0.005, 0], n=1, closed=False)
     nc = 10
     SV, SF = [], []
