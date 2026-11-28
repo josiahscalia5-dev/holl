@@ -26,21 +26,25 @@ P = {
     "view": "Standard",            # Unity parity: URP Tonemapping None + HDR bloom; team materials are authored as emission = sRGB target
     "exposure": 0.0,
     # world = Unity Environment Lighting (Ambient Color) + skybox reflection fallback
-    "world_hex": "#24163F", "world_strength": 0.6,
+    "world_hex": "#2E1F58", "world_strength": 1.5,
     # distance fog = Unity linear fog (RenderSettings.fogMode Linear, fogStartDistance / fogEndDistance, fogColor)
-    "fog_start": 12.0, "fog_end": 140.0, "fog_hex": "#6A48A6",
+    "fog_start": 12.0, "fog_end": 120.0, "fog_hex": "#7452B0",
     # bloom = URP Bloom (threshold in linear here; URP threshold is gamma: 0.9 lin ~ 0.95 gamma)
-    "bloom_threshold": 0.9, "bloom_strength": 0.55, "bloom_size": 0.55, "saturation": 1.06,
+    "bloom_threshold": 0.9, "bloom_strength": 0.8, "bloom_size": 0.6, "saturation": 1.06,
     # emission strengths (Blender multiplier; Unity HDR intensity = log2(strength))
-    "emit_bulb": 3.0, "emit_band_lip": 1.35, "emit_star": 2.6, "emit_star_glow": 0.6,
+    # pass 2: the materials-artist tags m["s2v1_emit_kind"] + m["s2v1_emit_default"] -> lighting scales THEIR default per kind
+    "km_lip": 0.70, "km_bulb": 1.15, "km_neon": 1.35, "km_glow": 1.0, "km_gold": 1.0, "km_band": 2.5, "km_crest": 0.8,
+    "km_ctx_bulb": 1.15, "km_roller": 1.0, "km_core": 1.0,
+    # fallback absolute strengths (parts whose material has no s2v1_emit_kind tag)
+    "emit_bulb": 3.0, "emit_band_lip": 0.95, "emit_star": 2.3, "emit_star_glow": 0.10,
     "emit_ctx_bulb": 3.0, "emit_ctx_rim": 1.1, "emit_ctx_neon": 2.4, "emit_ctx_core": 2.0,
     # emitter-motivated point lights (Blender W per ring = total, split over the sectors; no shadows = Unity mobile additional lights)
-    "g1_total_w": 220.0, "g1_sectors": 8, "g2_total_w": 120.0, "g2_sectors": 6,
-    "lipA_total_w": 160.0, "lip_total_w": 70.0, "lip_sectors": 8,
-    "door_total_w": 260.0, "door_sectors": 6,
-    "star_w": 22.0, "core_w": 160.0,
+    "g1_total_w": 350.0, "g1_sectors": 8, "g2_total_w": 200.0, "g2_sectors": 6,
+    "lipA_total_w": 450.0, "lip_total_w": 200.0, "lip_sectors": 8, "lip_radius": 0.8,
+    "door_total_w": 300.0, "door_sectors": 6,
+    "star_w": 35.0, "core_w": 300.0,
     # motivated foreground: machine-hall ceiling glow above the mascot + warm spill out of the door (both soft area lights)
-    "hall_w": 150.0, "door_glow_w": 300.0,
+    "hall_w": 150.0, "door_glow_w": 300.0, "fg_spec": 0.0,
 }
 for _k in list(P):
     _v = os.environ.get("S2V1_LIGHT_" + _k.upper())
@@ -287,11 +291,23 @@ def ctx_materials():
 
 
 def part_emission(C, ctx):
+    """pass 2: materials authored by the materials-artist carry m['s2v1_emit_kind'] + m['s2v1_emit_default'] -> strength = their
+    default x P['km_<kind>'] (one lighting multiplier per kind = one Unity HDR-intensity offset log2(km)). Untagged materials of the
+    light-carrying parts fall back to absolute strengths."""
+    kinds = {}
+    for m in bpy.data.materials:
+        k = m.get("s2v1_emit_kind")
+        if k is None or m.get("s2v1_emit_default") is None:
+            continue
+        km = P.get("km_" + str(k), 1.0)
+        if set_emission(m, float(m["s2v1_emit_default"]) * km):
+            kinds.setdefault(str(k), []).append("%s=%.2f" % (m.name, float(m["s2v1_emit_default"]) * km))
     rep = {}
     for tag, key in (("bulb", "emit_bulb"), ("band_lip", "emit_band_lip"), ("star", "emit_star"), ("star_glow", "emit_star_glow")):
         mats = {s.material for o in C.parts(ctx, tag) for s in o.material_slots if s.material}
-        rep[tag] = sum(1 for m in mats if set_emission(m, P[key]))
-    print("%s part emission strengths set: %s" % (LOG, rep))
+        rep[tag] = sum(1 for m in mats if m.get("s2v1_emit_kind") is None and set_emission(m, P[key]))
+    print("%s emission by kind (materials default x km): %s" % (LOG, {k: v for k, v in kinds.items()}))
+    print("%s untagged part emission fallbacks set: %s" % (LOG, rep))
 
 
 # ------------------------------------------------------------------------------------------------ lights
@@ -322,7 +338,7 @@ def add_light(sc, coll, name, kind, loc, hex_, watts, radius=0.15, cutoff=None, 
     return lo
 
 
-def sector_lights(C, sc, coll, objs, prefix, n_sect, total_w, hex_, inset, dz_cam, cutoff, min_z=0.35):
+def sector_lights(C, sc, coll, objs, prefix, n_sect, total_w, hex_, inset, dz_cam, cutoff, min_z=0.35, radius=0.25):
     """one point light per angular sector of the emitters' vertices (track space), pulled `inset` m toward the axis and `dz_cam` m
     toward the camera; sectors under the slide (z < min_z) are skipped. Returns the number of lights."""
     if not objs:
@@ -345,7 +361,7 @@ def sector_lights(C, sc, coll, objs, prefix, n_sect, total_w, hex_, inset, dz_ca
         made.append((x, dd, z))
     for i, (x, dd, z) in enumerate(made):
         add_light(sc, coll, "LGT_S2v1_%s_%02d" % (prefix, i), "POINT", tb(C, x, dd, z), hex_, total_w / max(1, len(made)),
-                  radius=0.25, cutoff=cutoff)
+                  radius=radius, cutoff=cutoff)
     return len(made)
 
 
@@ -376,14 +392,14 @@ def setup_lights(C, ctx):
     for gi, (d, objs) in enumerate(groups):
         tot, ns = (P["g1_total_w"], P["g1_sectors"]) if gi == 0 else (P["g2_total_w"], P["g2_sectors"])
         n["gold%d@%.1f" % (gi + 1, d)] = sector_lights(C, sc, coll, objs, "gold%d" % (gi + 1), int(ns), tot, COL["bulb"],
-                                                       inset=0.45, dz_cam=0.30, cutoff=5.0)
+                                                       inset=0.45, dz_cam=0.30, cutoff=5.0, radius=0.5)
     # 2) band lips (lavender) - band A (nearest, thick) brighter
     groups = cluster_by_d(C, C.parts(ctx, "band_lip"))
     for gi, (d, objs) in enumerate(groups):
         tot = P["lipA_total_w"] if gi == 0 else P["lip_total_w"] * (1.0 if d < 60 else 0.7)
         ns = int(P["lip_sectors"]) if d < 60 else 5
         n["lip%d@%.1f" % (gi + 1, d)] = sector_lights(C, sc, coll, objs, "lip%d" % (gi + 1), ns, tot, COL["lip"],
-                                                      inset=0.55, dz_cam=0.25, cutoff=4.5)
+                                                      inset=0.55, dz_cam=0.25, cutoff=5.0, radius=P["lip_radius"])
     # 3) door rim bulbs (warm, context SM_DoorHatch) - ring at the door mouth, a bit inside the rim toward the camera
     made = 0
     for i in range(int(P["door_sectors"])):
@@ -406,9 +422,9 @@ def setup_lights(C, ctx):
     # 5) small cool core accent deep in the tunnel (lights the far drum walls a cool blue-violet; core stays dark through the fog)
     add_light(sc, coll, "LGT_S2v1_core", "POINT", tb(C, 0.0, 92.0, AXIS_Z), COL["core"], P["core_w"], radius=0.5, cutoff=14.0)
     # 6) motivated foreground: machine-hall ceiling glow above the mascot, warm spill from the door bulbs onto the water / foam
-    add_light(sc, coll, "LGT_S2v1_hall", "AREA", tb(C, 0.3, 32.6, 3.4), COL["hall"], P["hall_w"], size=2.5, spec=0.2, shadow=True,
+    add_light(sc, coll, "LGT_S2v1_hall", "AREA", tb(C, 0.3, 32.6, 3.4), COL["hall"], P["hall_w"], size=2.5, spec=P["fg_spec"], shadow=True,
               aim=tb(C, 0.3, 33.2, 0.0) - tb(C, 0.3, 32.6, 3.4))
-    add_light(sc, coll, "LGT_S2v1_doorglow", "AREA", tb(C, 0.0, 39.2, 3.2), COL["door_glow"], P["door_glow_w"], size=4.0, spec=0.35,
+    add_light(sc, coll, "LGT_S2v1_doorglow", "AREA", tb(C, 0.0, 39.2, 3.2), COL["door_glow"], P["door_glow_w"], size=4.0, spec=P["fg_spec"],
               shadow=False, aim=tb(C, 0.0, 37.0, 0.0) - tb(C, 0.0, 39.2, 3.2))
     print("%s lights: %s (+ core, hall, doorglow) total %d" % (LOG, n, len(LIGHTS)))
 

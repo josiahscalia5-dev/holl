@@ -58,6 +58,9 @@ namespace BubbleWash.EditorTools
             public MPart[] parts; public MMat[] materials;
         }
 
+        [System.Serializable] public class LLight { public string name, unity_type, color; public float[] unity_pos, unity_dir; public float unity_intensity_est, range_m, spot_angle; public bool shadows; }
+        [System.Serializable] public class LRoot { public LLight[] lights; }
+
         static string Arg(string key)
         {
             var a = System.Environment.GetCommandLineArgs();
@@ -432,12 +435,44 @@ namespace BubbleWash.EditorTools
             return parts;
         }
 
+        /// <summary>The lighting-artist's emitter-motivated lights (renders/&lt;TAG&gt;/lights_unity.json: Unity world positions, colours,
+        /// URP intensity estimates, ranges) under parent, inactive until a variant asks for them ('+lights' in its flavour).</summary>
+        static GameObject LoadLights(string path, Transform parent, StringBuilder log)
+        {
+            if (string.IsNullOrEmpty(path) || !File.Exists(path)) { if (!string.IsNullOrEmpty(path)) log.AppendLine("lights file missing: " + path); return null; }
+            var root = JsonUtility.FromJson<LRoot>(File.ReadAllText(path));
+            var holder = new GameObject("S2V1_Lights");
+            holder.transform.SetParent(parent, false);
+            int n = 0;
+            foreach (var l in root.lights ?? new LLight[0])
+            {
+                if (l.unity_pos == null || l.unity_pos.Length < 3) continue;
+                var go = new GameObject(l.name);
+                go.transform.SetParent(holder.transform, false);
+                go.transform.position = new Vector3(l.unity_pos[0], l.unity_pos[1], l.unity_pos[2]);
+                var lt = go.AddComponent<Light>();
+                lt.type = l.unity_type == "Spot" ? LightType.Spot : LightType.Point;
+                if (lt.type == LightType.Spot && l.unity_dir != null && l.unity_dir.Length >= 3)
+                {
+                    go.transform.rotation = Quaternion.LookRotation(new Vector3(l.unity_dir[0], l.unity_dir[1], l.unity_dir[2]));
+                    if (l.spot_angle > 0f) lt.spotAngle = l.spot_angle;
+                }
+                ColorUtility.TryParseHtmlString(l.color ?? "#FFFFFF", out var c);
+                lt.color = c; lt.intensity = l.unity_intensity_est; lt.range = l.range_m > 0f ? l.range_m : 5f;
+                lt.shadows = LightShadows.None; lt.renderMode = LightRenderMode.ForcePixel;
+                n++;
+            }
+            holder.SetActive(false);
+            log.AppendLine($"v1 lights: {n} from {path}");
+            return holder;
+        }
+
         static void ApplyV1(List<V1Part> parts, HashSet<string> groups, string flavour)
         {
             foreach (var p in parts)
             {
                 bool on = groups.Contains(p.group) && !p.info.hide_render;
-                var mats = flavour == "urp" ? p.urp : p.bwk;
+                var mats = flavour.StartsWith("urp") ? p.urp : p.bwk;
                 if (on && mats.Any(m => m == null)) on = false;         // a part without a material in this flavour is not shown
                 p.go.SetActive(on);
                 if (on) p.mr.sharedMaterials = mats;
@@ -501,6 +536,7 @@ namespace BubbleWash.EditorTools
                 string variantsArg = Arg("-bwkVariants") ?? "current;bands:bwk;gold:bwk;stars:bwk;bands+gold+stars:bwk";
                 var dists = (Arg("-bwkDists") ?? "33.5,38.5,44").Split(',').Select(s => float.Parse(s, IC)).ToArray();
                 string saveSpec = Arg("-bwkSave");
+                string lightsPath = Arg("-bwkLights");
                 Directory.CreateDirectory(outDir);
                 var log = new StringBuilder();
                 var manPath = Path.Combine(inDir, "manifest_unity.json");
@@ -526,6 +562,7 @@ namespace BubbleWash.EditorTools
                 var env = GameObject.Find("Level01_RainbowRush");
                 if (env != null) root.transform.SetParent(env.transform, false);
                 var v1 = LoadV1(man, inDir, root.transform, layer, log);
+                var v1Lights = LoadLights(lightsPath, root.transform, log);
 
                 var mascot = MascotRenderers(runner);
                 var rig = Object.FindFirstObjectByType<RunnerCameraRig>(FindObjectsInactive.Include);
@@ -534,6 +571,7 @@ namespace BubbleWash.EditorTools
                 {
                     ApplyOld(oldParts, groups);
                     ApplyV1(v1, groups, flavour);
+                    if (v1Lights != null) v1Lights.SetActive(flavour.Contains("lights") && groups.Count > 0);
                     string vd = $"{outDir}/{name}";
                     Directory.CreateDirectory(vd);
                     PoseR2(runner, cam);
@@ -556,6 +594,7 @@ namespace BubbleWash.EditorTools
                     var (sname, sgroups, sflavour) = ParseVariant(saveSpec);
                     ApplyOld(oldParts, sgroups);
                     ApplyV1(v1, sgroups, sflavour);
+                    if (v1Lights != null) { v1Lights.SetActive(sflavour.Contains("lights") && sgroups.Count > 0); if (!v1Lights.activeSelf) Object.DestroyImmediate(v1Lights); }
                     SaveIsolated(scene, v1, oldParts, log);
                     log.AppendLine($"SAVED isolated test scene {TestScenePath} = variant {sname} (main scene untouched)");
                 }
