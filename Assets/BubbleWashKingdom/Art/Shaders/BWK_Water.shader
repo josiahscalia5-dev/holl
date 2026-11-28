@@ -60,6 +60,7 @@ Shader "BWK/Water"
         // lines, elongated wet crest highlights, deep-blue troughs / bright turquoise crests, light through the thin crests and
         // a grazing-angle (Fresnel) reflection of the real surroundings. All 0 = the pass-9 water.
         _FlowLines ("p10f Downhill Flow Lines", Range(0,2)) = 0
+        _S2OpticsPreview ("S2 optical response experiment (0 legacy, 1 candidate)", Range(0,1)) = 0
         _FlowLineDensity ("p10f Flow Lines per Metre", Float) = 2.4
         _GlossLines ("p10f Elongated Crest Highlights", Range(0,3)) = 0
         _DepthContrast ("p10f Deep Troughs / Bright Crests", Range(0,1)) = 0
@@ -116,6 +117,7 @@ Shader "BWK/Water"
             float _WeaveAmp, _WeaveLen, _WeaveZero;
             half _HueLock, _HueTarget;
             half _FlowLines, _GlossLines, _DepthContrast, _Translucency, _FresnelBoost;
+            half _S2OpticsPreview;
             float _FlowLineDensity;
             half4 _CrestColor;
             half _Absorb;
@@ -221,13 +223,16 @@ Shader "BWK/Water"
                 half zone = 1.0;
                 if (_S2ZoneEnd > _S2ZoneStart)
                     zone = smoothstep(_S2ZoneStart - _S2ZoneFade, _S2ZoneStart, m.y) * (1.0 - smoothstep(_S2ZoneEnd, _S2ZoneEnd + _S2ZoneFade, m.y));
+                // Opt-in and confined to the configured S2 track zone. If no zone is configured,
+                // do not modify other materials that happen to use this shader.
+                half opticsW = (_S2ZoneEnd > _S2ZoneStart) ? saturate(_S2OpticsPreview) * zone : 0.0h;
                 half3 deepC = lerp(_OutDeepColor.rgb, _DeepColor.rgb, zone);
                 half3 crestC = lerp(_OutCrestColor.rgb, _CrestColor.rgb, zone);
                 half3 causticC = lerp(_OutCausticColor.rgb, _CausticColor.rgb, zone);
                 half3 reflectT = lerp(_OutReflectTint.rgb, _ReflectTint.rgb, zone);
                 half nearB = lerp(_OutNearBrighten, _NearBrighten, zone);
-                half flowLinesK = lerp(_OutFlowLines, _FlowLines, zone);
-                half foamStreaksK = lerp(_OutFoamStreaks, _FoamStreaks, zone);
+                half flowLinesK = lerp(_OutFlowLines, _FlowLines, zone) * (1.0h - opticsW);
+                half foamStreaksK = lerp(_OutFoamStreaks, _FoamStreaks, zone) * lerp(1.0h, 0.45h, opticsW);
                 half hueTarget = lerp(_OutHueTarget, _HueTarget, zone);
                 half hueLockLow = lerp(_OutHueLockLow, _HueLockLow, zone);
                 half hueLowStart = lerp(_OutHueLowStart, _HueLowStart, zone);
@@ -423,6 +428,10 @@ Shader "BWK/Water"
                     foamStreak = saturate(foamStreak * foamStreaksK * (1.0 - foam));
                 }
 
+                // Retain real foam, but stop painting most of the white ridge pattern onto the
+                // water base color in the candidate. Existing animated normals still drive lighting.
+                streak *= lerp(1.0h, 0.25h, opticsW);
+                gloss *= lerp(1.0h, 0.2h, opticsW);
                 half3 albedo = lerp(body, _StreakColor.rgb, saturate(streak + foam + flowLine * 0.8));
                 albedo = lerp(albedo, _FoamStreakColor.rgb, foamStreak);
                 half smooth = lerp(_Smoothness, 0.55, saturate(foam + streak * 0.5));
@@ -441,10 +450,12 @@ Shader "BWK/Water"
                 // ---- extra glossy probe reflection (tunnel, rings, bulbs) on top of the PBR reflection
                 half fres = BWK_Fresnel(n, viewDir, 4.0);
                 half3 refl = GlossyEnvironmentReflection(reflect(-viewDir, n), i.positionWS, 0.06h, 1.0h, GetNormalizedScreenSpaceUV(i.positionCS));
-                emission += refl * reflectT * (0.12 + fres * 0.88) * _ReflectBoost * (1.0 - foam);
+                emission += refl * reflectT * (0.12 + fres * 0.88) * _ReflectBoost * (1.0 - foam)
+                          * lerp(1.0h, 0.35h, opticsW);
                 // S2 pass 10f: untinted grazing reflection (the real pink rails / gold rings / tunnel light on the wet surface,
                 // strongest far away and toward the banks), the flow lines + crest highlights, light through the thin crests
-                emission += refl * (fres * fres) * _FresnelBoost * (1.0 - foam);
+                emission += refl * (fres * fres) * _FresnelBoost * (1.0 - foam)
+                          * (1.0h - opticsW);
                 emission += _StreakColor.rgb * flowLine * 0.32 + half3(0.86, 0.98, 1.0) * gloss;
                 emission += crestC * smoothstep(0.55, 0.95, depthK) * _Translucency * (0.35 + 0.65 * centre) * 0.45;
                 emission += _FoamStreakColor.rgb * foamStreak * 0.2;
