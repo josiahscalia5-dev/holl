@@ -1,0 +1,178 @@
+---
+name: texture-workflow
+description: "(Blender, proyecto26) Texture baking and atlases: AO, curvature, normal and roughness maps from high-poly, decals, texture memory. Use for baked maps or an atlas. Ships tested scripts. Not for UVs (use uv-workflow)."
+license: MIT
+metadata:
+  author: https://github.com/proyecto26
+  version: "1.0.0"
+  domain: blender
+  role: specialist
+  category: discipline
+  stage: look_dev
+  triggers: texture, bake, normal map, AO, curvature, roughness, metallic, height, atlas, decal, emission
+  related-skills: uv-workflow, materials, asset-optimization
+---
+
+# Texture Workflow
+
+Bake high-poly detail to efficient texture sets. Optimize memory. Engine-ready outputs.
+
+## When to Use
+
+- Baking sculpt detail to normal maps
+- Creating texture atlases for modular kits
+- PBR texture set generation
+- Decal placement and blending
+- Texture memory optimization
+
+## Workflow
+
+```
+High/Low Poly Setup → Cage Setup → Bake Maps → Composite
+    → Atlas Pack → Engine Format Export → Validation
+```
+
+## Standard PBR Texture Set
+
+| Map | Format | Notes |
+|-----|--------|-------|
+| Base Color | sRGB PNG | No embedded AO |
+| Normal | Linear PNG | OpenGL convention unless engine specifies |
+| Roughness | Linear PNG | Single channel |
+| Metallic | Linear PNG | Single channel |
+| AO | Linear PNG | Multiply in shader, not base color |
+| Height | Linear PNG | Optional parallax |
+| Emission | sRGB PNG | Mask-based |
+| ORM Packed | Linear PNG | R=AO, G=Roughness, B=Metallic (Unreal) |
+
+Naming: `T_[Asset]_[Map]` per `blender-mcp-workflow` skill → `references/naming-conventions.md`
+
+## Bake Setup
+
+```
+1. Low-poly mesh with UVs (active)
+2. High-poly mesh (sculpt or detail) — selected
+3. Cage extrusion: 0.01–0.05m (adjust per asset scale)
+4. Ray distance: match cage
+5. Bake margin: 16px minimum
+6. Anti-aliasing: enabled
+```
+
+## Maps to Bake
+
+| Map | Source | Priority |
+|-----|--------|----------|
+| Normal | High→Low | Required |
+| AO | High or low (cavity) | Required |
+| Curvature | High sculpt | Wear masks |
+| Position | High | Optional (blending) |
+| Thickness | Subsurface meshes | Characters |
+
+## Texture Atlas Strategy
+
+Modular kits share one atlas:
+```
+1. All modules UV'd to shared 0–1 or UDIM space
+2. Bake each module to atlas regions
+3. Trim sheet areas for repeating detail
+4. Single material references atlas
+5. Document region map for artists
+```
+
+## Decals
+
+- Decal mesh projected on surface
+- Separate UV channel or atlas region
+- Blend via alpha mask
+- Limit decal overdraw in engine
+
+## Memory Optimization
+
+| Technique | Savings |
+|-----------|---------|
+| ORM packing | 3 textures → 1 |
+| Shared atlas | N materials → 1 texture |
+| Lower res on hidden surfaces | 50%+ memory |
+| BC compression in engine | 4:1 or 6:1 |
+| Trim sheets | Reuse detail across assets |
+
+## Resolution Guidelines
+
+See `blender-mcp-workflow` skill → `references/polycount-budgets.md` texture section.
+
+## MCP Integration
+
+1. Setup bake objects via MCP
+2. Configure bake settings via MCP if supported
+3. Export baked images via MCP
+4. Assign baked textures to materials via MCP
+5. Query texture count and resolution
+
+## Validation Checklist
+
+- [ ] Normal map correct orientation (test in engine)
+- [ ] No UV seams visible in bake
+- [ ] AO not baked into base color
+- [ ] Consistent texel density in final textures
+- [ ] Texture resolution within budget
+- [ ] Files named per convention
+- [ ] sRGB vs Linear correctly assigned
+
+## Constraints
+
+### MUST DO
+- Bake high-poly detail before discarding sculpt
+- Use cage for clean normal bakes
+- Pack ORM for engine efficiency
+- Test normal map orientation in target engine
+- Document atlas regions for modular kits
+
+### MUST NOT DO
+- Write code or snippets for Blender versions before 5.2, or add version fallbacks: this plugin targets 5.2+, and legacy branches teach users APIs that no longer exist
+- Bake without cage on complex shapes
+- Embed AO in base color (PBR standard)
+- Exceed texture budget without LOD justification
+- Use inconsistent normal map conventions
+- Skip margin in bake settings
+
+## Scripts
+
+Tested on Blender 5.2 LTS via the official Blender MCP. Run with `execute_blender_code` (or headless,
+see the `blender-mcp-workflow` skill); read the script header for every argument.
+When the user will paste code into Blender themselves, give them the short `runpy` call with the absolute
+path of this installed script and their ARGS. Don't inline or rewrite the script: the tested file is the point.
+
+| Script | What it does |
+|--------|--------------|
+| `scripts/bake_maps.py` | Bake high-poly -> low-poly maps in Cycles (normal, AO, roughness, diffuse color) to PNG files, with cage extrusion. Restores the render engine afterwards. Requires the low-poly to have a UV map. Also takes several high-poly sources, a `cage` object or `extrusion`, `max_ray_distance`, the `uv_layer` to bake into, `normal_convention` (`OPENGL` or `DIRECTX`, green flipped), a `metallic` map (Cycles has no metallic pass, so the metallic value is routed through a temporary Emission node and put back) and `orm=True` (AO, roughness, metallic in R, G, B of one image). Refuses an existing image of a target name (any size) or an existing output file unless `overwrite=True`, raises if a bake does not return FINISHED (a failed run removes the images and nodes it created), and reports the real size of every image (`sizes`). Selection, active object, bake settings, UV map and material node selection are restored afterwards. |
+| `scripts/import_painter_textures.py` | Wire exported PBR maps from a folder into a NEW Principled BSDF material by file name: sRGB for colour maps, Non-Color for data maps, Normal Map (optional DirectX green flip), Bump from height, packed ORM split. Refuses an existing material name. Tested with synthetic maps only; Substance Painter itself was not run. |
+
+```python
+import runpy
+result = runpy.run_path("<skill_dir>/scripts/bake_maps.py", init_globals={"ARGS": {...}})["result"]
+```
+
+ARGS: `low`, `high` (name or list), `maps`, `size`, `extrusion`, `cage`, `max_ray_distance`, `uv_layer`, `normal_convention`, `orm`, `overwrite`, `samples`, `out_dir`
+
+Import ARGS (`import_painter_textures.py`): `folder`, `material`, `texture_set`, `normal_convention` (`OPENGL`, `DIRECTX` or `AUTO`), `patterns`, `ao` (`skip` or `multiply`), `height_strength`, `assign_to`, `pack`. Read the result: `files`
+(which file went where), `unmatched`, `ambiguous`, `skipped_udim`. UDIM tiles are not wired. A normal map's convention comes from the argument, then the file name, else OPENGL: the pixels never flip green on their own. With no argument and no name hint, a map whose pixels look like DirectX is still wired as OpenGL, with a warning and `normal_convention_suggestion: "directx"`; pass `normal_convention="DIRECTX"` if that is right. `normal_convention="AUTO"` lets the pixels decide (curl of the height-gradient field under both green conventions, measured at full resolution, decided only with a 4x margin; `normal_convention_source` says which rule won). AUTO can be wrong for a map that is not height-derived (painted, some bakes) or whose red channel is inverted, which swaps the two scores. Measured on 216 synthetic height-derived maps (512 to 4096 px, square and 2048x64) at margin 4.0: 174 correct, 0 wrong, 42 default; with the red channel inverted, 60 of 72 maps were confidently wrong under AUTO. See
+`references/substance-painter-handoff.md`.
+
+## Reference Guide
+
+| Topic | Reference | Load When |
+|-------|-----------|-----------|
+| Bake troubleshooting | `references/bake-troubleshooting.md` | Bake artifacts |
+| ORM packing | `references/orm-packing.md` | Unreal/Unity export |
+| Substance Painter hand-off | `references/substance-painter-handoff.md` | Painter-exported maps into Blender |
+
+## Bubble Wash Kingdom usage (lead 8d2d815d, 2026-11-27 21:10 - read before using this skill here)
+- Installed selectively from github.com/proyecto26/blender-ai-plugin (MIT, commit 2075bda; LICENSE-proyecto26.txt) on the owner's
+  21:03 request (S2 Tunnel v1 art team). Scripts unmodified; security-reviewed (bpy / bmesh / numpy only, no network / subprocess).
+  NOT installed on purpose: the Blender Lab MCP server, `npx skills`, hooks, their orchestrator agent. Never add them.
+- Where it applies now: the isolated S2 Tunnel v1 environment - scripts Tools/Blender/scripts/s2v1/, work files Tools/Blender/work/s2v1/,
+  renders Captures/s2v1/; brief Captures/s2v1/TEAM_BRIEF.md; look targets: project skill `bwk-s2-cinematic-look`.
+- How to run here: headless `bash Tools/blender_run.sh <our s2v1 script>.py <log>` (heavy lock, --factory-startup; it does NOT
+  forward `--` arguments), calling this skill's script from OUR script with
+  `runpy.run_path("C:/Users/josia/thanksgiving/.claude/skills/<skill>/scripts/<script>.py", init_globals={"ARGS": {...}})["result"]`.
+  One heavy Blender / Unity job at a time. Never touch the Unity scene or the old tunnel files from this skill.

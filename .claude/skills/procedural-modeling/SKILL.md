@@ -1,0 +1,170 @@
+---
+name: procedural-modeling
+description: "(Blender, proyecto26) Procedural assets from a swept curve profile: pipes, cables, rails, trim, roads. Use for an editable parametric mesh. Ships tested scripts. Not for scattering many instances (use geometry-nodes)."
+license: MIT
+metadata:
+  author: https://github.com/proyecto26
+  version: "1.0.0"
+  domain: blender
+  role: specialist
+  category: discipline
+  stage: model
+  triggers: procedural modeling, procedural rock, procedural building, terrain, road, pipe, cable, sci-fi panel, parametric
+  related-skills: geometry-nodes, environment-artist, blender-modeler
+---
+
+# Procedural Modeling
+
+Parametric assets with art-directable variation. Geometry Nodes priority. Bake for game export.
+
+## When to Use
+
+- Rocks, cliffs, terrain features
+- Modular building generation
+- Road and path systems
+- Pipe/cable networks
+- Sci-fi panel arrays
+- Vegetation placement systems
+
+## Workflow
+
+```
+Define Parameters → Build Procedural System → Validate Variations
+    → Realize/Bake → Optimize → Export
+```
+
+## System Categories
+
+| System | Primary Tool | Output |
+|--------|--------------|--------|
+| Rocks | Geo Nodes + noise | Static mesh |
+| Buildings | Geo Nodes stack | Modular pieces |
+| Roads | Curve + Geo Nodes | Mesh strip |
+| Pipes | Curve to mesh | Network |
+| Vegetation | Scatter GN | Instanced/baked |
+| Sci-fi panels | Array + random | Trim sheet geo |
+
+## Rock Generation
+
+```
+Base shape (ico sphere) → Displace (multi-scale noise)
+    → Decimate → Subdivide (selective) → Weighted Normal
+    → Variation: seed input controls all noise
+```
+
+Expose: `seed`, `scale`, `roughness`, `density`
+
+## Building Generation
+
+```
+Footprint curve → Extrude floors → Window boolean pattern
+    → Balcony probability → Roof type switch → Material ID
+```
+
+Output separate meshes per floor module for game kits.
+
+## Road Systems
+
+```
+Centerline curve → Resample → Cross-section profile
+    → Bridge blend at intersections → UV follow curve
+```
+
+## Pipe/Cable Networks
+
+```
+Node graph points → Connect minimum spanning → Curve segments
+    → Profile sweep → Collision offset → Clamp size range
+```
+
+## Sci-Fi Panels
+
+```
+Grid subdivide → Random inset/extrude → Bevel
+    → Panel index → Material variation
+    → Bake to trim sheet layout
+```
+
+## Variation Testing
+
+Test at parameter extremes:
+- Minimum scale/density
+- Maximum scale/density
+- Seed 0, 42, 9999 (reproducibility check)
+
+## Game Export Decision
+
+| Approach | When |
+|----------|------|
+| Keep procedural in Blender only | Iteration phase |
+| Realize single variant | Standard game prop |
+| Bake multiple seeds as LOD variants | Background variety |
+| Export node group to engine | Only if engine supports |
+
+## MCP Integration
+
+1. Build procedural systems via MCP
+2. Set seed/density parameters via MCP
+3. Realize geometry via MCP
+4. Query output polycount per variation
+5. Export realized meshes
+
+## Constraints
+
+### MUST DO
+- Expose seed for reproducibility
+- Test min/max parameter bounds
+- Realize before game engine export
+- Optimize after realize (asset-optimization)
+- Document parameter ranges in production brief
+
+### MUST NOT DO
+- Export unrealsized geometry nodes to game without validation
+- Infinite variation without performance testing
+- Procedural where manual hero quality required
+- Skip UV planning on procedural output
+- Hardcode random without seed control
+
+## Scripts
+
+Tested on Blender 5.2 LTS via the official Blender MCP. Run with `execute_blender_code` (or headless,
+see the `blender-mcp-workflow` skill); read the script header for every argument.
+When the user will paste code into Blender themselves, give them the short `runpy` call with the absolute
+path of this installed script and their ARGS. Don't inline or rewrite the script: the tested file is the point.
+
+| Script | What it does |
+|--------|--------------|
+| `scripts/gn_curve_profile.py` | Curve-swept pipe/cable/rail: poly curve + Geometry Nodes (Curve to Mesh, Curve Circle profile) with Radius / Resolution / Fill Caps exposed on the modifier. |
+| `scripts/surface_tools.py` | `loft` through ordered sections (resampled to one point count, optional Catmull-Rom rows), `patch` (Coons surface from four boundary curves; refuses curves whose corners do not meet), `continuity` (G0 / G1 / G2 along a shared seam of two surfaces; refuses boundaries that do not coincide). Use `loft` / `patch` for a free-form surface from curves, and `continuity` to prove a join is smooth (a crease fails G1; a tangent join with a curvature jump passes G1 and fails G2) before calling it done. `loft` and `patch` add a new mesh object and change nothing else; `continuity` is read-only. |
+| `scripts/terrain_heightfield.py` | Seeded heightfield terrain mesh (`mathutils.noise`), optionally flattened into a corridor along a curve object. Creates one new object, refuses an existing name unless `replace`. |
+
+```python
+import runpy
+result = runpy.run_path("<skill_dir>/scripts/gn_curve_profile.py", init_globals={"ARGS": {"name": "GEO_Pipe", "points": [[0, -5, 0.5], [0, 5, 0.5]], "radius": 0.15}})["result"]
+```
+
+For `gn_curve_profile.py`, `points` are world space and are converted with the object's inverse world matrix, so a rerun on a moved or rotated pipe keeps its world path. `radius` is in the object's local units (metres only at scale 1).
+
+Terrain: ARGS `name`, `size`, `resolution`, `seed`, `height`, `frequency`, `octaves`, `center`, `corridor`
+(`{"curve", "half_width", "falloff", "offset"}`), `collection`, `replace`. The same seed gives the same mesh; inside
+`half_width` of the curve the terrain height equals the curve height (both checked by the test). See
+`references/terrain-road.md` for the road workflow and its limits.
+
+## Reference Guide
+
+| Topic | Reference | Load When |
+|-------|-----------|-----------|
+| Terrain with a road bed | `references/terrain-road.md` | Terrain, roads on slopes |
+| Geo nodes patterns | `geometry-nodes` skill | Node setup |
+| Environment integration | `environment-artist` skill | Scene placement |
+
+## Bubble Wash Kingdom usage (lead 8d2d815d, 2026-11-27 21:10 - read before using this skill here)
+- Installed selectively from github.com/proyecto26/blender-ai-plugin (MIT, commit 2075bda; LICENSE-proyecto26.txt) on the owner's
+  21:03 request (S2 Tunnel v1 art team). Scripts unmodified; security-reviewed (bpy / bmesh / numpy only, no network / subprocess).
+  NOT installed on purpose: the Blender Lab MCP server, `npx skills`, hooks, their orchestrator agent. Never add them.
+- Where it applies now: the isolated S2 Tunnel v1 environment - scripts Tools/Blender/scripts/s2v1/, work files Tools/Blender/work/s2v1/,
+  renders Captures/s2v1/; brief Captures/s2v1/TEAM_BRIEF.md; look targets: project skill `bwk-s2-cinematic-look`.
+- How to run here: headless `bash Tools/blender_run.sh <our s2v1 script>.py <log>` (heavy lock, --factory-startup; it does NOT
+  forward `--` arguments), calling this skill's script from OUR script with
+  `runpy.run_path("C:/Users/josia/thanksgiving/.claude/skills/<skill>/scripts/<script>.py", init_globals={"ARGS": {...}})["result"]`.
+  One heavy Blender / Unity job at a time. Never touch the Unity scene or the old tunnel files from this skill.

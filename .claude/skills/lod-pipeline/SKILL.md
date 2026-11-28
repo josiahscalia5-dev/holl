@@ -1,0 +1,127 @@
+---
+name: lod-pipeline
+description: "(Blender, proyecto26) LOD chains, tested scripts: LOD1..N copies, naming, screen-size switch distances. Use when distant meshes cost frame rate, LODs pop or an engine needs LODs; load even for advice. Not one-off cleanup (use asset-optimization)."
+license: MIT
+metadata:
+  author: https://github.com/proyecto26
+  version: "1.0.0"
+  domain: blender
+  role: specialist
+  category: delivery
+  stage: validate
+  triggers: LOD, LODs, level of detail, decimate, LOD0, LOD1, impostor, screen size
+  related-skills: asset-optimization, export-pipeline, unity-export, unreal-export, collision-proxy
+---
+
+# LOD Pipeline
+
+Intentional LOD chains. Preserve silhouette. Validate reductions.
+
+## When to Use
+
+- Game assets needing LOD0–N
+- Batch LOD for modular kits
+- Before Unity/Unreal/Godot export
+
+## Workflow
+
+```
+Approve LOD0 → Generate LOD1..N → Fix silhouette breaks
+  → Naming → Screen-size table → Export verify
+```
+
+## Typical Budgets (guide)
+
+| LOD | Tris vs LOD0 | Keep |
+|-----|--------------|------|
+| LOD0 | 100% | Full detail |
+| LOD1 | 40–60% | Major forms |
+| LOD2 | 15–30% | Silhouette |
+| LOD3 | 5–10% | Blob / impostor candidate |
+
+Tune per asset importance and camera.
+
+## Generation Methods
+
+1. **Decimate (planar/collapse)** — fast props
+2. **Manual retopo low** — hero characters/vehicles
+3. **Delete interiors / small parts** — vehicles, buildings
+4. **Bake normals from LOD0 → low** — when detail must move to texture
+
+## Naming
+
+```
+SM_Asset_LOD0
+SM_Asset_LOD1
+SM_Asset_LOD2
+```
+
+Collection: `COL_LODs_[Asset]`
+
+## Validation Checklist
+
+- [ ] Silhouette matches at intended distance
+- [ ] No major holes / inverted normals
+- [ ] UVs still valid (or rebaked)
+- [ ] Materials slots consistent across LODs
+- [ ] Vertex colors/UVs needed by shader preserved
+- [ ] LOD transitions planned (screen size %)
+
+## Screen Size Starters
+
+| LOD | Screen size (UE-like guide) |
+|-----|-----------------------------|
+| LOD0 | 1.0 – 0.5 |
+| LOD1 | 0.5 – 0.25 |
+| LOD2 | 0.25 – 0.1 |
+| LOD3 | 0.1 – 0.0 |
+
+## Constraints
+
+### MUST DO
+- Protect silhouette before poly reduction
+- Keep LOD0 as source of truth
+- Document budgets in production brief
+
+### MUST NOT DO
+- Write code or snippets for Blender versions before 5.2, or add version fallbacks: this plugin targets 5.2+, and legacy branches teach users APIs that no longer exist
+- Blind decimate until unrecognizable
+- Different material slot counts across LODs without reason
+
+## Scripts
+
+Tested on Blender 5.2 LTS via the official Blender MCP. Run with `execute_blender_code` (or headless,
+see the `blender-mcp-workflow` skill); read the script header for every argument.
+When the user will paste code into Blender themselves, give them the short `runpy` call with the absolute
+path of this installed script and their ARGS. Don't inline or rewrite the script: the tested file is the point.
+
+| Script | What it does |
+|--------|--------------|
+| `scripts/generate_lods.py` | Generate LOD copies of a mesh with Decimate (collapse) at given ratios. The source becomes/keeps LOD0; copies are named <base>_LOD1.. and placed in a COL_LODs collection. Copies share nothing with the source (single-user data). |
+
+```python
+import runpy
+result = runpy.run_path("<skill_dir>/scripts/generate_lods.py", init_globals={"ARGS": {...}})["result"]
+```
+
+ARGS: `object`, `ratios`, `apply`, `rename_source`, `offset_x`
+
+A `<base>_LOD<i>` object is replaced only if this script made it (it carries the `bap_lod_source` custom property); a hand-made object with that name stops the run before anything changes.
+
+## Reference Guide
+
+| Topic | Reference | Load When |
+|-------|-----------|----------|
+| Lod Budgets | `references/lod-budgets.md` | When needed |
+| Lod Validation | `references/lod-validation.md` | When needed |
+
+## Bubble Wash Kingdom usage (lead 8d2d815d, 2026-11-27 21:10 - read before using this skill here)
+- Installed selectively from github.com/proyecto26/blender-ai-plugin (MIT, commit 2075bda; LICENSE-proyecto26.txt) on the owner's
+  21:03 request (S2 Tunnel v1 art team). Scripts unmodified; security-reviewed (bpy / bmesh / numpy only, no network / subprocess).
+  NOT installed on purpose: the Blender Lab MCP server, `npx skills`, hooks, their orchestrator agent. Never add them.
+- Where it applies now: the isolated S2 Tunnel v1 environment - scripts Tools/Blender/scripts/s2v1/, work files Tools/Blender/work/s2v1/,
+  renders Captures/s2v1/; brief Captures/s2v1/TEAM_BRIEF.md; look targets: project skill `bwk-s2-cinematic-look`.
+- How to run here: headless `bash Tools/blender_run.sh <our s2v1 script>.py <log>` (heavy lock, --factory-startup; it does NOT
+  forward `--` arguments), calling this skill's script from OUR script with
+  `runpy.run_path("C:/Users/josia/thanksgiving/.claude/skills/<skill>/scripts/<script>.py", init_globals={"ARGS": {...}})["result"]`.
+  One heavy Blender / Unity job at a time. Never touch the Unity scene or the old tunnel files from this skill.
