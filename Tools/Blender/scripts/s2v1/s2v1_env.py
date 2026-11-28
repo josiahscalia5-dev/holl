@@ -49,7 +49,7 @@ BANDS = [  # (name, d centre, half width, depth, lips)
 ]
 GOLD = [  # (name, d centre, radial scale, width scale, bulbs, bulb radius)
     ("G1", 52.50, 1.40, 1.25, 28, 0.14),     # pass 3: bigger bulbs (the original's read as glowing blobs ~10 px)
-    ("G2", 60.80, 1.15, 1.00, 24, 0.11),
+    ("G2", 60.30, 1.15, 1.00, 24, 0.11),
 ]
 # stars: polar position around the original's ring centre mapped onto the track tunnel's centre (solve_stars2.py);
 # neon SIGNS facing down the tunnel (plane normal = -d tilted GAMMA toward the axis), on a short stem to the wall

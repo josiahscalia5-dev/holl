@@ -376,7 +376,7 @@ def mat_water():
     bump = b.n("ShaderNodeBump"); bump.inputs["Strength"].default_value = 0.10; bump.inputs["Distance"].default_value = 0.04
     b.link(rip, bump.inputs["Height"])
     dark = b.mix(body, (0.0, 0.0, 0.0, 1.0), 0.8)
-    p = b.principled(Base_Color=dark, Roughness=0.07, IOR=1.33, Coat_Weight=0.35, Coat_Roughness=0.04,
+    p = b.principled(Base_Color=dark, Roughness=0.06, IOR=1.33, Coat_Weight=0.0, Coat_Roughness=0.04,   # pass 06: ONE reflection closure
                      Emission_Color=body, Emission_Strength=1.0, Specular_IOR_Level=0.6)
     b.link(bump.outputs["Normal"], p.inputs["Normal"])
     b.link(p.outputs[0], b.out.inputs["Surface"])
@@ -860,7 +860,7 @@ def preview_light_if_no_lighting(ctx):
         except Exception:
             pass
     try:
-        ee.ray_tracing_options.resolution_scale = "2"
+        ee.ray_tracing_options.resolution_scale = "1"
     except Exception:
         pass
     w = bpy.data.worlds.new("WFX_TEMP_world")
