@@ -141,6 +141,27 @@ class NT:
                 self.link(v, nd.inputs[i])
         return nd.outputs[0]
 
+    def attr(self, name, kind="GEOMETRY"):
+        nd = self.n("ShaderNodeAttribute")
+        nd.attribute_type = kind
+        nd.attribute_name = name
+        return nd
+
+    def sep(self, v):
+        nd = self.n("ShaderNodeSeparateXYZ")
+        self.link(v, nd.inputs[0])
+        return nd.outputs
+
+    def smooth(self, x, a, b):
+        """smoothstep(a, b, x) as a Map Range node (clamped)."""
+        nd = self.n("ShaderNodeMapRange")
+        nd.interpolation_type = "SMOOTHSTEP"
+        nd.clamp = True
+        nd.inputs["From Min"].default_value = a
+        nd.inputs["From Max"].default_value = b
+        self.link(x, nd.inputs["Value"])
+        return nd.outputs["Result"]
+
     def principled(self, **kw):
         p = self.n("ShaderNodeBsdfPrincipled")
         for k, v in kw.items():
@@ -201,99 +222,166 @@ def uv_stats(obj, mat_names):
     return out
 
 
+def track_coords(objs, C, attr="wfx_trk"):
+    """Per-vertex TRACK-SPACE coordinates (lateral m, + right | track distance d m | height m above the centre line) stored as the
+    POINT attribute `attr` -> every flow pattern is seam-free across modules and independent of the per-module UV layouts (the
+    curved modules' rail-band UVs are unusable: 47.9 m per u). Same numbers the game's SplineMeshDeformer uses (Unity: UV2 / UV3)."""
+    F = C._frame_arrays()
+    ds = F["d"]
+    sw = [0, 2, 1]                                   # Unity (x, y, z) -> Blender (x, z, y)
+    pos, fw, up, rt = (F[k][:, sw] for k in ("pos", "fwd", "flatUp", "flatRight"))
+    out = {}
+    for o in objs:
+        me = o.data
+        n = len(me.vertices)
+        if n == 0:
+            continue
+        co = np.empty(n * 3); me.vertices.foreach_get("co", co); co = co.reshape(n, 3)
+        M = np.array(o.matrix_world)
+        co = co @ M[:3, :3].T + M[:3, 3]
+        idx = np.empty(n, dtype=np.int64)
+        for s in range(0, n, 4096):
+            dd = ((co[s:s + 4096, None, :] - pos[None]) ** 2).sum(-1)
+            idx[s:s + 4096] = dd.argmin(1)
+        d = ds[idx] + ((co - pos[idx]) * fw[idx]).sum(1)
+        d = np.clip(d, ds[0], ds[-1])
+        i = np.clip(np.searchsorted(ds, d) - 1, 0, len(ds) - 2)
+        t = ((d - ds[i]) / (ds[i + 1] - ds[i]))[:, None]
+        P = pos[i] * (1 - t) + pos[i + 1] * t
+        R = rt[i] * (1 - t) + rt[i + 1] * t; R /= np.linalg.norm(R, axis=1, keepdims=True)
+        U = up[i] * (1 - t) + up[i + 1] * t; U /= np.linalg.norm(U, axis=1, keepdims=True)
+        lat = ((co - P) * R).sum(1)
+        h = ((co - P) * U).sum(1)
+        a = me.attributes.get(attr) or me.attributes.new(attr, "FLOAT_VECTOR", "POINT")
+        a.data.foreach_set("vector", np.stack([lat, d, h], 1).astype(np.float32).ravel())
+        out[o.name] = (lat, d, h)
+    return out
+
+
+def per_material_lat(o, lat, names):
+    """|lateral| 2 / 98 percentiles of the vertices of every material slot whose base name is in `names`."""
+    me = o.data
+    npoly, nl = len(me.polygons), len(me.loops)
+    mi = np.empty(npoly, dtype=np.int64); me.polygons.foreach_get("material_index", mi)
+    lt = np.empty(npoly, dtype=np.int64); me.polygons.foreach_get("loop_total", lt)
+    lv = np.empty(nl, dtype=np.int64); me.loops.foreach_get("vertex_index", lv)
+    lm = np.repeat(mi, lt)
+    res = {}
+    for i, s in enumerate(o.material_slots):
+        nm = base_name(s.material)
+        if nm in names:
+            vi = np.unique(lv[lm == i])
+            if len(vi):
+                al = np.abs(lat[vi])
+                res[nm] = (float(np.percentile(al, 2)), float(np.percentile(al, 98)))
+    return res
+
+
 # ------------------------------------------------------------------------------------------------- materials
-def mat_water(fwd, across_m_per_u, u_mid):
-    """Deep blue-turquoise glossy water; soft wide low-contrast light bands along the flow (no thin scratch lines)."""
+# Pass 03 principle (measured on the ORIGINAL 720p frame, Captures/s2v1/NOTES_water.md): every look is EMISSION-LED = the emission
+# colour is the target on-screen sRGB colour at strength ~1 under the Standard view transform, the base colour is dark, so lights
+# only add gloss / highlights (robust to the lighting module, and the same split maps to Unity URP: emissive albedo + specular).
+def trk(b):
+    a = b.attr("wfx_trk")
+    s = b.sep(a.outputs["Vector"])
+    return s[0], s[1], s[2]                               # lateral, d, height
+
+
+def mat_water():
+    """Deep blue-turquoise glossy water; SOFT WIDE low-contrast light bands along the flow (no thin scratch lines).
+    ORIGINAL lower-half water: p10 #3788CD, p50 #4AABDD, p90 #D9FCF8 (the p90 = soft white-cyan bands / chevron glow)."""
     b = NT("WFX_Water", render="DITHERED")
-    tc = b.n("ShaderNodeTexCoord")
-    geo = b.n("ShaderNodeNewGeometry")
-    sep = b.n("ShaderNodeSeparateXYZ"); b.link(tc.outputs["UV"], sep.inputs[0])
-    across = b.math("MULTIPLY", b.math("SUBTRACT", sep.outputs[0], u_mid), across_m_per_u)        # metres from the water centre
-    dotn = b.n("ShaderNodeVectorMath"); dotn.operation = "DOT_PRODUCT"
-    b.link(geo.outputs["Position"], dotn.inputs[0]); dotn.inputs[1].default_value = fwd
-    along = dotn.outputs["Value"]                                                              # metres along the track (world)
-    # broad soft bands: ~0.5-0.9 m wide, many metres long (anisotropic noise)
-    v1 = b.vec(b.math("MULTIPLY", across, 1.25), b.math("MULTIPLY", along, 0.055), 0.0)
-    n1 = b.noise(v1, 1.0, detail=1.5, rough=0.45)
-    v2 = b.vec(b.math("MULTIPLY", across, 2.6), b.math("MULTIPLY", along, 0.09), 7.3)
-    n2 = b.noise(v2, 1.0, detail=1.0, rough=0.4)
-    band1 = b.ramp(n1, [(0.40, (0, 0, 0, 1)), (0.70, (1, 1, 1, 1))], "EASE").outputs[0]
-    band2 = b.ramp(n2, [(0.48, (0, 0, 0, 1)), (0.78, (1, 1, 1, 1))], "EASE").outputs[0]
-    # depth: turquoise centre, deeper blue toward the rails (the water reads deep and transparent at the sides)
-    ac = b.math("ABSOLUTE", across)
-    edge = b.ramp(ac, [(0.0, (1, 1, 1, 1)), (0.55, (0.55, 0.55, 0.55, 1)), (1.25, (0, 0, 0, 1))], "EASE").outputs[0]
-    body = b.mix(srgb("#0A3D9C"), srgb("#1D8BD9"), edge)
-    body = b.mix(body, srgb("#38C6E6"), b.math("MULTIPLY", edge, 0.55))
-    body = b.mix(body, srgb("#86DDF4"), b.math("MULTIPLY", band1, 0.38))
-    body = b.mix(body, srgb("#B9ECFA"), b.math("MULTIPLY", band2, 0.22))
-    # grazing angle: the water reflects the violet / pink tunnel
-    lw = b.n("ShaderNodeLayerWeight"); lw.inputs["Blend"].default_value = 0.35
-    fres = b.ramp(lw.outputs["Facing"], [(0.55, (0, 0, 0, 1)), (1.0, (1, 1, 1, 1))], "EASE").outputs[0]
-    col = b.mix(body, srgb("#7C6FE0"), b.math("MULTIPLY", fres, 0.35))
-    # elongated ripples -> stretched soft reflections along the flow
-    v3 = b.vec(b.math("MULTIPLY", across, 3.2), b.math("MULTIPLY", along, 0.35), 2.1)
-    rip = b.noise(v3, 1.0, detail=2.0, rough=0.5)
-    bump = b.n("ShaderNodeBump"); bump.inputs["Strength"].default_value = 0.22; bump.inputs["Distance"].default_value = 0.03
+    lat, d, h = trk(b)
+    prm = b.sep(b.attr("wfx_p", "OBJECT").outputs["Vector"])           # x = water half width (m)
+    t = b.math("DIVIDE", b.math("ABSOLUTE", lat), b.math("MAXIMUM", prm[0], 0.5), clamp=True)   # 0 centre .. 1 rail
+    # gently meandering flow lines (bands are not ruler-straight)
+    warp = b.noise(b.vec(b.math("MULTIPLY", lat, 0.35), b.math("MULTIPLY", d, 0.035), 1.7), 1.0, detail=1.0)
+    latw = b.math("ADD", lat, b.math("MULTIPLY", b.math("SUBTRACT", warp, 0.5), 0.55))
+    n1 = b.noise(b.vec(b.math("MULTIPLY", latw, 1.3), b.math("MULTIPLY", d, 0.045), 0.0), 1.0, detail=1.2, rough=0.4)
+    n2 = b.noise(b.vec(b.math("MULTIPLY", latw, 2.4), b.math("MULTIPLY", d, 0.07), 9.1), 1.0, detail=0.8, rough=0.35)
+    band1 = b.smooth(n1, 0.47, 0.68)                  # wide turquoise bands ~0.5 m x ~20 m
+    band2 = b.smooth(n2, 0.56, 0.74)                  # sparser soft white-cyan sheen bands
+    edge = b.smooth(t, 0.35, 1.0)
+    body = b.mix(srgb("#3497DC"), srgb("#2364C6"), edge)                       # turquoise-blue centre -> deep blue at the rails
+    body = b.mix(body, srgb("#5CCCF2"), b.math("MULTIPLY", band1, 0.62))
+    body = b.mix(body, srgb("#C8F4FC"), b.math("MULTIPLY", band2, 0.48))
+    body = b.mix(body, srgb("#A867D0"), b.math("MULTIPLY", b.smooth(t, 0.82, 1.0), 0.30))   # rail / tunnel pink-violet reflection
+    # elongated ripples -> stretched glossy highlights along the flow
+    rip = b.noise(b.vec(b.math("MULTIPLY", lat, 3.0), b.math("MULTIPLY", d, 0.30), 2.1), 1.0, detail=2.0, rough=0.5)
+    bump = b.n("ShaderNodeBump"); bump.inputs["Strength"].default_value = 0.16; bump.inputs["Distance"].default_value = 0.03
     b.link(rip, bump.inputs["Height"])
-    p = b.principled(Base_Color=col, Roughness=0.045, IOR=1.33, Coat_Weight=0.6, Coat_Roughness=0.02,
-                     Emission_Color=body, Emission_Strength=0.55, Specular_IOR_Level=0.7)
+    dark = b.mix(body, (0.0, 0.0, 0.0, 1.0), 0.8)
+    p = b.principled(Base_Color=dark, Roughness=0.05, IOR=1.33, Coat_Weight=0.45, Coat_Roughness=0.02,
+                     Emission_Color=body, Emission_Strength=1.0, Specular_IOR_Level=0.6)
     b.link(bump.outputs["Normal"], p.inputs["Normal"])
     b.link(p.outputs[0], b.out.inputs["Surface"])
     return b.m
 
 
-def mat_rail_band(fwd, u0, u1):
-    """Glossy hot-pink rail band with a golden-orange racing stripe and soft pink-white streaks along the flow."""
+def mat_rail_band():
+    """Glossy hot-pink rail band: bright pink-white lip at the water, pink body, a golden-orange light stripe, magenta outer edge,
+    long soft light streaks along the flow. ORIGINAL rails: p10 #D36494, p50 #E483AA / #EB79B2, p90 #F2BBD1."""
     b = NT("WFX_RailBand")
-    tc = b.n("ShaderNodeTexCoord"); geo = b.n("ShaderNodeNewGeometry")
-    sep = b.n("ShaderNodeSeparateXYZ"); b.link(tc.outputs["UV"], sep.inputs[0])
-    t = b.math("DIVIDE", b.math("SUBTRACT", sep.outputs[0], u0), max(1e-4, u1 - u0))
-    # symmetric fold so mirrored left / right bands get the same stripe order (0 = edge, 1 = band middle)
-    tf = b.math("SUBTRACT", 1.0, b.math("ABSOLUTE", b.math("MULTIPLY", b.math("SUBTRACT", t, 0.5), 2.0)))
-    stripes = b.ramp(tf, [(0.00, srgb("#E03AA8")), (0.22, srgb("#FF4FA0")), (0.48, srgb("#FF6F8E")),
-                          (0.62, srgb("#FFB24A")), (0.74, srgb("#FF8A6A")), (0.86, srgb("#FF4F9E")),
-                          (1.00, srgb("#F23C9A"))], "EASE").outputs[0]
-    dotn = b.n("ShaderNodeVectorMath"); dotn.operation = "DOT_PRODUCT"
-    b.link(geo.outputs["Position"], dotn.inputs[0]); dotn.inputs[1].default_value = fwd
-    along = dotn.outputs["Value"]
-    sv = b.vec(b.math("MULTIPLY", t, 9.0), b.math("MULTIPLY", along, 0.05), 3.3)
-    st = b.ramp(b.noise(sv, 1.0, detail=1.0, rough=0.4), [(0.55, (0, 0, 0, 1)), (0.78, (1, 1, 1, 1))], "EASE").outputs[0]
-    col = b.mix(stripes, srgb("#FFD7EE"), b.math("MULTIPLY", st, 0.45))
-    p = b.principled(Base_Color=col, Roughness=0.08, Coat_Weight=1.0, Coat_Roughness=0.03, Specular_IOR_Level=0.8,
-                     Emission_Color=stripes, Emission_Strength=0.42)
+    lat, d, h = trk(b)
+    prm = b.sep(b.attr("wfx_p", "OBJECT").outputs["Vector"])           # y, z = band |lateral| range (m)
+    t = b.math("DIVIDE", b.math("SUBTRACT", b.math("ABSOLUTE", lat), prm[1]),
+               b.math("MAXIMUM", b.math("SUBTRACT", prm[2], prm[1]), 0.05), clamp=True)
+    stripes = b.ramp(t, [(0.00, srgb("#FFCDE8")), (0.06, srgb("#F77CBA")), (0.30, srgb("#EC64A8")),
+                         (0.42, srgb("#FF9C82")), (0.50, srgb("#FFC46A")), (0.58, srgb("#FF9C86")),
+                         (0.70, srgb("#EF6AB0")), (0.88, srgb("#D8509E")), (1.00, srgb("#C8449A"))], "EASE").outputs[0]
+    warp = b.noise(b.vec(b.math("MULTIPLY", lat, 0.5), b.math("MULTIPLY", d, 0.03), 4.4), 1.0, detail=1.0)
+    tw = b.math("ADD", t, b.math("MULTIPLY", b.math("SUBTRACT", warp, 0.5), 0.25))
+    st = b.smooth(b.noise(b.vec(b.math("MULTIPLY", tw, 7.0), b.math("MULTIPLY", d, 0.05), 3.3), 1.0, detail=1.0, rough=0.4), 0.52, 0.74)
+    col = b.mix(stripes, srgb("#FFC9E6"), b.math("MULTIPLY", st, 0.55))
+    sh = b.smooth(b.noise(b.vec(b.math("MULTIPLY", tw, 5.0), b.math("MULTIPLY", d, 0.06), 8.8), 1.0, detail=1.0), 0.55, 0.75)
+    col = b.mix(col, srgb("#C24796"), b.math("MULTIPLY", sh, 0.35))           # darker magenta streaks for contrast (p10)
+    dark = b.mix(col, (0.0, 0.0, 0.0, 1.0), 0.7)
+    p = b.principled(Base_Color=dark, Roughness=0.07, Coat_Weight=1.0, Coat_Roughness=0.03, Specular_IOR_Level=0.7,
+                     Emission_Color=col, Emission_Strength=1.0)
     b.link(p.outputs[0], b.out.inputs["Surface"])
     return b.m
 
 
 def mat_rail_tube():
+    """Round pink rail tube: hot pink with a bright pink-white crest (the original's glossy top highlight)."""
     b = NT("WFX_RailTube")
+    geo = b.n("ShaderNodeNewGeometry")
+    nz = b.sep(geo.outputs["Normal"])[2]
     lw = b.n("ShaderNodeLayerWeight"); lw.inputs["Blend"].default_value = 0.4
-    crest = b.ramp(lw.outputs["Facing"], [(0.0, (1, 1, 1, 1)), (0.35, (0, 0, 0, 1))], "EASE").outputs[0]
-    col = b.mix(srgb("#F2238E"), srgb("#FF8CC6"), crest)
-    p = b.principled(Base_Color=col, Roughness=0.06, Coat_Weight=1.0, Coat_Roughness=0.02, Specular_IOR_Level=0.9,
-                     Emission_Color=col, Emission_Strength=0.38)
+    crest = b.smooth(nz, 0.55, 0.95)
+    col = b.mix(srgb("#D9479C"), srgb("#FF8CC8"), crest)
+    col = b.mix(col, srgb("#FFE0F2"), b.math("MULTIPLY", b.smooth(nz, 0.85, 1.0), 0.6))
+    dark = b.mix(col, (0.0, 0.0, 0.0, 1.0), 0.7)
+    p = b.principled(Base_Color=dark, Roughness=0.06, Coat_Weight=1.0, Coat_Roughness=0.02, Specular_IOR_Level=0.8,
+                     Emission_Color=col, Emission_Strength=1.0)
     b.link(p.outputs[0], b.out.inputs["Surface"])
     return b.m
 
 
 def mat_slide_shell():
     b = NT("WFX_SlideShell")
-    p = b.principled(Base_Color=srgb("#D63FB0"), Roughness=0.14, Coat_Weight=0.7, Coat_Roughness=0.05,
-                     Emission_Color=srgb("#D63FB0"), Emission_Strength=0.18)
+    p = b.principled(Base_Color=srgb("#5A1E52"), Roughness=0.14, Coat_Weight=0.7, Coat_Roughness=0.05,
+                     Emission_Color=srgb("#B83E96"), Emission_Strength=0.85)
     b.link(p.outputs[0], b.out.inputs["Surface"])
     return b.m
 
 
 def mat_foam(shade=False):
-    """Soft rounded soap foam: white with cool lavender-blue shading, subsurface softness, faint pink sheen (not plastic)."""
+    """Soft rounded soap foam: bright white tops, pink-lavender undersides (ORIGINAL foam p10 #CD94B5, p50 #E2D5E2, p90 #F2ECF0),
+    subsurface softness + sheen (not plastic). Form shading from the world normal so it reads under any light."""
     b = NT("WFX_Foam" + ("_Shade" if shade else ""))
+    geo = b.n("ShaderNodeNewGeometry")
+    nz = b.sep(geo.outputs["Normal"])[2]
     lw = b.n("ShaderNodeLayerWeight"); lw.inputs["Blend"].default_value = 0.5
-    rim = b.ramp(lw.outputs["Facing"], [(0.25, (0, 0, 0, 1)), (0.9, (1, 1, 1, 1))], "EASE").outputs[0]
-    base = srgb("#E9E6F6") if shade else srgb("#F7F5FD")
-    col = b.mix(base, srgb("#C9C4F0"), b.math("MULTIPLY", rim, 0.55))
-    p = b.principled(Base_Color=col, Roughness=0.5, Subsurface_Weight=0.55, Subsurface_Radius=(0.9, 0.8, 1.0),
-                     Subsurface_Scale=0.08, Sheen_Weight=0.35, Sheen_Tint=srgb("#FFD3F0"), Sheen_Roughness=0.4,
-                     Specular_IOR_Level=0.35, Emission_Color=col, Emission_Strength=0.32 if not shade else 0.24)
+    top = b.smooth(nz, -0.35, 0.75)
+    col = b.mix(srgb("#C995BC"), srgb("#F5F0F8"), top)
+    col = b.mix(col, srgb("#B9A6E6"), b.math("MULTIPLY", b.smooth(lw.outputs["Facing"], 0.55, 1.0), 0.35))   # cool rim
+    if shade:
+        col = b.mix(col, srgb("#B98AB4"), 0.25)
+    dark = b.mix(col, (0.0, 0.0, 0.0, 1.0), 0.55)
+    p = b.principled(Base_Color=dark, Roughness=0.42, Subsurface_Weight=0.5, Subsurface_Radius=(0.9, 0.8, 1.0),
+                     Subsurface_Scale=0.08, Sheen_Weight=0.4, Sheen_Tint=srgb("#FFD3F0"), Sheen_Roughness=0.4,
+                     Specular_IOR_Level=0.45, Emission_Color=col, Emission_Strength=0.9)
     b.link(p.outputs[0], b.out.inputs["Surface"])
     return b.m
 
@@ -343,35 +431,47 @@ def mat_droplet():
 
 
 def mat_milk():
-    """Milky white translucent splash: soft white body, cool blue translucency at thin / grazing parts, glossy wet coat."""
+    """Milky white translucent splash (ORIGINAL crown region p50 #BDD9E5, p90 #DBF3F5 = bluish milk, not paper white): bright
+    blue-white tops, cool translucent blue where thin / grazing (the water shows through), glossy wet coat + dithered alpha edges."""
     b = NT("WFX_Milk", render="DITHERED")
     b.m.use_backface_culling = False
+    geo = b.n("ShaderNodeNewGeometry")
+    nz = b.sep(geo.outputs["Normal"])[2]
     lw = b.n("ShaderNodeLayerWeight"); lw.inputs["Blend"].default_value = 0.45
-    edge = b.ramp(lw.outputs["Facing"], [(0.2, (0, 0, 0, 1)), (0.85, (1, 1, 1, 1))], "EASE").outputs[0]
-    col = b.mix(srgb("#FBFCFF"), srgb("#AEE3F7"), b.math("MULTIPLY", edge, 0.6))
-    p = b.principled(Base_Color=col, Roughness=0.12, Subsurface_Weight=0.7, Subsurface_Radius=(0.6, 0.8, 1.0),
-                     Subsurface_Scale=0.05, Coat_Weight=1.0, Coat_Roughness=0.03, Specular_IOR_Level=0.8,
-                     Emission_Color=col, Emission_Strength=0.55,
-                     Alpha=b.math("SUBTRACT", 0.97, b.math("MULTIPLY", edge, 0.3)))
+    edge = b.smooth(lw.outputs["Facing"], 0.35, 0.92)
+    col = b.mix(srgb("#C9DDEE"), srgb("#F7FBFF"), b.smooth(nz, -0.4, 0.8))          # form: lit tops, cooler undersides
+    col = b.mix(col, srgb("#7DB6E6"), b.math("MULTIPLY", edge, 0.55))                  # thin / grazing = translucent blue
+    dark = b.mix(col, (0.0, 0.0, 0.0, 1.0), 0.55)
+    p = b.principled(Base_Color=dark, Roughness=0.08, Subsurface_Weight=0.6, Subsurface_Radius=(0.6, 0.8, 1.0),
+                     Subsurface_Scale=0.05, Coat_Weight=1.0, Coat_Roughness=0.02, Specular_IOR_Level=0.9,
+                     Emission_Color=col, Emission_Strength=0.92,
+                     Alpha=b.math("SUBTRACT", 0.96, b.math("MULTIPLY", edge, 0.38)))
     b.link(p.outputs[0], b.out.inputs["Surface"])
     return b.m
 
 
 def mat_gold_coin():
+    """Polished gold paw coin (ORIGINAL coin: bright yellow #F2C64E faces, orange-gold #B97A2E rim / shade, pale-yellow highlights).
+    Emission-led yellow so a violet environment never turns the metal brown; metallic coat for the sharp highlights."""
     b = NT("WFX_CoinGold")
+    geo = b.n("ShaderNodeNewGeometry")
     lw = b.n("ShaderNodeLayerWeight"); lw.inputs["Blend"].default_value = 0.3
-    rim = b.ramp(lw.outputs["Facing"], [(0.2, (0, 0, 0, 1)), (0.9, (1, 1, 1, 1))], "EASE").outputs[0]
-    col = b.mix(srgb("#FFC93C"), srgb("#E8902A"), rim)
-    p = b.principled(Base_Color=col, Metallic=1.0, Roughness=0.17, Coat_Weight=0.4, Coat_Roughness=0.05,
-                     Emission_Color=srgb("#E9A531"), Emission_Strength=0.35)
+    face = b.smooth(lw.outputs["Facing"], 0.15, 0.75)                 # 0 = facing the camera, 1 = grazing rim
+    nz = b.sep(geo.outputs["Normal"])[2]
+    col = b.mix(srgb("#F4C64C"), srgb("#C07A26"), face)
+    col = b.mix(col, srgb("#FFE590"), b.math("MULTIPLY", b.smooth(nz, 0.5, 0.95), 0.5))   # upper bevel catches the tunnel light
+    p = b.principled(Base_Color=srgb("#7A5418"), Metallic=1.0, Roughness=0.16, Coat_Weight=0.5, Coat_Roughness=0.04,
+                     Emission_Color=col, Emission_Strength=0.9)
     b.link(p.outputs[0], b.out.inputs["Surface"])
     return b.m
 
 
 def mat_gem():
     b = NT("WFX_Gem")
-    p = b.principled(Base_Color=srgb("#9B3BE8"), Roughness=0.05, IOR=2.0, Transmission_Weight=0.35, Coat_Weight=1.0,
-                     Emission_Color=srgb("#A847F0"), Emission_Strength=0.6)
+    lw = b.n("ShaderNodeLayerWeight"); lw.inputs["Blend"].default_value = 0.35
+    col = b.mix(srgb("#B24CF2"), srgb("#5E1AA8"), b.smooth(lw.outputs["Facing"], 0.2, 0.9))
+    p = b.principled(Base_Color=srgb("#3A0C66"), Roughness=0.04, IOR=2.0, Coat_Weight=1.0, Specular_IOR_Level=1.0,
+                     Emission_Color=col, Emission_Strength=0.95)
     b.link(p.outputs[0], b.out.inputs["Surface"])
     return b.m
 
@@ -397,20 +497,23 @@ def mat_emit(name, hexcol, strength, base_hex=None):
 
 
 def mat_chevron():
-    """Glowing cyan boost chevron: saturated luminous turquoise panel, slightly paler at grazing edges."""
+    """Glowing cyan boost chevron (ORIGINAL p10 #36B7D5, p50 #AEFAF5, p90 #C8FDF8): pale luminous cyan core, saturated cyan edges."""
     b = NT("WFX_Chevron")
     lw = b.n("ShaderNodeLayerWeight"); lw.inputs["Blend"].default_value = 0.4
-    col = b.mix(srgb("#1FD3E6"), srgb("#9AF4FF"), b.ramp(lw.outputs["Facing"], [(0.5, (0, 0, 0, 1)), (1.0, (1, 1, 1, 1))]).outputs[0])
-    p = b.principled(Base_Color=col, Roughness=0.1, Coat_Weight=1.0, Emission_Color=col, Emission_Strength=1.5)
+    col = b.mix(srgb("#A8FAF4"), srgb("#22BCDD"), b.smooth(lw.outputs["Facing"], 0.35, 0.9))
+    p = b.principled(Base_Color=srgb("#0C4E5C"), Roughness=0.08, Coat_Weight=1.0, Emission_Color=col, Emission_Strength=1.15)
     b.link(p.outputs[0], b.out.inputs["Surface"])
     return b.m
 
 
-def mat_plush(name, hexcol, sheen_hex, rough=0.75, emit=0.12):
+def mat_plush(name, hexcol, sheen_hex, rough=0.75, emit=0.55):
+    """PLACEHOLDER only (character team owns the mascot): emission-led plush colour with a soft facing-based form."""
     b = NT(name)
-    p = b.principled(Base_Color=srgb(hexcol), Roughness=rough, Subsurface_Weight=0.25, Subsurface_Radius=(1.0, 0.5, 0.5),
-                     Subsurface_Scale=0.03, Sheen_Weight=0.6, Sheen_Tint=srgb(sheen_hex), Sheen_Roughness=0.35,
-                     Specular_IOR_Level=0.3, Emission_Color=srgb(hexcol), Emission_Strength=emit)
+    lw = b.n("ShaderNodeLayerWeight"); lw.inputs["Blend"].default_value = 0.5
+    col = b.mix(srgb(hexcol), srgb(sheen_hex), b.math("MULTIPLY", b.smooth(lw.outputs["Facing"], 0.5, 1.0), 0.45))
+    p = b.principled(Base_Color=b.mix(col, (0.0, 0.0, 0.0, 1.0), 0.5), Roughness=rough, Subsurface_Weight=0.25,
+                     Subsurface_Radius=(1.0, 0.5, 0.5), Subsurface_Scale=0.03, Sheen_Weight=0.6, Sheen_Tint=srgb(sheen_hex),
+                     Sheen_Roughness=0.35, Specular_IOR_Level=0.3, Emission_Color=col, Emission_Strength=emit)
     b.link(p.outputs[0], b.out.inputs["Surface"])
     return b.m
 
@@ -559,33 +662,21 @@ def apply(ctx):
     print("%s collections: water %d foam %d bubbles %d pickups %d mascot %d context %d" % (
         LOG, len(water), len(foam), len(bubbles), len(pickups), len(mascot_c), len(context)))
 
-    # ---- measure the slide UVs (water + rails) and pick the flow direction at the mascot
-    stats = {}
+    # ---- track-space coordinates on every slide module (seam-free flow patterns) + per-module widths as OBJECT attributes
+    tc = track_coords(water, C)
     for o in water:
-        s = uv_stats(o, {"M_Water", "M_RailBand_r8", "M_RailTube_r8", "M_SlideShell"})
-        for k, v in s.items():
-            stats.setdefault(k, []).append(v)
-            print("%s uv %s %s faces %d u %.3f..%.3f v %.2f..%.2f m/u %.3f m/v %.3f" % (
-                LOG, o.name[:26], k, v["faces"], v["u"][0], v["u"][1], v["v"][0], v["v"][1], v["m_per_u"], v["m_per_v"]))
-
-    def med(k, f, default):
-        vals = [x[f] for x in stats.get(k, []) if not (isinstance(x[f], float) and math.isnan(x[f]))]
-        return float(np.median(vals)) if vals else default
-
-    fr = C.frame_at(34.0)
-    fwd = tuple(float(x) for x in C.u2b(fr["fwd"]))
-    w_u = [x["u"] for x in stats.get("M_Water", [])]
-    u_lo = float(np.median([a for a, _ in w_u])) if w_u else 0.0
-    u_hi = float(np.median([b for _, b in w_u])) if w_u else 1.0
-    m_per_u = med("M_Water", "m_per_u", 3.6)
-    print("%s water u %.3f..%.3f m/u %.3f  fwd %s" % (LOG, u_lo, u_hi, m_per_u, tuple(round(x, 3) for x in fwd)))
-    b_u = [x["u"] for x in stats.get("M_RailBand_r8", [])]
-    bu0 = float(np.median([a for a, _ in b_u])) if b_u else 0.0
-    bu1 = float(np.median([b for _, b in b_u])) if b_u else 1.0
-
-    m_water = mat_water(fwd, m_per_u, 0.5 * (u_lo + u_hi))
-    n = assign(water, {"M_Water"}, m_water)
-    n += assign(water, {"M_RailBand_r8", "M_RailPink"}, mat_rail_band(fwd, bu0, bu1))
+        if o.name not in tc:
+            continue
+        lat = tc[o.name][0]
+        r = per_material_lat(o, lat, {"M_Water", "M_RailBand_r8", "M_RailTube_r8", "M_SlideShell"})
+        w_half = r.get("M_Water", (0.0, 1.6))[1]
+        b0, b1 = r.get("M_RailBand_r8", (w_half, w_half + 0.9))
+        o["wfx_p"] = (float(w_half), float(b0), float(b1))
+        dd = tc[o.name][1]
+        print("%s slide %s d %.1f..%.1f |lat| %s" % (LOG, o.name[:24], float(dd.min()), float(dd.max()),
+              " ".join("%s %.2f..%.2f" % (k.replace("M_", ""), a, b) for k, (a, b) in sorted(r.items()))))
+    n = assign(water, {"M_Water"}, mat_water())
+    n += assign(water, {"M_RailBand_r8", "M_RailPink"}, mat_rail_band())
     n += assign(water, {"M_RailTube_r8"}, mat_rail_tube())
     n += assign(water, {"M_SlideShell"}, mat_slide_shell())
     print("%s slide slots %d" % (LOG, n))
@@ -597,8 +688,8 @@ def apply(ctx):
     bub = mat_bubble()
     n = assign(bubbles + mascot_c, {"M_Bubble"}, bub)
     n2 = assign(bubbles, {"M_Glass"}, mat_glass())
-    n2 += assign(bubbles, {"M_PipeWaterPink", "M_PinkLiquid_p5"}, mat_emit("WFX_PipeLiquidPink", "#FF5FC8", 1.4))
-    n2 += assign(bubbles, {"M_PipeWaterCyan"}, mat_emit("WFX_PipeLiquidCyan", "#4FE3F2", 1.4))
+    n2 += assign(bubbles, {"M_PipeWaterPink", "M_PinkLiquid_p5"}, mat_emit("WFX_PipeLiquidPink", "#FF5FC8", 1.2, "#5A1440"))
+    n2 += assign(bubbles, {"M_PipeWaterCyan"}, mat_emit("WFX_PipeLiquidCyan", "#4FE3F2", 1.2, "#0C4450"))
     print("%s bubble slots %d, pipe slots %d" % (LOG, n, n2))
 
     n = assign(pickups, {"M_Coin", "M_Gold", "M_GoldDark"}, mat_gold_coin())
@@ -615,15 +706,15 @@ def apply(ctx):
         if "ContactShadow" in o.name:
             o.hide_render = True               # Unity decal quad (untextured here); EEVEE casts real shadows
     if body is not None and all(untextured(s.material) for s in body.material_slots):
-        fur = mat_plush("WFX_PH_Fur", "#EE8FA8", "#FFD0E0", rough=0.8)
+        fur = mat_plush("WFX_PH_Fur", "#E9809F", "#FFC4D8", rough=0.8)
         pairs = {
             "M_Fur_v5": fur,
-            "M_PawPad_v5": mat_plush("WFX_PH_Pad", "#F5A3B5", "#FFFFFF", rough=0.6),
-            "M_HatKnit_v5": mat_plush("WFX_PH_HatKnit", "#7A3CC8", "#C9A2FF", rough=0.85),
-            "M_HatCuff_v5": mat_plush("WFX_PH_HatCuff", "#6E34BC", "#C9A2FF", rough=0.85),
-            "M_HatStripe_v5": mat_plush("WFX_PH_HatStripe", "#F4D9E8", "#FFFFFF", rough=0.85),
-            "M_PomPom_v5": mat_plush("WFX_PH_PomPom", "#8A4CDA", "#D9B8FF", rough=0.9),
-            "M_StarBadge": mat_plush("WFX_PH_Badge", "#FFD447", "#FFFFFF", rough=0.4, emit=0.3),
+            "M_PawPad_v5": mat_plush("WFX_PH_Pad", "#F29AB0", "#FFFFFF", rough=0.6),
+            "M_HatKnit_v5": mat_plush("WFX_PH_HatKnit", "#7B40C6", "#B88BF2", rough=0.85),
+            "M_HatCuff_v5": mat_plush("WFX_PH_HatCuff", "#6C34B8", "#B88BF2", rough=0.85),
+            "M_HatStripe_v5": mat_plush("WFX_PH_HatStripe", "#F2D2E6", "#FFFFFF", rough=0.85),
+            "M_PomPom_v5": mat_plush("WFX_PH_PomPom", "#9152DA", "#C9A2FF", rough=0.9),
+            "M_StarBadge": mat_plush("WFX_PH_Badge", "#FFD447", "#FFFFFF", rough=0.4),
         }
         dark = mat_plush("WFX_PH_Dark", "#2A1A2E", "#806080", rough=0.3, emit=0.0)
         for s in body.material_slots:
@@ -635,7 +726,8 @@ def apply(ctx):
     n = assign(crowns, {"M_FX_Milk_v3"}, milk)
     for cr in crowns:
         # liquid read: relax the faceted V7 sheet and round every edge / tip (look test; Unity would get the re-exported mesh)
-        sm = cr.modifiers.new("WFX_relax", "SMOOTH"); sm.factor = 0.6; sm.iterations = 3
+        sm = cr.modifiers.new("WFX_relax", "SMOOTH"); sm.factor = 0.6; sm.iterations = 4
+        so = cr.modifiers.new("WFX_body", "SOLIDIFY"); so.thickness = 0.012; so.offset = 0.0   # liquid sheets have a body
         sd = cr.modifiers.new("WFX_round", "SUBSURF"); sd.levels = sd.render_levels = 1
         for f in cr.data.polygons:
             f.use_smooth = True
@@ -652,29 +744,51 @@ def apply(ctx):
 
 
 def preview_light_if_no_lighting(ctx):
-    """ONLY while the lighting-artist's s2v1_lighting.py does not exist: a neutral violet-tunnel preview light so the water /
-    gold / foam materials can be judged at all (emission-only renders hide gloss and metal). Removed automatically as soon as the
-    lighting module exists (it owns world + lights)."""
+    """ONLY while the lighting-artist's s2v1_lighting.py does not exist (it owns engine, view transform, world, lights): a neutral
+    preview so the water / gold / foam materials can be judged. Pass 03 fix: the assembly's 'Standard' fallback never triggers
+    (context.blend is already EEVEE -> factory AgX, which desaturated everything in water_01/02) and the old uniform world at 0.9
+    flooded the closed tunnel -> now Standard view, a DARK violet world, raytraced reflections, a few soft area lights."""
     import os
     if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "s2v1_lighting.py")):
         return
     sc = ctx["scene"]
+    try:
+        sc.view_settings.view_transform = "Standard"
+        sc.view_settings.look = "None"
+        sc.view_settings.exposure = 0.0
+        sc.view_settings.gamma = 1.0
+    except Exception as e:
+        print("%s preview view transform: %s" % (LOG, e))
+    ee = getattr(sc, "eevee", None)
+    for k, v in (("use_raytracing", True), ("ray_tracing_method", "SCREEN"), ("use_shadows", True),
+                 ("taa_render_samples", 32)):
+        try:
+            setattr(ee, k, v)
+        except Exception:
+            pass
+    try:
+        ee.ray_tracing_options.resolution_scale = "2"
+    except Exception:
+        pass
     w = bpy.data.worlds.new("WFX_TEMP_world")
     w.use_nodes = True
     bg = next(n for n in w.node_tree.nodes if n.type == "BACKGROUND")
-    bg.inputs[0].default_value = srgb("#6A55B8"); bg.inputs[1].default_value = 0.9
+    bg.inputs[0].default_value = srgb("#2A1A52"); bg.inputs[1].default_value = 0.35
     sc.world = w
     cam = bpy.data.objects.get("CAM_R2_16x9")
     if cam is None:
         return
     m3 = cam.matrix_world.to_3x3()
     fwd = (m3 @ Vector((0, 0, -1))).normalized(); upv = (m3 @ Vector((0, 1, 0))).normalized()
+    rgt = (m3 @ Vector((1, 0, 0))).normalized()
     base = cam.matrix_world.translation
-    for name, off, col, e, size in (("WFX_TEMP_key", fwd * 1.0 + upv * 2.5, "#FFE9F6", 220.0, 3.0),
-                                    ("WFX_TEMP_door", fwd * 9.0 + upv * 1.5, "#FFC870", 400.0, 4.0),
-                                    ("WFX_TEMP_core", fwd * 22.0 + upv * 1.0, "#A88BFF", 600.0, 5.0)):
+    for name, off, col, e, size in (("WFX_TEMP_key", fwd * 2.0 + upv * 2.6, "#FFE6F4", 160.0, 2.5),
+                                    ("WFX_TEMP_door", fwd * 9.0 + upv * 2.0, "#FFC870", 350.0, 4.0),
+                                    ("WFX_TEMP_L", fwd * 4.0 + upv * 1.6 - rgt * 2.6, "#C08CFF", 120.0, 2.0),
+                                    ("WFX_TEMP_R", fwd * 4.0 + upv * 1.6 + rgt * 2.6, "#FF9AD8", 120.0, 2.0),
+                                    ("WFX_TEMP_core", fwd * 22.0 + upv * 1.0, "#A88BFF", 500.0, 5.0)):
         ld = bpy.data.lights.new(name, "AREA"); ld.energy = e; ld.color = srgb(col)[:3]; ld.size = size
         lo = bpy.data.objects.new(name, ld); sc.collection.objects.link(lo)
         lo.location = base + off
         lo.rotation_euler = (-upv).to_track_quat("-Z", "Y").to_euler()
-    print("%s TEMP preview light (no s2v1_lighting.py yet)" % LOG)
+    print("%s TEMP preview light (no s2v1_lighting.py yet): Standard view, dark world, raytracing" % LOG)
