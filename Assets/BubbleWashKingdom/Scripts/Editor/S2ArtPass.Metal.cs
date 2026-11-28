@@ -59,14 +59,16 @@ namespace BubbleWash.EditorTools
                 C(m, "_BaySheenColor", "#4466FF"); F(m, "_BaySheen", 0.15f);
                 // P2.2: darker recesses, curved pressed panels a little deeper (soft sheen band per panel, value step at seams)
                 F(m, "_DoorHole", 0.10f); F(m, "_DoorPanelCurve", 0.30f);
+                // ORIGINAL ceiling = short dark dashes in BROKEN rows with plain metal between (ours: a dense even grille)
+                F(m, "_SlotDropout", 0.30f);
                 // colourful reflections: warmer gold / pinker rim pickup in the polished door drum, a little wider
                 C(m, "_MirrorGold", "#A8561A"); C(m, "_MirrorRim", "#A82AA0"); F(m, "_MirrorF0", 0.42f); F(m, "_MirrorRingWidth", 0.40f);
                 C(m, "_PinkSpill", "#D050FF");
                 // P4.3 / P6.4 deep tunnel (S3-S7, graded from 68 m): magenta-mauve -> slate blue-violet metal (ORIGINAL 7.5 s
                 // #514580 hue 252, 14 s #4b508a hue 235), black elongated holes, dark seams, less pink emission
-                // (bp_A_1 .62 / #B8BDFF / #99A8EB moved hue 287-307 -> 271-285: half way)
-                C(m, "_LitTint", "#A2A8FF"); F(m, "_LitDesat", 0.74f);
-                C(m, "_DeepTint", "#8E9EF0"); F(m, "_DeepHole", 0.12f); F(m, "_DeepEmit", 0.35f);
+                // (bp_A_1 .62 / #B8BDFF / #99A8EB: hue 287-307 -> 271-285; bp_A_2 .74 / #A2A8FF / #8E9EF0: 262-290 - the rest is the pink rail bloom veil)
+                C(m, "_LitTint", "#9AA4FF"); F(m, "_LitDesat", 0.80f);
+                C(m, "_DeepTint", "#8898F2"); F(m, "_DeepHole", 0.12f); F(m, "_DeepEmit", 0.35f);
                 C(m, "_SeamColor", "#0A0620");
             }, c.log);
             // the dark recessed violet band seen through the gap between the hatch and the mouth drum (ORIGINAL: #3A2A80 groove)
