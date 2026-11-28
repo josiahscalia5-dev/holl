@@ -68,6 +68,7 @@ Material:
     - _RainbowAmount: 0.32
     - _ReflectBoost: 0.38
     - _RippleStrength: 1.45
+    - _S2OpticsPreview: 0
     - _S2ZoneEnd: 52
     - _S2ZoneFade: 3
     - _S2ZoneStart: 29

@@ -109,6 +109,7 @@ Material:
     - _RimPhase: 0
     - _RowPitch: 0
     - _Rows: 4
+    - _S2OpticsPreview: 0
     - _SeamHighlight: 0
     - _SeamMargin: 0
     - _ShadowTint: 0
