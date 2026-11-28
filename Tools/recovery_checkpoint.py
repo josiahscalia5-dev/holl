@@ -293,6 +293,14 @@ def main():
     L += ["", "## Owner sheets, acceptance decisions, scores"]
     L += [f"- {rel(s)} ({ts(os.path.getmtime(s))})" for s in owner_sheets]
     L += ["- scores / decisions: see the lead's STATE block below (honest scores only) and the workflow results above"]
+    try:  # lead c7e89796 22:22 (owner 22:20 "preserve the best version at every checkpoint"): S2 Tunnel v1 best critic score
+        import importlib.util as _ilu
+        _sp = _ilu.spec_from_file_location("s2v1_best", f"{ROOT}/Tools/s2v1_best.py")
+        _m = _ilu.module_from_spec(_sp)
+        _sp.loader.exec_module(_m)
+        L += _m.update()
+    except Exception as _e:
+        L.append(f"- S2 Tunnel v1 best tracking failed: {type(_e).__name__} {_e}")
     L += ["", f"## Modified files ({n_changed} paths in git status; newest {len(changed)})"]
     L += [f"- {hm(t)} {p}" for t, p in changed]
     L += ["", "## Saves and backups",

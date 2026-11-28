@@ -34,6 +34,16 @@ CAMS = [c.strip() for c in (os.environ.get("CAMERAS") or "R2_16x9,RIG_d33.5_9x16
 SCALE = float(os.environ.get("SCALE") or 1.0)
 OUT = C.CAPT + "/renders/" + TAG
 os.makedirs(OUT, exist_ok=True)
+# Lead c7e89796 2026-11-27 22:21 (owner 22:20 "preserve the best version at every checkpoint"): every render keeps the exact module
+# sources that produced it in <OUT>/_src/ - restore a better state by copying them back (Captures/s2v1/BEST.json names the best one).
+try:
+    import glob as _glob
+    import shutil as _shutil
+    os.makedirs(OUT + "/_src", exist_ok=True)
+    for _p in _glob.glob(os.path.join(HERE, "s2v1_*.py")):
+        _shutil.copy2(_p, os.path.join(OUT, "_src", os.path.basename(_p)))
+except Exception as _e:  # never block a render
+    print("ASSEMBLY _src snapshot failed: %s" % _e)
 UNITY_R2 = "C:/Users/josia/thanksgiving/Captures/lead/s2_projection/R2_current_1280x720.png"
 UNITY_RIG = "C:/Users/josia/thanksgiving/Captures/lead/s2_projection/prev_v1/current_rig_d%s_9x16.png"
 
