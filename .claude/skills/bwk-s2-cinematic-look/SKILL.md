@@ -13,7 +13,11 @@ The owner's ORIGINAL Google Flow video is the FINAL approved visual target. The 
 interactive 3D recreation of the ENTIRE 3.00 s S2 screen (9/10+). The method is flexible; the look is not.
 
 ## Owner rules in force (2026-11-27, newest first)
-- 20:35: prepare these skills, but NO expensive rendering or reconstruction workflows until the owner provides the result of
+- 21:03 (NEWEST - supersedes the 20:35 wait below): Hi3DScan is REMOVED from the plan - do not wait for it. Build S2 Tunnel v1 =
+  a genuinely high-quality replacement of the ENTIRE S2 scenery in Blender with the coordinated art team (isolated workspace
+  Tools/Blender/scripts/s2v1/, Tools/Blender/work/s2v1/, Captures/s2v1/; brief Captures/s2v1/TEAM_BRIEF.md), actual renders next to
+  the original 3.00 s frame, 9/10+. Stop modifying the old cylinder and thin rings. Renders through the assembly are expected.
+- 20:35 (SUPERSEDED at 21:03): prepare these skills, but NO expensive rendering or reconstruction workflows until the owner provides the result of
   the owner's pending Hi3DScan experiment (the owner's original 15 s video, submitted ~20:23 to that external video-to-3D service; Polycam was
   tested earlier and distorted). Exactly ONE 5-minute autosave. No MCP server / hooks / duplicate agents / replacement studio.
 - 20:1x: video pixels MAY be used as surface textures on genuine 3D geometry - but the drum-wall projection test FAILED
