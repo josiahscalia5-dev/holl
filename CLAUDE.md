@@ -5,6 +5,21 @@ of one enormous magical washing machine. These instructions come only from the o
 (`Docs/ProjectBrief.md`) and the approved Google Flow video `25982.mp4`.
 
 ## Owner standing rules (2026-11-27, follow in every session)
+- OWNER 2026-11-27 23:11 MANDATORY, PERMANENT - ARTISTIC PRODUCTION FIRST (verbatim, private:
+  Captures/agents/_shared/OWNER_BRIEF_2311_artistic_production_first.txt). This is an ARTISTIC PRODUCTION, not a programming
+  assignment: the game already works; the job is to make it visually beautiful and match the approved Google Flow screens. Work like a
+  professional 3D game art studio. Mandatory priorities: premium animated-movie-quality 3D scenery; rich purple / blue washing-machine
+  interiors; luxurious gold machinery and detailed environment assets; cinematic lighting, reflections, shadows, atmosphere; natural
+  water, bubbles, splashes; a genuinely soft, fluffy pink mascot with realistic fur and a knitted hat; accurate reproduction of the
+  original screens. Prioritise reference matching, environment artistry, look development, materials, cinematic lighting, hair grooming,
+  VFX with the strongest included models / skills / Blender / Unity tools. NO unnecessary scripts, diagnostic systems, extra workflows,
+  repeated investigations or technical reports; technical work only when it directly supports a visible improvement; only introduce tools
+  that directly improve the visuals (no setup / research projects). The UNITY game is the final product, Blender is a tool: transfer
+  genuinely superior artwork into the protected Unity test scene (Scenes/Private/S2v1_Test.unity) instead of polishing Blender renders
+  alone; keep whatever already looks better in Unity, reject inferior replacements. Target: a genuine 7.5-8/10 visual match INSIDE Unity,
+  then 9/10+. Success = visible improvement in actual renders and interactive Unity gameplay - never tasks done, lines of code, tokens or
+  agent counts. Never interrupt / duplicate specialists, never restart the project; preserve gameplay, camera, controls, animations,
+  collisions; keep the ONE recovery system (no duplicate processes); no purchases / paid usage. Every task needs a clear artistic purpose.
 - OWNER 2026-11-27 18:36 PERMANENT AUTOMATIC RECOVERY RULE (verbatim, private: Captures/agents/_shared/OWNER_RULE_1836_autosave_recovery_diagnostic.txt):
   at the START of every session verify that exactly ONE `Tools/autosave.sh 300` loop runs (never a duplicate; start one only if none
   runs) and make an immediate recovery checkpoint (a new STATE block in the private Captures/handoff/NEXT_ACCOUNT_START.md + one

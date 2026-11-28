@@ -39,13 +39,13 @@ LOG = "MAT"
 # drum metal #634F9B (rendered median), slots #3A2F51, gold #C6934F, bulbs #F3D882, lavender glow #DDD1E5,
 # neon yellow #EFD66F / cyan #59CADC / pink #E172B6, dark saturated core #68479D
 P = {
-    "drum_metal": "#6E58AE",      # base albedo a bit above the rendered median (#634F9B): cavity AO + grazing angles pull it down
-    "drum_edge": "#B9A2EC",       # polished convex rims of the perforations (curvature)
+    "drum_metal": "#7C66C0",      # pass 02: brighter + less metallic (mat_01 at metallic 0.72 rendered as dark chrome)
+    "drum_edge": "#C8B4F2",       # polished convex rims of the perforations (curvature)
     "drum_slot": "#1E1733",       # inside the slots (renders ~#3A2F51 with the lit rim + bloom around it)
     "drum_deep": "#5B4596",       # old deep tunnel beyond d 80 (darker, saturated: the original's core is L* 38-45)
-    "band": "#6A4CB8",            # rich violet lacquer body
-    "band_emit": "#8E6AD8",       # faint inner glow of the band body (the original's bands glow lavender-violet)
-    "lip": "#E3CCF6",             # luminous lavender-pink lip (#DDD1E5 measured)
+    "band": "#7656C6",            # rich violet lacquer body
+    "band_emit": "#9470E0",       # faint inner glow of the band body (the original's bands glow lavender-violet)
+    "lip": "#CFA8F2",             # pass 02: saturated lavender (#E3CCF6 clipped to white hoops in mat_01; #DDD1E5 = measured WITH bloom)
     "gold": "#E7B064",            # polished gold albedo (renders ~#C6934F in the tunnel)
     "gold_emit": "#B8782F",       # warm self-glow of the gold (the bulbs' bounce in the original)
     "gold_dark": "#B98244",
@@ -69,8 +69,9 @@ P = {
     "core": "#6E48A8",
 }
 # default emission strengths (Standard view; the lighting-artist may rescale by mat["s2v1_emit_kind"])
-EMIT = {"lip": 1.35, "bulb": 2.6, "neon": 1.7, "glow": 0.10, "gold": 0.16, "band": 0.10, "crest": 0.9, "ctx_bulb": 2.4,
-        "roller": 0.30, "core": 0.45, "drum": 0.0}
+EMIT = {"lip": 1.35, "bulb": 2.6, "neon": 1.7, "glow": 0.10, "gold": 0.16, "band": 0.14, "crest": 0.9, "ctx_bulb": 2.4,
+        "roller": 0.30, "core": 0.45, "drum": 0.16}
+DRUM_METALLIC, DRUM_SMOOTH = 0.40, 0.62   # pass 02 (mat_01: 0.72 / 0.70 = dark chrome mirroring the dark tunnel)
 
 
 def srgb(h, a=1.0):
@@ -121,14 +122,17 @@ def principled(name, base, metallic=0.0, rough=0.4, coat=0.0, coat_rough=0.05, e
 def mat_drum_procedural(name="M_S2v1_DrumMetal", base=None):
     """drum metal without bakes (also what the env handler copies onto drum_hp slot 0): satin blue-violet metal with fine
     circumferential brushing (noise stretched along the tunnel's circumference in object space) - roughness 0.30."""
-    m, b, N, L = principled(name, base or P["drum_metal"], 0.72, 0.30, unity="URP Lit: base %s metallic 0.72 smoothness 0.70" % (base or P["drum_metal"]))
+    bh = base or P["drum_metal"]
+    m, b, N, L = principled(name, bh, DRUM_METALLIC, 1 - DRUM_SMOOTH, emit_hex=bh, emit=EMIT["drum"], kind="drum",
+                            unity="URP Lit: base %s metallic %.2f smoothness %.2f, emission = base colour x %.2f"
+                                  % (bh, DRUM_METALLIC, DRUM_SMOOTH, EMIT["drum"]))
     tc = N.new("ShaderNodeTexCoord"); tc.location = (-900, 0)
     mp = N.new("ShaderNodeMapping"); mp.location = (-700, 0); mp.inputs["Scale"].default_value = (1.0, 40.0, 1.0)
     nz = N.new("ShaderNodeTexNoise"); nz.location = (-500, 0); nz.inputs["Scale"].default_value = 3.0
     nz.inputs["Detail"].default_value = 4.0
     L.new(tc.outputs["Generated"], mp.inputs["Vector"]); L.new(mp.outputs["Vector"], nz.inputs["Vector"])
     mr = N.new("ShaderNodeMapRange"); mr.location = (-300, -200)
-    mr.inputs["To Min"].default_value = 0.26; mr.inputs["To Max"].default_value = 0.36
+    mr.inputs["To Min"].default_value = 1 - DRUM_SMOOTH - 0.05; mr.inputs["To Max"].default_value = 1 - DRUM_SMOOTH + 0.05
     L.new(nz.outputs["Fac"], mr.inputs["Value"]); L.new(mr.outputs["Result"], b.inputs["Roughness"])
     return m
 
@@ -139,10 +143,11 @@ def mat_drum_baked(key):
     if not all(os.path.exists(f) for f in files.values()):
         return None
     name = "M_S2v1_DrumMetal_" + key
-    m, b, N, L = principled(name, P["drum_metal"], 0.72, 0.30,
+    m, b, N, L = principled(name, P["drum_metal"], DRUM_METALLIC, 1 - DRUM_SMOOTH, emit_hex=P["drum_metal"], emit=EMIT["drum"],
+                            kind="drum",
                             unity="URP Lit: Base Map drum_%s_basecolor.png (sRGB), Metallic Map drum_%s_ms.png (linear, Source = "
-                                  "Metallic Alpha), Normal Map drum_%s_normal.png (OpenGL), no Occlusion (AO is in the base map)"
-                                  % (key, key, key))
+                                  "Metallic Alpha), Normal Map drum_%s_normal.png (OpenGL), no Occlusion (AO is in the base map), "
+                                  "Emission Map = drum_%s_basecolor.png x %.2f (ambient stand-in)" % (key, key, key, key, EMIT["drum"]))
 
     def img(k, cs, x, y):
         n = N.new("ShaderNodeTexImage"); n.location = (x, y)
@@ -157,6 +162,7 @@ def mat_drum_baked(key):
     im = img("ms", "Non-Color", -700, 0)
     inn = img("normal", "Non-Color", -700, -300)
     L.new(ib.outputs["Color"], b.inputs["Base Color"])
+    L.new(ib.outputs["Color"], b.inputs["Emission Color"])      # emission = base map x strength (lighting may rescale "drum")
     sep = N.new("ShaderNodeSeparateColor"); sep.location = (-400, 50)
     L.new(im.outputs["Color"], sep.inputs["Color"])
     L.new(sep.outputs[0], b.inputs["Metallic"])
@@ -178,9 +184,9 @@ def mat_slot():
 def mat_band():
     """rich violet lacquer: violet metallic-ish body under a clear coat; faint violet self-glow keeps the body saturated
     (the original's bands read luminous violet, never grey)."""
-    m, b, N, L = principled("M_S2v1_BandLacquer", P["band"], 0.35, 0.30, coat=1.0, coat_rough=0.05,
+    m, b, N, L = principled("M_S2v1_BandLacquer", P["band"], 0.20, 0.28, coat=1.0, coat_rough=0.05,
                             emit_hex=P["band_emit"], emit=EMIT["band"], kind="band",
-                            unity="URP Lit (or BWK_Gold violet palette): base %s metallic 0.35 smoothness 0.70, Clear Coat (Complex "
+                            unity="URP Lit (or BWK_Gold violet palette): base %s metallic 0.20 smoothness 0.72, Clear Coat (Complex "
                                   "Lit) 1.0 / smoothness 0.95, emission %s x %.2f" % (P["band"], P["band_emit"], EMIT["band"]))
     return m
 
@@ -243,7 +249,7 @@ def ctx_table():
         "M_GoldDark": lambda: mat_gold("M_S2v1_GoldDark", P["gold_dark"], 0.26, EMIT["gold"] * 0.7),
         "M_Coin": lambda: mat_gold(),
         "M_Bulb": lambda: mat_bulb("M_S2v1_CtxBulb", EMIT["ctx_bulb"]),
-        "M_HatchViolet_s2": lambda: principled("M_S2v1_HatchViolet", P["hatch_violet"], 0.45, 0.24, coat=1.0, coat_rough=0.04,
+        "M_HatchViolet_s2": lambda: principled("M_S2v1_HatchViolet", P["hatch_violet"], 0.30, 0.26, coat=1.0, coat_rough=0.04,
                                                emit_hex=P["band_emit"], emit=EMIT["band"], kind="band",
                                                unity="URP Lit: base %s metallic 0.45 smoothness 0.76 + clear coat" % P["hatch_violet"])[0],
         "M_HatchCrest_s2": lambda: principled("M_S2v1_HatchCrest", P["hatch_crest"], 0.0, 0.2, emit_hex=P["hatch_crest"],
@@ -453,8 +459,8 @@ def derive_maps(key, nrm_img, msk_img, len_u, len_v):
     base = base * (1 - 0.55 * e) + edge[None, None] * 0.55 * e
     base = base * M[..., None] + slot[None, None] * (1 - M[..., None])
     base = base * (0.30 + 0.70 * ao[..., None])
-    met = M * 0.72
-    smooth = M * np.clip(0.70 + 0.03 * rows + 0.03 * fine, 0.55, 0.80) + (1 - M) * 0.30
+    met = M * DRUM_METALLIC
+    smooth = M * np.clip(DRUM_SMOOTH + 0.03 * rows + 0.03 * fine, 0.45, 0.80) + (1 - M) * 0.30
     ms = np.zeros((H, W, 4), dtype=np.float32)
     ms[..., 0] = met; ms[..., 3] = smooth
     nrm = np.stack([NX * 0.5 + 0.5, NY * 0.5 + 0.5, NZ * 0.5 + 0.5], -1)
@@ -479,6 +485,16 @@ def bake(sizes=None, samples=4):
     bpy.ops.wm.read_factory_settings(use_empty=True)
     spec = importlib.util.spec_from_file_location("s2v1_env", os.path.join(HERE, "s2v1_env.py"))
     env = importlib.util.module_from_spec(spec); spec.loader.exec_module(env)
+    if os.environ.get("S2V1_MAT_DERIVE_ONLY") == "1":          # re-derive the Unity maps from the existing raw bakes (~20 s)
+        for key, len_v in (("A", 62.0 - env.D0), ("B", env.D1 - 62.0)):
+            ims = []
+            for k in ("Normal", "Emit"):
+                im = bpy.data.images.load("%s/raw/T_S2V1_drum_%s_%s.png" % (BAKES, key, k))
+                im.colorspace_settings.name = "Non-Color"
+                ims.append(im)
+            derive_maps(key, ims[0], ims[1], 2 * math.pi * 4.2, len_v)
+        print("DONE %s derive-only in %.1f s" % (LOG, time.time() - t0))
+        return
     ctx = {"scene": bpy.context.scene, "world_objects": [], "track_objects": [], "C": C, "tag": "bake", "out_dir": BAKES}
     objs = env.build(ctx)
     for h in list(bpy.app.handlers.render_pre):
