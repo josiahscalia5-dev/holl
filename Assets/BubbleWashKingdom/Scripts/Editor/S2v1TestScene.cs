@@ -41,7 +41,7 @@ namespace BubbleWash.EditorTools
         public const string TestScenePath = "Assets/BubbleWashKingdom/Scenes/Private/S2v1_Test.unity";
         const string AssetDir = "Assets/BubbleWashKingdom/Art/S2v1Test";
         static readonly CultureInfo IC = CultureInfo.InvariantCulture;
-        static readonly string[] Groups = { "drum", "bands", "gold", "stars" };
+        static readonly string[] Groups = { "drum", "bands", "gold", "stars", "splash" };
 
         // ------------------------------------------------------------------------------------------- manifest (JsonUtility)
         [System.Serializable] public class MPart { public string name, part, color, file; public int tris; public bool hide_render; }
@@ -76,6 +76,7 @@ namespace BubbleWash.EditorTools
                 case "band": case "band_lip": return "bands";
                 case "gold_ring": case "bulb_socket": case "bulb": return "gold";
                 case "star": case "star_glow": case "other": return "stars";
+                case "crown": case "wfx": return "splash";
                 default: return null;
             }
         }
@@ -339,6 +340,30 @@ namespace BubbleWash.EditorTools
             }
         }
 
+        static Material v1Milk;
+        /// <summary>The water-fx-artist's v1 milk (s2v1_water.mat_milk: lit tops #F2F8FD, cooler undersides #B9D3EA, thin / grazing
+        /// #78B2E4, alpha 0.96 -> 0.58 at the edges, strongly self-lit) on the game's own milk shader (copy of M_FX_Milk_v3, BWK/Soft
+        /// mode 6), so it keeps the game's lighting response and the SplashCrowns flipbook / jitter / collapse.</summary>
+        static Material V1Milk()
+        {
+            if (v1Milk != null) return v1Milk;
+            var src = Lib("M_FX_Milk_v3");
+            if (src == null) return null;
+            v1Milk = new Material(src) { name = "M_FX_Milk_s2v1" };
+            void C(string prop, string hex) { if (v1Milk.HasProperty(prop) && ColorUtility.TryParseHtmlString(hex, out var c)) v1Milk.SetColor(prop, c); }
+            void F(string prop, float v) { if (v1Milk.HasProperty(prop)) v1Milk.SetFloat(prop, v); }
+            C("_ColorA", "#F2F8FD"); C("_ShadowColor", "#B9D3EA"); C("_MilkThin", "#78B2E4");
+            F("_MilkAlpha", 0.96f); F("_MilkEdgeAlpha", 0.58f); F("_Glow", 0.40f); F("_Wrap", 0.6f); F("_SpecStrength", 1.2f);
+            return v1Milk;
+        }
+
+        static Material SplashMaterial(string matName, string flavour)
+        {
+            bool droplet = matName != null && matName.Contains("Droplet");
+            if (droplet) return Lib("M_FX_Bubble") ?? Lib("M_Bubble");
+            return flavour.StartsWith("urp") ? V1Milk() : Lib("M_FX_Milk_v3");
+        }
+
         static Color LinToGamma(float r, float g, float b, float a = 1f) =>
             new Color(Mathf.LinearToGammaSpace(Mathf.Max(0f, r)), Mathf.LinearToGammaSpace(Mathf.Max(0f, g)), Mathf.LinearToGammaSpace(Mathf.Max(0f, b)), a);
 
@@ -426,8 +451,18 @@ namespace BubbleWash.EditorTools
                 var mr = go.AddComponent<MeshRenderer>();
                 mr.shadowCastingMode = ShadowCastingMode.Off; mr.receiveShadows = true;
                 mr.reflectionProbeUsage = ReflectionProbeUsage.BlendProbes; mr.lightProbeUsage = LightProbeUsage.BlendProbes;
-                var bwk = subMat.Select(_ => BwkMaterial(p.part, p.color)).ToArray();
-                var urp = subMat.Select(mi => mi >= 0 && mi < urpMats.Length ? urpMats[mi] : null).ToArray();
+                Material[] bwk, urp;
+                if (g == "splash")
+                {
+                    string MatName(int mi) => man.materials != null && mi >= 0 && mi < man.materials.Length ? man.materials[mi].name : null;
+                    bwk = subMat.Select(mi => SplashMaterial(MatName(mi), "bwk")).ToArray();
+                    urp = subMat.Select(mi => SplashMaterial(MatName(mi), "urp")).ToArray();
+                }
+                else
+                {
+                    bwk = subMat.Select(_ => BwkMaterial(p.part, p.color)).ToArray();
+                    urp = subMat.Select(mi => mi >= 0 && mi < urpMats.Length ? urpMats[mi] : null).ToArray();
+                }
                 parts.Add(new V1Part { info = p, group = g, go = go, mr = mr, mesh = mesh, subMat = subMat, bwk = bwk, urp = urp });
                 log.AppendLine(string.Format(IC, "v1 {0,-28} {1,-12} group {2,-6} tris {3,7} submeshes {4} bwk [{5}] urp [{6}]", p.name, p.part, g, p.tris,
                     subMat.Length, string.Join(",", bwk.Select(m => m ? m.name : "-")), string.Join(",", urp.Select(m => m ? m.name : "-"))));
@@ -556,6 +591,7 @@ namespace BubbleWash.EditorTools
                 var ts = new TrackSampler(track, Mathf.Max(0f, Mathf.Min(man.replaced_d0, man.stars_from) - 15f), man.replaced_d1 + 15f);
                 var zone = ts.Bounds(10f);
 
+                PoseRunner(runner, SceneBuilder.HeroMouthDistance);         // = the pose of the Blender context export (splash parts)
                 var oldParts = CollectOldParts(runner.transform, ts, zone, man.replaced_d0, man.replaced_d1, man.stars_from, log);
                 int layer = oldParts.Count > 0 ? oldParts[0].r.gameObject.layer : 0;
                 var root = new GameObject("S2V1_Test");
@@ -563,6 +599,17 @@ namespace BubbleWash.EditorTools
                 if (env != null) root.transform.SetParent(env.transform, false);
                 var v1 = LoadV1(man, inDir, root.transform, layer, log);
                 var v1Lights = LoadLights(lightsPath, root.transform, log);
+                // splash: the game's crowns (SplashCrowns flipbooks on the runner) + their materials; v1 crowns / droplets follow them
+                var crownMFs = runner.GetComponentsInChildren<SplashCrowns>(true).Where(c => c.crowns != null).SelectMany(c => c.crowns).Where(mf => mf != null).Distinct().ToList();
+                var crownRs = crownMFs.Select(mf => mf.GetComponent<Renderer>()).Where(r => r != null).ToList();
+                var crownMats = crownRs.Select(r => r.sharedMaterials).ToList();
+                foreach (var p in v1.Where(x => x.group == "splash"))
+                {
+                    var c = p.mesh.bounds.center;
+                    var near = crownMFs.OrderBy(mf => (mf.GetComponent<Renderer>().bounds.center - c).sqrMagnitude).FirstOrDefault();
+                    if (near != null) p.go.transform.SetParent(near.transform, true);
+                }
+                log.AppendLine($"splash: {crownMFs.Count} game crowns, {v1.Count(x => x.group == "splash")} v1 splash parts parented to them");
 
                 var mascot = MascotRenderers(runner);
                 var rig = Object.FindFirstObjectByType<RunnerCameraRig>(FindObjectsInactive.Include);
@@ -572,13 +619,19 @@ namespace BubbleWash.EditorTools
                     ApplyOld(oldParts, groups);
                     ApplyV1(v1, groups, flavour);
                     if (v1Lights != null) v1Lights.SetActive(flavour.Contains("lights") && groups.Count > 0);
+                    for (int i = 0; i < crownRs.Count; i++)
+                    {
+                        crownRs[i].enabled = !groups.Contains("splash");
+                        crownRs[i].sharedMaterials = groups.Contains("milk") && V1Milk() != null ? crownMats[i].Select(_ => V1Milk()).ToArray() : crownMats[i];
+                    }
                     string vd = $"{outDir}/{name}";
                     Directory.CreateDirectory(vd);
                     PoseR2(runner, cam);
                     CaptureTools.Render(cam, 1280, 720, $"{vd}/R2_16x9.png");
+                    var was = mascot.Select(r => r.enabled).ToArray();
                     foreach (var r in mascot) r.enabled = false;
                     CaptureTools.Render(cam, 1280, 720, $"{vd}/R2_bg_16x9.png");
-                    foreach (var r in mascot) r.enabled = true;
+                    for (int i = 0; i < mascot.Count; i++) mascot[i].enabled = was[i];
                     foreach (float d in dists)
                     {
                         PoseRig(runner, cam, d, 720f / 1280f);
@@ -595,6 +648,12 @@ namespace BubbleWash.EditorTools
                     ApplyOld(oldParts, sgroups);
                     ApplyV1(v1, sgroups, sflavour);
                     if (v1Lights != null) { v1Lights.SetActive(sflavour.Contains("lights") && sgroups.Count > 0); if (!v1Lights.activeSelf) Object.DestroyImmediate(v1Lights); }
+                    for (int i = 0; i < crownRs.Count; i++)
+                    {
+                        crownRs[i].enabled = true;
+                        crownRs[i].sharedMaterials = sgroups.Contains("milk") && V1Milk() != null ? crownMats[i].Select(_ => V1Milk()).ToArray() : crownMats[i];
+                    }
+                    if (sgroups.Contains("splash")) HideGameCrownFlipbooks(runner, log);
                     SaveIsolated(scene, v1, oldParts, log);
                     log.AppendLine($"SAVED isolated test scene {TestScenePath} = variant {sname} (main scene untouched)");
                 }
@@ -604,6 +663,25 @@ namespace BubbleWash.EditorTools
                 EditorApplication.Exit(0);
             }
             catch (System.Exception e) { Debug.LogError("[BWK] S2v1 Unity test failed: " + e); EditorApplication.Exit(1); }
+        }
+
+        /// <summary>Saved test scene with the v1 splash: the game's SplashCrowns keep animating their crown TRANSFORMS (jitter, speed
+        /// growth, collapse in the air) but swap in an empty mesh, so only the v1 crowns / droplets parented to them are drawn.</summary>
+        static void HideGameCrownFlipbooks(RunnerController runner, StringBuilder log)
+        {
+            Directory.CreateDirectory($"{AssetDir}/Meshes");
+            string ep = $"{AssetDir}/Meshes/S2V1_EmptyCrown.asset";
+            var empty = AssetDatabase.LoadAssetAtPath<Mesh>(ep);
+            if (empty == null) { empty = new Mesh { name = "S2V1_EmptyCrown" }; AssetDatabase.CreateAsset(empty, ep); }
+            foreach (var sc in runner.GetComponentsInChildren<SplashCrowns>(true))
+            {
+                int n = Mathf.Max(6, sc.frames != null ? sc.frames.Length : 6);
+                sc.frames = Enumerable.Repeat(empty, n).ToArray();
+                if (sc.framesRight != null && sc.framesRight.Length > 0) sc.framesRight = Enumerable.Repeat(empty, n).ToArray();
+                if (sc.crowns != null) foreach (var mf in sc.crowns) if (mf != null) mf.sharedMesh = empty;
+                EditorUtility.SetDirty(sc);
+            }
+            log.AppendLine("saved scene: game crown flipbooks draw an empty mesh; the v1 crowns / droplets (children) take over with the same motion");
         }
 
         /// <summary>Persist the generated meshes / materials as assets (gitignored Art/S2v1Test/) and save the open, modified copy of the

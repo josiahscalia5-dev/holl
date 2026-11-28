@@ -50,6 +50,7 @@ OUT = OUT.replace("\\", "/")
 PARTS = [p.strip() for p in (os.environ.get("PARTS") or "").split(",") if p.strip()]
 CONTEXT = os.environ.get("CONTEXT", "1") != "0"
 SKIP_MODULES = {m.strip() for m in (os.environ.get("SKIP_MODULES") or "").split(",") if m.strip()}
+WFX = os.environ.get("WFX") == "1"          # also run s2v1_water and export its splash crowns (part "crown") + droplets / tips ("wfx")
 SKIP_PARTS = {"drum_hp"}
 
 
@@ -243,7 +244,9 @@ for o in track_objs:
     ctx["world_objects"].append(C.to_world_mesh(o, collection=wc))
 for o in track_objs:
     o.hide_render = True; o.hide_viewport = True
-for name in ("s2v1_materials", "s2v1_lighting"):
+for name in ("s2v1_materials", "s2v1_water", "s2v1_lighting"):
+    if name == "s2v1_water" and not WFX:
+        continue
     if name in SKIP_MODULES:
         print("EXPORT module %s skipped (SKIP_MODULES)" % name)
         continue
@@ -272,8 +275,17 @@ def mat_index_of(mat):
     return mat_ids[key]
 
 
+export_objs = list(ctx["world_objects"])
+if WFX:                                                             # the water artist's splash look on the game's own crowns
+    for o in bpy.data.objects:
+        if o.type == "MESH" and "Crown" in o.name and not o.hide_render and any(c.name == "CTX_mascot" for c in o.users_collection):
+            o["s2v1_part"] = "crown"; export_objs.append(o)
+    wc2 = bpy.data.collections.get("S2V1_WFX")
+    for o in (wc2.all_objects if wc2 else []):
+        if o.type == "MESH" and not o.hide_render:
+            o["s2v1_part"] = "wfx"; export_objs.append(o)
 parts = []
-for o in ctx["world_objects"]:
+for o in export_objs:
     tag = o.get("s2v1_part", "other")
     if tag in SKIP_PARTS or (PARTS and tag not in PARTS):
         continue

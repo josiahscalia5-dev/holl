@@ -30,10 +30,10 @@ P = {
     # distance fog = Unity linear fog (RenderSettings.fogMode Linear, fogStartDistance / fogEndDistance, fogColor)
     "fog_start": 12.0, "fog_end": 120.0, "fog_hex": "#7452B0",
     # bloom = URP Bloom (threshold in linear here; URP threshold is gamma: 0.9 lin ~ 0.95 gamma)
-    "bloom_threshold": 0.9, "bloom_strength": 0.8, "bloom_size": 0.6, "saturation": 1.06,
+    "bloom_threshold": 0.9, "bloom_strength": 1.1, "bloom_size": 0.75, "saturation": 1.0,   # pass 3: bigger neon / bulb halos, near walls were +10 C*
     # emission strengths (Blender multiplier; Unity HDR intensity = log2(strength))
     # pass 2: the materials-artist tags m["s2v1_emit_kind"] + m["s2v1_emit_default"] -> lighting scales THEIR default per kind
-    "km_lip": 0.70, "km_bulb": 1.15, "km_neon": 1.35, "km_glow": 1.0, "km_gold": 1.0, "km_band": 2.5, "km_crest": 0.8,
+    "km_lip": 0.70, "km_bulb": 1.15, "km_neon": 1.5, "km_glow": 1.0, "km_gold": 1.8, "km_band": 2.5, "km_crest": 0.8,
     "km_ctx_bulb": 1.15, "km_roller": 1.0, "km_core": 1.0,
     # fallback absolute strengths (parts whose material has no s2v1_emit_kind tag)
     "emit_bulb": 3.0, "emit_band_lip": 0.95, "emit_star": 2.3, "emit_star_glow": 0.10,
