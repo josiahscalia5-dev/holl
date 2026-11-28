@@ -94,6 +94,8 @@ Shader "BWK/Water"
         _OutCausticColor ("p10i Outside: Caustic Color", Color) = (0.5, 0.9, 1, 1)
         _OutDeepColor ("p10i Outside: Deep Color", Color) = (0.04, 0.4, 0.78, 1)
         _OutCrestColor ("p10i Outside: Crest Color", Color) = (0.22, 0.68, 0.92, 1)
+        _OutGlossLines ("p10i Outside: Gloss Lines", Range(0,2)) = 0
+        _OutStreakAmount ("p10i Outside: Streak Amount", Range(0,2)) = 0
     }
     SubShader
     {
@@ -124,6 +126,7 @@ Shader "BWK/Water"
             float _S2ZoneStart, _S2ZoneEnd, _S2ZoneFade;
             half _OutFlowLines, _OutFoamStreaks, _OutNearBrighten, _OutHueTarget, _OutHueLockLow, _OutHueLowStart;
             half4 _OutReflectTint, _OutCausticColor, _OutDeepColor, _OutCrestColor;
+            half _OutGlossLines, _OutStreakAmount;
         CBUFFER_END
 
         // flowing height field: long swells stretched along the flow + a finer, faster chop
@@ -228,6 +231,8 @@ Shader "BWK/Water"
                 half hueTarget = lerp(_OutHueTarget, _HueTarget, zone);
                 half hueLockLow = lerp(_OutHueLockLow, _HueLockLow, zone);
                 half hueLowStart = lerp(_OutHueLowStart, _HueLowStart, zone);
+                half glossK = lerp(_OutGlossLines, _GlossLines, zone);
+                half streakK = lerp(_OutStreakAmount, _StreakAmount, zone);
 
                 // ---- flowing ripple normal (finite differences of the height field)
                 float e = 0.04;
@@ -350,7 +355,7 @@ Shader "BWK/Water"
                 float sA = Ridge(BWK_ValueNoise(float2(sx * 3.1, flowY * 0.18)));
                 float sB = Ridge(BWK_ValueNoise(float2(sx * 7.3 + 5.0, flowY * 0.36 + 2.0)));
                 float gate = smoothstep(0.42, 0.8, BWK_ValueNoise(float2(sx * 1.3 + 11.0, flowY * 0.5)));
-                half streak = saturate((smoothstep(0.9, 0.985, sA) * 0.85 + smoothstep(0.935, 0.992, sB) * 0.55) * gate) * _StreakAmount;
+                half streak = saturate((smoothstep(0.9, 0.985, sA) * 0.85 + smoothstep(0.935, 0.992, sB) * 0.55) * gate) * streakK;
 
                 // ---- S2 pass 10f downhill flow lines (approved frame: thin white flow lines running down the slide, denser
                 //      toward the banks, broken into long segments, gently curving). One line per lateral cell at a random
@@ -381,13 +386,13 @@ Shader "BWK/Water"
                 // ---- S2 pass 10f elongated wet crest highlights: contour ridges of a flow-stretched noise (meandering, varying
                 //      width), brightest toward grazing angles (Fresnel) -> glossy white-cyan highlight streaks moving with the water
                 half gloss = 0;
-                if (_GlossLines > 0.001)
+                if (glossK > 0.001)
                 {
                     float gwp = (BWK_ValueNoise(float2(m.x * 1.1 + 6.3, flowY * 0.3)) - 0.5) * 0.6;
                     float gl1 = Ridge(BWK_ValueNoise(float2((m.x + gwp) * 3.4, flowY * 0.42 + 1.9)));
                     float gl2 = Ridge(BWK_ValueNoise(float2((m.x - gwp) * 6.1 + 3.0, flowY * 0.8 + 5.2)));
                     half gfr = saturate(BWK_Fresnel(n, viewDir, 2.0) * 1.4 + 0.2);
-                    gloss = (half)(smoothstep(0.86, 0.985, gl1) * 0.8 + smoothstep(0.9, 0.99, gl2) * 0.45) * gfr * _GlossLines * (1.0 - foam);
+                    gloss = (half)(smoothstep(0.86, 0.985, gl1) * 0.8 + smoothstep(0.9, 0.99, gl2) * 0.45) * gfr * glossK * (1.0 - foam);
                 }
                 // ---- S2 pass 10h soft broken FOAM streaks: per lateral cell one streak at a random offset, a soft gaussian
                 //      profile (no drawn edge) whose width breathes along the flow, long broken segments and a stretched bubbly

@@ -106,6 +106,12 @@ namespace BubbleWash.EditorTools
                 F(m, "_OutHueTarget", 203f); F(m, "_OutHueLockLow", 0f); F(m, "_OutHueLowStart", 172f);
                 C(m, "_OutReflectTint", "#7FF0FF"); C(m, "_OutCausticColor", "#7FE9FF");
                 C(m, "_OutDeepColor", "#0A68C8"); C(m, "_OutCrestColor", "#38AEEA");
+                F(m, "_OutGlossLines", 0.4f); F(m, "_OutStreakAmount", 0.2f);
+                // S2 pass 10i water (inside the S2 zone only; R2 lower-right zoom gate_s2p10h vs ORIGINAL f_03.00s: ours = crisp thin
+                // white lines - straight flow lines, curved arcs of the gloss contours, meandering streaks - over the azure water; the
+                // original = deep cobalt water with SOFT, wide, low-contrast light bands along the flow, its whites are the crowns +
+                // round droplets): no thin flow lines, gloss contours / thin streaks nearly off, the soft foam bands a little bluer
+                F(m, "_FlowLines", 0f); F(m, "_GlossLines", 0.1f); F(m, "_StreakAmount", 0.05f); C(m, "_FoamStreakColor", "#D2E6FA");
                 // light halos around the decor chevrons: same period / geometry / runway offset as SceneBuilder.BuildDecorChevrons
                 F(m, "_ChevronStart", SceneBuilder.ChevronStart); F(m, "_ChevronSpacing", SceneBuilder.ChevronSpacing);
                 // (v2 notch measured #55B8E5 vs reference deep #3386CC: the arrows now bloom on their own -> fainter, tighter pool)

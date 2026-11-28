@@ -44,12 +44,12 @@ Material:
     - _EdgeFoam: 0.6
     - _EdgeTintAmount: 0.42
     - _FlowLineDensity: 1.5
-    - _FlowLines: 0.14
+    - _FlowLines: 0
     - _FlowSpeed: 7.5
     - _FoamStreakDensity: 0.9
     - _FoamStreaks: 0.9
     - _FresnelBoost: 0.35
-    - _GlossLines: 0.4
+    - _GlossLines: 0.1
     - _Glow: 0.16
     - _HueLock: 0.85
     - _HueLockLow: 1
@@ -58,10 +58,12 @@ Material:
     - _NearBrighten: 0
     - _OutFlowLines: 0.42
     - _OutFoamStreaks: 0
+    - _OutGlossLines: 0.4
     - _OutHueLockLow: 0
     - _OutHueLowStart: 172
     - _OutHueTarget: 203
     - _OutNearBrighten: 0.16
+    - _OutStreakAmount: 0.2
     - _PatchAmount: 0.42
     - _RainbowAmount: 0.32
     - _ReflectBoost: 0.38
@@ -71,7 +73,7 @@ Material:
     - _S2ZoneStart: 29
     - _Smoothness: 0.62
     - _SparkleAmount: 1.05
-    - _StreakAmount: 0.2
+    - _StreakAmount: 0.05
     - _StreakDensity: 1.15
     - _Translucency: 0.25
     - _VTile: 4
@@ -86,7 +88,7 @@ Material:
     - _CrestColor: {r: 0.21960784, g: 0.68235296, b: 0.91764706, a: 1}
     - _DeepColor: {r: 0.039215688, g: 0.40784314, b: 0.78431374, a: 1}
     - _EdgeTint: {r: 0.9019608, g: 0.41568628, b: 0.78431374, a: 1}
-    - _FoamStreakColor: {r: 0.8862745, g: 0.9490196, b: 1, a: 1}
+    - _FoamStreakColor: {r: 0.8235294, g: 0.9019608, b: 0.98039216, a: 1}
     - _OutCausticColor: {r: 0.49803922, g: 0.9137255, b: 1, a: 1}
     - _OutCrestColor: {r: 0.21960784, g: 0.68235296, b: 0.91764706, a: 1}
     - _OutDeepColor: {r: 0.039215688, g: 0.40784314, b: 0.78431374, a: 1}
