@@ -179,12 +179,40 @@ namespace BubbleWash.EditorTools
             RenderSettings.fogDensity = 0.0118f;
             Swap("depth deep rims", m => Named(m, "M_RimLight", "M_RimSpark_s2"), m => { F(m, "_CoreWhite", 0.04f); Mul(m, "_Intensity", 0.8f); F(m, "_EdgeSaturate", 0.8f); }, log);
             Swap("depth vanish core", m => Starts(m, "M_VanishCore", "M_VanishGlow"), m => { Mul(m, "_Intensity", 0.7f); }, log);
+            // art01 pick: the white hoops deep in the tunnel = SM_LedRim_s2 band lips (M_RimGlow_s2, #D85CFF x3.2 tonemapped to white
+            // with a white core) -> saturated violet-lavender glow without the white core (lighting artist: lips just under bloom)
+            Swap("depth band lips", m => Named(m, "M_RimGlow_s2"), m => { F(m, "_CoreWhite", 0f); Mul(m, "_Intensity", 0.72f); F(m, "_EdgeSaturate", 1f); C(m, "_Color", "#B65CFF"); }, log);
         }
 
         static void Roller(StringBuilder log)
         {
-            // ORIGINAL top-left: a bright, fluffy hot-pink brush roller with paler tips (today: a dark magenta block in the shade)
-            Swap("roller", m => Starts(m, "M_RollerFur"), m => { Mul(m, "_Glow", 1.6f); C(m, "_TipColor", "#FFFFFF"); C(m, "_RimColor", "#FFF4FA"); F(m, "_RimStrength", 0.5f); }, log);
+            // ORIGINAL top-left: a bright hot-pink BRISTLE brush roller with pale pink tips (art01: still a dark smooth velvet disc - the
+            // blue hall light turns the cream ramp x vertex pink into magenta) -> own hot-pink ramp, colour-true self light, coarse
+            // contrasted strands, a pale rim
+            Swap("roller", m => Starts(m, "M_RollerFur"), m =>
+            {
+                F(m, "_UseVertexTint", 0f);
+                C(m, "_RootColor", "#B8246E"); C(m, "_BaseColor", "#F2479C"); C(m, "_TipColor", "#FFC2E2");
+                F(m, "_Glow", 0.95f); F(m, "_StrandContrast", 1f); F(m, "_AO", 0.5f);
+                C(m, "_RimColor", "#FFE4F2"); F(m, "_RimStrength", 0.6f); F(m, "_RimPower", 2.0f);
+            }, log);
+        }
+
+        static void Walls(StringBuilder log)
+        {
+            // owner 23:36 "rich metallic purple and blue scenery" (ORIGINAL: glossy saturated violet drum metal with lavender sheen and
+            // glittering glints, polished violet bands with bright crests; ours: greyer matte violet after the r8 desaturation)
+            Swap("walls drum metal", m => Named(m, "M_DrumWall", "M_DrumWallFlat"), m =>
+            {
+                C(m, "_BaseColor", "#8A6CC4"); C(m, "_HighlightColor", "#CDB6F5"); C(m, "_SheenColor", "#E6C8FF");
+                F(m, "_SheenStrength", 0.32f); F(m, "_Sparkle", 1.0f); F(m, "_Metallic", 0.68f); F(m, "_Smoothness", 0.70f);
+                F(m, "_BaySheen", 0.28f); F(m, "_Glow", 0.05f);
+            }, log);
+            Swap("walls violet bands", m => Named(m, "M_HatchViolet_s2"), m =>
+            {
+                C(m, "_HighColor", "#CFA2F2"); Mul(m, "_SpecStrength", 1.4f); F(m, "_Sparkle", 0.6f); F(m, "_Brightness", 0.9f); F(m, "_GlintStrength", 1.3f);
+            }, log);
+            Swap("walls gold", m => Named(m, "M_Gold", "M_GoldDark", "M_DrumRim"), m => { Mul(m, "_GlintStrength", 1.4f); Mul(m, "_Sparkle", 1.6f); Mul(m, "_Brightness", 1.06f); }, log);
         }
 
         // ------------------------------------------------------------------------------------------- what sits under key R2 pixels
@@ -321,6 +349,7 @@ namespace BubbleWash.EditorTools
                         case "glow": Glow(log); break;
                         case "depth": Depth(log); break;
                         case "roller": Roller(log); break;
+                        case "walls": Walls(log); break;
                         default: log.AppendLine("  unknown step - skipped"); continue;
                     }
                     acc = acc.Length == 0 ? st : acc + "+" + st;

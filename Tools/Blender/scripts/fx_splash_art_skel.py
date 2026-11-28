@@ -12,6 +12,8 @@ import numpy as np
 
 W, H = 1280, 720
 YW = -0.02            # water line (runner-local y), as build_fx_crown_v7.py
+LIFT = 0.025          # art01 (Unity): the flat tendrils / splats sank under the curved slide water -> everything sits a bit higher
+SC = 1.25             # art01 (Unity): crowns read ~25 % smaller than the original's sprays
 FRAMES = 6
 VIS = 0.575           # visible sphere radius / metaball element radius (threshold 0.6, stiffness 2)
 
@@ -106,8 +108,8 @@ def side_skeleton(side, frame, rng_seed):
     pts, s = _curve(BASE_R if side > 0 else BASE_L)
     out = np.array([float(side), 0.0, 0.0])                      # outward from the body
     back = np.array([0.0, 0.0, -1.0])                            # toward the camera
-    Hb = 0.15 if side > 0 else 0.13                              # lacy lip height beside the sole (m)
-    lean = math.radians(28.0)
+    Hb = (0.15 if side > 0 else 0.13) * SC                       # lacy lip height beside the sole (m)
+    lean = math.radians(32.0)
     balls, drops, bubbles = [], [], []
 
     def frame_at(t):
@@ -175,7 +177,7 @@ def side_skeleton(side, frame, rng_seed):
         b, tan, nrm = frame_at(t)
         hb = lip(t)
         phi = rng.random()
-        L = (0.15 + 0.24 * rng.random()) * (1.2 - 0.9 * t) * (1.0 + 0.18 * math.sin(tau * (ph + phi)))
+        L = SC * (0.15 + 0.24 * rng.random()) * (1.2 - 0.9 * t) * (1.0 + 0.18 * math.sin(tau * (ph + phi)))
         a = math.radians(8.0 + 58.0 * (i / max(1.0, n_f - 1.0)) + 16.0 * (rng.random() - 0.5) + 5.0 * math.sin(tau * (ph + phi + 0.25)))
         fwdk = (rng.random() - 0.55) * 0.9                       # fan: some lean forward (+z), most back toward the camera
         d0 = UP * math.cos(a) + nrm * math.sin(a) - back * fwdk
@@ -187,27 +189,27 @@ def side_skeleton(side, frame, rng_seed):
     # 2b) the far wake: separate milk tendrils on the water that leave the lip toward the camera (no straight ribbon)
     for t0 in ((0.52, 0.70, 0.88) if side > 0 else (0.55, 0.80)):
         b, tan, nrm = frame_at(t0)
-        L = 0.10 + 0.10 * rng.random()
+        L = 1.4 * (0.10 + 0.10 * rng.random())
         dirv = tan * 0.8 + nrm * (0.6 * (rng.random() - 0.3))
         dirv = dirv / np.linalg.norm(dirv)
         steps = 7
         for k in range(steps + 1):
             u = k / float(steps)
-            rv = 0.020 - 0.006 * u
+            rv = 0.024 - 0.006 * u
             p = b + dirv * L * u + nrm * 0.02 * math.sin(3.0 * u + tau * ph)
-            balls.append((p[0], YW + rv * 0.6 + 0.01 * (1.0 - u), p[2], rv / VIS))
+            balls.append((p[0], YW + LIFT + rv * 0.6 + 0.015 * (1.0 - u), p[2], rv / VIS))
         tip = b + dirv * (L + 0.015)
         rb = 0.022 + 0.010 * rng.random()
-        balls.append((tip[0], YW + rb * 0.6, tip[2], rb / VIS))
+        balls.append((tip[0], YW + LIFT + rb * 0.6, tip[2], rb / VIS))
         side_dir = np.cross(UP, dirv)
         fb = dirv * 0.6 + side_dir * (0.8 if rng.random() < 0.5 else -0.8)
         fb = fb / np.linalg.norm(fb)
         m = b + dirv * L * 0.5
         for k in range(1, 5):
             p = m + fb * 0.018 * k
-            balls.append((p[0], YW + 0.012, p[2], 0.015 / VIS))
-        q = m + fb * 0.09
-        balls.append((q[0], YW + 0.014, q[2], 0.022 / VIS))
+            balls.append((p[0], YW + LIFT + 0.012, p[2], 0.018 / VIS))
+        q = m + fb * 0.11
+        balls.append((q[0], YW + LIFT + 0.014, q[2], 0.025 / VIS))
 
     # 3) branching milk splats lying on the water toward the camera
     for (u, v) in (SPLATS_R if side > 0 else SPLATS_L):
@@ -218,31 +220,31 @@ def side_skeleton(side, frame, rng_seed):
             ang = base_ang + tau * j / n_b + 0.6 * (rng.random() - 0.5)
             dirv = np.array([math.cos(ang), 0.0, math.sin(ang) * 1.3])
             dirv /= np.linalg.norm(dirv)
-            Lb = (0.07 + 0.09 * rng.random()) * (1.0 + 0.15 * math.sin(tau * (ph + j * 0.3)))
+            Lb = 1.35 * (0.07 + 0.09 * rng.random()) * (1.0 + 0.15 * math.sin(tau * (ph + j * 0.3)))
             steps = 6
             for k in range(steps + 1):
                 uu = k / float(steps)
-                rv = 0.017 - 0.005 * uu
+                rv = 0.021 - 0.005 * uu
                 p = c + dirv * Lb * uu
-                balls.append((p[0], YW + rv * 0.5, p[2], rv / VIS))
+                balls.append((p[0], YW + LIFT + rv * 0.5, p[2], rv / VIS))
             tip = c + dirv * (Lb + 0.012)
-            rb = 0.019 + 0.008 * rng.random()
-            balls.append((tip[0], YW + rb * 0.55, tip[2], rb / VIS))
-        balls.append((c[0], YW + 0.010, c[2], 0.026 / VIS))
+            rb = 0.023 + 0.008 * rng.random()
+            balls.append((tip[0], YW + LIFT + rb * 0.55, tip[2], rb / VIS))
+        balls.append((c[0], YW + LIFT + 0.010, c[2], 0.030 / VIS))
 
     # 4) flying droplets (milky beads) spraying up / outward on looping ballistic paths; clear water bubbles on the water
-    n_d = 24 if side > 0 else 15
+    n_d = 36 if side > 0 else 22
     for j in range(n_d):
         t = rng.random() * 0.75
         b, tan, nrm = frame_at(t)
         phi = rng.random()
         q = (ph + phi) % 1.0
-        v0 = UP * (1.0 + 1.0 * rng.random()) + nrm * (0.7 + 1.3 * rng.random()) + back * (0.2 + 0.6 * rng.random())
-        size = 0.009 + 0.017 * rng.random()                       # drawn before any frame-dependent skip (stable ids)
+        v0 = UP * (1.1 + 1.1 * rng.random()) + nrm * (0.9 + 1.8 * rng.random()) + back * (0.2 + 0.9 * rng.random())
+        size = 0.010 + 0.019 * rng.random()                       # drawn before any frame-dependent skip (stable ids)
         T = 0.45
         tt = q * T
         p = b + UP * (lip(t) * 0.8) + v0 * tt + np.array([0.0, -4.9, 0.0]) * tt * tt
-        if p[1] < YW + 0.03:
+        if p[1] < YW + LIFT + 0.03:
             continue
         drops.append((p[0], p[1], p[2], size))
     for j in range(7 if side > 0 else 6):
